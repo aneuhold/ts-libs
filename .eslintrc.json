@@ -1,0 +1,51 @@
+{
+  "env": {
+    "browser": true,
+    "es2021": true
+  },
+  "extends": [
+    "airbnb-base",
+    "plugin:@typescript-eslint/recommended",
+    "plugin:prettier/recommended"
+  ],
+  "parser": "@typescript-eslint/parser",
+  "parserOptions": {
+    "ecmaVersion": "latest",
+    "sourceType": "module"
+  },
+  "plugins": ["@typescript-eslint", "prettier"],
+  "rules": {
+    "prettier/prettier": [
+      "error",
+      {
+        "trailingComma": "none",
+        "endOfLine": "auto"
+      }
+    ],
+    "no-console": "off",
+    "import/extensions": [
+      "warn",
+      "ignorePackages",
+      // Set the specific extensions you want excluded from warning on imports
+      // here.
+      {
+        "ts": "never",
+        "js": "never"
+      }
+    ],
+    // Disabling no emtpy function because it seems to be needed for using yargs
+    "no-empty-function": "off",
+    "@typescript-eslint/no-empty-function": ["off"],
+    // Base rule needs to be disabled as it can report incorrect errors
+    "no-shadow": "off",
+    "@typescript-eslint/no-shadow": ["error"],
+    "no-use-before-define": "off"
+  },
+  "settings": {
+    "import/resolver": {
+      "node": {
+        "extensions": [".js", ".jsx", ".ts", ".tsx"]
+      }
+    }
+  }
+}

@@ -1,0 +1,43 @@
+{
+  "name": "@aneuhold/core-ts-lib",
+  "version": "1.0.0",
+  "description": "A core library for all of my TypeScript projects",
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
+  "scripts": {
+    "pushpub": "npm run build && npm version patch && git push && npm publish --access public",
+    "build": "tsc"
+  },
+  "type": "commonjs",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/aneuhold/core-ts-lib.git"
+  },
+  "keywords": [
+    "Scripting",
+    "Node.js"
+  ],
+  "author": "Anton G. Neuhold Jr.",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/aneuhold/core-ts-lib/issues"
+  },
+  "homepage": "https://github.com/aneuhold/core-ts-lib#readme",
+  "files": [
+    "lib/**/*"
+  ],
+  "dependencies": {},
+  "devDependencies": {
+    "@types/node": "^16.10.2",
+    "@typescript-eslint/eslint-plugin": "^4.32.0",
+    "@typescript-eslint/parser": "^4.32.0",
+    "eslint": "^7.32.0",
+    "eslint-config-airbnb-base": "^14.2.1",
+    "eslint-config-prettier": "^8.3.0",
+    "eslint-plugin-import": "^2.22.1",
+    "eslint-plugin-prettier": "^4.0.0",
+    "prettier": "^2.4.1",
+    "ts-node": "^10.2.1",
+    "typescript": "^4.4.3"
+  }
+}
