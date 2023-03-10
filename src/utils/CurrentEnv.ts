@@ -1,7 +1,7 @@
 import { readdir } from 'fs/promises';
 import path from 'path';
-import execCmd, { ExecCmdCommandArgument } from '../helperFunctions/cmd';
-import Log from './Log';
+import CLIService from '../services/CLIService';
+import Logger from './Logger';
 
 /**
  * The type of shell that the current environment is running.
@@ -58,7 +58,7 @@ export default class CurrentEnv {
     const currentOs = CurrentEnv.os;
     if (currentOs === OperatingSystemType.Windows) {
       // Command comes from: https://stackoverflow.com/questions/34471956/how-to-determine-if-im-in-powershell-or-cmd
-      const { output } = await execCmd(
+      const { output } = await CLIService.execCmd(
         '(dir 2>&1 *`|echo CMD);&<# rem #>echo ($PSVersionTable).PSEdition'
       );
       switch (output) {
@@ -69,7 +69,7 @@ export default class CurrentEnv {
         case 'Core':
           return ShellType.PowerShellCore;
         default:
-          Log.verbose.failure(
+          Logger.verbose.failure(
             `No recognizable shell returned for Windows environment.`
           );
       }
@@ -92,12 +92,9 @@ export default class CurrentEnv {
    *
    * The startup scripts are defined in the
    * [dotfiles repo](https://github.com/aneuhold/dotfiles).
-   *
-   * @param args are the arguements that should be provided to the startup
-   * script as a string[]. This can be empty.
    */
-  public static async runStartupScript(args?: string[]): Promise<void> {
-    let cmd: ExecCmdCommandArgument = '';
+  public static async runStartupScript(): Promise<void> {
+    let cmd = '';
     if (CurrentEnv.os === OperatingSystemType.Windows) {
       // & says to powershell that you actually want to run the script in the
       // quotes afterwards
@@ -105,23 +102,15 @@ export default class CurrentEnv {
       // loop issues with specifying arguments
       cmd = `& "$Home\\startup.ps1"`;
     } else {
-      cmd = { command: 'zsh' };
-      const tmpArgs: string[] = ['startup.sh'];
-
-      // Add additional arguments
-      if (args) {
-        args.forEach((arg) => {
-          tmpArgs.push(arg);
-        });
-      }
-      cmd.args = tmpArgs;
-      await execCmd(cmd, true, process.env.HOME);
+      cmd = 'zsh';
+      const args = ['startup.sh'];
+      await CLIService.spawnCmd(cmd, args, process.env.HOME);
       return;
     }
 
-    Log.info(`Executing the following command: "${cmd}"`);
-    const { output } = await execCmd(cmd);
-    Log.info(output);
+    Logger.info(`Executing the following command: "${cmd}"`);
+    const { output } = await CLIService.execCmd(cmd);
+    Logger.info(output);
 
     process.exit();
   }

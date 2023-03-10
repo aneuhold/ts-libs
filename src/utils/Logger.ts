@@ -1,4 +1,4 @@
-class Log {
+export default class Logger {
   public static verboseLoggingEnabled = false;
 
   /**
@@ -17,8 +17,8 @@ class Log {
    * Sets the logging of the next chained function to only be activated
    * if verbose logging is turned on.
    */
-  static get verbose(): Log {
-    return new Log(true);
+  static get verbose(): Logger {
+    return new Logger(true);
   }
 
   /**
@@ -36,12 +36,12 @@ class Log {
   }
 
   /**
-   * Static version of {@link Log.prototype.info}.
+   * Static version of {@link Logger.prototype.info}.
    *
-   * @see Log.prototype.info
+   * @see Logger.prototype.info
    */
   static info(msg: string, skipNewline?: boolean): void {
-    new Log().info(msg, skipNewline);
+    new Logger().info(msg, skipNewline);
   }
 
   /**
@@ -56,12 +56,12 @@ class Log {
   }
 
   /**
-   * Static version of {@link Log.prototype.success}.
+   * Static version of {@link Logger.prototype.success}.
    *
-   * @see Log.prototype.success
+   * @see Logger.prototype.success
    */
   static success(msg: string): void {
-    new Log().success(msg);
+    new Logger().success(msg);
   }
 
   /**
@@ -79,12 +79,12 @@ class Log {
   }
 
   /**
-   * Static version of {@link Log.prototype.failure}.
+   * Static version of {@link Logger.prototype.failure}.
    *
-   * @see Log.prototype.failure
+   * @see Logger.prototype.failure
    */
   static failure(msg: string): void {
-    new Log().failure(msg);
+    new Logger().failure(msg);
   }
 
   /**
@@ -102,23 +102,21 @@ class Log {
   }
 
   /**
-   * Static version of {@link Log.prototype.error}.
+   * Static version of {@link Logger.prototype.error}.
    *
-   * @see Log.prototype.error
+   * @see Logger.prototype.error
    */
   static error(msg: string): void {
-    new Log().error(msg);
+    new Logger().error(msg);
   }
 
   private shouldLog(): boolean {
     if (
       !this.logOnlyIfVerbose ||
-      (this.logOnlyIfVerbose && Log.verboseLoggingEnabled)
+      (this.logOnlyIfVerbose && Logger.verboseLoggingEnabled)
     ) {
       return true;
     }
     return false;
   }
 }
-
-export default Log;

@@ -1,32 +1,28 @@
-import applications, {
-  AppName
-} from './helperFunctions/applications/applications';
-import execCmd, { execCmdWithTimeout } from './helperFunctions/cmd';
 import datesAreOnSameDay from './helperFunctions/dateFunctions';
-import findAndInsertText from './helperFunctions/fileFunctions';
-import getUserInput from './helperFunctions/input';
 import sleep from './helperFunctions/sleep';
 import getFileNameExtension from './helperFunctions/stringFunctions';
+import ChromeService from './services/applications/ChromeService';
+import FileSystemService from './services/applications/FileSystemService';
+import CLIService from './services/CLIService';
+import StringService from './services/StringService';
 import CurrentEnv, {
   OperatingSystemType,
   ShellType,
   TerminalType
 } from './utils/CurrentEnv';
-import Log from './utils/Log';
+import Logger from './utils/Logger';
 
 // Export all the functions and classes from this library
 export {
-  execCmd,
-  execCmdWithTimeout,
+  CLIService,
+  StringService,
   CurrentEnv,
-  applications,
-  AppName,
-  Log,
+  ChromeService,
+  FileSystemService,
   sleep,
-  getUserInput,
-  findAndInsertText,
   OperatingSystemType,
   ShellType,
+  Logger,
   TerminalType,
   datesAreOnSameDay,
   getFileNameExtension
