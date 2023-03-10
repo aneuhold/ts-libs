@@ -40,7 +40,8 @@
     "no-shadow": "off",
     "@typescript-eslint/no-shadow": ["error"],
     "no-use-before-define": "off",
-    "default-param-last": "off"
+    "default-param-last": "off",
+    "no-promise-executor-return": "off"
   },
   "settings": {
     "import/resolver": {

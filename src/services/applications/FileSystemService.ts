@@ -12,6 +12,7 @@ export default class FileSystemService {
   static async openNugetCache(): Promise<void> {
     if (CurrentEnv.os === OperatingSystemType.Windows) {
       await FileSystemService.openWindowsNugetCache();
+      return;
     }
     Logger.error('Not implemented for this OS yet.');
   }

@@ -9,10 +9,6 @@ import Logger from '../utils/Logger';
  * The promisified version of the {@link normalExec} function.
  */
 const execute = util.promisify(normalExec);
-const readline = rl.createInterface({
-  input: process.stdin,
-  output: process.stdout
-});
 
 type ExecCmdReturnType = { didComplete: boolean; output: string };
 
@@ -32,7 +28,7 @@ export default class CLIService {
    *
    * @param cmd the command to run. This is ran as a normal execution where the
    * output is all returned at once after completion. For example this could be
-   * `ls -a`
+   * `ls -a`.
    *
    * @param logError if set to false, it will not output a log if an error
    * occurs in `stderr` when executing the function. This can be useful if
@@ -50,16 +46,20 @@ export default class CLIService {
     logError = false,
     cwd?: string
   ): Promise<ExecCmdReturnType> {
-    const execOptions: ExecOptions = {
-      cwd
-    };
-    let commandToExecute = cmd;
-
-    // Set the powershell prefix if the current OS is Windows
-    if (CurrentEnv.os === OperatingSystemType.Windows) {
-      commandToExecute = CLIService.POWERSHELL_PREFIX + cmd;
+    const execOptions: ExecOptions = {};
+    if (cwd) {
+      execOptions.cwd = cwd;
     }
 
+    let commandToExecute = cmd;
+
+    // Set the powershell prefix if the current OS is Windows so that
+    // the profile is not ran before the command.
+    if (CurrentEnv.os === OperatingSystemType.Windows) {
+      commandToExecute = `${CLIService.POWERSHELL_PREFIX}${cmd}`;
+    }
+
+    Logger.verbose.info(`Executing command: ${commandToExecute}`);
     try {
       const { stdout, stderr } = await execute(commandToExecute, execOptions);
       if (stderr) {
@@ -72,13 +72,14 @@ export default class CLIService {
           output: stderr
         };
       }
-      Logger.verbose.info(stdout);
+      Logger.verbose.info(`Output from stdout is: ${stdout}`);
       return {
         didComplete: true,
         output: stdout
       };
     } catch (err) {
-      Logger.error(`There was an error executing the "exec" function. Details are printed below:
+      Logger.verbose
+        .error(`There was an error executing the "exec" function. Details are printed below:
         ${err}`);
       return {
         didComplete: false,
@@ -166,6 +167,10 @@ export default class CLIService {
    * a newline at the end if you want there to be one.
    */
   static async getUserInput(promptToUser: string): Promise<string> {
+    const readline = rl.createInterface({
+      input: process.stdin,
+      output: process.stdout
+    });
     return new Promise((resolve) => {
       readline.question(promptToUser, (input: string) => {
         readline.close();

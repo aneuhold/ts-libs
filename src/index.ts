@@ -2,6 +2,7 @@ import datesAreOnSameDay from './helperFunctions/dateFunctions';
 import sleep from './helperFunctions/sleep';
 import getFileNameExtension from './helperFunctions/stringFunctions';
 import ChromeService from './services/applications/ChromeService';
+import DockerService from './services/applications/DockerService';
 import FileSystemService from './services/applications/FileSystemService';
 import CLIService from './services/CLIService';
 import StringService from './services/StringService';
@@ -18,6 +19,7 @@ export {
   StringService,
   CurrentEnv,
   ChromeService,
+  DockerService,
   FileSystemService,
   sleep,
   OperatingSystemType,
