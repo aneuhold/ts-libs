@@ -1,3 +1,6 @@
+import applications, {
+  AppName
+} from './helperFunctions/applications/applications';
 import execCmd, { execCmdWithTimeout } from './helperFunctions/cmd';
 import datesAreOnSameDay from './helperFunctions/dateFunctions';
 import findAndInsertText from './helperFunctions/fileFunctions';
@@ -12,10 +15,12 @@ import CurrentEnv, {
 import Log from './utils/Log';
 
 // Export all the functions and classes from this library
-export default {
+export {
   execCmd,
   execCmdWithTimeout,
   CurrentEnv,
+  applications,
+  AppName,
   Log,
   sleep,
   getUserInput,

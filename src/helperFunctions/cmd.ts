@@ -17,6 +17,8 @@ export const variousCommands = {
     'Get-Command pwsh | Select-Object -ExpandProperty Definition'
 };
 
+const POWERSHELL_PREFIX = `pwsh -NoProfile -Command `;
+
 type ExecCmdReturnType = { didComplete: boolean; output: string };
 export type ExecCmdCommandArgument =
   | string
@@ -122,6 +124,9 @@ async function helperSpawn(
  * a command regularly outputs an error even when it succeeds. This  only
  * applies to commands ran with normal execution.
  *
+ * @param cwd the current working directory to run the command in. If not
+ * provided, it will use the current working directory of the process.
+ *
  * @returns an object that holds the output and the true if the command comlpleted
  * successfully or false if it did not
  */
@@ -134,21 +139,25 @@ export default async function execCmd(
     cwd
   };
 
-  // Use powershell core if it is windows
-  if (CurrentEnv.os === OperatingSystemType.Windows) {
-    execOptions.shell = 'pwsh';
-  }
+  let modifiedCmd: string | null = null;
 
   if (typeof cmd === 'string') {
     Log.verbose.info(
       'Command type provided to "execCmd" was a string, so executing "exec" promise...'
     );
-    return helperExec(cmd, execOptions, logError);
+    if (CurrentEnv.os === OperatingSystemType.Windows) {
+      modifiedCmd = POWERSHELL_PREFIX + cmd;
+    }
+    return helperExec(modifiedCmd || cmd, execOptions, logError);
   }
+
   Log.verbose.info(
     'Command type provided to "execCmd" was an object, so executing "spawn" promise...'
   );
-  return helperSpawn(cmd.command, cmd.args, execOptions);
+  if (CurrentEnv.os === OperatingSystemType.Windows) {
+    modifiedCmd = POWERSHELL_PREFIX + cmd.command;
+  }
+  return helperSpawn(modifiedCmd || cmd.command, cmd.args, execOptions);
 }
 
 /**

@@ -6,7 +6,9 @@
   "types": "lib/index.d.ts",
   "scripts": {
     "pushpub": "npm run build && npm version patch && git push && npm publish --access public",
-    "build": "tsc"
+    "build": "tsc",
+    "watch": "tsc -w",
+    "upgrade:all": "yarn upgrade --latest"
   },
   "type": "commonjs",
   "repository": {
@@ -28,11 +30,11 @@
   ],
   "dependencies": {},
   "devDependencies": {
-    "@types/node": "^16.10.2",
-    "@typescript-eslint/eslint-plugin": "^4.32.0",
-    "@typescript-eslint/parser": "^4.32.0",
-    "eslint": "^7.32.0",
-    "eslint-config-airbnb-base": "^14.2.1",
+    "@types/node": "^18.15.0",
+    "@typescript-eslint/eslint-plugin": "^5.54.1",
+    "@typescript-eslint/parser": "^5.54.1",
+    "eslint": "^8.35.0",
+    "eslint-config-airbnb-base": "^15.0.0",
     "eslint-config-prettier": "^8.3.0",
     "eslint-plugin-import": "^2.22.1",
     "eslint-plugin-prettier": "^4.0.0",

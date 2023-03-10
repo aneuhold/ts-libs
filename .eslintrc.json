@@ -39,7 +39,8 @@
     // Base rule needs to be disabled as it can report incorrect errors
     "no-shadow": "off",
     "@typescript-eslint/no-shadow": ["error"],
-    "no-use-before-define": "off"
+    "no-use-before-define": "off",
+    "default-param-last": "off"
   },
   "settings": {
     "import/resolver": {
