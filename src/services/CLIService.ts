@@ -38,13 +38,17 @@ export default class CLIService {
    * @param cwd the current working directory to run the command in. If not
    * provided, it will use the current working directory of the process.
    *
+   * @param useProfile if set to true will use the current profile or zshrc of
+   * the shell environment. By default this is false.
+   *
    * @returns an object that holds the output and true if the command completed
    * successfully or false if it did not.
    */
   static async execCmd(
     cmd: string,
     logError = false,
-    cwd?: string
+    cwd?: string,
+    useProfile = false
   ): Promise<ExecCmdReturnType> {
     const execOptions: ExecOptions = {};
     if (cwd) {
@@ -55,8 +59,10 @@ export default class CLIService {
 
     // Set the powershell prefix if the current OS is Windows so that
     // the profile is not ran before the command.
-    if (CurrentEnv.os === OperatingSystemType.Windows) {
+    if (CurrentEnv.os === OperatingSystemType.Windows && !useProfile) {
       commandToExecute = `${CLIService.POWERSHELL_PREFIX}${cmd}`;
+    } else if (CurrentEnv.os === OperatingSystemType.Windows && useProfile) {
+      execOptions.shell = 'pwsh';
     }
 
     Logger.verbose.info(`Executing command: ${commandToExecute}`);
