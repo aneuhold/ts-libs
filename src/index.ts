@@ -4,6 +4,7 @@ import getFileNameExtension from './helperFunctions/stringFunctions';
 import ChromeService from './services/applications/ChromeService';
 import DockerService from './services/applications/DockerService';
 import FileSystemService from './services/applications/FileSystemService';
+import ITermService from './services/applications/ITermService';
 import CLIService from './services/CLIService';
 import StringService from './services/StringService';
 import CurrentEnv, {
@@ -27,5 +28,6 @@ export {
   Logger,
   TerminalType,
   datesAreOnSameDay,
-  getFileNameExtension
+  getFileNameExtension,
+  ITermService
 };

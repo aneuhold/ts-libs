@@ -27,6 +27,7 @@ export enum OperatingSystemType {
  */
 export enum TerminalType {
   WindowsTerminal,
+  ITerm2,
   Unknown
 }
 
@@ -43,6 +44,9 @@ export default class CurrentEnv {
     // for information on why this method was chosen.
     if (process.env.WT_SESSION) {
       return TerminalType.WindowsTerminal;
+    }
+    if (process.env.TERM_PROGRAM && process.env.TERM_PROGRAM === 'iTerm.app') {
+      return TerminalType.ITerm2;
     }
     return TerminalType.Unknown;
   }
