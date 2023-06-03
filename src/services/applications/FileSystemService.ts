@@ -14,6 +14,10 @@ export default class FileSystemService {
       await FileSystemService.openWindowsNugetCache();
       return;
     }
+    if (CurrentEnv.os === OperatingSystemType.MacOSX) {
+      await FileSystemService.openMacNugetCache();
+      return;
+    }
     Logger.error('Not implemented for this OS yet.');
   }
 
@@ -63,6 +67,13 @@ export default class FileSystemService {
     await Promise.all([
       CLIService.execCmd(`ii $HOME/localNuget`),
       CLIService.execCmd(`ii $HOME/.nuget/packages`)
+    ]);
+  }
+
+  private static async openMacNugetCache() {
+    await Promise.all([
+      CLIService.execCmd(`open $HOME/localNuget`),
+      CLIService.execCmd(`open $HOME/.nuget/packages`)
     ]);
   }
 }
