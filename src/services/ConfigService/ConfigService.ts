@@ -27,9 +27,8 @@ export default class ConfigService {
       const strippedJson = ConfigService.stripJsonComments(
         result.data as unknown as string
       );
-      console.log('strippedJson', strippedJson);
       const config = JSON.parse(strippedJson);
-      console.log(config);
+      ConfigService.insertPropertiesIntoEnv(config);
     } catch (error) {
       Logger.error(`Failed to load ${env}.json, error: ${error}`);
       throw error;
@@ -49,6 +48,19 @@ export default class ConfigService {
     }
     return new Octokit({
       auth: authToken
+    });
+  }
+
+  /**
+   * Inserts the provided configuration into the local environment.
+   */
+  private static insertPropertiesIntoEnv(config: object) {
+    Object.entries(config).forEach(([key, value]) => {
+      if (typeof value === 'object') {
+        ConfigService.insertPropertiesIntoEnv(value);
+      } else {
+        process.env[key] = value;
+      }
     });
   }
 
