@@ -6,6 +6,7 @@ import DockerService from './services/applications/DockerService';
 import FileSystemService from './services/applications/FileSystemService';
 import ITermService from './services/applications/ITermService';
 import CLIService from './services/CLIService';
+import ConfigService from './services/ConfigService/ConfigService';
 import StringService from './services/StringService';
 import CurrentEnv, {
   OperatingSystemType,
@@ -29,5 +30,6 @@ export {
   TerminalType,
   datesAreOnSameDay,
   getFileNameExtension,
-  ITermService
+  ITermService,
+  ConfigService
 };
