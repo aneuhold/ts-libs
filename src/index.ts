@@ -7,6 +7,9 @@ import FileSystemService from './services/applications/FileSystemService';
 import ITermService from './services/applications/ITermService';
 import CLIService from './services/CLIService';
 import ConfigService from './services/ConfigService/ConfigService';
+import DOFunctionService, {
+  DOFunctionOutput
+} from './services/DOFunctionService';
 import StringService from './services/StringService';
 import CurrentEnv, {
   OperatingSystemType,
@@ -31,5 +34,7 @@ export {
   datesAreOnSameDay,
   getFileNameExtension,
   ITermService,
-  ConfigService
+  ConfigService,
+  DOFunctionService,
+  DOFunctionOutput
 };
