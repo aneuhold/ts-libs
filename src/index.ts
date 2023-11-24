@@ -1,15 +1,12 @@
 import datesAreOnSameDay from './helperFunctions/dateFunctions';
 import sleep from './helperFunctions/sleep';
-import getFileNameExtension from './helperFunctions/stringFunctions';
 import ChromeService from './services/applications/ChromeService';
 import DockerService from './services/applications/DockerService';
-import FileSystemService from './services/applications/FileSystemService';
+import FileSystemService from './services/applications/FileSystemService/FileSystemService';
 import ITermService from './services/applications/ITermService';
 import CLIService from './services/CLIService';
 import ConfigService from './services/ConfigService/ConfigService';
-import DOFunctionService, {
-  DOFunctionOutput
-} from './services/DOFunctionService';
+import DOFunctionService from './services/DOFunctionService';
 import StringService from './services/StringService';
 import CurrentEnv, {
   OperatingSystemType,
@@ -32,9 +29,7 @@ export {
   Logger,
   TerminalType,
   datesAreOnSameDay,
-  getFileNameExtension,
   ITermService,
   ConfigService,
-  DOFunctionService,
-  DOFunctionOutput
+  DOFunctionService
 };

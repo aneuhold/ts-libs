@@ -1,7 +1,7 @@
 /**
  * Output from a Digital Ocean function must always be an object.
  */
-export type DOFunctionOutput<TOutput extends object> = {
+type DOFunctionOutput<TOutput extends object> = {
   /**
    * The body is an object, which means it will automatically be serialized to
    * JSON and the Content-Type header will be set to application/json.
