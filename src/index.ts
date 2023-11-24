@@ -6,6 +6,7 @@ import FileSystemService from './services/applications/FileSystemService/FileSys
 import ITermService from './services/applications/ITermService';
 import CLIService from './services/CLIService';
 import ConfigService from './services/ConfigService/ConfigService';
+import DependencyService from './services/DependencyService';
 import DOFunctionService from './services/DOFunctionService';
 import StringService from './services/StringService';
 import CurrentEnv, {
@@ -31,5 +32,6 @@ export {
   datesAreOnSameDay,
   ITermService,
   ConfigService,
-  DOFunctionService
+  DOFunctionService,
+  DependencyService
 };

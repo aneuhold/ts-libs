@@ -8,6 +8,8 @@
     "pushpub": "npm run build && npm version patch && git push && npm publish --access public",
     "build": "tsc",
     "watch": "tsc -w",
+    "link:local": "cd lib && yarn link",
+    "unlink:local": "cd lib && yarn unlink",
     "upgrade:all": "yarn upgrade --latest",
     "test": "jest"
   },
