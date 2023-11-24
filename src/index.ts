@@ -7,7 +7,14 @@ import ITermService from './services/applications/ITermService';
 import CLIService from './services/CLIService';
 import ConfigService from './services/ConfigService/ConfigService';
 import DependencyService from './services/DependencyService';
-import DOFunctionService from './services/DOFunctionService';
+import DOFunctionService, {
+  DOFunction
+} from './services/DOFunctionService/DOFunctionService';
+import {
+  DOAuthCheckPasswordInput,
+  DOAuthCheckPasswordOutput,
+  DOAuthCheckPasswordRawOutput
+} from './services/DOFunctionService/functionsInfo/authCheckPassword';
 import StringService from './services/StringService';
 import CurrentEnv, {
   OperatingSystemType,
@@ -34,4 +41,12 @@ export {
   ConfigService,
   DOFunctionService,
   DependencyService
+};
+
+// Export TypeScript types where needed
+export type {
+  DOAuthCheckPasswordRawOutput,
+  DOAuthCheckPasswordInput,
+  DOAuthCheckPasswordOutput,
+  DOFunction
 };
