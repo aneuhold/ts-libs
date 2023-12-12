@@ -1,0 +1,8 @@
+{
+  "name": "@aneuhold/core-ts-db-lib",
+  "version": "1.0.0",
+  "description": "A core database library used for personal projects",
+  "main": "index.js",
+  "author": "Anton G Neuhold Jr <agneuhold@gmail.com>",
+  "license": "MIT"
+}
