@@ -1,0 +1,24 @@
+{
+  "name": "@aneuhold/be-ts-lib",
+  "version": "1.0.0",
+  "description": "A backend TypeScript library used for common functionality in personal backend projects.",
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
+  "author": "Anton G Neuhold Jr <agneuhold@gmail.com>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/aneuhold/be-ts-lib.git"
+  },
+  "bugs": {
+    "url": "https://github.com/aneuhold/be-ts-lib/issues"
+  },
+  "homepage": "https://github.com/aneuhold/be-ts-lib#readme",
+  "files": [
+    "lib/**/*"
+  ],
+  "keywords": [
+    "Scripting",
+    "Node.js"
+  ]
+}
