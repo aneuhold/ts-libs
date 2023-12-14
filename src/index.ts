@@ -10,6 +10,7 @@ import CurrentEnv, {
 } from './utils/CurrentEnv';
 import ITermService from './services/applications/ITermService';
 import ConfigService from './services/ConfigService/ConfigService';
+import Config from './services/ConfigService/ConfigDefinition';
 
 // Export all the functions and classes from this library
 export {
@@ -27,4 +28,4 @@ export {
 };
 
 // Export TypeScript types where needed
-export type {};
+export type { Config };
