@@ -11,6 +11,7 @@ import {
 } from './services/DOFunctionService/functionsInfo/authCheckPassword';
 import FileSystemService from './services/FileSystemService/FileSystemService';
 import StringService from './services/StringService';
+import ErrorUtils from './utils/ErrorUtils';
 import Logger from './utils/Logger';
 import TestUtils from './utils/TestUtils';
 
@@ -23,7 +24,8 @@ export {
   Logger,
   sleep,
   StringService,
-  TestUtils
+  TestUtils,
+  ErrorUtils
 };
 
 // Export TypeScript types where needed
