@@ -1,5 +1,5 @@
 // Export all the functions and classes from this library
-export { };
+export {};
 
 // Export TypeScript types where needed
-  export type { };
+export type {};
