@@ -41,7 +41,9 @@
     "@typescript-eslint/no-shadow": ["error"],
     "no-use-before-define": "off",
     "default-param-last": "off",
-    "no-promise-executor-return": "off"
+    "no-promise-executor-return": "off",
+    "arrow-body-style": "off",
+    "prefer-arrow-callback": "off"
   },
   "settings": {
     "import/resolver": {

@@ -9,6 +9,7 @@
   },
   "editor.codeActionsOnSave": {
     "source.fixAll.eslint": "always",
-    "source.organizeImports": "always"
+    // Re-enable this when the index.ts file has exports.
+    "source.organizeImports": "never"
   }
 }
