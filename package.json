@@ -30,6 +30,9 @@
     "upgrade:all": "yarn upgrade --latest",
     "test": "jest"
   },
+  "dependencies": {
+    "bson": "^6.2.0"
+  },
   "devDependencies": {
     "@types/jest": "^29.5.8",
     "@types/node": "^20.10.4",
