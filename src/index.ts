@@ -12,6 +12,7 @@ import {
 import FileSystemService from './services/FileSystemService/FileSystemService';
 import StringService from './services/StringService';
 import Logger from './utils/Logger';
+import TestUtils from './utils/TestUtils';
 
 // Export all the functions and classes from this library
 export {
@@ -21,7 +22,8 @@ export {
   FileSystemService,
   Logger,
   sleep,
-  StringService
+  StringService,
+  TestUtils
 };
 
 // Export TypeScript types where needed
