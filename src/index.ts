@@ -9,6 +9,7 @@ import {
   DOAuthCheckPasswordOutput,
   DOAuthCheckPasswordRawOutput
 } from './services/DOFunctionService/functionsInfo/authCheckPassword';
+import FileSystemService from './services/FileSystemService/FileSystemService';
 import StringService from './services/StringService';
 import Logger from './utils/Logger';
 
@@ -17,6 +18,7 @@ export {
   datesAreOnSameDay,
   DependencyService,
   DOFunctionService,
+  FileSystemService,
   Logger,
   sleep,
   StringService
