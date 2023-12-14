@@ -1,6 +1,6 @@
 import { access, readFile, writeFile } from 'fs/promises';
 import path from 'path';
-import FileSystemService from './applications/FileSystemService/FileSystemService';
+import FileSystemService from './FileSystemService/FileSystemService';
 
 /**
  * A service which can be used to manage dependencies in the current project

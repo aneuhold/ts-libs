@@ -10,28 +10,14 @@ import {
   writeFile
 } from 'fs/promises';
 import path from 'path';
-import CurrentEnv, { OperatingSystemType } from '../../../utils/CurrentEnv';
-import Logger from '../../../utils/Logger';
-import CLIService from '../../CLIService';
-import StringService from '../../StringService';
+import Logger from '../../utils/Logger';
+import StringService from '../StringService';
 
 /**
- * A service which can be used to interact with the file system application on
- * the current system.
+ * A service which can be used to interact with the file system, only in build
+ * steps.
  */
 export default class FileSystemService {
-  static async openNugetCache(): Promise<void> {
-    if (CurrentEnv.os === OperatingSystemType.Windows) {
-      await FileSystemService.openWindowsNugetCache();
-      return;
-    }
-    if (CurrentEnv.os === OperatingSystemType.MacOSX) {
-      await FileSystemService.openMacNugetCache();
-      return;
-    }
-    Logger.error('Not implemented for this OS yet.');
-  }
-
   /**
    * Tries to add the provided snippet of text to the path provided. If the file
    * doesn't exist, it creates it. If the folders to the file don't exist, it
@@ -173,19 +159,5 @@ export default class FileSystemService {
     return filePaths.map((filePath) => {
       return filePath.replace(dirPath, '');
     });
-  }
-
-  private static async openWindowsNugetCache() {
-    await Promise.all([
-      CLIService.execCmd(`ii $HOME/localNuget`),
-      CLIService.execCmd(`ii $HOME/.nuget/packages`)
-    ]);
-  }
-
-  private static async openMacNugetCache() {
-    await Promise.all([
-      CLIService.execCmd(`open $HOME/localNuget`),
-      CLIService.execCmd(`open $HOME/.nuget/packages`)
-    ]);
   }
 }

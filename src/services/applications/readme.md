@@ -1,1 +1,0 @@
-`applications` are applications that actually run independently on a system and are able to be interacted with through a GUI. The behavior of each of the applications in this folder will change based on the operating system.
