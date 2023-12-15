@@ -4,4 +4,7 @@
  */
 export default interface Config {
   someKey: string;
+  mongoRootUsername: string;
+  mongoRootPassword: string;
+  mongoUrl: string;
 }

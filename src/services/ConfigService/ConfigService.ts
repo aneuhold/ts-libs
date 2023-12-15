@@ -30,6 +30,10 @@ export default class ConfigService {
     return ConfigService.configObject;
   }
 
+  static get isInitialized(): boolean {
+    return !!ConfigService.configObject;
+  }
+
   /**
    * Loads configuration from the GitHub repository into the ConfigService.
    */
