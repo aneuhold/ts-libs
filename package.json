@@ -26,9 +26,20 @@
     "build": "tsc",
     "watch": "tsc -w",
     "link:local": "cd lib && yarn link",
+    "link:coredb": "yarn link @aneuhold/core-ts-db-lib",
+    "link:bets": "yarn link @aneuhold/be-ts-lib",
     "unlink:local": "cd lib && yarn unlink",
+    "unlink:coredb": "yarn unlink @aneuhold/core-ts-db-lib && yarn install --force",
+    "unlink:bets": "yarn unlink @aneuhold/be-ts-lib && yarn install --force",
     "upgrade:all": "yarn upgrade --latest",
     "test": "jest"
+  },
+  "dependencies": {
+    "@aneuhold/be-ts-lib": "^1.0.2",
+    "@aneuhold/core-ts-db-lib": "^1.0.1",
+    "@aneuhold/core-ts-lib": "^1.1.6",
+    "bson": "^6.2.0",
+    "mongodb": "^6.3.0"
   },
   "devDependencies": {
     "@types/jest": "^29.5.8",
