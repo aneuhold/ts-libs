@@ -15,10 +15,10 @@
     "@jridgewell/gen-mapping" "^0.3.0"
     "@jridgewell/trace-mapping" "^0.3.9"
 
-"@aneuhold/be-ts-lib@^1.0.2":
-  version "1.0.2"
-  resolved "https://registry.yarnpkg.com/@aneuhold/be-ts-lib/-/be-ts-lib-1.0.2.tgz#2296d1cea49c750dbe59e93c0088a93a0e90d01b"
-  integrity sha512-ArDZq6PqbeIWuIPpMmRuA+fGTOJOmC+wecjUiU1MqpqJWeP9mrdMmJu5S5hftblSDjIhXE+x+diuiMndWOs9rw==
+"@aneuhold/be-ts-lib@^1.0.3":
+  version "1.0.3"
+  resolved "https://registry.yarnpkg.com/@aneuhold/be-ts-lib/-/be-ts-lib-1.0.3.tgz#5772f142e1d34ee25ac567ac83e22ec21dba9437"
+  integrity sha512-s/raa0f9LSQrJZf129PHVEZBQPqTGpQWK/IIGnN9epsDOPC3ldZ6yj/oOX4yybnuJsGW04PSwJUi775h63riRQ==
   dependencies:
     "@aneuhold/core-ts-lib" "^1.1.5"
     dotenv "^16.3.1"
