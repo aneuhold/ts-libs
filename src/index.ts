@@ -1,5 +1,24 @@
+import DOFunctionService from './services/DOFunctionService/DOFunctionService';
+import {
+  AuthCheckPasswordInput,
+  AuthCheckPasswordOutput,
+  AuthCheckPasswordRawOutput
+} from './services/DOFunctionService/functions/authCheckPassword';
+import {
+  AuthValidateUserInput,
+  AuthValidateUserOutput,
+  AuthValidateUserRawOutput
+} from './services/DOFunctionService/functions/authValidateUser';
+
 // Export all the functions and classes from this library
-export {};
+export { DOFunctionService };
 
 // Export TypeScript types where needed
-export type {};
+export type {
+  AuthCheckPasswordInput,
+  AuthCheckPasswordOutput,
+  AuthCheckPasswordRawOutput,
+  AuthValidateUserInput,
+  AuthValidateUserOutput,
+  AuthValidateUserRawOutput
+};
