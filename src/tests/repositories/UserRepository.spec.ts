@@ -3,10 +3,33 @@ import { User } from '@aneuhold/core-ts-db-lib';
 import { cleanupDoc, expectToThrow } from '../testsUtil';
 import UserRepository from '../../repositories/common/UserRepository';
 import DocumentDb from '../../util/DocumentDb';
+import ApiKeyRepository from '../../repositories/common/ApiKeyRepository';
 
 const userRepo = UserRepository.getRepo();
 
 describe('Create operations', () => {
+  it('can create a new user', async () => {
+    const newUser = new User(crypto.randomUUID());
+    const insertResult = await userRepo.insertNew(newUser);
+    expect(insertResult).toBeTruthy();
+
+    await cleanupDoc(userRepo, newUser);
+  });
+  it('can create a new user and the new user gets an API key', async () => {
+    const newUser = new User(crypto.randomUUID());
+    const insertResult = await userRepo.insertNew(newUser);
+    expect(insertResult).toBeTruthy();
+    const apiKey = await ApiKeyRepository.getRepo().get({
+      userId: newUser._id
+    });
+    expect(apiKey).toBeTruthy();
+
+    await cleanupDoc(userRepo, newUser);
+    const apiKeyThatShouldNotExist = await ApiKeyRepository.getRepo().get({
+      userId: newUser._id
+    });
+    expect(apiKeyThatShouldNotExist).toBeFalsy();
+  });
   it('throws if the username is a duplicate username', async () => {
     const duplicateUserName = `${crypto.randomUUID()}`;
     const newUser1 = new User(duplicateUserName);
