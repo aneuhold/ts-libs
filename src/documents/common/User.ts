@@ -11,6 +11,8 @@ export default class User implements BaseDocument {
 
   userName: string;
 
+  password?: string;
+
   email?: string;
 
   auth: {

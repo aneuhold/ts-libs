@@ -28,6 +28,7 @@
     "link:local": "cd lib && yarn link",
     "unlink:local": "cd lib && yarn unlink",
     "upgrade:all": "yarn upgrade --latest",
+    "upgrade:core": "yarn upgrade --latest @aneuhold",
     "test": "jest"
   },
   "dependencies": {
