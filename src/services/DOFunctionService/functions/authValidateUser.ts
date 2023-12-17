@@ -26,7 +26,7 @@ const authValidateUser: DOFunctionInfo<
   AuthValidateUserInput,
   AuthValidateUserOutput
 > = {
-  url: 'TBD',
+  url: 'https://faas-sfo3-7872a1dd.doserverless.co/api/v1/web/fn-66dd3ef6-c21d-46dc-b7ae-caf2ac8041ec/auth/validateUser',
   call: async (input: AuthValidateUserInput) => {
     const result = await fetch(`${authValidateUser.url}`, {
       method: 'POST',
