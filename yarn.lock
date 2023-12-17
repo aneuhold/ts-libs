@@ -25,10 +25,10 @@
     node-fetch "^2"
     octokit "^3.1.2"
 
-"@aneuhold/core-ts-db-lib@^1.0.1":
-  version "1.0.1"
-  resolved "https://registry.yarnpkg.com/@aneuhold/core-ts-db-lib/-/core-ts-db-lib-1.0.1.tgz#8972122a3764e1de7c6728afd5e79b2761762853"
-  integrity sha512-Q7QvJSPaAOtbleLwmaiGfk8CMeXi+dk93Mm0xdVAgaqNdHG+G2a51t36t4zUShneMo2jAApgmcJqYVVD1lESkw==
+"@aneuhold/core-ts-db-lib@^1.0.3":
+  version "1.0.3"
+  resolved "https://registry.yarnpkg.com/@aneuhold/core-ts-db-lib/-/core-ts-db-lib-1.0.3.tgz#b43f3fb028baecf43766f9f48e1a02610d3b1e25"
+  integrity sha512-Pd/Zwg9Fw3YvSozxmui9B/QdkzzqIda2os0YkWOAq3JSew/p/cIt3EaJJCIMkNHTP/b6oiu4VdNYAroS4FHHOg==
   dependencies:
     bson "^6.2.0"
 
@@ -37,10 +37,10 @@
   resolved "https://registry.yarnpkg.com/@aneuhold/core-ts-lib/-/core-ts-lib-1.1.5.tgz#d6e1097573e637409b8dde77f4fc7809e046853f"
   integrity sha512-+Rjt24/B7DcN4ZgrZJdHqkCmyifPLG4HQyZkqd4oo0DhXXx2gcX07SU+uyZwXSef4k55jnLZunvy/fgdtMBScw==
 
-"@aneuhold/core-ts-lib@^1.1.6":
-  version "1.1.6"
-  resolved "https://registry.yarnpkg.com/@aneuhold/core-ts-lib/-/core-ts-lib-1.1.6.tgz#1830de7bd40fdc34b98cceb7eeee725905ad25e2"
-  integrity sha512-6mygtftjqL7tUcWjwUw3pC0natQH+dRfv7C6jwFycbxZVKovOuKVQ2wzJzkPvT6QtCGt/wF7JXA7Hbi47mkEhQ==
+"@aneuhold/core-ts-lib@^1.1.7":
+  version "1.1.7"
+  resolved "https://registry.yarnpkg.com/@aneuhold/core-ts-lib/-/core-ts-lib-1.1.7.tgz#fe041a59729d4952410ba5152c180f7ac17b347c"
+  integrity sha512-bZXXod0pqQiKpg6P3NCRy+FXm5J2LDwhEE2v5rgOgEXfARliBpXncd1hnveR2EVEgNlgTqyUkjqSlRj52Hl6BQ==
 
 "@babel/code-frame@^7.0.0", "@babel/code-frame@^7.12.13", "@babel/code-frame@^7.22.13", "@babel/code-frame@^7.23.5":
   version "7.23.5"
