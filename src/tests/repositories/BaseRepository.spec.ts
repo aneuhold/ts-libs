@@ -13,6 +13,16 @@ it('can create a new document and delete it', async () => {
   await cleanupDoc(userRepository, newUser);
 });
 
+// -- Manual Database Operations Section -- //
+
+it.skip('can add a new test user', async () => {
+  const userRepository = UserRepository.getRepo();
+  const newUser = new User('someUser');
+  newUser.password = crypto.randomUUID();
+  const createResult = await userRepository.insertNew(newUser);
+  expect(createResult).toBeTruthy();
+});
+
 afterAll(async () => {
   return DocumentDb.closeDbConnection();
 });
