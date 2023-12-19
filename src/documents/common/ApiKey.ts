@@ -10,7 +10,7 @@ export default class ApiKey implements BaseDocument {
   _id = new ObjectId();
 
   /**
-   * The API key for the user.
+   * The API key for the user. This is indexed in the DB.
    */
   key = crypto.randomUUID();
 
