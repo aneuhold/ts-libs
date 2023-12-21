@@ -10,6 +10,7 @@ import {
   AuthValidateUserOutput,
   AuthValidateUserRawOutput
 } from './services/DOFunctionService/functions/authValidateUser';
+import { Translation, Translations } from './types/Translations';
 
 // Export all the functions and classes from this library
 export { DOFunctionService, APIService };
@@ -21,5 +22,7 @@ export type {
   AuthCheckPasswordRawOutput,
   AuthValidateUserInput,
   AuthValidateUserOutput,
-  AuthValidateUserRawOutput
+  AuthValidateUserRawOutput,
+  Translations,
+  Translation
 };
