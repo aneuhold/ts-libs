@@ -15,10 +15,25 @@
     "@jridgewell/gen-mapping" "^0.3.0"
     "@jridgewell/trace-mapping" "^0.3.9"
 
-"@aneuhold/core-ts-lib@^1.1.5":
-  version "1.1.5"
-  resolved "https://registry.yarnpkg.com/@aneuhold/core-ts-lib/-/core-ts-lib-1.1.5.tgz#d6e1097573e637409b8dde77f4fc7809e046853f"
-  integrity sha512-+Rjt24/B7DcN4ZgrZJdHqkCmyifPLG4HQyZkqd4oo0DhXXx2gcX07SU+uyZwXSef4k55jnLZunvy/fgdtMBScw==
+"@aneuhold/core-ts-api-lib@^1.0.4":
+  version "1.0.4"
+  resolved "https://registry.yarnpkg.com/@aneuhold/core-ts-api-lib/-/core-ts-api-lib-1.0.4.tgz#32fafa8b847934f6fb08f375c34c354c733cbc99"
+  integrity sha512-/CzYBHlq/2aTDjvB1Ua4BduZ0407tfdO3T27fmYABY2lfAUF6qR4wHsDM9kYJXwZG6yUnORjJaRzGaOXggVo/w==
+  dependencies:
+    "@aneuhold/core-ts-db-lib" "^1.0.3"
+    "@aneuhold/core-ts-lib" "^1.1.7"
+
+"@aneuhold/core-ts-db-lib@^1.0.3":
+  version "1.0.3"
+  resolved "https://registry.yarnpkg.com/@aneuhold/core-ts-db-lib/-/core-ts-db-lib-1.0.3.tgz#b43f3fb028baecf43766f9f48e1a02610d3b1e25"
+  integrity sha512-Pd/Zwg9Fw3YvSozxmui9B/QdkzzqIda2os0YkWOAq3JSew/p/cIt3EaJJCIMkNHTP/b6oiu4VdNYAroS4FHHOg==
+  dependencies:
+    bson "^6.2.0"
+
+"@aneuhold/core-ts-lib@^1.1.7", "@aneuhold/core-ts-lib@^1.1.8":
+  version "1.1.8"
+  resolved "https://registry.yarnpkg.com/@aneuhold/core-ts-lib/-/core-ts-lib-1.1.8.tgz#6e74b9fa1666109802c915339f3d3e252f744972"
+  integrity sha512-pHCV/xV08kxbbtGhLVRW8UZ38Jeog5o4owmd8OCKr5pMOZDejER04qcfv+E/qkeDcK6fDtj1cCOk2BAif/WVOg==
 
 "@babel/code-frame@^7.0.0", "@babel/code-frame@^7.12.13", "@babel/code-frame@^7.22.13", "@babel/code-frame@^7.23.5":
   version "7.23.5"
@@ -1421,6 +1436,11 @@ bser@2.1.1:
   integrity sha512-gQxTNE/GAfIIrmHLUE3oJyp5FO6HRBfhjnw4/wMmA63ZGDJnWBmgY/lyQBpnDUkGmAhbSe39tx2d/iTOAfglwQ==
   dependencies:
     node-int64 "^0.4.0"
+
+bson@^6.2.0:
+  version "6.2.0"
+  resolved "https://registry.yarnpkg.com/bson/-/bson-6.2.0.tgz#4b6acafc266ba18eeee111373c2699304a9ba0a3"
+  integrity sha512-ID1cI+7bazPDyL9wYy9GaQ8gEEohWvcUl/Yf0dIdutJxnmInEEyCsb4awy/OiBfall7zBA179Pahi3vCdFze3Q==
 
 btoa-lite@^1.0.0:
   version "1.0.0"

@@ -1,7 +1,7 @@
-import { Octokit } from 'octokit';
 import 'dotenv/config';
-import { Logger } from '@aneuhold/core-ts-lib';
+import { Logger, StringService } from '@aneuhold/core-ts-lib';
 import Config from './ConfigDefinition';
+import GitHubService from '../GitHubService';
 
 export type ConfigEnv = 'local' | 'dev' | 'prod';
 
@@ -12,8 +12,6 @@ export type ConfigEnv = 'local' | 'dev' | 'prod';
  */
 export default class ConfigService {
   static env: ConfigEnv | null = null;
-
-  private static gitHub: Octokit | null = null;
 
   private static configObject: Config | null = null;
 
@@ -39,42 +37,17 @@ export default class ConfigService {
    */
   static async useConfig(env: ConfigEnv): Promise<void> {
     ConfigService.env = env;
-    if (!ConfigService.gitHub) {
-      ConfigService.gitHub = ConfigService.getGitHubClient();
-    }
     try {
-      const result = await ConfigService.gitHub.rest.repos.getContent({
-        mediaType: {
-          format: 'raw'
-        },
-        owner: 'aneuhold',
-        repo: 'config',
-        path: `${env}.jsonc`
-      });
-      const strippedJson = ConfigService.stripJsonComments(
-        result.data as unknown as string
+      const jsonString = await GitHubService.getContentFromRepo(
+        'config',
+        `${env}.jsonc`
       );
+      const strippedJson = StringService.stripJsonComments(jsonString);
       ConfigService.configObject = JSON.parse(strippedJson);
     } catch (error) {
       Logger.error(`Failed to load ${env}.json, error: ${error}`);
       throw error;
     }
-  }
-
-  /**
-   * Creates a new GitHub client using `CONFIG_GITHUB_TOKEN` from the
-   * local environment or .env file.
-   */
-  private static getGitHubClient(): Octokit {
-    const authToken = process.env.CONFIG_GITHUB_TOKEN;
-    if (!authToken) {
-      throw new Error(
-        'No CONFIG_GITHUB_TOKEN key found in environment variables.'
-      );
-    }
-    return new Octokit({
-      auth: authToken
-    });
   }
 
   /**
@@ -91,13 +64,4 @@ export default class ConfigService {
       }
     });
   }
-
-  /**
-   * Strips JSON comments from the provided JSON string. Only `//` comments
-   * are supported at the moment.
-   */
-  private static stripJsonComments = (jsonString: string) => {
-    const commentRegex = /\/\/(.*)/g;
-    return jsonString.replace(commentRegex, '');
-  };
 }

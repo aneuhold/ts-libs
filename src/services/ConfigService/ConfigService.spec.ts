@@ -1,4 +1,3 @@
-import { assert } from 'console';
 import ConfigService from './ConfigService';
 
 describe('ConfigService', () => {
@@ -11,7 +10,7 @@ describe('ConfigService', () => {
     it('should load configuration from GitHub', async () => {
       const env = 'local';
       await ConfigService.useConfig(env);
-      assert(ConfigService.config.someKey === 'SOME_VALUE');
+      expect(ConfigService.config.someKey).toEqual('SOME_VALUE');
     });
   });
 });

@@ -28,13 +28,15 @@
     "link:local": "cd lib && yarn link",
     "unlink:local": "cd lib && yarn unlink",
     "upgrade:all": "yarn upgrade --latest",
+    "upgrade:core": "yarn upgrade --latest --pattern @aneuhold",
     "test": "jest"
   },
   "dependencies": {
-    "@aneuhold/core-ts-lib": "^1.1.5",
+    "@aneuhold/core-ts-api-lib": "^1.0.4",
+    "@aneuhold/core-ts-lib": "^1.1.8",
+    "dotenv": "^16.3.1",
     "node-fetch": "^2",
-    "octokit": "^3.1.2",
-    "dotenv": "^16.3.1"
+    "octokit": "^3.1.2"
   },
   "devDependencies": {
     "@types/jest": "^29.5.8",

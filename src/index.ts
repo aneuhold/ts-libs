@@ -11,6 +11,9 @@ import CurrentEnv, {
 import ITermService from './services/applications/ITermService';
 import ConfigService from './services/ConfigService/ConfigService';
 import Config from './services/ConfigService/ConfigDefinition';
+import TranslationService, {
+  TranslationProject
+} from './services/TranslationService/TranslationService';
 
 // Export all the functions and classes from this library
 export {
@@ -24,8 +27,9 @@ export {
   ShellType,
   TerminalType,
   ITermService,
-  ConfigService
+  ConfigService,
+  TranslationService
 };
 
 // Export TypeScript types where needed
-export type { Config };
+export type { Config, TranslationProject };
