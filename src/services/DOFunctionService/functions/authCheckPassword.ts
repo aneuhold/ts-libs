@@ -1,9 +1,4 @@
-import {
-  DOFunctionInfo,
-  DOFunctionInput,
-  DOFunctionOutput,
-  DOFunctionRawOutput
-} from '../DOFunctionService';
+import DOFunction, { DOFunctionInput, DOFunctionOutput } from '../DOFunction';
 
 export interface AuthCheckPasswordInput extends DOFunctionInput {
   password: string;
@@ -11,27 +6,23 @@ export interface AuthCheckPasswordInput extends DOFunctionInput {
 export interface AuthCheckPasswordOutput extends DOFunctionOutput {
   passwordIsCorrect: boolean;
 }
-export interface AuthCheckPasswordRawOutput
-  extends DOFunctionRawOutput<AuthCheckPasswordOutput> {
-  body: AuthCheckPasswordOutput;
-}
 
-const authCheckPassword: DOFunctionInfo<
+export default class AuthCheckPassword extends DOFunction<
   AuthCheckPasswordInput,
   AuthCheckPasswordOutput
-> = {
-  url: 'https://faas-sfo3-7872a1dd.doserverless.co/api/v1/web/fn-66dd3ef6-c21d-46dc-b7ae-caf2ac8041ec/auth/checkPassword',
-  call: async (input: AuthCheckPasswordInput) => {
-    const result = await fetch(`${authCheckPassword.url}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(input)
-    });
-    const json = (await result.json()) as AuthCheckPasswordOutput;
-    return json;
-  }
-};
+> {
+  private static instance: AuthCheckPassword;
 
-export default authCheckPassword;
+  private constructor() {
+    super();
+    this.url =
+      'https://faas-sfo3-7872a1dd.doserverless.co/api/v1/web/fn-66dd3ef6-c21d-46dc-b7ae-caf2ac8041ec/auth/checkPassword';
+  }
+
+  static getFunction() {
+    if (!this.instance) {
+      AuthCheckPassword.instance = new AuthCheckPassword();
+    }
+    return AuthCheckPassword.instance;
+  }
+}

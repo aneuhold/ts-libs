@@ -1,43 +1,42 @@
 import { ApiKey, User } from '@aneuhold/core-ts-db-lib';
-import {
-  DOFunctionInfo,
-  DOFunctionInput,
-  DOFunctionOutput,
-  DOFunctionRawOutput
-} from '../DOFunctionService';
+import DOFunction, { DOFunctionInput, DOFunctionOutput } from '../DOFunction';
+import { DashboardConfig } from '../../../types/DashboardConfig';
 
 export interface AuthValidateUserInput extends DOFunctionInput {
   userName: string;
   password: string;
 }
+
 export interface AuthValidateUserOutput extends DOFunctionOutput {
   success: boolean;
   userInfo?: {
     user: User;
     apiKey: ApiKey;
   };
-}
-export interface AuthValidateUserRawOutput
-  extends DOFunctionRawOutput<AuthValidateUserOutput> {
-  body: AuthValidateUserOutput;
+  /**
+   * Basic configuration for the projects that the user has access to.
+   */
+  config?: {
+    dashboard?: DashboardConfig;
+  };
 }
 
-const authValidateUser: DOFunctionInfo<
+export default class AuthValidateUser extends DOFunction<
   AuthValidateUserInput,
   AuthValidateUserOutput
-> = {
-  url: 'https://faas-sfo3-7872a1dd.doserverless.co/api/v1/web/fn-66dd3ef6-c21d-46dc-b7ae-caf2ac8041ec/auth/validateUser',
-  call: async (input: AuthValidateUserInput) => {
-    const result = await fetch(`${authValidateUser.url}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(input)
-    });
-    const json = (await result.json()) as AuthValidateUserOutput;
-    return json;
-  }
-};
+> {
+  private static instance: AuthValidateUser;
 
-export default authValidateUser;
+  private constructor() {
+    super();
+    this.url =
+      'https://faas-sfo3-7872a1dd.doserverless.co/api/v1/web/fn-66dd3ef6-c21d-46dc-b7ae-caf2ac8041ec/auth/validateUser';
+  }
+
+  static getFunction() {
+    if (!this.instance) {
+      AuthValidateUser.instance = new AuthValidateUser();
+    }
+    return AuthValidateUser.instance;
+  }
+}

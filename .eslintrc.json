@@ -41,7 +41,9 @@
     "@typescript-eslint/no-shadow": ["error"],
     "no-use-before-define": "off",
     "default-param-last": "off",
-    "no-promise-executor-return": "off"
+    "no-promise-executor-return": "off",
+    // Disabled because sometimes the constructor needs to be made private
+    "no-useless-constructor": "off"
   },
   "settings": {
     "import/resolver": {
