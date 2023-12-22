@@ -22,7 +22,7 @@ export interface ProjectDashboardInput extends DOFunctionInput {
 
 export interface ProjectDashboardOutput extends DOFunctionOutput {
   success: boolean;
-  data: {
+  data?: {
     translations?: Translations;
     // Todo: add user config type
     userConfig?: object;
