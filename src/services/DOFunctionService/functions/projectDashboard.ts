@@ -1,3 +1,4 @@
+import { UUID } from 'crypto';
 import { Translations } from '../../../types/Translations';
 import DOFunction, { DOFunctionInput, DOFunctionOutput } from '../DOFunction';
 
@@ -15,7 +16,7 @@ export interface ProjectDashboardOptions {
 }
 
 export interface ProjectDashboardInput extends DOFunctionInput {
-  apiKey: string;
+  apiKey: UUID;
   options: ProjectDashboardOptions;
 }
 
