@@ -3,11 +3,9 @@ import { Logger, StringService } from '@aneuhold/core-ts-lib';
 import { Translations } from '@aneuhold/core-ts-api-lib';
 import GitHubService from '../GitHubService';
 
-export const TranslationProject = {
-  dashboard: 'dashboard'
-} as const;
-export type TranslationProject =
-  (typeof TranslationProject)[keyof typeof TranslationProject];
+export enum TranslationSource {
+  dashboard = 'dashboard'
+}
 
 /**
  * A class which can be used to get translations for personal projects. It is
@@ -16,18 +14,18 @@ export type TranslationProject =
  */
 export default class TranslationService {
   /**
-   * Gets translations for the provided project.
+   * Gets translations for the provided source.
    */
-  static async getTranslations(project: TranslationProject) {
+  static async getTranslations(source: TranslationSource) {
     try {
       const jsonString = await GitHubService.getContentFromRepo(
         'translations',
-        `${project}.jsonc`
+        `${source}.jsonc`
       );
       const strippedJson = StringService.stripJsonComments(jsonString);
       return JSON.parse(strippedJson) as Translations;
     } catch (error) {
-      Logger.error(`Failed to load ${project}.json, error: ${error}`);
+      Logger.error(`Failed to load ${source}.json, error: ${error}`);
       throw error;
     }
   }

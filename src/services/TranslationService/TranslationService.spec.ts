@@ -1,4 +1,4 @@
-import TranslationService, { TranslationProject } from './TranslationService';
+import TranslationService, { TranslationSource } from './TranslationService';
 
 describe('TranslationService', () => {
   describe('getTranslations', () => {
@@ -9,7 +9,7 @@ describe('TranslationService', () => {
      */
     it('should load translations from GitHub', async () => {
       const translations = await TranslationService.getTranslations(
-        TranslationProject.dashboard
+        TranslationSource.dashboard
       );
       expect(translations['test-translation'].value).toEqual('something');
     });

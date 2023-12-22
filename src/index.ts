@@ -12,7 +12,7 @@ import ITermService from './services/applications/ITermService';
 import ConfigService from './services/ConfigService/ConfigService';
 import Config from './services/ConfigService/ConfigDefinition';
 import TranslationService, {
-  TranslationProject
+  TranslationSource
 } from './services/TranslationService/TranslationService';
 
 // Export all the functions and classes from this library
@@ -28,8 +28,9 @@ export {
   TerminalType,
   ITermService,
   ConfigService,
-  TranslationService
+  TranslationService,
+  TranslationSource
 };
 
 // Export TypeScript types where needed
-export type { Config, TranslationProject };
+export type { Config };
