@@ -59,7 +59,7 @@ export default abstract class DOFunction<
       },
       body: JSON.stringify(input)
     });
-    const json = (await result.json()) as DOFunctionRawOutput<TOutput>;
-    return json.body;
+    const json = (await result.json()) as TOutput;
+    return json;
   }
 }
