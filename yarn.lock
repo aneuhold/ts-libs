@@ -15,15 +15,24 @@
     "@jridgewell/gen-mapping" "^0.3.0"
     "@jridgewell/trace-mapping" "^0.3.9"
 
-"@aneuhold/be-ts-lib@^1.0.3":
-  version "1.0.3"
-  resolved "https://registry.yarnpkg.com/@aneuhold/be-ts-lib/-/be-ts-lib-1.0.3.tgz#5772f142e1d34ee25ac567ac83e22ec21dba9437"
-  integrity sha512-s/raa0f9LSQrJZf129PHVEZBQPqTGpQWK/IIGnN9epsDOPC3ldZ6yj/oOX4yybnuJsGW04PSwJUi775h63riRQ==
+"@aneuhold/be-ts-lib@^1.0.5":
+  version "1.0.5"
+  resolved "https://registry.yarnpkg.com/@aneuhold/be-ts-lib/-/be-ts-lib-1.0.5.tgz#a8e7964b9466019f1a21512558a58b12de8a9f3c"
+  integrity sha512-q21xhWGLZED9revueJZKNwlMZ8GP2WmYl//RZufTDbMfN+zxr2XeNMluuVi7PniSlKvGRF/UKuINGPWR68Wicw==
   dependencies:
-    "@aneuhold/core-ts-lib" "^1.1.5"
+    "@aneuhold/core-ts-api-lib" "^1.0.4"
+    "@aneuhold/core-ts-lib" "^1.1.8"
     dotenv "^16.3.1"
     node-fetch "^2"
     octokit "^3.1.2"
+
+"@aneuhold/core-ts-api-lib@^1.0.4":
+  version "1.0.8"
+  resolved "https://registry.yarnpkg.com/@aneuhold/core-ts-api-lib/-/core-ts-api-lib-1.0.8.tgz#906409049ca5395f0f5641a4dbfb645a1e688a8d"
+  integrity sha512-nTZ+JsMdqxxOjgfWNauyKLjmV8hqGjGXteNg3vT/oZ+JvzMKvJskYzRr2p+wKozk7OkKpcCZ5hw9Tctx3OnBrw==
+  dependencies:
+    "@aneuhold/core-ts-db-lib" "^1.0.3"
+    "@aneuhold/core-ts-lib" "^1.1.7"
 
 "@aneuhold/core-ts-db-lib@^1.0.3":
   version "1.0.3"
@@ -32,15 +41,22 @@
   dependencies:
     bson "^6.2.0"
 
-"@aneuhold/core-ts-lib@^1.1.5":
-  version "1.1.5"
-  resolved "https://registry.yarnpkg.com/@aneuhold/core-ts-lib/-/core-ts-lib-1.1.5.tgz#d6e1097573e637409b8dde77f4fc7809e046853f"
-  integrity sha512-+Rjt24/B7DcN4ZgrZJdHqkCmyifPLG4HQyZkqd4oo0DhXXx2gcX07SU+uyZwXSef4k55jnLZunvy/fgdtMBScw==
+"@aneuhold/core-ts-db-lib@^1.0.4":
+  version "1.0.4"
+  resolved "https://registry.yarnpkg.com/@aneuhold/core-ts-db-lib/-/core-ts-db-lib-1.0.4.tgz#6b94402ee91bd6028e561303d7fc9ee68de70ea1"
+  integrity sha512-5eWlaEQUlPbDjgr6LWVyfzi5BXRp95st+vsOFKTI90IQkikPrkVVa5iTGiSS3NJflxRTTm0JIPzfCh9kvU1dzQ==
+  dependencies:
+    bson "^6.2.0"
 
 "@aneuhold/core-ts-lib@^1.1.7":
   version "1.1.7"
   resolved "https://registry.yarnpkg.com/@aneuhold/core-ts-lib/-/core-ts-lib-1.1.7.tgz#fe041a59729d4952410ba5152c180f7ac17b347c"
   integrity sha512-bZXXod0pqQiKpg6P3NCRy+FXm5J2LDwhEE2v5rgOgEXfARliBpXncd1hnveR2EVEgNlgTqyUkjqSlRj52Hl6BQ==
+
+"@aneuhold/core-ts-lib@^1.1.8":
+  version "1.1.8"
+  resolved "https://registry.yarnpkg.com/@aneuhold/core-ts-lib/-/core-ts-lib-1.1.8.tgz#6e74b9fa1666109802c915339f3d3e252f744972"
+  integrity sha512-pHCV/xV08kxbbtGhLVRW8UZ38Jeog5o4owmd8OCKr5pMOZDejER04qcfv+E/qkeDcK6fDtj1cCOk2BAif/WVOg==
 
 "@babel/code-frame@^7.0.0", "@babel/code-frame@^7.12.13", "@babel/code-frame@^7.22.13", "@babel/code-frame@^7.23.5":
   version "7.23.5"
