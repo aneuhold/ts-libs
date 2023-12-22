@@ -19,6 +19,10 @@ export default class User implements BaseDocument {
     googleId?: string;
   } = {};
 
+  projectAccess = {
+    dashboard: true
+  };
+
   /**
    * Constructs a new {@link User} with default values.
    */
