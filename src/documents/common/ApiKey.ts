@@ -6,9 +6,7 @@ import BaseDocument from '../BaseDocument';
  * A document containing an API key for a particular user. This is stored
  * separately from the {@link User} document to enhance security a bit.
  */
-export default class ApiKey implements BaseDocument {
-  _id = new ObjectId();
-
+export default class ApiKey extends BaseDocument {
   /**
    * The API key for the user. This is indexed in the DB.
    */
@@ -23,6 +21,7 @@ export default class ApiKey implements BaseDocument {
    * Constructs a new {@link ApiKey} for the provided user.
    */
   constructor(userId: ObjectId) {
+    super();
     this.userId = userId;
   }
 }
