@@ -1,5 +1,6 @@
 import BaseDocument from './documents/BaseDocument';
 import BaseDocumentWithType from './documents/BaseDocumentWithType';
+import BaseDocumentWithUserId from './documents/BaseDocumentWithUserId';
 import ApiKey from './documents/common/ApiKey';
 import User from './documents/common/User';
 import DashboardUserConfig from './documents/dashboard/UserConfig';
@@ -10,7 +11,8 @@ export {
   ApiKey,
   DashboardUserConfig,
   BaseDocument,
-  BaseDocumentWithType
+  BaseDocumentWithType,
+  BaseDocumentWithUserId
 };
 
 // Export TypeScript types where needed
