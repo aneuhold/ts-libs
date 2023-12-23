@@ -4,4 +4,11 @@
  */
 export type DashboardConfig = {
   projectDashboardFunctionUrl: string;
+  automationUrls: {
+    sunLight: string;
+    zoomLighting: string;
+    bedTimeButStillWatchingShows: string;
+    bedTime: string;
+    sunrise: string;
+  };
 };
