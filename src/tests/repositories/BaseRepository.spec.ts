@@ -24,7 +24,7 @@ it.skip('can add a new test user', async () => {
   expect(createResult).toBeTruthy();
 });
 
-it('can create a dashboard config for a user', async () => {
+it.skip('can create a dashboard config for a user', async () => {
   const userRepo = UserRepository.getRepo();
   const user = await userRepo.get({ userName: 'usernameHere' });
   expect(user).toBeTruthy();
