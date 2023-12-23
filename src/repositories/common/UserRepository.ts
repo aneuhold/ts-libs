@@ -1,9 +1,10 @@
-import { ApiKey, User } from '@aneuhold/core-ts-db-lib';
+import { ApiKey, DashboardUserConfig, User } from '@aneuhold/core-ts-db-lib';
 import { DeleteResult } from 'mongodb';
 import { ObjectId } from 'bson';
 import BaseRepository from '../BaseRepository';
 import UserValidator from '../../validators/common/UserValidator';
 import ApiKeyRepository from './ApiKeyRepository';
+import DashboardUserConfigRepository from '../dashboard/UserConfigRepository';
 
 /**
  * The repository that contains {@link User} documents.
@@ -35,12 +36,16 @@ export default class UserRepository extends BaseRepository<User> {
    * @override
    */
   async insertNew(newUser: User): Promise<User | null> {
-    // Insert the new user then the new API Key
     const insertResult = await super.insertNew(newUser);
     if (!insertResult) {
       return null;
     }
     await ApiKeyRepository.getRepo().insertNew(new ApiKey(newUser._id));
+    if (insertResult.projectAccess.dashboard) {
+      await DashboardUserConfigRepository.getRepo().insertNew(
+        new DashboardUserConfig(newUser._id)
+      );
+    }
     return newUser;
   }
 
@@ -54,7 +59,8 @@ export default class UserRepository extends BaseRepository<User> {
   async delete(userId: ObjectId): Promise<DeleteResult> {
     const [deleteResult] = await Promise.all([
       super.delete(userId),
-      ApiKeyRepository.getRepo().deleteByUserId(userId)
+      ApiKeyRepository.getRepo().deleteByUserId(userId),
+      DashboardUserConfigRepository.getRepo().deleteByUserId(userId)
     ]);
     return deleteResult;
   }
@@ -69,7 +75,8 @@ export default class UserRepository extends BaseRepository<User> {
   async deleteList(userIds: ObjectId[]): Promise<DeleteResult> {
     const [deleteResult] = await Promise.all([
       super.deleteList(userIds),
-      ApiKeyRepository.getRepo().deleteByUserIds(userIds)
+      ApiKeyRepository.getRepo().deleteByUserIds(userIds),
+      DashboardUserConfigRepository.getRepo().deleteByUserIds(userIds)
     ]);
     return deleteResult;
   }
@@ -82,7 +89,8 @@ export default class UserRepository extends BaseRepository<User> {
   async deleteAll(): Promise<DeleteResult> {
     const [deleteResult] = await Promise.all([
       super.deleteAll(),
-      ApiKeyRepository.getRepo().deleteAll()
+      ApiKeyRepository.getRepo().deleteAll(),
+      DashboardUserConfigRepository.getRepo().deleteAll()
     ]);
     return deleteResult;
   }

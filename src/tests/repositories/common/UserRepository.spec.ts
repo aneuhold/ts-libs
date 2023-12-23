@@ -1,9 +1,9 @@
 import crypto from 'crypto';
 import { User } from '@aneuhold/core-ts-db-lib';
-import { cleanupDoc, expectToThrow } from '../testsUtil';
-import UserRepository from '../../repositories/common/UserRepository';
-import DocumentDb from '../../util/DocumentDb';
-import ApiKeyRepository from '../../repositories/common/ApiKeyRepository';
+import UserRepository from '../../../repositories/common/UserRepository';
+import { cleanupDoc, expectToThrow } from '../../testsUtil';
+import ApiKeyRepository from '../../../repositories/common/ApiKeyRepository';
+import DocumentDb from '../../../util/DocumentDb';
 
 const userRepo = UserRepository.getRepo();
 
@@ -15,6 +15,7 @@ describe('Create operations', () => {
 
     await cleanupDoc(userRepo, newUser);
   });
+
   it('can create a new user and the new user gets an API key', async () => {
     const newUser = new User(crypto.randomUUID());
     const insertResult = await userRepo.insertNew(newUser);
@@ -30,6 +31,7 @@ describe('Create operations', () => {
     });
     expect(apiKeyThatShouldNotExist).toBeFalsy();
   });
+
   it('throws if the username is a duplicate username', async () => {
     const duplicateUserName = `${crypto.randomUUID()}`;
     const newUser1 = new User(duplicateUserName);

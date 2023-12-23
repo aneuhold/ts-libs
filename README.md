@@ -4,6 +4,10 @@
 
 This is used to actually interact with databases in personal projects.
 
+## Manual Database Operations
+
+Go ahead and run these as code in a test in the BaseRepository.spec.ts file.
+
 ## Dependencies
 
 - [`core-ts-db-lib`](https://github.com/aneuhold/core-ts-db-lib)

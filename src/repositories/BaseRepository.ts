@@ -1,8 +1,9 @@
 import { BaseDocument } from '@aneuhold/core-ts-db-lib';
-import { Collection, DeleteResult, UpdateResult } from 'mongodb';
-import { ObjectId } from 'bson';
+import { Collection, DeleteResult, Filter, UpdateResult } from 'mongodb';
+import { Document, ObjectId } from 'bson';
 import DocumentDb from '../util/DocumentDb';
 import IValidator from '../validators/BaseValidator';
+import DocumentCleaner from '../util/DocumentCleaner';
 
 /**
  * A base repository that implements a lot of the normal CRUD operations.
@@ -12,9 +13,21 @@ export default abstract class BaseRepository<TBasetype extends BaseDocument> {
 
   private collection?: Collection;
 
+  /**
+   * Constructs a new base repository.
+   *
+   * @param defaultUpdateCleaner this is a function that will be run on the
+   * update object before it is sent to the DB. This is useful for removing
+   * fields that should not be updated. Only remove fields that are at the
+   * top-level of the object. _id is already removed.
+   */
   constructor(
     collectionName: string,
-    private validator: IValidator<TBasetype>
+    private validator: IValidator<TBasetype>,
+    private defaultFilter?: Partial<TBasetype>,
+    private defaultUpdateCleaner?: (
+      doc: Partial<TBasetype>
+    ) => Partial<TBasetype>
   ) {
     this.collectionName = collectionName;
   }
@@ -38,20 +51,22 @@ export default abstract class BaseRepository<TBasetype extends BaseDocument> {
 
   async get(filter: Partial<TBasetype>): Promise<TBasetype | null> {
     const collection = await this.getCollection();
-    const result = await collection.findOne(filter);
+    const result = await collection.findOne(this.getFilterWithDefault(filter));
     return result as TBasetype | null;
   }
 
   async getAll(): Promise<TBasetype[]> {
     const collection = await this.getCollection();
-    const result = await collection.find().toArray();
+    const result = await collection.find(this.getFilterWithDefault()).toArray();
     // Set to unknown first because of some weird type things.
     return result as unknown as TBasetype[];
   }
 
   async getList(docIds: ObjectId[]): Promise<TBasetype[]> {
     const collection = await this.getCollection();
-    const result = await collection.find({ _id: { $in: docIds } }).toArray();
+    const result = await collection
+      .find(this.getFilterWithDefault({ _id: { $in: docIds } }))
+      .toArray();
     return result as TBasetype[];
   }
 
@@ -70,7 +85,7 @@ export default abstract class BaseRepository<TBasetype extends BaseDocument> {
    */
   async deleteAll(): Promise<DeleteResult> {
     const collection = await this.getCollection();
-    return collection.deleteMany({});
+    return collection.deleteMany(this.getFilterWithDefault());
   }
 
   /**
@@ -84,10 +99,37 @@ export default abstract class BaseRepository<TBasetype extends BaseDocument> {
 
     const docId = updatedDoc._id;
 
-    // Create a copy so that there aren't side-effects
-    const docCopy = { ...updatedDoc };
-    delete docCopy._id;
+    const cleanedDoc = this.cleanUpdateObject(updatedDoc);
 
-    return collection.updateOne({ _id: docId }, { $set: docCopy });
+    return collection.updateOne({ _id: docId }, { $set: cleanedDoc });
+  }
+
+  /**
+   * Gets the filter with the default filter applied if there is one.
+   *
+   * This is purposefully changing the type because of some weird restrictions
+   * with the `mongodb` package types.
+   */
+  private getFilterWithDefault(
+    filter: Filter<Document> = {}
+  ): Filter<Document> {
+    if (!this.defaultFilter) {
+      return filter;
+    }
+    return { ...filter, ...this.defaultFilter };
+  }
+
+  /**
+   * Cleans the update object by removing the `_id` field and running the
+   * default update cleaner if there is one.
+   *
+   * Returns a shallow copy of the object.
+   */
+  private cleanUpdateObject(
+    updatedDoc: Partial<TBasetype>
+  ): Partial<TBasetype> {
+    return this.defaultUpdateCleaner
+      ? this.defaultUpdateCleaner(DocumentCleaner.id(updatedDoc))
+      : DocumentCleaner.id(updatedDoc);
   }
 }
