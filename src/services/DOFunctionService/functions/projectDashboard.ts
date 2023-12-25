@@ -9,7 +9,7 @@ export interface ProjectDashboardOptions {
     userConfig?: boolean;
   };
   update?: {
-    placeholder?: boolean;
+    userConfig?: DashboardUserConfig;
   };
   delete?: {
     placeholder?: boolean;
