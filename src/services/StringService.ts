@@ -12,13 +12,4 @@ export default class StringService {
   static getFileNameExtension(fileName: string): string | undefined {
     return fileName.split('.').pop();
   }
-
-  /**
-   * Strips JSON comments from the provided JSON string. Only `//` comments
-   * are supported at the moment.
-   */
-  static stripJsonComments = (jsonString: string) => {
-    const commentRegex = /\/\/(.*)/g;
-    return jsonString.replace(commentRegex, '');
-  };
 }
