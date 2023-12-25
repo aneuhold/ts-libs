@@ -15,10 +15,10 @@
     "@jridgewell/gen-mapping" "^0.3.0"
     "@jridgewell/trace-mapping" "^0.3.9"
 
-"@aneuhold/core-ts-api-lib@^1.0.4":
-  version "1.0.4"
-  resolved "https://registry.yarnpkg.com/@aneuhold/core-ts-api-lib/-/core-ts-api-lib-1.0.4.tgz#32fafa8b847934f6fb08f375c34c354c733cbc99"
-  integrity sha512-/CzYBHlq/2aTDjvB1Ua4BduZ0407tfdO3T27fmYABY2lfAUF6qR4wHsDM9kYJXwZG6yUnORjJaRzGaOXggVo/w==
+"@aneuhold/core-ts-api-lib@^1.0.9":
+  version "1.0.9"
+  resolved "https://registry.yarnpkg.com/@aneuhold/core-ts-api-lib/-/core-ts-api-lib-1.0.9.tgz#f3ed16bea1c71d8ef541e5c443a56b42b45361ba"
+  integrity sha512-1at/uvR7qjElMyie7zFjJiPORRzXsF1UNKCQFC8nzy+2WLMhxMHTs3E/jTLzaXFeRcTmgG8sD87UhC6xfl+9ow==
   dependencies:
     "@aneuhold/core-ts-db-lib" "^1.0.3"
     "@aneuhold/core-ts-lib" "^1.1.7"
@@ -30,10 +30,15 @@
   dependencies:
     bson "^6.2.0"
 
-"@aneuhold/core-ts-lib@^1.1.7", "@aneuhold/core-ts-lib@^1.1.8":
+"@aneuhold/core-ts-lib@^1.1.7":
   version "1.1.8"
   resolved "https://registry.yarnpkg.com/@aneuhold/core-ts-lib/-/core-ts-lib-1.1.8.tgz#6e74b9fa1666109802c915339f3d3e252f744972"
   integrity sha512-pHCV/xV08kxbbtGhLVRW8UZ38Jeog5o4owmd8OCKr5pMOZDejER04qcfv+E/qkeDcK6fDtj1cCOk2BAif/WVOg==
+
+"@aneuhold/core-ts-lib@^1.1.9":
+  version "1.1.9"
+  resolved "https://registry.yarnpkg.com/@aneuhold/core-ts-lib/-/core-ts-lib-1.1.9.tgz#b3bc01a3aa471df58a4929f4eca0e5af196ba426"
+  integrity sha512-WChmw2wIZ80UA3ZrDc6YJSq19JcyAC/Z7Rx0EkIfXxITREzxSvTq1nE5Ikt6rGjoC+r0OcWxaCi6QuFAs3aBBA==
 
 "@babel/code-frame@^7.0.0", "@babel/code-frame@^7.12.13", "@babel/code-frame@^7.22.13", "@babel/code-frame@^7.23.5":
   version "7.23.5"
@@ -3072,6 +3077,11 @@ json5@^2.2.3:
   version "2.2.3"
   resolved "https://registry.yarnpkg.com/json5/-/json5-2.2.3.tgz#78cd6f1a19bdc12b73db5ad0c61efd66c1e29283"
   integrity sha512-XmOWe7eyHYH14cLdVPoyg+GOH3rYX++KpzrylJwSW98t3Nk+U8XOl8FWKOgwtzdb8lXGf6zYwDUzeHMWfxasyg==
+
+jsonc-parser@^3.2.0:
+  version "3.2.0"
+  resolved "https://registry.yarnpkg.com/jsonc-parser/-/jsonc-parser-3.2.0.tgz#31ff3f4c2b9793f89c67212627c51c6394f88e76"
+  integrity sha512-gfFQZrcTc8CnKXp6Y4/CBT3fTc0OVuDofpre4aEeEpSBPV5X5v4+Vmx+8snU7RLPrNHPKSgLxGo9YuQzz20o+w==
 
 jsonwebtoken@^9.0.0:
   version "9.0.2"

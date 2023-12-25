@@ -1,6 +1,7 @@
 import 'dotenv/config';
-import { Logger, StringService } from '@aneuhold/core-ts-lib';
+import { Logger } from '@aneuhold/core-ts-lib';
 import { Translations } from '@aneuhold/core-ts-api-lib';
+import { parse } from 'jsonc-parser';
 import GitHubService from '../GitHubService';
 
 export enum TranslationSource {
@@ -22,8 +23,7 @@ export default class TranslationService {
         'translations',
         `${source}.jsonc`
       );
-      const strippedJson = StringService.stripJsonComments(jsonString);
-      return JSON.parse(strippedJson) as Translations;
+      return parse(jsonString) as Translations;
     } catch (error) {
       Logger.error(`Failed to load ${source}.json, error: ${error}`);
       throw error;
