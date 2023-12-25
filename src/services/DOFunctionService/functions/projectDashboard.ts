@@ -1,4 +1,5 @@
 import { UUID } from 'crypto';
+import { DashboardUserConfig } from '@aneuhold/core-ts-db-lib';
 import { Translations } from '../../../types/Translations';
 import DOFunction, { DOFunctionInput, DOFunctionOutput } from '../DOFunction';
 
@@ -24,8 +25,7 @@ export interface ProjectDashboardOutput extends DOFunctionOutput {
   success: boolean;
   data?: {
     translations?: Translations;
-    // Todo: add user config type
-    userConfig?: object;
+    userConfig?: DashboardUserConfig;
   };
 }
 
