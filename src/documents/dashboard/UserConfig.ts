@@ -1,10 +1,10 @@
 import { ObjectId } from 'bson';
 import BaseDocumentWithType from '../BaseDocumentWithType';
-import BaseDocumentWithUserId from '../BaseDocumentWithUserId';
+import RequiredUserId from '../../schemas/required_refs/RequiredUserId';
 
 export default class DashboardUserConfig
   extends BaseDocumentWithType
-  implements BaseDocumentWithUserId
+  implements RequiredUserId
 {
   static docType = 'userConfig';
 
