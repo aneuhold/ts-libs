@@ -1,8 +1,7 @@
 import { ApiKey } from '@aneuhold/core-ts-db-lib';
-import { DeleteResult } from 'mongodb';
-import { ObjectId } from 'bson';
 import BaseRepository from '../BaseRepository';
 import ApiKeyValidator from '../../validators/common/ApiKeyValidator';
+import UserRepository from './UserRepository';
 
 /**
  * The repository that contains {@link User} documents.
@@ -16,6 +15,20 @@ export default class ApiKeyRepository extends BaseRepository<ApiKey> {
     super(ApiKeyRepository.COLLECTION_NAME, new ApiKeyValidator());
   }
 
+  setupListeners(): void {
+    UserRepository.getRepo().subscribeToChanges({
+      deleteOne: async (userId) => {
+        (await this.getCollection()).deleteOne({ userId });
+      },
+      deleteList: async (userIds) => {
+        (await this.getCollection()).deleteMany({ userId: { $in: userIds } });
+      },
+      insertNew: async (user) => {
+        await this.insertNew(new ApiKey(user._id));
+      }
+    });
+  }
+
   /**
    * Gets the singleton instance of the {@link ApiKeyRepository}.
    */
@@ -24,15 +37,5 @@ export default class ApiKeyRepository extends BaseRepository<ApiKey> {
       ApiKeyRepository.singletonInstance = new ApiKeyRepository();
     }
     return ApiKeyRepository.singletonInstance;
-  }
-
-  async deleteByUserId(userId: ObjectId): Promise<DeleteResult> {
-    const collection = await this.getCollection();
-    return collection.deleteOne({ userId });
-  }
-
-  async deleteByUserIds(userIds: ObjectId[]): Promise<DeleteResult> {
-    const collection = await this.getCollection();
-    return collection.deleteMany({ userId: { $in: userIds } });
   }
 }

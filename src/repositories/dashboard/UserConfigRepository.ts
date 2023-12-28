@@ -1,9 +1,8 @@
 import { DashboardUserConfig } from '@aneuhold/core-ts-db-lib';
-import { ObjectId } from 'bson';
-import { DeleteResult } from 'mongodb';
 import DashboardBaseRepository from './DashboardBaseRepository';
 import DashboardUserConfigValidator from '../../validators/dashboard/UserConfigValidator';
 import CleanDocument from '../../util/DocumentCleaner';
+import UserRepository from '../common/UserRepository';
 
 /**
  * The repository that contains {@link DashboardUserConfig} documents.
@@ -19,6 +18,22 @@ export default class DashboardUserConfigRepository extends DashboardBaseReposito
     );
   }
 
+  setupListeners(): void {
+    UserRepository.getRepo().subscribeToChanges({
+      deleteOne: async (userId) => {
+        (await this.getCollection()).deleteOne({ userId });
+      },
+      deleteList: async (userIds) => {
+        (await this.getCollection()).deleteMany({ userId: { $in: userIds } });
+      },
+      insertNew: async (user) => {
+        if (user.projectAccess.dashboard) {
+          await this.insertNew(new DashboardUserConfig(user._id));
+        }
+      }
+    });
+  }
+
   /**
    * Gets the singleton instance of the {@link DashboardUserConfigRepository}.
    */
@@ -28,15 +43,5 @@ export default class DashboardUserConfigRepository extends DashboardBaseReposito
         new DashboardUserConfigRepository();
     }
     return DashboardUserConfigRepository.singletonInstance;
-  }
-
-  async deleteByUserId(userId: ObjectId): Promise<DeleteResult> {
-    const collection = await this.getCollection();
-    return collection.deleteOne({ userId });
-  }
-
-  async deleteByUserIds(userIds: ObjectId[]): Promise<DeleteResult> {
-    const collection = await this.getCollection();
-    return collection.deleteMany({ userId: { $in: userIds } });
   }
 }

@@ -1,9 +1,18 @@
 import { BaseDocument } from '@aneuhold/core-ts-db-lib';
-import { Collection, DeleteResult, Filter, UpdateResult } from 'mongodb';
+import {
+  BulkWriteResult,
+  Collection,
+  DeleteResult,
+  Filter,
+  UpdateResult
+} from 'mongodb';
 import { Document, ObjectId } from 'bson';
 import DocumentDb from '../util/DocumentDb';
 import IValidator from '../validators/BaseValidator';
 import DocumentCleaner from '../util/DocumentCleaner';
+import RepoSubscriptionService, {
+  RepoListeners
+} from '../services/RepoSubscriptionService';
 
 /**
  * A base repository that implements a lot of the normal CRUD operations.
@@ -12,6 +21,9 @@ export default abstract class BaseRepository<TBasetype extends BaseDocument> {
   protected collectionName: string;
 
   private collection?: Collection;
+
+  private subscribers =
+    RepoSubscriptionService.getDefaultSubscribers<TBasetype>();
 
   /**
    * Constructs a new base repository.
@@ -30,6 +42,7 @@ export default abstract class BaseRepository<TBasetype extends BaseDocument> {
     ) => Partial<TBasetype>
   ) {
     this.collectionName = collectionName;
+    RepoSubscriptionService.checkOrAttachListeners();
   }
 
   protected async getCollection() {
@@ -39,6 +52,35 @@ export default abstract class BaseRepository<TBasetype extends BaseDocument> {
     return this.collection;
   }
 
+  /**
+   * A required method that sets up any listeners that are needed for the
+   * repository with other repositories. This will be called once when any
+   * repository is instantiated.
+   *
+   * Make sure to register this in the {@link RepoSubscriptionService}.
+   */
+  abstract setupListeners(): void;
+
+  /**
+   * Registers a set of functions that will be called when a change happens
+   * in this repository.
+   */
+  async subscribeToChanges(listeners: RepoListeners<TBasetype>) {
+    const { insertNew, updateMany, deleteOne, deleteList } = listeners;
+    if (insertNew) {
+      this.subscribers.insertNew.push(insertNew);
+    }
+    if (updateMany) {
+      this.subscribers.updateMany.push(updateMany);
+    }
+    if (deleteOne) {
+      this.subscribers.deleteOne.push(deleteOne);
+    }
+    if (deleteList) {
+      this.subscribers.deleteList.push(deleteList);
+    }
+  }
+
   async insertNew(newDoc: TBasetype): Promise<TBasetype | null> {
     const collection = await this.getCollection();
     await this.validator.validateNewObject(newDoc);
@@ -46,6 +88,9 @@ export default abstract class BaseRepository<TBasetype extends BaseDocument> {
     if (!insertResult.acknowledged) {
       return null;
     }
+    await Promise.all(
+      this.subscribers.insertNew.map((subscriber) => subscriber(newDoc))
+    );
     return newDoc;
   }
 
@@ -62,6 +107,17 @@ export default abstract class BaseRepository<TBasetype extends BaseDocument> {
     return result as unknown as TBasetype[];
   }
 
+  /**
+   * Gets all the IDs in the collection as a hash for performant lookups.
+   */
+  async getAllIdsAsHash(): Promise<{ [id: string]: boolean }> {
+    const allDocs = await this.getAll();
+    return allDocs.reduce<{ [id: string]: boolean }>((acc, doc) => {
+      acc[doc._id.toString()] = true;
+      return acc;
+    }, {});
+  }
+
   async getList(docIds: ObjectId[]): Promise<TBasetype[]> {
     const collection = await this.getCollection();
     const result = await collection
@@ -72,12 +128,19 @@ export default abstract class BaseRepository<TBasetype extends BaseDocument> {
 
   async delete(docId: ObjectId): Promise<DeleteResult> {
     const collection = await this.getCollection();
+    await Promise.all(
+      this.subscribers.deleteOne.map((subscriber) => subscriber(docId))
+    );
     return collection.deleteOne({ _id: docId });
   }
 
   async deleteList(docIds: ObjectId[]): Promise<DeleteResult> {
     const collection = await this.getCollection();
-    return collection.deleteMany({ _id: { $in: docIds } });
+    const deleteResult = collection.deleteMany({ _id: { $in: docIds } });
+    await Promise.all(
+      this.subscribers.deleteList.map((subscriber) => subscriber(docIds))
+    );
+    return deleteResult;
   }
 
   /**
@@ -102,6 +165,33 @@ export default abstract class BaseRepository<TBasetype extends BaseDocument> {
     const cleanedDoc = this.cleanUpdateObject(updatedDoc);
 
     return collection.updateOne({ _id: docId }, { $set: cleanedDoc });
+  }
+
+  /**
+   * Updates the provided docs in the DB.
+   *
+   * This base method strips the `_id` before updating.
+   */
+  async updateMany(
+    updatedDocs: Array<Partial<TBasetype>>
+  ): Promise<BulkWriteResult> {
+    const collection = await this.getCollection();
+    await Promise.all(
+      updatedDocs.map((doc) => this.validator.validateUpdateObject(doc))
+    );
+
+    const bulkOps = updatedDocs.map((doc) => {
+      const docId = doc._id;
+      const cleanedDoc = this.cleanUpdateObject(doc);
+      return {
+        updateOne: {
+          filter: { _id: docId },
+          update: { $set: cleanedDoc }
+        }
+      };
+    });
+
+    return collection.bulkWrite(bulkOps);
   }
 
   /**
