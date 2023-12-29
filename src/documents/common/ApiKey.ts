@@ -1,7 +1,18 @@
 import { ObjectId } from 'bson';
 import crypto from 'crypto';
 import BaseDocument from '../BaseDocument';
-import RequiredUserId from '../../schemas/required_refs/RequiredUserId';
+import RequiredUserId from '../../schemas/required-refs/RequiredUserId';
+import Validate from '../../schemas/validators/ValidateUtil';
+
+export const validateApiKey = (apiKey: ApiKey) => {
+  const errors: string[] = [];
+  const exampleApiKey = new ApiKey(new ObjectId());
+  const validate = new Validate(apiKey, errors);
+
+  validate.string('key', exampleApiKey.key);
+
+  return { updatedDoc: apiKey, errors };
+};
 
 /**
  * A document containing an API key for a particular user. This is stored
