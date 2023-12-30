@@ -12,6 +12,7 @@ export const validateUser: DocumentValidator<User> = (user) => {
   validate.optionalString('password');
   validate.optionalString('email');
   validate.object('auth', exampleUser.auth);
+  validate.optionalString('auth.password');
   validate.optionalString('auth.googleId');
   validate.object('projectAccess', exampleUser.projectAccess);
   validate.boolean(
@@ -32,11 +33,10 @@ export default class User extends BaseDocument {
 
   userName: string;
 
-  password?: string;
-
   email?: string;
 
   auth: {
+    password?: string;
     googleId?: string;
   } = {};
 
