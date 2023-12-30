@@ -19,7 +19,7 @@ it('can create a new document and delete it', async () => {
 it.skip('can add a new test user', async () => {
   const userRepository = UserRepository.getRepo();
   const newUser = new User('someUser');
-  newUser.password = crypto.randomUUID();
+  newUser.auth.password = crypto.randomUUID();
   const createResult = await userRepository.insertNew(newUser);
   expect(createResult).toBeTruthy();
 });
