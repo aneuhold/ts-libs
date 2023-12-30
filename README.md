@@ -27,3 +27,4 @@ following steps
 1. Pull the new versions into `digital-ocean-functions` and deploy
 1. Pull the new versions into `core-ts-api-lib` and push to NPM
 1. Pull the new versions into any relevant frontends and deploy
+1. Test out the frontends to make sure it works okay and double check MongoDB directly
