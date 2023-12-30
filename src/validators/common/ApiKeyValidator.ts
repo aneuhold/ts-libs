@@ -42,30 +42,26 @@ export default class ApiKeyValidator extends IValidator<ApiKey> {
     const allApiKeys = await apiKeyRepo.getAll();
     const allUserIds = await UserRepository.getRepo().getAllIdsAsHash();
 
-    const shouldDeleteApiKey = (apiKey: ApiKey) => {
-      if (!allUserIds[apiKey.userId.toString()]) {
-        Logger.error(
-          `API Key with ID: ${apiKey._id} has no valid associated user.`
-        );
-        return true;
-      }
-      return false;
-    };
-    const deletionFunction = async (docIdsToDelete: ObjectId[]) => {
-      await apiKeyRepo.deleteList(docIdsToDelete);
-    };
-    const updateFunction = async (docsToUpdate: ApiKey[]) => {
-      await apiKeyRepo.updateMany(docsToUpdate);
-    };
-
-    await this.runStandardValidationForRepository(
+    await this.runStandardValidationForRepository({
       dryRun,
-      'API Key',
-      allApiKeys,
-      shouldDeleteApiKey,
-      validateApiKey,
-      deletionFunction,
-      updateFunction
-    );
+      docName: 'API Key',
+      allDocs: allApiKeys,
+      shouldDelete: (apiKey: ApiKey) => {
+        if (!allUserIds[apiKey.userId.toString()]) {
+          Logger.error(
+            `API Key with ID: ${apiKey._id} has no valid associated user.`
+          );
+          return true;
+        }
+        return false;
+      },
+      documentValidator: validateApiKey,
+      deletionFunction: async (docIdsToDelete: ObjectId[]) => {
+        await apiKeyRepo.deleteList(docIdsToDelete);
+      },
+      updateFunction: async (docsToUpdate: ApiKey[]) => {
+        await apiKeyRepo.updateMany(docsToUpdate);
+      }
+    });
   }
 }

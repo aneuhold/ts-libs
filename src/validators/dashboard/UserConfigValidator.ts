@@ -1,5 +1,9 @@
-import { DashboardUserConfig } from '@aneuhold/core-ts-db-lib';
-import { ErrorUtils } from '@aneuhold/core-ts-lib';
+import {
+  DashboardUserConfig,
+  validateDashboardUserConfig
+} from '@aneuhold/core-ts-db-lib';
+import { ErrorUtils, Logger } from '@aneuhold/core-ts-lib';
+import { ObjectId } from 'bson';
 import IValidator from '../BaseValidator';
 import DashboardUserConfigRepository from '../../repositories/dashboard/DashboardUserConfigRepository';
 import UserRepository from '../../repositories/common/UserRepository';
@@ -39,7 +43,31 @@ export default class DashboardUserConfigValidator extends IValidator<DashboardUs
     }
   }
 
-  validateRepositoryInDb(dryRun: boolean): Promise<void> {
-    throw new Error('Method not implemented.');
+  async validateRepositoryInDb(dryRun: boolean): Promise<void> {
+    const userConfigRepo = DashboardUserConfigRepository.getRepo();
+    const allUserConfigs = await userConfigRepo.getAll();
+    const allUserIds = await UserRepository.getRepo().getAllIdsAsHash();
+
+    await this.runStandardValidationForRepository({
+      dryRun,
+      docName: 'Dashboard User Config',
+      allDocs: allUserConfigs,
+      shouldDelete: (userConfig: DashboardUserConfig) => {
+        if (!allUserIds[userConfig.userId.toString()]) {
+          Logger.error(
+            `Dashboard User Config with ID: ${userConfig._id} has no valid associated user.`
+          );
+          return true;
+        }
+        return false;
+      },
+      documentValidator: validateDashboardUserConfig,
+      deletionFunction: async (docIdsToDelete: ObjectId[]) => {
+        await userConfigRepo.deleteList(docIdsToDelete);
+      },
+      updateFunction: async (docsToUpdate: DashboardUserConfig[]) => {
+        await userConfigRepo.updateMany(docsToUpdate);
+      }
+    });
   }
 }

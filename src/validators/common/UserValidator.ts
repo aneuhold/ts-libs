@@ -1,7 +1,9 @@
-import { User } from '@aneuhold/core-ts-db-lib';
-import { ErrorUtils } from '@aneuhold/core-ts-lib';
+import { User, validateUser } from '@aneuhold/core-ts-db-lib';
+import { ErrorUtils, Logger } from '@aneuhold/core-ts-lib';
+import { ObjectId } from 'bson';
 import IValidator from '../BaseValidator';
 import UserRepository from '../../repositories/common/UserRepository';
+import { TEST_USER_NAME_PREFIX } from '../../tests/testsUtil';
 
 export default class UserValidator extends IValidator<User> {
   async validateNewObject(newUser: User): Promise<void> {
@@ -37,8 +39,31 @@ export default class UserValidator extends IValidator<User> {
     }
   }
 
-  validateRepositoryInDb(dryRun: boolean): Promise<void> {
-    throw new Error('Method not implemented.');
+  async validateRepositoryInDb(dryRun: boolean): Promise<void> {
+    const userRepo = UserRepository.getRepo();
+    const allUsers = await userRepo.getAll();
+
+    await this.runStandardValidationForRepository({
+      dryRun,
+      docName: 'User',
+      allDocs: allUsers,
+      shouldDelete: (user: User) => {
+        if (user.userName.startsWith(TEST_USER_NAME_PREFIX)) {
+          Logger.error(
+            `User with ID: ${user._id} is a test user and should be deleted`
+          );
+          return true;
+        }
+        return false;
+      },
+      documentValidator: validateUser,
+      deletionFunction: async (docIdsToDelete: ObjectId[]) => {
+        await userRepo.deleteList(docIdsToDelete);
+      },
+      updateFunction: async (docsToUpdate: User[]) => {
+        await userRepo.updateMany(docsToUpdate);
+      }
+    });
   }
 
   /**

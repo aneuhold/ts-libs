@@ -45,15 +45,24 @@ export default abstract class IValidator<TBaseType extends BaseDocument> {
    * deleted. This should also log the specific error because it will not be
    * logged elsewhere.
    */
-  protected async runStandardValidationForRepository(
-    dryRun: boolean,
-    docName: string,
-    allDocs: Array<TBaseType>,
-    shouldDelete: (doc: TBaseType) => boolean,
-    documentValidator: DocumentValidator<TBaseType>,
-    deletionFunction: (docIdsToDelete: ObjectId[]) => Promise<void>,
-    updateFunction: (docsToUpdate: TBaseType[]) => Promise<void>
-  ) {
+  protected async runStandardValidationForRepository(input: {
+    dryRun: boolean;
+    docName: string;
+    allDocs: Array<TBaseType>;
+    shouldDelete: (doc: TBaseType) => boolean;
+    documentValidator: DocumentValidator<TBaseType>;
+    deletionFunction: (docIdsToDelete: ObjectId[]) => Promise<void>;
+    updateFunction: (docsToUpdate: TBaseType[]) => Promise<void>;
+  }) {
+    const {
+      dryRun,
+      docName,
+      allDocs,
+      shouldDelete,
+      documentValidator,
+      deletionFunction,
+      updateFunction
+    } = input;
     const docIdsToDelete: Array<ObjectId> = [];
     const docsToValidate: Array<TBaseType> = [];
     const docsToUpdate: Array<TBaseType> = [];
@@ -81,14 +90,14 @@ export default abstract class IValidator<TBaseType extends BaseDocument> {
     });
     if (dryRun) {
       if (numInvalidDocs === 0) {
-        Logger.info(`No invalid ${docName}s found.`);
+        Logger.success(`No invalid ${docName}s found.`);
       } else {
         Logger.info(
           `Would update ${numInvalidDocs} ${docName}s in the database.`
         );
       }
       if (docIdsToDelete.length === 0) {
-        Logger.info(`No ${docName}s to delete found.`);
+        Logger.success(`No ${docName}s to delete found.`);
       } else {
         Logger.info(
           `Would delete ${docIdsToDelete.length} ${docName}s in the database.`
@@ -103,7 +112,7 @@ export default abstract class IValidator<TBaseType extends BaseDocument> {
       );
       await deletionFunction(docIdsToDelete);
     } else {
-      Logger.info(`No ${docName}s to delete found.`);
+      Logger.success(`No ${docName}s to delete found.`);
     }
     // Update all that need to be updated
     if (docsToUpdate.length !== 0) {
@@ -112,7 +121,7 @@ export default abstract class IValidator<TBaseType extends BaseDocument> {
       );
       await updateFunction(docsToUpdate);
     } else {
-      Logger.info(`No ${docName}s to update found.`);
+      Logger.success(`No ${docName}s to update found.`);
     }
   }
 
