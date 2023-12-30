@@ -37,6 +37,10 @@ export default class UserValidator extends IValidator<User> {
     }
   }
 
+  validateRepositoryInDb(dryRun: boolean): Promise<void> {
+    throw new Error('Method not implemented.');
+  }
+
   /**
    * Checks if the username exists already and throws an error if it does.
    */

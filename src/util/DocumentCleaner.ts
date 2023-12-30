@@ -1,7 +1,7 @@
 import {
   BaseDocument,
   BaseDocumentWithType,
-  BaseDocumentWithUserId
+  RequiredUserId
 } from '@aneuhold/core-ts-db-lib';
 
 /**
@@ -15,9 +15,7 @@ export default class CleanDocument {
     return docCopy;
   }
 
-  static userId<TDocType extends BaseDocumentWithUserId>(
-    updateDoc: Partial<TDocType>
-  ) {
+  static userId<TDocType extends RequiredUserId>(updateDoc: Partial<TDocType>) {
     const docCopy = { ...updateDoc };
     delete docCopy.userId;
     return docCopy;

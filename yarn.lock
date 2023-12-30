@@ -15,29 +15,30 @@
     "@jridgewell/gen-mapping" "^0.3.0"
     "@jridgewell/trace-mapping" "^0.3.9"
 
-"@aneuhold/be-ts-lib@^1.0.5":
-  version "1.0.5"
-  resolved "https://registry.yarnpkg.com/@aneuhold/be-ts-lib/-/be-ts-lib-1.0.5.tgz#a8e7964b9466019f1a21512558a58b12de8a9f3c"
-  integrity sha512-q21xhWGLZED9revueJZKNwlMZ8GP2WmYl//RZufTDbMfN+zxr2XeNMluuVi7PniSlKvGRF/UKuINGPWR68Wicw==
+"@aneuhold/be-ts-lib@^1.0.6":
+  version "1.0.6"
+  resolved "https://registry.yarnpkg.com/@aneuhold/be-ts-lib/-/be-ts-lib-1.0.6.tgz#0492cb4b3b5dd5b3b0f493f5e6ebe340d2d5cb85"
+  integrity sha512-kpjPLR7WEmmWBbtXI9k0hBQ2lrx5pWf/PdOntwUiODVkRzjXLML5Q21zcWCYs06MWrSNUeaz8pYW1MgkQx2ujA==
   dependencies:
-    "@aneuhold/core-ts-api-lib" "^1.0.4"
-    "@aneuhold/core-ts-lib" "^1.1.8"
+    "@aneuhold/core-ts-api-lib" "^1.0.9"
+    "@aneuhold/core-ts-lib" "^1.1.9"
     dotenv "^16.3.1"
+    jsonc-parser "^3.2.0"
     node-fetch "^2"
     octokit "^3.1.2"
 
-"@aneuhold/core-ts-api-lib@^1.0.4":
-  version "1.0.8"
-  resolved "https://registry.yarnpkg.com/@aneuhold/core-ts-api-lib/-/core-ts-api-lib-1.0.8.tgz#906409049ca5395f0f5641a4dbfb645a1e688a8d"
-  integrity sha512-nTZ+JsMdqxxOjgfWNauyKLjmV8hqGjGXteNg3vT/oZ+JvzMKvJskYzRr2p+wKozk7OkKpcCZ5hw9Tctx3OnBrw==
+"@aneuhold/core-ts-api-lib@^1.0.9":
+  version "1.0.11"
+  resolved "https://registry.yarnpkg.com/@aneuhold/core-ts-api-lib/-/core-ts-api-lib-1.0.11.tgz#92758aa56cf5bd711d67b71b121155a39bf5502a"
+  integrity sha512-u9M12Z03KgCVfcQIbRXCVq8m3/+mUlmkMGJv2dEPlyyAuxlaPYG1Bxw7TTiMXYbXTmmXSSpQJPZ9F64pnjx0Vg==
   dependencies:
-    "@aneuhold/core-ts-db-lib" "^1.0.3"
-    "@aneuhold/core-ts-lib" "^1.1.7"
+    "@aneuhold/core-ts-db-lib" "^1.0.8"
+    "@aneuhold/core-ts-lib" "^1.1.9"
 
-"@aneuhold/core-ts-db-lib@^1.0.3":
-  version "1.0.3"
-  resolved "https://registry.yarnpkg.com/@aneuhold/core-ts-db-lib/-/core-ts-db-lib-1.0.3.tgz#b43f3fb028baecf43766f9f48e1a02610d3b1e25"
-  integrity sha512-Pd/Zwg9Fw3YvSozxmui9B/QdkzzqIda2os0YkWOAq3JSew/p/cIt3EaJJCIMkNHTP/b6oiu4VdNYAroS4FHHOg==
+"@aneuhold/core-ts-db-lib@^1.0.10":
+  version "1.0.10"
+  resolved "https://registry.yarnpkg.com/@aneuhold/core-ts-db-lib/-/core-ts-db-lib-1.0.10.tgz#27fdc3f696c2609bb8245078ad0bdb59b442ef1c"
+  integrity sha512-17YnpWjP+DpCVk5R/Wnjrx9vI8zx027W2IKSv+/lSlEoqKeNdcTueIhxpjnZK515WknweVU64lotpCtD46R45w==
   dependencies:
     bson "^6.2.0"
 
@@ -48,15 +49,10 @@
   dependencies:
     bson "^6.2.0"
 
-"@aneuhold/core-ts-lib@^1.1.7":
-  version "1.1.7"
-  resolved "https://registry.yarnpkg.com/@aneuhold/core-ts-lib/-/core-ts-lib-1.1.7.tgz#fe041a59729d4952410ba5152c180f7ac17b347c"
-  integrity sha512-bZXXod0pqQiKpg6P3NCRy+FXm5J2LDwhEE2v5rgOgEXfARliBpXncd1hnveR2EVEgNlgTqyUkjqSlRj52Hl6BQ==
-
-"@aneuhold/core-ts-lib@^1.1.8":
-  version "1.1.8"
-  resolved "https://registry.yarnpkg.com/@aneuhold/core-ts-lib/-/core-ts-lib-1.1.8.tgz#6e74b9fa1666109802c915339f3d3e252f744972"
-  integrity sha512-pHCV/xV08kxbbtGhLVRW8UZ38Jeog5o4owmd8OCKr5pMOZDejER04qcfv+E/qkeDcK6fDtj1cCOk2BAif/WVOg==
+"@aneuhold/core-ts-lib@^1.1.9":
+  version "1.1.9"
+  resolved "https://registry.yarnpkg.com/@aneuhold/core-ts-lib/-/core-ts-lib-1.1.9.tgz#b3bc01a3aa471df58a4929f4eca0e5af196ba426"
+  integrity sha512-WChmw2wIZ80UA3ZrDc6YJSq19JcyAC/Z7Rx0EkIfXxITREzxSvTq1nE5Ikt6rGjoC+r0OcWxaCi6QuFAs3aBBA==
 
 "@babel/code-frame@^7.0.0", "@babel/code-frame@^7.12.13", "@babel/code-frame@^7.22.13", "@babel/code-frame@^7.23.5":
   version "7.23.5"
@@ -3114,6 +3110,11 @@ json5@^2.2.3:
   version "2.2.3"
   resolved "https://registry.yarnpkg.com/json5/-/json5-2.2.3.tgz#78cd6f1a19bdc12b73db5ad0c61efd66c1e29283"
   integrity sha512-XmOWe7eyHYH14cLdVPoyg+GOH3rYX++KpzrylJwSW98t3Nk+U8XOl8FWKOgwtzdb8lXGf6zYwDUzeHMWfxasyg==
+
+jsonc-parser@^3.2.0:
+  version "3.2.0"
+  resolved "https://registry.yarnpkg.com/jsonc-parser/-/jsonc-parser-3.2.0.tgz#31ff3f4c2b9793f89c67212627c51c6394f88e76"
+  integrity sha512-gfFQZrcTc8CnKXp6Y4/CBT3fTc0OVuDofpre4aEeEpSBPV5X5v4+Vmx+8snU7RLPrNHPKSgLxGo9YuQzz20o+w==
 
 jsonwebtoken@^9.0.0:
   version "9.0.2"

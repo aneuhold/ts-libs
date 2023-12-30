@@ -1,7 +1,7 @@
 import { DashboardUserConfig } from '@aneuhold/core-ts-db-lib';
 import { ErrorUtils } from '@aneuhold/core-ts-lib';
 import IValidator from '../BaseValidator';
-import DashboardUserConfigRepository from '../../repositories/dashboard/UserConfigRepository';
+import DashboardUserConfigRepository from '../../repositories/dashboard/DashboardUserConfigRepository';
 import UserRepository from '../../repositories/common/UserRepository';
 
 export default class DashboardUserConfigValidator extends IValidator<DashboardUserConfig> {
@@ -37,5 +37,9 @@ export default class DashboardUserConfigValidator extends IValidator<DashboardUs
         updatedUserConfig
       );
     }
+  }
+
+  validateRepositoryInDb(dryRun: boolean): Promise<void> {
+    throw new Error('Method not implemented.');
   }
 }

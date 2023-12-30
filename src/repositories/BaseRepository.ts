@@ -22,7 +22,7 @@ export default abstract class BaseRepository<TBasetype extends BaseDocument> {
 
   private collection?: Collection;
 
-  private subscribers =
+  protected subscribers =
     RepoSubscriptionService.getDefaultSubscribers<TBasetype>();
 
   /**
@@ -42,30 +42,23 @@ export default abstract class BaseRepository<TBasetype extends BaseDocument> {
     ) => Partial<TBasetype>
   ) {
     this.collectionName = collectionName;
-    RepoSubscriptionService.checkOrAttachListeners();
   }
 
   protected async getCollection() {
     if (!this.collection) {
       this.collection = await DocumentDb.getCollection(this.collectionName);
+      this.setupSubscribers();
     }
     return this.collection;
   }
 
-  /**
-   * A required method that sets up any listeners that are needed for the
-   * repository with other repositories. This will be called once when any
-   * repository is instantiated.
-   *
-   * Make sure to register this in the {@link RepoSubscriptionService}.
-   */
-  abstract setupListeners(): void;
+  protected abstract setupSubscribers(): void;
 
   /**
    * Registers a set of functions that will be called when a change happens
    * in this repository.
    */
-  async subscribeToChanges(listeners: RepoListeners<TBasetype>) {
+  subscribeToChanges(listeners: RepoListeners<TBasetype>) {
     const { insertNew, updateMany, deleteOne, deleteList } = listeners;
     if (insertNew) {
       this.subscribers.insertNew.push(insertNew);

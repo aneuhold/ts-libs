@@ -33,12 +33,14 @@
     "unlink:bets": "yarn unlink @aneuhold/be-ts-lib && yarn install --force",
     "upgrade:all": "yarn upgrade --latest",
     "upgrade:core": "yarn upgrade --latest --pattern @aneuhold",
-    "test": "jest"
+    "test": "jest && yarn validate:dry",
+    "validate": "ts-node ./src/scripts/validateSchema.ts",
+    "validate:dry": "ts-node ./src/scripts/validateSchemaDryRun.ts"
   },
   "dependencies": {
-    "@aneuhold/be-ts-lib": "^1.0.5",
-    "@aneuhold/core-ts-db-lib": "^1.0.8",
-    "@aneuhold/core-ts-lib": "^1.1.8",
+    "@aneuhold/be-ts-lib": "^1.0.6",
+    "@aneuhold/core-ts-db-lib": "^1.0.10",
+    "@aneuhold/core-ts-lib": "^1.1.9",
     "bson": "^6.2.0",
     "mongodb": "^6.3.0"
   },

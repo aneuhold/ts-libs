@@ -1,6 +1,8 @@
 import { User } from '@aneuhold/core-ts-db-lib';
 import BaseRepository from '../BaseRepository';
 import UserValidator from '../../validators/common/UserValidator';
+import ApiKeyRepository from './ApiKeyRepository';
+import DashboardUserConfigRepository from '../dashboard/DashboardUserConfigRepository';
 
 /**
  * The repository that contains {@link User} documents.
@@ -14,12 +16,17 @@ export default class UserRepository extends BaseRepository<User> {
     super(UserRepository.COLLECTION_NAME, new UserValidator());
   }
 
-  setupListeners(): void {}
+  protected setupSubscribers(): void {
+    this.subscribeToChanges(ApiKeyRepository.getListenersForUserRepo());
+    this.subscribeToChanges(
+      DashboardUserConfigRepository.getListenersForUserRepo()
+    );
+  }
 
   /**
    * Gets the singleton instance of the {@link UserRepository}.
    */
-  public static getRepo() {
+  static getRepo() {
     if (!UserRepository.singletonInstance) {
       UserRepository.singletonInstance = new UserRepository();
     }

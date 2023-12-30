@@ -1,8 +1,5 @@
 import { BaseDocument } from '@aneuhold/core-ts-db-lib';
 import { ObjectId } from 'bson';
-import UserRepository from '../repositories/common/UserRepository';
-import ApiKeyRepository from '../repositories/common/ApiKeyRepository';
-import DashboardUserConfigRepository from '../repositories/dashboard/UserConfigRepository';
 
 export type RepoSubscribers<TDocType extends BaseDocument> = {
   insertNew: InsertNewSubscriber<TDocType>[];
@@ -35,21 +32,6 @@ export type DeleteListSubscriber = (docIds: ObjectId[]) => Promise<void>;
  * that happen in other repositories.
  */
 export default class RepoSubscriptionService {
-  private static allRepoSetupFunctions: Array<() => void> = [
-    UserRepository.getRepo().setupListeners,
-    ApiKeyRepository.getRepo().setupListeners,
-    DashboardUserConfigRepository.getRepo().setupListeners
-  ];
-
-  private static allRepoSetupFunctionsRan = false;
-
-  static checkOrAttachListeners() {
-    if (!this.allRepoSetupFunctionsRan) {
-      this.allRepoSetupFunctions.forEach((func) => func());
-      this.allRepoSetupFunctionsRan = true;
-    }
-  }
-
   /**
    * A utility method to get a default empty set of subscribers for a
    * repository.

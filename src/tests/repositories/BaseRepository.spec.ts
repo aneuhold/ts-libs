@@ -3,7 +3,7 @@ import { DashboardUserConfig, User } from '@aneuhold/core-ts-db-lib';
 import UserRepository from '../../repositories/common/UserRepository';
 import { cleanupDoc } from '../testsUtil';
 import DocumentDb from '../../util/DocumentDb';
-import DashboardUserConfigRepository from '../../repositories/dashboard/UserConfigRepository';
+import DashboardUserConfigRepository from '../../repositories/dashboard/DashboardUserConfigRepository';
 
 it('can create a new document and delete it', async () => {
   const userRepository = UserRepository.getRepo();
