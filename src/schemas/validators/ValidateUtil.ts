@@ -127,7 +127,7 @@ export default class Validate {
     }
     let currentObject = this.parentObject;
     for (let i = 0; i < fieldPath.length - 1; i += 1) {
-      if (currentObject[fieldPath[i]] === undefined) {
+      if (typeof currentObject[fieldPath[i]] !== 'object') {
         return false;
       }
       currentObject = currentObject[fieldPath[i]] as IndexableObject;
