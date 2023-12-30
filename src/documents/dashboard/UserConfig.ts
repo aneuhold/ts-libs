@@ -2,8 +2,11 @@ import { ObjectId } from 'bson';
 import BaseDocumentWithType from '../BaseDocumentWithType';
 import RequiredUserId from '../../schemas/required-refs/RequiredUserId';
 import Validate from '../../schemas/validators/ValidateUtil';
+import { DocumentValidator } from '../../schemas/validators/DocumentValidator';
 
-export const validateDashboardUserConfig = (config: DashboardUserConfig) => {
+export const validateDashboardUserConfig: DocumentValidator<
+  DashboardUserConfig
+> = (config: DashboardUserConfig) => {
   const errors: string[] = [];
   const validate = new Validate(config, errors);
   const exampleConfig = new DashboardUserConfig(new ObjectId());

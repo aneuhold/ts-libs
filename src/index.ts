@@ -6,6 +6,7 @@ import DashboardUserConfig, {
   validateDashboardUserConfig
 } from './documents/dashboard/UserConfig';
 import RequiredUserId from './schemas/required-refs/RequiredUserId';
+import { DocumentValidator } from './schemas/validators/DocumentValidator';
 
 // Export all the functions and classes from this library
 export {
@@ -21,4 +22,4 @@ export {
 };
 
 // Export TypeScript types where needed
-export type {};
+export type { DocumentValidator };

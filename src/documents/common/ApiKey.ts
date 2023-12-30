@@ -3,8 +3,9 @@ import crypto from 'crypto';
 import BaseDocument from '../BaseDocument';
 import RequiredUserId from '../../schemas/required-refs/RequiredUserId';
 import Validate from '../../schemas/validators/ValidateUtil';
+import { DocumentValidator } from '../../schemas/validators/DocumentValidator';
 
-export const validateApiKey = (apiKey: ApiKey) => {
+export const validateApiKey: DocumentValidator<ApiKey> = (apiKey: ApiKey) => {
   const errors: string[] = [];
   const exampleApiKey = new ApiKey(new ObjectId());
   const validate = new Validate(apiKey, errors);
