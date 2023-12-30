@@ -35,7 +35,9 @@
     "upgrade:core": "yarn upgrade --latest --pattern @aneuhold",
     "test": "jest && yarn validate:dry",
     "validate": "ts-node ./src/scripts/validateSchema.ts",
-    "validate:dry": "ts-node ./src/scripts/validateSchemaDryRun.ts"
+    "validate:dry": "ts-node ./src/scripts/validateSchemaDryRun.ts",
+    "migrate": "ts-node ./src/scripts/migrate.ts",
+    "migrate:dry": "ts-node ./src/scripts/migrateDry.ts"
   },
   "dependencies": {
     "@aneuhold/be-ts-lib": "^1.0.6",
