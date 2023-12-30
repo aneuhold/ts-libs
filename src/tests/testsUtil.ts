@@ -1,5 +1,11 @@
 import { BaseDocument } from '@aneuhold/core-ts-db-lib';
+import crypto from 'crypto';
 import BaseRepository from '../repositories/BaseRepository';
+
+/**
+ * A random series of characters for tests to help identify test users.
+ */
+export const TEST_USER_NAME_PREFIX = 'lkahwsetpiohweat';
 
 export async function expectToThrow(func: () => Promise<void>) {
   let threwError = false;
@@ -9,6 +15,15 @@ export async function expectToThrow(func: () => Promise<void>) {
     threwError = true;
   }
   expect(threwError).toBeTruthy();
+}
+
+/**
+ * Gets a test user name with a standardized prefix so that they can all be
+ * identified and deleted if anything goes wrong in the tests.
+ */
+export function getTestUserName(username?: string) {
+  if (!username) return `${TEST_USER_NAME_PREFIX}-${crypto.randomUUID()}`;
+  return `${TEST_USER_NAME_PREFIX}-${username}`;
 }
 
 /**

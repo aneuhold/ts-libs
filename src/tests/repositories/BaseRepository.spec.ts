@@ -1,13 +1,13 @@
 import crypto from 'crypto';
 import { DashboardUserConfig, User } from '@aneuhold/core-ts-db-lib';
 import UserRepository from '../../repositories/common/UserRepository';
-import { cleanupDoc } from '../testsUtil';
+import { cleanupDoc, getTestUserName } from '../testsUtil';
 import DocumentDb from '../../util/DocumentDb';
 import DashboardUserConfigRepository from '../../repositories/dashboard/DashboardUserConfigRepository';
 
 it('can create a new document and delete it', async () => {
   const userRepository = UserRepository.getRepo();
-  const newUser = new User(crypto.randomUUID());
+  const newUser = new User(getTestUserName());
   const createResult = await userRepository.insertNew(newUser);
   expect(createResult).toBeTruthy();
 

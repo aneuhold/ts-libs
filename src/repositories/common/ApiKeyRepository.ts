@@ -25,9 +25,7 @@ export default class ApiKeyRepository extends BaseRepository<ApiKey> {
         });
       },
       insertNew: async (user) => {
-        console.log('ApiKeyRepository.insertNew', user._id);
         await apiKeyRepo.insertNew(new ApiKey(user._id));
-        console.log('ApiKeyRepository.insertNew after', user._id);
       }
     };
   }

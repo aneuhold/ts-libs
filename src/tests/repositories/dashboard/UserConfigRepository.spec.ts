@@ -1,7 +1,7 @@
 import crypto from 'crypto';
 import { User } from '@aneuhold/core-ts-db-lib';
 import UserRepository from '../../../repositories/common/UserRepository';
-import { cleanupDoc } from '../../testsUtil';
+import { cleanupDoc, getTestUserName } from '../../testsUtil';
 import DocumentDb from '../../../util/DocumentDb';
 import DashboardUserConfigRepository from '../../../repositories/dashboard/DashboardUserConfigRepository';
 
@@ -45,7 +45,9 @@ afterAll(async () => {
 });
 
 async function createNewTestUser() {
-  const newUser = new User(`${crypto.randomUUID()}userconfigtest`);
+  const newUser = new User(
+    getTestUserName(`${crypto.randomUUID()}userconfigtest`)
+  );
   newUser.projectAccess.dashboard = true;
   const insertResult = await userRepo.insertNew(newUser);
   expect(insertResult).toBeTruthy();
