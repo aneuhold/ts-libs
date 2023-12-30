@@ -41,56 +41,31 @@ export default class ApiKeyValidator extends IValidator<ApiKey> {
     const apiKeyRepo = ApiKeyRepository.getRepo();
     const allApiKeys = await apiKeyRepo.getAll();
     const allUserIds = await UserRepository.getRepo().getAllIdsAsHash();
-    const apiKeysToDelete: Array<ObjectId> = [];
-    const apiKeysToValidate: Array<ApiKey> = [];
-    const apiKeysToUpdate: Array<ApiKey> = [];
 
-    // Check that all API Keys have a valid user
-    allApiKeys.forEach((apiKey) => {
+    const shouldDeleteApiKey = (apiKey: ApiKey) => {
       if (!allUserIds[apiKey.userId.toString()]) {
         Logger.error(
           `API Key with ID: ${apiKey._id} has no valid associated user.`
         );
-        apiKeysToDelete.push(apiKey._id);
-      } else {
-        apiKeysToValidate.push(apiKey);
+        return true;
       }
-    });
-    // Validate the rest
-    let numInvalidDocs = 0;
-    apiKeysToValidate.forEach((apiKey) => {
-      const { updatedDoc, errors } = validateApiKey(apiKey);
-      if (errors.length !== 0) {
-        Logger.error(`API Key with ID: ${apiKey._id} is invalid. Errors:`);
-        numInvalidDocs += 1;
-        errors.forEach((error) => {
-          Logger.error(error);
-        });
-        apiKeysToUpdate.push(updatedDoc);
-      }
-    });
-    if (dryRun) {
-      if (numInvalidDocs === 0) {
-        Logger.info(`No invalid API keys found.`);
-      } else {
-        Logger.info(`Would update ${numInvalidDocs} API keys in the database.`);
-      }
-      if (apiKeysToDelete.length === 0) {
-        Logger.info(`No API keys to delete found.`);
-      } else {
-        Logger.info(
-          `Would delete ${apiKeysToDelete.length} API keys in the database.`
-        );
-      }
-      return;
-    }
-    // Delete all invalid
-    if (apiKeysToDelete.length !== 0) {
-      await apiKeyRepo.deleteList(apiKeysToDelete);
-    }
-    // Update all that need to be updated
-    if (apiKeysToUpdate.length !== 0) {
-      await apiKeyRepo.updateMany(apiKeysToUpdate);
-    }
+      return false;
+    };
+    const deletionFunction = async (docIdsToDelete: ObjectId[]) => {
+      await apiKeyRepo.deleteList(docIdsToDelete);
+    };
+    const updateFunction = async (docsToUpdate: ApiKey[]) => {
+      await apiKeyRepo.updateMany(docsToUpdate);
+    };
+
+    await this.runStandardValidationForRepository(
+      dryRun,
+      'API Key',
+      allApiKeys,
+      shouldDeleteApiKey,
+      validateApiKey,
+      deletionFunction,
+      updateFunction
+    );
   }
 }
