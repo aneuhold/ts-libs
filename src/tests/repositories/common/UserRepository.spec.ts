@@ -121,5 +121,5 @@ it.skip('can delete all users', async () => {
 });
 
 afterAll(async () => {
-  return DocumentDb.closeDbConnection();
+  await DocumentDb.closeDbConnection();
 });

@@ -193,7 +193,7 @@ export default abstract class BaseRepository<TBasetype extends BaseDocument> {
    * This is purposefully changing the type because of some weird restrictions
    * with the `mongodb` package types.
    */
-  private getFilterWithDefault(
+  protected getFilterWithDefault(
     filter: Filter<Document> = {}
   ): Filter<Document> {
     if (!this.defaultFilter) {

@@ -1,4 +1,5 @@
 import { DashboardUserConfig, User } from '@aneuhold/core-ts-db-lib';
+import { ObjectId } from 'bson';
 import DashboardBaseRepository from './DashboardBaseRepository';
 import DashboardUserConfigValidator from '../../validators/dashboard/UserConfigValidator';
 import CleanDocument from '../../util/DocumentCleaner';
@@ -22,10 +23,12 @@ export default class DashboardUserConfigRepository extends DashboardBaseReposito
     const userConfigRepo = DashboardUserConfigRepository.getRepo();
     return {
       deleteOne: async (userId) => {
-        (await userConfigRepo.getCollection()).deleteOne({ userId });
+        await (await userConfigRepo.getCollection()).deleteOne({ userId });
       },
       deleteList: async (userIds) => {
-        (await userConfigRepo.getCollection()).deleteMany({
+        await (
+          await userConfigRepo.getCollection()
+        ).deleteMany({
           userId: { $in: userIds }
         });
       },
@@ -48,5 +51,15 @@ export default class DashboardUserConfigRepository extends DashboardBaseReposito
         new DashboardUserConfigRepository();
     }
     return DashboardUserConfigRepository.singletonInstance;
+  }
+
+  /**
+   * Gets the config for a given user.
+   * @param userId The ID of the user to get the config for.
+   */
+  async getForUser(userId: ObjectId): Promise<DashboardUserConfig | null> {
+    const collection = await this.getCollection();
+    const result = await collection.findOne({ userId });
+    return result as DashboardUserConfig | null;
   }
 }
