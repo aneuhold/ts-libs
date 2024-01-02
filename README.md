@@ -9,16 +9,7 @@ This is used to actually interact with databases in personal projects.
 ### Creating a new Repository
 
 1. Copy an existing one over
-2. Make sure to register the repository in the `RepoSubscriptionService`, even if nothing needs to be setup, just as a future precaution.
-
-## Subscription System
-
-```mermaid
-sequenceDiagram
-  Note over UserRepository: getRepo called
-  UserRepository->>ApiKeyRepository: getSubscribers called
-  ApiKeyRepository->>UserRepository: Subscribes
-```
+1. Create an associated validator
 
 ## Schema Validation for DB
 

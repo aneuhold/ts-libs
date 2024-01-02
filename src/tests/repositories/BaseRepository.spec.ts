@@ -1,9 +1,14 @@
 import crypto from 'crypto';
-import { DashboardUserConfig, User } from '@aneuhold/core-ts-db-lib';
+import {
+  DashboardTask,
+  DashboardUserConfig,
+  User
+} from '@aneuhold/core-ts-db-lib';
 import UserRepository from '../../repositories/common/UserRepository';
 import { cleanupDoc, getTestUserName } from '../testsUtil';
 import DocumentDb from '../../util/DocumentDb';
 import DashboardUserConfigRepository from '../../repositories/dashboard/DashboardUserConfigRepository';
+import DashboardTaskRepository from '../../repositories/dashboard/DashboardTaskRepository';
 
 it('can create a new document and delete it', async () => {
   const userRepository = UserRepository.getRepo();
@@ -34,6 +39,19 @@ it.skip('can create a dashboard config for a user', async () => {
     const newConfig = new DashboardUserConfig(user._id);
     newConfig.enableDevMode = true;
     await configRepo.insertNew(newConfig);
+  }
+});
+
+it.skip(`can create a new task for a user`, async () => {
+  const userRepo = UserRepository.getRepo();
+  const user = await userRepo.get({ userName: 'testUser' });
+  expect(user).toBeTruthy();
+
+  if (user) {
+    const taskRepo = DashboardTaskRepository.getRepo();
+    const newTask = new DashboardTask(user._id);
+    newTask.title = 'Test Task';
+    await taskRepo.insertNew(newTask);
   }
 });
 

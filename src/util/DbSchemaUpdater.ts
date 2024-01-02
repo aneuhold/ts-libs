@@ -1,5 +1,6 @@
 import ApiKeyValidator from '../validators/common/ApiKeyValidator';
 import UserValidator from '../validators/common/UserValidator';
+import DashboardTaskValidator from '../validators/dashboard/TaskValidator';
 import DashboardUserConfigValidator from '../validators/dashboard/UserConfigValidator';
 
 /**
@@ -10,5 +11,6 @@ export default class DbSchemaUpdater {
     await new UserValidator().validateRepositoryInDb(dryRun);
     await new ApiKeyValidator().validateRepositoryInDb(dryRun);
     await new DashboardUserConfigValidator().validateRepositoryInDb(dryRun);
+    await new DashboardTaskValidator().validateRepositoryInDb(dryRun);
   }
 }

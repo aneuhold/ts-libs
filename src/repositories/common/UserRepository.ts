@@ -3,6 +3,7 @@ import BaseRepository from '../BaseRepository';
 import UserValidator from '../../validators/common/UserValidator';
 import ApiKeyRepository from './ApiKeyRepository';
 import DashboardUserConfigRepository from '../dashboard/DashboardUserConfigRepository';
+import DashboardTaskRepository from '../dashboard/DashboardTaskRepository';
 
 /**
  * The repository that contains {@link User} documents.
@@ -21,6 +22,7 @@ export default class UserRepository extends BaseRepository<User> {
     this.subscribeToChanges(
       DashboardUserConfigRepository.getListenersForUserRepo()
     );
+    this.subscribeToChanges(DashboardTaskRepository.getListenersForUserRepo());
   }
 
   /**
