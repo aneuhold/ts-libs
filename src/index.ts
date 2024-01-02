@@ -2,6 +2,9 @@ import BaseDocument from './documents/BaseDocument';
 import BaseDocumentWithType from './documents/BaseDocumentWithType';
 import ApiKey, { validateApiKey } from './documents/common/ApiKey';
 import User, { validateUser } from './documents/common/User';
+import DashboardTask, {
+  validateDashboardTask
+} from './documents/dashboard/Task';
 import DashboardUserConfig, {
   validateDashboardUserConfig
 } from './documents/dashboard/UserConfig';
@@ -16,6 +19,8 @@ export {
   validateApiKey,
   DashboardUserConfig,
   validateDashboardUserConfig,
+  DashboardTask,
+  validateDashboardTask,
   BaseDocument,
   BaseDocumentWithType,
   RequiredUserId
