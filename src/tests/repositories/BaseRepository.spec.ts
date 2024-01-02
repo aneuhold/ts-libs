@@ -44,7 +44,7 @@ it.skip('can create a dashboard config for a user', async () => {
 
 it.skip(`can create a new task for a user`, async () => {
   const userRepo = UserRepository.getRepo();
-  const user = await userRepo.get({ userName: 'testUser' });
+  const user = await userRepo.get({ userName: 'usernameHer' });
   expect(user).toBeTruthy();
 
   if (user) {
