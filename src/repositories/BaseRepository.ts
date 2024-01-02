@@ -87,6 +87,21 @@ export default abstract class BaseRepository<TBasetype extends BaseDocument> {
     return newDoc;
   }
 
+  async insertMany(newDocs: TBasetype[]): Promise<TBasetype[]> {
+    const collection = await this.getCollection();
+    await Promise.all(
+      newDocs.map((doc) => this.validator.validateNewObject(doc))
+    );
+    const insertResult = await collection.insertMany(newDocs);
+    if (!insertResult.acknowledged) {
+      return [];
+    }
+    await Promise.all(
+      this.subscribers.insertMany.map((subscriber) => subscriber(newDocs))
+    );
+    return newDocs;
+  }
+
   async get(filter: Partial<TBasetype>): Promise<TBasetype | null> {
     const collection = await this.getCollection();
     const result = await collection.findOne(this.getFilterWithDefault(filter));
