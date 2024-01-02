@@ -9,6 +9,9 @@ export interface ProjectDashboardOptions {
     userConfig?: boolean;
     tasks?: boolean;
   };
+  insert?: {
+    tasks?: DashboardTask[];
+  };
   update?: {
     userConfig?: DashboardUserConfig;
     tasks?: DashboardTask[];
