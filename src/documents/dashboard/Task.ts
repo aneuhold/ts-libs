@@ -16,6 +16,10 @@ export const validateDashboardTask: DocumentValidator<DashboardTask> = (
   validate.optionalString('description');
   validate.array('tags', exampleTask.tags);
   validate.string('category', exampleTask.category);
+  validate.object('createdDate', exampleTask.createdDate);
+  validate.object('lastUpdatedDate', exampleTask.lastUpdatedDate);
+  validate.optionalObject('startDate');
+  validate.optionalObject('dueDate');
 
   return { updatedDoc: task, errors };
 };

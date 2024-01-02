@@ -2,6 +2,7 @@ import {
   isOptionalArray,
   isOptionalBoolean,
   isOptionalNumber,
+  isOptionalObject,
   isOptionalString
 } from '../type-guards/commonTypeGuards';
 
@@ -66,6 +67,16 @@ export default class Validate {
       !isOptionalArray(this.getField(fieldName))
     ) {
       this.errorsArray.push(`${fieldName} must be an array or undefined`);
+      this.deleteField(fieldName);
+    }
+  }
+
+  optionalObject(fieldName: string) {
+    if (
+      this.fieldPathIsValid(fieldName) &&
+      !isOptionalObject(this.getField(fieldName))
+    ) {
+      this.errorsArray.push(`${fieldName} must be an object or undefined`);
       this.deleteField(fieldName);
     }
   }
