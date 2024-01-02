@@ -23,6 +23,7 @@ following steps
 1. Run the migration with `yarn migrate:dry` then `yarn migrate`
 1. Run validation to ensure everything is alright with `yarn validate:dry` then `yarn validate` if needed
 1. Run tests
+1. Update tests if needed then re-validate
 1. Push a new version of the `be-ts-db-lib` to NPM
 1. Pull the new versions into `digital-ocean-functions` and deploy
 1. Pull the new versions into `core-ts-api-lib` and push to NPM
