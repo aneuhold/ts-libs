@@ -110,6 +110,16 @@ export default class Validate {
     }
   }
 
+  array(fieldName: string, defaultValue: unknown[]) {
+    if (
+      this.fieldPathIsValid(fieldName) &&
+      !Array.isArray(this.getField(fieldName))
+    ) {
+      this.errorsArray.push(`${fieldName} must be an array`);
+      this.updateField(fieldName, defaultValue);
+    }
+  }
+
   /**
    * Checks if the provided field path is valid. In other words, if the
    * field path is of length 1, it always returns true. If the field path
