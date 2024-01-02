@@ -15,17 +15,24 @@ export default class ApiKeyRepository extends BaseRepository<ApiKey> {
     const apiKeyRepo = ApiKeyRepository.getRepo();
     return {
       deleteOne: async (userId) => {
-        (await apiKeyRepo.getCollection()).deleteOne({
+        await (
+          await apiKeyRepo.getCollection()
+        ).deleteOne({
           userId
         });
       },
       deleteList: async (userIds) => {
-        (await apiKeyRepo.getCollection()).deleteMany({
+        await (
+          await apiKeyRepo.getCollection()
+        ).deleteMany({
           userId: { $in: userIds }
         });
       },
       insertNew: async (user) => {
         await apiKeyRepo.insertNew(new ApiKey(user._id));
+      },
+      insertMany: async (users) => {
+        await apiKeyRepo.insertMany(users.map((user) => new ApiKey(user._id)));
       }
     };
   }

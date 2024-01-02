@@ -36,6 +36,14 @@ export default class DashboardUserConfigRepository extends DashboardBaseReposito
         if (user.projectAccess.dashboard) {
           await userConfigRepo.insertNew(new DashboardUserConfig(user._id));
         }
+      },
+      insertMany: async (users) => {
+        const usersThatNeedConfig = users.filter(
+          (user) => user.projectAccess.dashboard
+        );
+        await userConfigRepo.insertMany(
+          usersThatNeedConfig.map((user) => new DashboardUserConfig(user._id))
+        );
       }
     };
   }

@@ -3,6 +3,7 @@ import { ObjectId } from 'bson';
 
 export type RepoSubscribers<TDocType extends BaseDocument> = {
   insertNew: InsertNewSubscriber<TDocType>[];
+  insertMany: InsertManySubscriber<TDocType>[];
   updateMany: UpdateManySubscriber<TDocType>[];
   deleteOne: DeleteOneSubscriber[];
   deleteList: DeleteListSubscriber[];
@@ -10,6 +11,7 @@ export type RepoSubscribers<TDocType extends BaseDocument> = {
 
 export type RepoListeners<TDocType extends BaseDocument> = {
   insertNew?: InsertNewSubscriber<TDocType>;
+  insertMany?: InsertManySubscriber<TDocType>;
   updateMany?: UpdateManySubscriber<TDocType>;
   deleteOne?: DeleteOneSubscriber;
   deleteList?: DeleteListSubscriber;
@@ -17,6 +19,10 @@ export type RepoListeners<TDocType extends BaseDocument> = {
 
 export type InsertNewSubscriber<TDocType extends BaseDocument> = (
   doc: TDocType
+) => Promise<void>;
+
+export type InsertManySubscriber<TDocType extends BaseDocument> = (
+  docs: TDocType[]
 ) => Promise<void>;
 
 export type UpdateManySubscriber<TDocType extends BaseDocument> = (
@@ -41,6 +47,7 @@ export default class RepoSubscriptionService {
   >(): RepoSubscribers<TDocType> {
     return {
       insertNew: [],
+      insertMany: [],
       updateMany: [],
       deleteOne: [],
       deleteList: []
