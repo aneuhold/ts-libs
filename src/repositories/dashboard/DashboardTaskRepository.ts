@@ -1,5 +1,6 @@
 import { DashboardTask, User } from '@aneuhold/core-ts-db-lib';
 import { ObjectId } from 'bson';
+import { DeleteResult } from 'mongodb';
 import DashboardBaseRepository from './DashboardBaseRepository';
 import CleanDocument from '../../util/DocumentCleaner';
 import { RepoListeners } from '../../services/RepoSubscriptionService';
@@ -50,6 +51,35 @@ export default class DashboardTaskRepository extends DashboardBaseRepository<Das
       DashboardTaskRepository.singletonInstance = new DashboardTaskRepository();
     }
     return DashboardTaskRepository.singletonInstance;
+  }
+
+  /**
+   * Deletes a task and removes the reference to this task from any other tasks
+   * that have it as a parent.
+   *
+   * @override
+   */
+  async delete(docId: ObjectId): Promise<DeleteResult> {
+    const result = await super.delete(docId);
+    const collection = await this.getCollection();
+    await collection.updateMany({ parent: docId }, { $unset: { parent: '' } });
+    return result;
+  }
+
+  /**
+   * Deletes a list of tasks and removes the reference to these tasks from
+   * any other tasks that have them as a parent.
+   *
+   * @override
+   */
+  async deleteList(docIds: ObjectId[]): Promise<DeleteResult> {
+    const result = await super.deleteList(docIds);
+    const collection = await this.getCollection();
+    await collection.updateMany(
+      { parent: { $in: docIds } },
+      { $unset: { parent: '' } }
+    );
+    return result;
   }
 
   /**
