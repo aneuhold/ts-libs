@@ -4,6 +4,10 @@
 
 This is used to actually interact with databases in personal projects.
 
+Possible next tasks:
+
+- Make the validators have an updateMany validation that is more performant.
+
 ## Development
 
 ### Creating a new Repository

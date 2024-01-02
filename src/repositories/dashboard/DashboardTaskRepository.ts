@@ -62,7 +62,10 @@ export default class DashboardTaskRepository extends DashboardBaseRepository<Das
   async delete(docId: ObjectId): Promise<DeleteResult> {
     const result = await super.delete(docId);
     const collection = await this.getCollection();
-    await collection.updateMany({ parent: docId }, { $unset: { parent: '' } });
+    await collection.updateMany(
+      { parentTaskId: docId },
+      { $unset: { parentTaskId: '' } }
+    );
     return result;
   }
 
@@ -76,8 +79,8 @@ export default class DashboardTaskRepository extends DashboardBaseRepository<Das
     const result = await super.deleteList(docIds);
     const collection = await this.getCollection();
     await collection.updateMany(
-      { parent: { $in: docIds } },
-      { $unset: { parent: '' } }
+      { parentTaskId: { $in: docIds } },
+      { $unset: { parentTaskId: '' } }
     );
     return result;
   }
