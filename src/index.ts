@@ -1,5 +1,6 @@
 import ApiKeyRepository from './repositories/common/ApiKeyRepository';
 import UserRepository from './repositories/common/UserRepository';
+import DashboardTaskRepository from './repositories/dashboard/DashboardTaskRepository';
 import DashboardUserConfigRepository from './repositories/dashboard/DashboardUserConfigRepository';
 import DocumentDb from './util/DocumentDb';
 
@@ -7,8 +8,9 @@ import DocumentDb from './util/DocumentDb';
 export {
   UserRepository,
   ApiKeyRepository,
-  DocumentDb,
-  DashboardUserConfigRepository
+  DashboardTaskRepository,
+  DashboardUserConfigRepository,
+  DocumentDb
 };
 
 // Export TypeScript types where needed
