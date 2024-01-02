@@ -1,5 +1,5 @@
 import { UUID } from 'crypto';
-import { DashboardUserConfig } from '@aneuhold/core-ts-db-lib';
+import { DashboardTask, DashboardUserConfig } from '@aneuhold/core-ts-db-lib';
 import { Translations } from '../../../types/Translations';
 import DOFunction, { DOFunctionInput, DOFunctionOutput } from '../DOFunction';
 
@@ -7,12 +7,14 @@ export interface ProjectDashboardOptions {
   get?: {
     translations?: boolean;
     userConfig?: boolean;
+    tasks?: boolean;
   };
   update?: {
     userConfig?: DashboardUserConfig;
+    tasks?: DashboardTask[];
   };
   delete?: {
-    placeholder?: boolean;
+    tasks?: DashboardTask[];
   };
 }
 
@@ -26,6 +28,7 @@ export interface ProjectDashboardOutput extends DOFunctionOutput {
   data?: {
     translations?: Translations;
     userConfig?: DashboardUserConfig;
+    tasks?: DashboardTask[];
   };
 }
 
