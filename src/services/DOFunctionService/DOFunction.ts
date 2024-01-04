@@ -13,15 +13,37 @@ export type DOFunctionInput = object;
 export type DOFunctionOutput = object;
 
 /**
+ * Raw input to a Digital Ocean function will always have a data property
+ * which is a string. This string must be parsed using EJSON.parse.
+ */
+export interface DOFunctionRawInput {
+  data: string;
+}
+
+/**
  * Raw output from a Digital Ocean function must always be an object with
  * a body property. The body property must also be an object.
  */
-export interface DOFunctionRawOutput<TOutput extends DOFunctionOutput> {
+export interface DOFunctionRawOutput {
   /**
    * The body is an object, which means it will automatically be serialized to
    * JSON and the Content-Type header will be set to application/json.
+   *
+   * Because the output typically depends on bson, the data must be serialized
+   * to EJSON using the EJSON.stringify. Then when it is received, it must be
+   * parsed using EJSON.parse.
    */
-  body: TOutput;
+  body: {
+    success: boolean;
+    errors: string[];
+    data: string;
+  };
+}
+
+export interface DOFunctionCallOutput<TOutput extends DOFunctionOutput> {
+  success: boolean;
+  errors: string[];
+  data: TOutput;
 }
 
 /**
@@ -50,19 +72,25 @@ export default abstract class DOFunction<
   /**
    * A generic call method for any digital ocean function.
    */
-  async call(input: TInput): Promise<TOutput> {
+  async call(input: TInput): Promise<DOFunctionCallOutput<TOutput>> {
     if (!this.url) {
       throw new Error(`${this.functionName} URL is not set`);
     }
+    const rawInput: DOFunctionRawInput = {
+      data: EJSON.stringify(input, { relaxed: false })
+    };
     const result = await fetch(`${this.url}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
       },
-      body: EJSON.stringify(input, { relaxed: false })
+      body: JSON.stringify(rawInput)
     });
-    const json = await result.json();
-    const parsedJson = EJSON.parse(json);
-    return parsedJson as TOutput;
+    const json: DOFunctionRawOutput = await result.json();
+    return {
+      success: json.body.success,
+      errors: json.body.errors,
+      data: EJSON.parse(json.body.data)
+    };
   }
 }

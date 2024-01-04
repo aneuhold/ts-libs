@@ -8,7 +8,6 @@ export interface AuthValidateUserInput extends DOFunctionInput {
 }
 
 export interface AuthValidateUserOutput extends DOFunctionOutput {
-  success: boolean;
   userInfo?: {
     user: User;
     apiKey: ApiKey;

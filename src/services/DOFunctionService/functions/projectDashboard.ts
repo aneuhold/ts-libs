@@ -27,12 +27,9 @@ export interface ProjectDashboardInput extends DOFunctionInput {
 }
 
 export interface ProjectDashboardOutput extends DOFunctionOutput {
-  success: boolean;
-  data?: {
-    translations?: Translations;
-    userConfig?: DashboardUserConfig;
-    tasks?: DashboardTask[];
-  };
+  translations?: Translations;
+  userConfig?: DashboardUserConfig;
+  tasks?: DashboardTask[];
 }
 
 /**

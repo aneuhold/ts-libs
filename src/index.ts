@@ -1,5 +1,9 @@
 import APIService from './services/APIService/APIService';
-import { DOFunctionRawOutput } from './services/DOFunctionService/DOFunction';
+import {
+  DOFunctionCallOutput,
+  DOFunctionRawInput,
+  DOFunctionRawOutput
+} from './services/DOFunctionService/DOFunction';
 import DOFunctionService from './services/DOFunctionService/DOFunctionService';
 import {
   AuthCheckPasswordInput,
@@ -22,7 +26,9 @@ export { DOFunctionService, APIService };
 
 // Export TypeScript types where needed
 export type {
+  DOFunctionRawInput,
   DOFunctionRawOutput,
+  DOFunctionCallOutput,
   AuthCheckPasswordInput,
   AuthCheckPasswordOutput,
   AuthValidateUserInput,
