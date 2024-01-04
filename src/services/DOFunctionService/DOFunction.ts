@@ -1,3 +1,5 @@
+import { EJSON } from 'bson';
+
 /**
  * The input to a Digital Ocean function must always be an object.
  */
@@ -57,9 +59,10 @@ export default abstract class DOFunction<
       headers: {
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify(input)
+      body: EJSON.stringify(input, { relaxed: false })
     });
-    const json = (await result.json()) as TOutput;
-    return json;
+    const json = await result.json();
+    const parsedJson = EJSON.parse(json);
+    return parsedJson as TOutput;
   }
 }
