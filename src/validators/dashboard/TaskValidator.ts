@@ -14,7 +14,9 @@ export default class DashboardTaskValidator extends IValidator<DashboardTask> {
     const usersFound = await userRepo.getList(userIds);
     if (usersFound.length !== userIds.length) {
       errors.push(
-        `Not all users exist. Found: ${usersFound.length}, expected: ${userIds.length}. List searched was: ${userIds}.`
+        `Not all users exist. Found: ${usersFound.length}, expected: ${
+          userIds.length
+        }. List searched was: ${JSON.stringify(userIds)}.`
       );
     }
     // Check if the task has a parent, and if so, that it exists
