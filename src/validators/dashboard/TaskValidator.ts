@@ -10,11 +10,11 @@ export default class DashboardTaskValidator extends IValidator<DashboardTask> {
     const errors: string[] = [];
     // Check if the user exists, and any shared users exist
     const userRepo = UserRepository.getRepo();
-    const users = [newTask.userId, ...newTask.sharedWith];
-    const usersFound = await userRepo.getList(users);
-    if (usersFound.length !== users.length) {
+    const userIds = [newTask.userId, ...newTask.sharedWith];
+    const usersFound = await userRepo.getList(userIds);
+    if (usersFound.length !== userIds.length) {
       errors.push(
-        `Not all users exist. Found: ${usersFound.length}, expected: ${users.length}`
+        `Not all users exist. Found: ${usersFound.length}, expected: ${userIds.length}. List searched was: ${userIds}.`
       );
     }
     // Check if the task has a parent, and if so, that it exists
