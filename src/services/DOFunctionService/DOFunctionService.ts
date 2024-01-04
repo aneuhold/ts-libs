@@ -23,6 +23,10 @@ export default class DOFunctionService {
   /**
    * A generic method to handle any API request on the backend. This has
    * no use on the frontend.
+   *
+   * This will take care of returning the error if the handler throws.
+   * Ideally the handler should not throw though unless something really
+   * unexpected happened.
    */
   static async handleApiRequest<
     TInput extends DOFunctionInput,
@@ -32,13 +36,21 @@ export default class DOFunctionService {
     handler: (input: TInput) => Promise<DOFunctionCallOutput<TOutput>>
   ): Promise<DOFunctionRawOutput> {
     const input: TInput = EJSON.parse(rawInput.data);
-    const output = await handler(input);
-    return {
+    const rawOutput: DOFunctionRawOutput = {
       body: {
-        success: output.success,
-        errors: output.errors,
-        data: EJSON.stringify(output.data, { relaxed: false })
+        success: false,
+        errors: [],
+        data: ''
       }
     };
+    try {
+      const output = await handler(input);
+      rawOutput.body.success = output.success;
+      rawOutput.body.errors = output.errors;
+      rawOutput.body.data = EJSON.stringify(output.data, { relaxed: false });
+    } catch (error) {
+      rawOutput.body.errors.push(JSON.stringify(error));
+    }
+    return rawOutput;
   }
 }
