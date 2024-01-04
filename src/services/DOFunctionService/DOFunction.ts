@@ -87,6 +87,7 @@ export default abstract class DOFunction<
       body: JSON.stringify(rawInput)
     });
     const json: DOFunctionRawOutput = await result.json();
+    console.log(json);
     return {
       success: json.body.success,
       errors: json.body.errors,
