@@ -86,12 +86,12 @@ export default abstract class DOFunction<
       },
       body: JSON.stringify(rawInput)
     });
-    const json: DOFunctionRawOutput = await result.json();
-    console.log(json);
+    // This is the reduced form of the DOFunctionRawOutput. Without the body.
+    const json = await result.json();
     return {
-      success: json.body.success,
-      errors: json.body.errors,
-      data: EJSON.parse(json.body.data)
+      success: json.success,
+      errors: json.errors,
+      data: EJSON.parse(json.data)
     };
   }
 }
