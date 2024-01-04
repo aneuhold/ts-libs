@@ -9,16 +9,16 @@ export default class DashboardTaskValidator extends IValidator<DashboardTask> {
   async validateNewObject(newTask: DashboardTask): Promise<void> {
     const errors: string[] = [];
     // Check if the user exists, and any shared users exist
-    const userRepo = UserRepository.getRepo();
-    const userIds = [newTask.userId, ...newTask.sharedWith];
-    const usersFound = await userRepo.getList(userIds);
-    if (usersFound.length !== userIds.length) {
-      errors.push(
-        `Not all users exist. Found: ${usersFound.length}, expected: ${
-          userIds.length
-        }. List searched was: ${JSON.stringify(userIds)}.`
-      );
-    }
+    // const userRepo = UserRepository.getRepo();
+    // const userIds = [newTask.userId, ...newTask.sharedWith];
+    // const usersFound = await userRepo.getList(userIds);
+    // if (usersFound.length !== userIds.length) {
+    //   errors.push(
+    //     `Not all users exist. Found: ${usersFound.length}, expected: ${
+    //       userIds.length
+    //     }. List searched was: ${JSON.stringify(userIds)}.`
+    //   );
+    // }
     // Check if the task has a parent, and if so, that it exists
     if (newTask.parentTaskId) {
       const parentTask = await DashboardTaskRepository.getRepo().get({
