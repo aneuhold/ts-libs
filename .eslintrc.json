@@ -43,7 +43,10 @@
     "default-param-last": "off",
     "no-promise-executor-return": "off",
     // Disabled because sometimes the constructor needs to be made private
-    "no-useless-constructor": "off"
+    "no-useless-constructor": "off",
+    // Turned off because it doesn't allow for typed functions in non-static
+    // classes
+    "class-methods-use-this": "off"
   },
   "settings": {
     "import/resolver": {

@@ -1,4 +1,4 @@
-import { EJSON } from 'bson';
+import { BSON } from 'bson';
 
 /**
  * The input to a Digital Ocean function must always be an object.
@@ -17,26 +17,32 @@ export type DOFunctionOutput = object;
  * which is a string. This string must be parsed using EJSON.parse.
  */
 export interface DOFunctionRawInput {
-  data: string;
+  /**
+   * There are many other properties in the `http` object, but only the body
+   * property is used.
+   */
+  http: {
+    /**
+     * The body property needs to be parsed with atob, then put through some
+     * other processing.
+     */
+    body: string;
+  };
 }
 
 /**
  * Raw output from a Digital Ocean function must always be an object with
- * a body property. The body property must also be an object.
+ * a body property. The body property must be a string that is base64 encoded
+ * or an object. With how this project is set up, it will always be base64
+ * encoded to support BSON types.
  */
 export interface DOFunctionRawOutput {
   /**
-   * The body is an object, which means it will automatically be serialized to
-   * JSON and the Content-Type header will be set to application/json.
-   *
-   * Because the output typically depends on bson, the data must be serialized
-   * to EJSON using the EJSON.stringify. Then when it is received, it must be
-   * parsed using EJSON.parse.
+   * The body is a base64 encoded string.
    */
-  body: {
-    success: boolean;
-    errors: string[];
-    data: string;
+  body: string;
+  headers: {
+    'Content-Type': 'application/octet-stream';
   };
 }
 
@@ -70,28 +76,30 @@ export default abstract class DOFunction<
   }
 
   /**
-   * A generic call method for any digital ocean function.
+   * A generic call method for any Digital Ocean Function from the client.
+   * This gets pretty crazy with the serialization logic. It has been tested
+   * heavily.
    */
   async call(input: TInput): Promise<DOFunctionCallOutput<TOutput>> {
     if (!this.url) {
       throw new Error(`${this.functionName} URL is not set`);
     }
-    const rawInput: DOFunctionRawInput = {
-      data: EJSON.stringify(input, { relaxed: false })
-    };
     const result = await fetch(`${this.url}`, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/octet-stream'
       },
-      body: JSON.stringify(rawInput)
+      // It isn't clear why this works by itself. It comes in to the function
+      // as a base64 string.
+      body: BSON.serialize(input)
     });
-    // This is the reduced form of the DOFunctionRawOutput. Without the body.
-    const json = await result.json();
-    return {
-      success: json.success,
-      errors: json.errors,
-      data: EJSON.parse(json.data)
-    };
+    return this.decodeArrayBuffer(await result.arrayBuffer());
+  }
+
+  private decodeArrayBuffer(
+    buffer: ArrayBuffer
+  ): DOFunctionCallOutput<TOutput> {
+    const bytes = new Uint8Array(buffer);
+    return BSON.deserialize(bytes) as DOFunctionCallOutput<TOutput>;
   }
 }
