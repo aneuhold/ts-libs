@@ -3,6 +3,7 @@ import BaseDocumentWithType from './documents/BaseDocumentWithType';
 import ApiKey, { validateApiKey } from './documents/common/ApiKey';
 import User, { validateUser } from './documents/common/User';
 import DashboardTask, {
+  getDashboardTaskChildrenIds,
   validateDashboardTask
 } from './documents/dashboard/Task';
 import DashboardUserConfig, {
@@ -21,6 +22,7 @@ export {
   validateDashboardUserConfig,
   DashboardTask,
   validateDashboardTask,
+  getDashboardTaskChildrenIds,
   BaseDocument,
   BaseDocumentWithType,
   RequiredUserId

@@ -41,7 +41,9 @@
     "@typescript-eslint/no-shadow": ["error"],
     "no-use-before-define": "off",
     "default-param-last": "off",
-    "no-promise-executor-return": "off"
+    "no-promise-executor-return": "off",
+    // Turned off because mongoDB is being used and that needs the underscore
+    "no-underscore-dangle": "off"
   },
   "settings": {
     "import/resolver": {
