@@ -1,4 +1,8 @@
-import { DashboardTask, User } from '@aneuhold/core-ts-db-lib';
+import {
+  DashboardTask,
+  User,
+  getDashboardTaskChildrenIds
+} from '@aneuhold/core-ts-db-lib';
 import { ObjectId } from 'bson';
 import { DeleteResult } from 'mongodb';
 import DashboardBaseRepository from './DashboardBaseRepository';
@@ -60,28 +64,19 @@ export default class DashboardTaskRepository extends DashboardBaseRepository<Das
    * @override
    */
   async delete(docId: ObjectId): Promise<DeleteResult> {
-    const result = await super.delete(docId);
-    const collection = await this.getCollection();
-    await collection.updateMany(
-      { parentTaskId: docId },
-      { $unset: { parentTaskId: '' } }
-    );
-    return result;
+    const docIdsToDelete = await this.getAllTaskIDsToDelete([docId]);
+    const deleteResult = await super.deleteList(docIdsToDelete);
+    return deleteResult;
   }
 
   /**
-   * Deletes a list of tasks and removes the reference to these tasks from
-   * any other tasks that have them as a parent.
+   * Deletes a list of tasks and all children of those tasks.
    *
    * @override
    */
   async deleteList(docIds: ObjectId[]): Promise<DeleteResult> {
-    const result = await super.deleteList(docIds);
-    const collection = await this.getCollection();
-    await collection.updateMany(
-      { parentTaskId: { $in: docIds } },
-      { $unset: { parentTaskId: '' } }
-    );
+    const docIdsToDelete = await this.getAllTaskIDsToDelete(docIds);
+    const result = await super.deleteList(docIdsToDelete);
     return result;
   }
 
@@ -99,5 +94,22 @@ export default class DashboardTaskRepository extends DashboardBaseRepository<Das
     };
     const result = await collection.find(filter).toArray();
     return result as DashboardTask[];
+  }
+
+  /**
+   * Gets all the task IDs that need to be deleted if the provided list of
+   * tasks is deleted.
+   */
+  private async getAllTaskIDsToDelete(taskIds: ObjectId[]) {
+    if (taskIds.length === 0) {
+      return taskIds;
+    }
+    const initialTask = await this.get({ _id: taskIds[0] });
+    if (!initialTask) {
+      return taskIds;
+    }
+    const allUserTasks = await this.getAllForUser(initialTask.userId);
+    const childrenIds = getDashboardTaskChildrenIds(allUserTasks, taskIds);
+    return [...taskIds, ...childrenIds];
   }
 }
