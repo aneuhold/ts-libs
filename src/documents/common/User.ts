@@ -3,6 +3,15 @@ import BaseDocument from '../BaseDocument';
 import { DocumentValidator } from '../../schemas/validators/DocumentValidator';
 import Validate from '../../schemas/validators/ValidateUtil';
 
+/**
+ * A User CTO which can be used to reference a User with only the necessary
+ * information.
+ */
+export type UserCTO = {
+  _id: ObjectId;
+  userName: string;
+};
+
 export const validateUser: DocumentValidator<User> = (user) => {
   const errors: string[] = [];
   const validate = new Validate(user, errors);

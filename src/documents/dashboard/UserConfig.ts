@@ -12,6 +12,7 @@ export const validateDashboardUserConfig: DocumentValidator<
   const exampleConfig = new DashboardUserConfig(new ObjectId());
 
   validate.boolean('enableDevMode', exampleConfig.enableDevMode);
+  validate.array('collaborators', exampleConfig.collaborators);
 
   return { updatedDoc: config, errors };
 };
@@ -28,6 +29,12 @@ export default class DashboardUserConfig
    * The owner of this config.
    */
   userId: ObjectId;
+
+  /**
+   * The different users that the owner of this config is collaborating with
+   * on the dashboard.
+   */
+  collaborators: ObjectId[] = [];
 
   /**
    * Whether or not to enable dev mode for the user.

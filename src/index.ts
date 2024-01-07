@@ -1,7 +1,7 @@
 import BaseDocument from './documents/BaseDocument';
 import BaseDocumentWithType from './documents/BaseDocumentWithType';
 import ApiKey, { validateApiKey } from './documents/common/ApiKey';
-import User, { validateUser } from './documents/common/User';
+import User, { UserCTO, validateUser } from './documents/common/User';
 import DashboardTask, {
   getDashboardTaskChildrenIds,
   validateDashboardTask
@@ -29,4 +29,4 @@ export {
 };
 
 // Export TypeScript types where needed
-export type { DocumentValidator };
+export type { DocumentValidator, UserCTO };
