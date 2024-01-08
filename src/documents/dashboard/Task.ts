@@ -14,6 +14,7 @@ export const validateDashboardTask: DocumentValidator<DashboardTask> = (
   validate.string('title', exampleTask.title);
   validate.boolean('completed', exampleTask.completed);
   validate.optionalString('description');
+  validate.array('sharedWith', exampleTask.sharedWith);
   validate.array('tags', exampleTask.tags);
   validate.string('category', exampleTask.category);
   validate.object('createdDate', exampleTask.createdDate);
@@ -82,6 +83,22 @@ function getChildrenTaskIds(
   return childrenIds;
 }
 
+/**
+ * When thinking about the logic of tasks, the following thoughts come to mind:
+ *
+ * What would you expect a task manager to do in the case that you have a task
+ * with a bunch of subtasks, and you share that single task with another person?
+ *
+ * - Should the subtasks be automatically shared as well no matter what? (Would make behavior simpler for the user)
+ * - Should there instead be an option to share the subtasks automatically?
+ * - In the case that the other user adds a subtask to the original task you shared, would you expect to see that subtask?
+ * - If there is an option to not share the subtasks automatically, what happens when the other user adds a subtask to the one you shared?
+ *
+ * Because of the complexity for the user in not automatically sharing subtasks,
+ * it seems better to always automatically share subtasks. In a theoretical sense,
+ * sharing a task with someone seems to imply the shared ownership of completing
+ * the overall task, including all the subtasks.
+ */
 export default class DashboardTask
   extends BaseDocumentWithType
   implements RequiredUserId
