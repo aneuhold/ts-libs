@@ -13,6 +13,7 @@ export interface ProjectDashboardOptions {
     userConfig?: boolean;
     tasks?: boolean;
     collaborators?: boolean;
+    userNameIsValid?: string;
   };
   insert?: {
     tasks?: DashboardTask[];
@@ -36,6 +37,7 @@ export interface ProjectDashboardOutput extends DOFunctionOutput {
   userConfig?: DashboardUserConfig;
   tasks?: DashboardTask[];
   collaborators?: UserCTO[];
+  userFromUserName?: UserCTO | null;
 }
 
 /**
