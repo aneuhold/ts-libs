@@ -10,9 +10,12 @@ import DOFunction, { DOFunctionInput, DOFunctionOutput } from '../DOFunction';
 export interface ProjectDashboardOptions {
   get?: {
     translations?: boolean;
+    /**
+     * If this is true, the user config will be returned for the user
+     * and the collaborators.
+     */
     userConfig?: boolean;
     tasks?: boolean;
-    collaborators?: boolean;
     userNameIsValid?: string;
   };
   insert?: {
