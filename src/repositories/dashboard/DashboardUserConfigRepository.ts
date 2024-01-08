@@ -1,5 +1,11 @@
 import { DashboardUserConfig, User } from '@aneuhold/core-ts-db-lib';
 import { ObjectId } from 'bson';
+import {
+  AnyBulkWriteOperation,
+  BulkWriteResult,
+  UpdateFilter,
+  UpdateResult
+} from 'mongodb';
 import DashboardBaseRepository from './DashboardBaseRepository';
 import DashboardUserConfigValidator from '../../validators/dashboard/UserConfigValidator';
 import CleanDocument from '../../util/DocumentCleaner';
@@ -23,14 +29,21 @@ export default class DashboardUserConfigRepository extends DashboardBaseReposito
     const userConfigRepo = DashboardUserConfigRepository.getRepo();
     return {
       deleteOne: async (userId) => {
-        await (await userConfigRepo.getCollection()).deleteOne({ userId });
+        const collection = await userConfigRepo.getCollection();
+        await collection.deleteOne({ userId });
+        await collection.updateMany(
+          { collaborators: userId },
+          { $pull: { collaborators: userId } }
+        );
       },
       deleteList: async (userIds) => {
-        await (
-          await userConfigRepo.getCollection()
-        ).deleteMany({
+        const collection = await userConfigRepo.getCollection();
+        await collection.deleteMany({
           userId: { $in: userIds }
         });
+        await collection.updateMany({ collaborators: { $in: userIds } }, {
+          $pull: { collaborators: { $in: userIds } }
+        } as UpdateFilter<DashboardUserConfig>);
       },
       insertNew: async (user) => {
         if (user.projectAccess.dashboard) {
@@ -62,6 +75,88 @@ export default class DashboardUserConfigRepository extends DashboardBaseReposito
   }
 
   /**
+   * Inserts a new config for a user. If the user has collaborators, those
+   * collaborators will have the current user added to their collaborators list.
+   *
+   * @override
+   */
+  async insertNew(
+    newDoc: DashboardUserConfig
+  ): Promise<DashboardUserConfig | null> {
+    const result = await super.insertNew(newDoc);
+    if (newDoc.collaborators.length > 0) {
+      await this.updateCollaboratorsIfNeeded([
+        {
+          originalDoc: new DashboardUserConfig(newDoc.userId),
+          updatedDoc: newDoc
+        }
+      ]);
+    }
+    return result;
+  }
+
+  /**
+   * Inserts a list of new configs for users. If the users have collaborators,
+   * those collaborators will have the current user added to their collaborators
+   * list.
+   *
+   * @override
+   */
+  async insertMany(
+    newDocs: DashboardUserConfig[]
+  ): Promise<DashboardUserConfig[]> {
+    const result = await super.insertMany(newDocs);
+    // Simulate having no collaborators originally.
+    await this.updateCollaboratorsIfNeeded(
+      newDocs.map((doc) => ({
+        originalDoc: new DashboardUserConfig(doc.userId),
+        updatedDoc: doc
+      }))
+    );
+    return result;
+  }
+
+  /**
+   * Updates a user config. If the user has collaborators, those collaborators
+   * will have the current user added to their collaborators list.
+   *
+   * @override
+   */
+  async update(
+    updatedDoc: Partial<DashboardUserConfig>
+  ): Promise<UpdateResult<DashboardUserConfig>> {
+    // Get the config before the update
+    const originalDoc = await super.get({ _id: updatedDoc._id });
+    const result = await super.update(updatedDoc);
+    if (originalDoc) {
+      await this.updateCollaboratorsIfNeeded([
+        { originalDoc, updatedDoc: updatedDoc as DashboardUserConfig }
+      ]);
+    }
+    return result;
+  }
+
+  async updateMany(
+    updatedDocs: Partial<DashboardUserConfig>[]
+  ): Promise<BulkWriteResult> {
+    const docIds: ObjectId[] = [];
+    updatedDocs.forEach((doc) => {
+      if (doc._id) {
+        docIds.push(doc._id);
+      }
+    });
+    const originalDocs = await super.getList(docIds);
+    const result = await super.updateMany(updatedDocs);
+    await this.updateCollaboratorsIfNeeded(
+      originalDocs.map((originalDoc, index) => ({
+        originalDoc,
+        updatedDoc: updatedDocs[index] as DashboardUserConfig
+      }))
+    );
+    return result;
+  }
+
+  /**
    * Gets the config for a given user.
    * @param userId The ID of the user to get the config for.
    */
@@ -69,5 +164,67 @@ export default class DashboardUserConfigRepository extends DashboardBaseReposito
     const collection = await this.getCollection();
     const result = await collection.findOne({ userId });
     return result as DashboardUserConfig | null;
+  }
+
+  /**
+   * Updates the user configs for the collaborators of the provided user
+   * configs.
+   *
+   * If a collaborator is removed from a user config, the collaborator will
+   * have the user removed from their collaborators list.
+   *
+   * If a collaborator is added to a user config, the collaborator will have
+   * the user added to their collaborators list.
+   */
+  private async updateCollaboratorsIfNeeded(
+    docSets: Array<{
+      originalDoc: DashboardUserConfig;
+      updatedDoc: Partial<DashboardUserConfig>;
+    }>
+  ) {
+    const bulkOps: AnyBulkWriteOperation<DashboardUserConfig>[] = [];
+    // For each set of documents
+    docSets.forEach((docSet) => {
+      const originalCollaborators = docSet.originalDoc.collaborators;
+      const updatedCollaborators = docSet.updatedDoc.collaborators;
+      if (
+        updatedCollaborators &&
+        !this.objectIdArraysAreEqual(
+          originalCollaborators,
+          updatedCollaborators
+        )
+      ) {
+        // For each original collaborator, if they are not in the updated list,
+        // remove the user from their collaborators list
+        originalCollaborators.forEach((collaboratorId) => {
+          if (!updatedCollaborators.includes(collaboratorId)) {
+            bulkOps.push({
+              updateOne: {
+                filter: { userId: collaboratorId },
+                update: { $pull: { collaborators: docSet.originalDoc.userId } }
+              }
+            });
+          }
+        });
+        // For each updated collaborator, if they are not in the original list,
+        // add the user to their collaborators list
+        updatedCollaborators.forEach((collaboratorId) => {
+          if (!originalCollaborators.includes(collaboratorId)) {
+            bulkOps.push({
+              updateOne: {
+                filter: { userId: collaboratorId },
+                update: {
+                  $addToSet: { collaborators: docSet.originalDoc.userId }
+                }
+              }
+            });
+          }
+        });
+      }
+    });
+    if (bulkOps.length !== 0) {
+      const collection = await this.getCollection();
+      await collection.bulkWrite(bulkOps);
+    }
   }
 }

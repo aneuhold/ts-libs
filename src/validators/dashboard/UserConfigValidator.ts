@@ -29,6 +29,15 @@ export default class DashboardUserConfigValidator extends IValidator<DashboardUs
         newUserConfig
       );
     }
+    if (newUserConfig.collaborators.length > 0) {
+      const collaborators = await userRepo.getList(newUserConfig.collaborators);
+      if (collaborators.length !== newUserConfig.collaborators.length) {
+        ErrorUtils.throwError(
+          `Some collaborators not found. Expected ${newUserConfig.collaborators.length}, found ${collaborators.length}`,
+          newUserConfig
+        );
+      }
+    }
   }
 
   async validateUpdateObject(
@@ -40,6 +49,21 @@ export default class DashboardUserConfigValidator extends IValidator<DashboardUs
         `No _id defined for DashboardUserConfig update.`,
         updatedUserConfig
       );
+    }
+    if (
+      updatedUserConfig.collaborators &&
+      updatedUserConfig.collaborators.length > 0
+    ) {
+      const userRepo = UserRepository.getRepo();
+      const collaborators = await userRepo.getList(
+        updatedUserConfig.collaborators
+      );
+      if (collaborators.length !== updatedUserConfig.collaborators.length) {
+        ErrorUtils.throwError(
+          `Some collaborators not found. Expected ${updatedUserConfig.collaborators.length}, found ${collaborators.length}`,
+          updatedUserConfig
+        );
+      }
     }
   }
 
@@ -61,7 +85,22 @@ export default class DashboardUserConfigValidator extends IValidator<DashboardUs
         }
         return false;
       },
-      documentValidator: validateDashboardUserConfig,
+      documentValidator: (userConfig) => {
+        const { updatedDoc, errors } = validateDashboardUserConfig(userConfig);
+        const collaboratorIds = [...userConfig.collaborators];
+        collaboratorIds.forEach((userId) => {
+          if (!allUserIds[userId.toString()]) {
+            errors.push(
+              `User with ID: ${userId} does not exist in collaborators property of Dashboard User Config with ID: ${userConfig._id}.`
+            );
+            // eslint-disable-next-line no-param-reassign
+            updatedDoc.collaborators = updatedDoc.collaborators.filter(
+              (id) => id.toString() !== userId.toString()
+            );
+          }
+        });
+        return { updatedDoc, errors };
+      },
       deletionFunction: async (docIdsToDelete: ObjectId[]) => {
         await userConfigRepo.deleteList(docIdsToDelete);
       },

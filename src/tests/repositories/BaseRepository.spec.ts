@@ -17,7 +17,7 @@ it('can create a new document and delete it', async () => {
   expect(createResult).toBeTruthy();
 
   await cleanupDoc(userRepository, newUser);
-});
+}, 10000);
 
 // -- Manual Database Operations Section -- //
 
@@ -44,7 +44,7 @@ it.skip('can create a dashboard config for a user', async () => {
 
 it.skip(`can create a new task for a user`, async () => {
   const userRepo = UserRepository.getRepo();
-  const user = await userRepo.get({ userName: 'usernameHer' });
+  const user = await userRepo.get({ userName: 'usernameHere' });
   expect(user).toBeTruthy();
 
   if (user) {

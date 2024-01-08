@@ -1,9 +1,11 @@
 import { BaseDocument } from '@aneuhold/core-ts-db-lib';
 import {
+  AnyBulkWriteOperation,
   BulkWriteResult,
   Collection,
   DeleteResult,
   Filter,
+  OptionalUnlessRequiredId,
   UpdateResult
 } from 'mongodb';
 import { Document, ObjectId } from 'bson';
@@ -20,7 +22,7 @@ import RepoSubscriptionService, {
 export default abstract class BaseRepository<TBasetype extends BaseDocument> {
   protected collectionName: string;
 
-  private collection?: Collection;
+  private collection?: Collection<TBasetype>;
 
   protected subscribers =
     RepoSubscriptionService.getDefaultSubscribers<TBasetype>();
@@ -59,9 +61,13 @@ export default abstract class BaseRepository<TBasetype extends BaseDocument> {
    * in this repository.
    */
   subscribeToChanges(listeners: RepoListeners<TBasetype>) {
-    const { insertNew, updateMany, deleteOne, deleteList } = listeners;
+    const { insertNew, updateOne, updateMany, deleteOne, deleteList } =
+      listeners;
     if (insertNew) {
       this.subscribers.insertNew.push(insertNew);
+    }
+    if (updateOne) {
+      this.subscribers.updateOne.push(updateOne);
     }
     if (updateMany) {
       this.subscribers.updateMany.push(updateMany);
@@ -77,7 +83,9 @@ export default abstract class BaseRepository<TBasetype extends BaseDocument> {
   async insertNew(newDoc: TBasetype): Promise<TBasetype | null> {
     const collection = await this.getCollection();
     await this.validator.validateNewObject(newDoc);
-    const insertResult = await collection.insertOne(newDoc);
+    const insertResult = await collection.insertOne(
+      newDoc as OptionalUnlessRequiredId<TBasetype>
+    );
     if (!insertResult.acknowledged) {
       return null;
     }
@@ -92,7 +100,9 @@ export default abstract class BaseRepository<TBasetype extends BaseDocument> {
     await Promise.all(
       newDocs.map((doc) => this.validator.validateNewObject(doc))
     );
-    const insertResult = await collection.insertMany(newDocs);
+    const insertResult = await collection.insertMany(
+      newDocs as OptionalUnlessRequiredId<TBasetype>[]
+    );
     if (!insertResult.acknowledged) {
       return [];
     }
@@ -139,12 +149,14 @@ export default abstract class BaseRepository<TBasetype extends BaseDocument> {
     await Promise.all(
       this.subscribers.deleteOne.map((subscriber) => subscriber(docId))
     );
-    return collection.deleteOne({ _id: docId });
+    return collection.deleteOne({ _id: docId } as Filter<TBasetype>);
   }
 
   async deleteList(docIds: ObjectId[]): Promise<DeleteResult> {
     const collection = await this.getCollection();
-    const deleteResult = collection.deleteMany({ _id: { $in: docIds } });
+    const deleteResult = collection.deleteMany({
+      _id: { $in: docIds }
+    } as Filter<TBasetype>);
     await Promise.all(
       this.subscribers.deleteList.map((subscriber) => subscriber(docIds))
     );
@@ -172,7 +184,13 @@ export default abstract class BaseRepository<TBasetype extends BaseDocument> {
 
     const cleanedDoc = this.cleanUpdateObject(updatedDoc);
 
-    return collection.updateOne({ _id: docId }, { $set: cleanedDoc });
+    const result = collection.updateOne({ _id: docId } as Filter<TBasetype>, {
+      $set: cleanedDoc
+    });
+    await Promise.all(
+      this.subscribers.updateOne.map((subscriber) => subscriber(updatedDoc))
+    );
+    return result;
   }
 
   /**
@@ -197,7 +215,11 @@ export default abstract class BaseRepository<TBasetype extends BaseDocument> {
           update: { $set: cleanedDoc }
         }
       };
-    });
+    }) as AnyBulkWriteOperation<TBasetype>[];
+
+    await Promise.all(
+      this.subscribers.updateMany.map((subscriber) => subscriber(updatedDocs))
+    );
 
     return collection.bulkWrite(bulkOps);
   }
@@ -215,6 +237,16 @@ export default abstract class BaseRepository<TBasetype extends BaseDocument> {
       return filter;
     }
     return { ...filter, ...this.defaultFilter };
+  }
+
+  protected objectIdArraysAreEqual(
+    array1: ObjectId[],
+    array2: ObjectId[]
+  ): boolean {
+    if (array1.length !== array2.length) {
+      return false;
+    }
+    return array1.every((id) => array2.includes(id));
   }
 
   /**

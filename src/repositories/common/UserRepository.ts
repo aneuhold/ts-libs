@@ -1,4 +1,5 @@
-import { User } from '@aneuhold/core-ts-db-lib';
+import { User, UserCTO } from '@aneuhold/core-ts-db-lib';
+import { ObjectId } from 'bson';
 import BaseRepository from '../BaseRepository';
 import UserValidator from '../../validators/common/UserValidator';
 import ApiKeyRepository from './ApiKeyRepository';
@@ -33,5 +34,24 @@ export default class UserRepository extends BaseRepository<User> {
       UserRepository.singletonInstance = new UserRepository();
     }
     return UserRepository.singletonInstance;
+  }
+
+  async getUserCTOByUsername(userName: string): Promise<UserCTO | null> {
+    const user = await this.get({ userName });
+    if (user) {
+      return {
+        userName: user.userName,
+        _id: user._id
+      };
+    }
+    return null;
+  }
+
+  async getUserCTOsByIds(userIds: ObjectId[]): Promise<UserCTO[]> {
+    const users = await this.getList(userIds);
+    return users.map((user) => ({
+      userName: user.userName,
+      _id: user._id
+    }));
   }
 }

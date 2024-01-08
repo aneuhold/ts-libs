@@ -9,6 +9,7 @@ import DashboardBaseRepository from './DashboardBaseRepository';
 import CleanDocument from '../../util/DocumentCleaner';
 import { RepoListeners } from '../../services/RepoSubscriptionService';
 import DashboardTaskValidator from '../../validators/dashboard/TaskValidator';
+import DashboardUserConfigRepository from './DashboardUserConfigRepository';
 
 /**
  * The repository that contains {@link DashboardTask} documents.
@@ -29,11 +30,15 @@ export default class DashboardTaskRepository extends DashboardBaseRepository<Das
     );
   }
 
+  /**
+   * Doesn't handle removing sharedWith references, as that should be handled
+   * by the User Config updates.
+   */
   static getListenersForUserRepo(): RepoListeners<User> {
     const taskRepo = DashboardTaskRepository.getRepo();
     return {
       deleteOne: async (userId) => {
-        await (await taskRepo.getCollection()).deleteOne({ userId });
+        await (await taskRepo.getCollection()).deleteMany({ userId });
       },
       deleteList: async (userIds) => {
         await (
@@ -81,15 +86,31 @@ export default class DashboardTaskRepository extends DashboardBaseRepository<Das
   }
 
   /**
-   * Gets all tasks for a given user.
+   * Gets all tasks for a given user. Only the tasks that are owned by the user
+   * or shared with the user, while they have the user ID as a collaborator,
+   * will be returned.
+   *
    * @param userId The ID of the user to get tasks for.
    */
   async getAllForUser(userId: ObjectId): Promise<DashboardTask[]> {
+    const userConfigRepo = DashboardUserConfigRepository.getRepo();
+    const userConfig = await userConfigRepo.get({ userId });
+    if (!userConfig) {
+      return [];
+    }
+    const { collaborators } = userConfig;
     const collection = await this.getCollection();
     const filter = {
       $and: [
         this.getFilterWithDefault(),
-        { $or: [{ userId }, { sharedWith: userId }] }
+        {
+          $or: [
+            { userId },
+            {
+              $and: [{ sharedWith: userId }, { userId: { $in: collaborators } }]
+            }
+          ]
+        }
       ]
     };
     const result = await collection.find(filter).toArray();
