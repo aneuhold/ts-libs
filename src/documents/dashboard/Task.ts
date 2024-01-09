@@ -98,6 +98,11 @@ function getChildrenTaskIds(
  * it seems better to always automatically share subtasks. In a theoretical sense,
  * sharing a task with someone seems to imply the shared ownership of completing
  * the overall task, including all the subtasks.
+ *
+ * Recurring Tasks:
+ *
+ * - The user sets a task as recurring with a frequency? Only that task is marked, because when the recurrence comes up, the frontend will update that task and all sub tasks.
+ * - The date + time for the recurrence happens? If the users browser is open, the frontend will trigger the update ideally. This needs to be checked if this can be done in a performant way.
  */
 export default class DashboardTask
   extends BaseDocumentWithType
@@ -113,8 +118,16 @@ export default class DashboardTask
   userId: ObjectId;
 
   /**
-   * The different users this task is shared with. This should be indexed
-   * somehow.
+   * What happens when:
+   *
+   * - A task is shared that has sub tasks? All the subtasks are shared as well from the frontend. This in case the frontend fails to make a connection to the backend, the state will still be correct.
+   * - A subtask of a shared task is deleted? It is deleted like normal
+   * - A user that has been shared a task adds a subtask? The subtask gets the same owner as the parent shared task.
+   * - A shared task with subtasks is unshared? The frontend will need to make the updates and send them to the backend.
+   * - A user removes a collaborator and they have shared tasks with that
+   * collaborator? Nothing happens to the tasks. That way, if they add the
+   * collaborator back it will return to normal. But the frontend needs to
+   * double check for this when displaying things.
    */
   sharedWith: ObjectId[] = [];
 
