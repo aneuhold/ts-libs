@@ -138,7 +138,8 @@ export default class DashboardTask
   sharedWith: ObjectId[] = [];
 
   /**
-   * The recurrence info for this task if there is any.
+   * The recurrence info for this task if there is any. This is ignored
+   * if {@link parentRecurringTask} is set.
    */
   recurrenceInfo?: RecurrenceInfo;
 
