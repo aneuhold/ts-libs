@@ -9,6 +9,13 @@ import DashboardTask, {
 import DashboardUserConfig, {
   validateDashboardUserConfig
 } from './documents/dashboard/UserConfig';
+import {
+  RecurrenceBasis,
+  RecurrenceEffect,
+  RecurrenceFrequency,
+  RecurrenceFrequencyType,
+  RecurrenceInfo
+} from './embedded-types/dashboard/task/RecurrenceInfo';
 import RequiredUserId from './schemas/required-refs/RequiredUserId';
 import { DocumentValidator } from './schemas/validators/DocumentValidator';
 
@@ -21,6 +28,9 @@ export {
   DashboardUserConfig,
   validateDashboardUserConfig,
   DashboardTask,
+  RecurrenceFrequencyType,
+  RecurrenceBasis,
+  RecurrenceEffect,
   validateDashboardTask,
   getDashboardTaskChildrenIds,
   BaseDocument,
@@ -29,4 +39,4 @@ export {
 };
 
 // Export TypeScript types where needed
-export type { DocumentValidator, UserCTO };
+export type { DocumentValidator, UserCTO, RecurrenceInfo, RecurrenceFrequency };

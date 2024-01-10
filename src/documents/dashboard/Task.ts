@@ -3,6 +3,10 @@ import BaseDocumentWithType from '../BaseDocumentWithType';
 import RequiredUserId from '../../schemas/required-refs/RequiredUserId';
 import Validate from '../../schemas/validators/ValidateUtil';
 import { DocumentValidator } from '../../schemas/validators/DocumentValidator';
+import {
+  RecurrenceInfo,
+  validateRecurrenceInfo
+} from '../../embedded-types/dashboard/task/RecurrenceInfo';
 
 export const validateDashboardTask: DocumentValidator<DashboardTask> = (
   task: DashboardTask
@@ -15,12 +19,14 @@ export const validateDashboardTask: DocumentValidator<DashboardTask> = (
   validate.boolean('completed', exampleTask.completed);
   validate.optionalString('description');
   validate.array('sharedWith', exampleTask.sharedWith);
+  validate.optionalObject('recurrenceInfo');
   validate.array('tags', exampleTask.tags);
   validate.string('category', exampleTask.category);
   validate.object('createdDate', exampleTask.createdDate);
   validate.object('lastUpdatedDate', exampleTask.lastUpdatedDate);
   validate.optionalObject('startDate');
   validate.optionalObject('dueDate');
+  validateRecurrenceInfo(task, errors);
 
   return { updatedDoc: task, errors };
 };
@@ -130,6 +136,8 @@ export default class DashboardTask
    * double check for this when displaying things.
    */
   sharedWith: ObjectId[] = [];
+
+  recurrenceInfo?: RecurrenceInfo;
 
   title = '';
 
