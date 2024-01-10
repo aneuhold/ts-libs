@@ -137,7 +137,17 @@ export default class DashboardTask
    */
   sharedWith: ObjectId[] = [];
 
+  /**
+   * The recurrence info for this task if there is any.
+   */
   recurrenceInfo?: RecurrenceInfo;
+
+  /**
+   * The ID of the parent recurring task if there is one. Users should not
+   * be able to share the current task if this is set to a value. It would
+   * get confusing for the user it was shared with.
+   */
+  parentRecurringTask?: ObjectId;
 
   title = '';
 
