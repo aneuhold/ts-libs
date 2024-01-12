@@ -148,7 +148,7 @@ export default class DashboardTask
    * be able to share the current task if this is set to a value. It would
    * get confusing for the user it was shared with.
    */
-  parentRecurringTask?: ObjectId;
+  parentRecurringTaskId?: ObjectId;
 
   title = '';
 
