@@ -44,8 +44,11 @@ export type RecurrenceFrequency = {
   /**
    * The set of week days that the task should recur on. This is 0-6 with 0
    * being Sunday.
+   *
+   * The idea that each of these values is unique needs to be enforced on the
+   * frontend.
    */
-  weekDaySet?: Set<number>;
+  weekDaySet?: number[];
   everyXWeekdayOfMonth?: {
     weekDay: number;
     /**

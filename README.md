@@ -10,6 +10,10 @@ Project-specific documents can be held in a single collection. So those should i
 
 When different document types are held under a specific collection, they should get their own folder.
 
+## Guidelines
+
+- Note that documents cannot have really special types or classes with functions. For example `Set` cannot be used.
+
 ## Updating an existing document
 
 If a property is being moved or a new required property is added, then take the
