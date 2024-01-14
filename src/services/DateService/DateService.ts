@@ -63,13 +63,16 @@ export default class DateService {
   }
 
   /**
-   * Gets the last day of the month for the provided date. This will return
-   * the date at exactly 00:00 on the last day of the month.
+   * Gets the last day of the month for the provided date. This will retain the
+   * time that was provided in the date.
    */
   static getLastDayOfGivenMonth(date: Date): Date {
     // Setting the day to 0, makes the date move to the last day of the
     // previous month.
-    return new Date(date.getFullYear(), date.getMonth() + 1, 0);
+    const newDate = new Date(date);
+    newDate.setMonth(newDate.getMonth() + 1);
+    newDate.setDate(0);
+    return newDate;
   }
 
   /**
@@ -109,6 +112,7 @@ export default class DateService {
 
   /**
    * Gets the date of the provided weekday in the provided week of the month.
+   * Retains the time that was provided in the date.
    *
    * For example, the 2nd Monday of the month, or the last Saturday of the
    * month.
@@ -132,7 +136,8 @@ export default class DateService {
       }
       return resultDate;
     }
-    const firstDayOfMonth = new Date(date.getFullYear(), date.getMonth(), 1);
+    const firstDayOfMonth = new Date(date);
+    firstDayOfMonth.setDate(1);
     let resultDate = new Date(firstDayOfMonth);
     resultDate.setDate(
       resultDate.getDate() + this.getDaysUntilWeekDay(firstDayOfMonth, day)

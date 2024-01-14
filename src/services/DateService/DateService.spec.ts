@@ -59,6 +59,15 @@ describe('DateService', () => {
       expect(result).toEqual(new Date(2024, 0, 16));
     });
 
+    it('should successfully get the 1st Saturday of January 2024', () => {
+      const result = DateService.getWeekDayOfXWeekOfMonth(
+        new Date(2024, 0, 1),
+        6,
+        1
+      );
+      expect(result).toEqual(new Date(2024, 0, 6));
+    });
+
     it('should successfully get the 1st sunday of January 2024', () => {
       const result = DateService.getWeekDayOfXWeekOfMonth(
         new Date(2024, 0, 1),
