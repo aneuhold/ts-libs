@@ -15,6 +15,11 @@
     "@jridgewell/gen-mapping" "^0.3.0"
     "@jridgewell/trace-mapping" "^0.3.9"
 
+"@aneuhold/core-ts-lib@^1.1.10":
+  version "1.1.10"
+  resolved "https://registry.yarnpkg.com/@aneuhold/core-ts-lib/-/core-ts-lib-1.1.10.tgz#ceb738d06b950053ad9b0327163e62f46a8d450f"
+  integrity sha512-UNoYKZ41mXZVGCDGAkQegiiEQbvPYQIDF+xGH+XLhos3sPGjJ91wQZM8WulrrmKU8MJMHuCgwjd8pKl3z0eO/g==
+
 "@babel/code-frame@^7.0.0", "@babel/code-frame@^7.12.13", "@babel/code-frame@^7.22.13", "@babel/code-frame@^7.23.5":
   version "7.23.5"
   resolved "https://registry.yarnpkg.com/@babel/code-frame/-/code-frame-7.23.5.tgz#9009b69a8c602293476ad598ff53e4562e15c244"

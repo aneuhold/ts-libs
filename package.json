@@ -26,12 +26,15 @@
     "build": "tsc",
     "watch": "tsc -w",
     "link:local": "cd lib && yarn link",
+    "link:core-ts-lib": "yarn link @aneuhold/core-ts-lib",
     "unlink:local": "cd lib && yarn unlink",
+    "unlink:core-ts-lib": "yarn unlink @aneuhold/core-ts-lib && yarn install --force",
     "upgrade:all": "yarn upgrade --latest",
     "upgrade:core": "yarn upgrade --latest --pattern @aneuhold",
     "test": "jest"
   },
   "dependencies": {
+    "@aneuhold/core-ts-lib": "^1.1.10",
     "bson": "^6.2.0"
   },
   "devDependencies": {

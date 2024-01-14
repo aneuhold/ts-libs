@@ -41,6 +41,9 @@
     "@typescript-eslint/no-shadow": ["error"],
     "no-use-before-define": "off",
     "default-param-last": "off",
+    // Disabled because updating function parameters is kind of nice sometimes
+    // instead of always copying the object when it isn't necessary
+    "no-param-reassign": "off",
     "no-promise-executor-return": "off",
     // Turned off because mongoDB is being used and that needs the underscore
     "no-underscore-dangle": "off"

@@ -32,64 +32,6 @@ export const validateDashboardTask: DocumentValidator<DashboardTask> = (
 };
 
 /**
- * Gets all the children task IDs for the given parent task IDs.
- */
-export const getDashboardTaskChildrenIds = (
-  allUserTasks: DashboardTask[],
-  parentTaskIds: ObjectId[]
-): ObjectId[] => {
-  const parentToTaskIdsDict: Record<string, string[]> = {};
-  const taskIdToTaskDict: Record<string, DashboardTask> = {};
-  allUserTasks.forEach((task) => {
-    taskIdToTaskDict[task._id.toString()] = task;
-    if (task.parentTaskId) {
-      if (!parentToTaskIdsDict[task.parentTaskId.toString()]) {
-        parentToTaskIdsDict[task.parentTaskId.toString()] = [];
-      }
-      parentToTaskIdsDict[task.parentTaskId.toString()].push(
-        task._id.toString()
-      );
-    }
-  });
-  const childrenIds: ObjectId[] = [];
-  parentTaskIds.forEach((taskId) => {
-    const task = taskIdToTaskDict[taskId.toString()];
-    if (task) {
-      const childrenTaskIds = getChildrenTaskIds(
-        taskIdToTaskDict,
-        parentToTaskIdsDict,
-        taskId.toString()
-      );
-      childrenIds.push(...childrenTaskIds.map((id) => new ObjectId(id)));
-    }
-  });
-  return childrenIds;
-};
-
-function getChildrenTaskIds(
-  taskIdToTaskDict: Record<string, DashboardTask>,
-  parentToTaskIdsDict: Record<string, string[]>,
-  taskId: string
-) {
-  const childrenIds = parentToTaskIdsDict[taskId];
-  if (!childrenIds) {
-    return [];
-  }
-  childrenIds.forEach((childId) => {
-    const childTask = taskIdToTaskDict[childId];
-    if (childTask) {
-      const grandchildrenIds = getChildrenTaskIds(
-        taskIdToTaskDict,
-        parentToTaskIdsDict,
-        childId
-      );
-      childrenIds.push(...grandchildrenIds);
-    }
-  });
-  return childrenIds;
-}
-
-/**
  * When thinking about the logic of tasks, the following thoughts come to mind:
  *
  * What would you expect a task manager to do in the case that you have a task

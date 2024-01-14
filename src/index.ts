@@ -3,7 +3,6 @@ import BaseDocumentWithType from './documents/BaseDocumentWithType';
 import ApiKey, { validateApiKey } from './documents/common/ApiKey';
 import User, { UserCTO, validateUser } from './documents/common/User';
 import DashboardTask, {
-  getDashboardTaskChildrenIds,
   validateDashboardTask
 } from './documents/dashboard/Task';
 import DashboardUserConfig, {
@@ -18,6 +17,7 @@ import {
 } from './embedded-types/dashboard/task/RecurrenceInfo';
 import RequiredUserId from './schemas/required-refs/RequiredUserId';
 import { DocumentValidator } from './schemas/validators/DocumentValidator';
+import DashboardTaskService from './services/dashboard/TaskService';
 
 // Export all the functions and classes from this library
 export {
@@ -32,7 +32,7 @@ export {
   RecurrenceBasis,
   RecurrenceEffect,
   validateDashboardTask,
-  getDashboardTaskChildrenIds,
+  DashboardTaskService,
   BaseDocument,
   BaseDocumentWithType,
   RequiredUserId
