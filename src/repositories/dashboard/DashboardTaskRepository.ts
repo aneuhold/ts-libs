@@ -1,7 +1,7 @@
 import {
   DashboardTask,
-  User,
-  getDashboardTaskChildrenIds
+  DashboardTaskService,
+  User
 } from '@aneuhold/core-ts-db-lib';
 import { ObjectId } from 'bson';
 import { DeleteResult } from 'mongodb';
@@ -130,7 +130,10 @@ export default class DashboardTaskRepository extends DashboardBaseRepository<Das
       return taskIds;
     }
     const allUserTasks = await this.getAllForUser(initialTask.userId);
-    const childrenIds = getDashboardTaskChildrenIds(allUserTasks, taskIds);
+    const childrenIds = DashboardTaskService.getChildrenIds(
+      allUserTasks,
+      taskIds
+    );
     return [...taskIds, ...childrenIds];
   }
 }
