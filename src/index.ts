@@ -9,6 +9,7 @@ import DashboardUserConfig, {
   validateDashboardUserConfig
 } from './documents/dashboard/UserConfig';
 import {
+  ParentRecurringTaskInfo,
   RecurrenceBasis,
   RecurrenceEffect,
   RecurrenceFrequency,
@@ -39,4 +40,10 @@ export {
 };
 
 // Export TypeScript types where needed
-export type { DocumentValidator, UserCTO, RecurrenceInfo, RecurrenceFrequency };
+export type {
+  DocumentValidator,
+  UserCTO,
+  RecurrenceInfo,
+  RecurrenceFrequency,
+  ParentRecurringTaskInfo
+};

@@ -1,3 +1,4 @@
+import { ObjectId } from 'bson';
 import DashboardTask from '../../../documents/dashboard/Task';
 
 export function validateRecurrenceInfo(task: DashboardTask, errors: string[]) {
@@ -92,3 +93,9 @@ export enum RecurrenceEffect {
    */
   stack = 'stack'
 }
+
+export type ParentRecurringTaskInfo = {
+  taskId: ObjectId;
+  startDate?: Date;
+  dueDate?: Date;
+};

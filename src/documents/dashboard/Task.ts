@@ -4,6 +4,7 @@ import RequiredUserId from '../../schemas/required-refs/RequiredUserId';
 import Validate from '../../schemas/validators/ValidateUtil';
 import { DocumentValidator } from '../../schemas/validators/DocumentValidator';
 import {
+  ParentRecurringTaskInfo,
   RecurrenceInfo,
   validateRecurrenceInfo
 } from '../../embedded-types/dashboard/task/RecurrenceInfo';
@@ -91,11 +92,7 @@ export default class DashboardTask
    * If this is set, then the current tasks's recurrence info should be the
    * same as the parent recurring task.
    */
-  parentRecurringTaskInfo?: {
-    taskId: ObjectId;
-    startDate?: Date;
-    dueDate?: Date;
-  };
+  parentRecurringTaskInfo?: ParentRecurringTaskInfo;
 
   title = '';
 
