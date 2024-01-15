@@ -18,6 +18,7 @@ import {
 } from './embedded-types/dashboard/task/RecurrenceInfo';
 import RequiredUserId from './schemas/required-refs/RequiredUserId';
 import { DocumentValidator } from './schemas/validators/DocumentValidator';
+import DocumentService from './services/DocumentService';
 import DashboardTaskService from './services/dashboard/TaskService';
 
 // Export all the functions and classes from this library
@@ -36,7 +37,8 @@ export {
   DashboardTaskService,
   BaseDocument,
   BaseDocumentWithType,
-  RequiredUserId
+  RequiredUserId,
+  DocumentService
 };
 
 // Export TypeScript types where needed
