@@ -127,7 +127,25 @@ export default class DashboardTaskService {
    */
   static updateDatesForRecurrence(task: DashboardTask): void {
     // Initial basic validation
-    if (
+    if (!task.recurrenceInfo) {
+      return;
+    }
+    // Validation for dates based on parent
+    if (task.parentRecurringTaskInfo) {
+      if (
+        // No dates to move forward
+        (!task.dueDate && !task.startDate) ||
+        // Invalid start date recurrence basis
+        (task.recurrenceInfo.recurrenceBasis === 'startDate' &&
+          !task.parentRecurringTaskInfo.startDate) ||
+        // Invalid due date recurrence basis
+        (task.recurrenceInfo.recurrenceBasis === 'dueDate' &&
+          !task.parentRecurringTaskInfo.dueDate)
+      ) {
+        return;
+      }
+      // Validation for moving dates based on their own recurrence
+    } else if (
       !task.recurrenceInfo ||
       (task.recurrenceInfo.recurrenceBasis === 'startDate' &&
         !task.startDate) ||
@@ -136,42 +154,52 @@ export default class DashboardTaskService {
       return;
     }
 
-    // Start Date Basis
-    if (task.recurrenceInfo.recurrenceBasis === 'startDate') {
-      if (!task.startDate) {
-        return;
+    let diff = 0;
+
+    if (task.parentRecurringTaskInfo) {
+      if (task.recurrenceInfo.recurrenceBasis === 'startDate') {
+        diff = this.getDiffForDateUpdate(
+          task.parentRecurringTaskInfo.startDate,
+          task.recurrenceInfo.frequency
+        );
+      } else {
+        diff = this.getDiffForDateUpdate(
+          task.parentRecurringTaskInfo.dueDate,
+          task.recurrenceInfo.frequency
+        );
       }
-      const nextRecurDate = this.getNextFrequencyDate(
+    } else if (task.recurrenceInfo.recurrenceBasis === 'startDate') {
+      diff = this.getDiffForDateUpdate(
         task.startDate,
         task.recurrenceInfo.frequency
       );
-      if (!nextRecurDate) {
-        return;
-      }
-      const diff = nextRecurDate.getTime() - task.startDate.getTime();
-      task.startDate = new Date(task.startDate.getTime() + diff);
-      if (task.dueDate) {
-        task.dueDate = new Date(task.dueDate.getTime() + diff);
-      }
-      return;
+    } else {
+      diff = this.getDiffForDateUpdate(
+        task.dueDate,
+        task.recurrenceInfo.frequency
+      );
     }
 
-    // Due Date Basis
-    if (!task.dueDate) {
-      return;
-    }
-    const nextRecurDate = this.getNextFrequencyDate(
-      task.dueDate,
-      task.recurrenceInfo.frequency
-    );
-    if (!nextRecurDate) {
-      return;
-    }
-    const diff = nextRecurDate.getTime() - task.dueDate.getTime();
-    task.dueDate = new Date(task.dueDate.getTime() + diff);
     if (task.startDate) {
       task.startDate = new Date(task.startDate.getTime() + diff);
     }
+    if (task.dueDate) {
+      task.dueDate = new Date(task.dueDate.getTime() + diff);
+    }
+  }
+
+  private static getDiffForDateUpdate(
+    basisDate: Date | undefined,
+    frequency: RecurrenceFrequency
+  ) {
+    if (!basisDate) {
+      return 0;
+    }
+    const nextFrequencyDate = this.getNextFrequencyDate(basisDate, frequency);
+    if (!nextFrequencyDate) {
+      return 0;
+    }
+    return nextFrequencyDate.getTime() - basisDate.getTime();
   }
 
   private static getChildrenTaskIds(

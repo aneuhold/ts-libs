@@ -26,6 +26,7 @@ export const validateDashboardTask: DocumentValidator<DashboardTask> = (
   validate.object('lastUpdatedDate', exampleTask.lastUpdatedDate);
   validate.optionalObject('startDate');
   validate.optionalObject('dueDate');
+  validate.optionalObject('parentRecurringTaskInfo');
   validateRecurrenceInfo(task, errors);
 
   return { updatedDoc: task, errors };
@@ -80,17 +81,21 @@ export default class DashboardTask
   sharedWith: ObjectId[] = [];
 
   /**
-   * The recurrence info for this task if there is any. This is ignored
-   * if {@link parentRecurringTask} is set.
+   * The recurrence info for this task if there is any.
    */
   recurrenceInfo?: RecurrenceInfo;
 
   /**
-   * The ID of the parent recurring task if there is one. Users should not
-   * be able to share the current task if this is set to a value. It would
-   * get confusing for the user it was shared with.
+   * The recurring task info for the parent recurring task if there is one.
+   *
+   * If this is set, then the current tasks's recurrence info should be the
+   * same as the parent recurring task.
    */
-  parentRecurringTaskId?: ObjectId;
+  parentRecurringTaskInfo?: {
+    taskId: ObjectId;
+    startDate?: Date;
+    dueDate?: Date;
+  };
 
   title = '';
 

@@ -159,6 +159,30 @@ describe('DashboardTaskService', () => {
         expect(task.startDate).toEqual(new Date(2024, 0, 2));
       });
 
+      it('should update the start date correctly for daily recurrence on subtask', () => {
+        const task = new DashboardTask(new ObjectId());
+        task.startDate = new Date(2024, 0, 8);
+        task.dueDate = new Date(2024, 0, 13);
+        task.recurrenceInfo = {
+          frequency: {
+            type: RecurrenceFrequencyType.everyXTimeUnit,
+            everyXTimeUnit: {
+              timeUnit: 'day',
+              x: 1
+            }
+          },
+          recurrenceBasis: RecurrenceBasis.startDate,
+          recurrenceEffect: RecurrenceEffect.rollOnBasis
+        };
+        task.parentRecurringTaskInfo = {
+          taskId: new ObjectId(),
+          startDate: new Date(2024, 0, 1)
+        };
+        DashboardTaskService.updateDatesForRecurrence(task);
+        expect(task.startDate).toEqual(new Date(2024, 0, 9));
+        expect(task.dueDate).toEqual(new Date(2024, 0, 14));
+      });
+
       it('should update the start date correctly for a weekly recurrence', () => {
         const task = new DashboardTask(new ObjectId());
         task.startDate = new Date(2024, 0, 1);
