@@ -19,17 +19,8 @@ export default class DashboardTaskValidator extends IValidator<DashboardTask> {
         }. List searched was: ${JSON.stringify(userIds)}.`
       );
     }
-    // Check if the task has a parent, and if so, that it exists
-    if (newTask.parentTaskId) {
-      const parentTask = await DashboardTaskRepository.getRepo().get({
-        _id: newTask.parentTaskId
-      });
-      if (!parentTask) {
-        errors.push(
-          `Parent task with ID: ${newTask.parentTaskId} does not exist.`
-        );
-      }
-    }
+    // Do not check if it has a parent, becuase multiple could be inserted at
+    // once and the parent may not exist yet.
     if (errors.length > 0) {
       ErrorUtils.throwErrorList(errors, newTask);
     }

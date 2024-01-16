@@ -35,10 +35,10 @@
     "@aneuhold/core-ts-db-lib" "^1.0.8"
     "@aneuhold/core-ts-lib" "^1.1.9"
 
-"@aneuhold/core-ts-db-lib@^1.0.26":
-  version "1.0.26"
-  resolved "https://registry.yarnpkg.com/@aneuhold/core-ts-db-lib/-/core-ts-db-lib-1.0.26.tgz#4c63b8a6a25218b01b98f75b04c46d34b0781e65"
-  integrity sha512-8kguYau1Ls/fFWVLvEYjGQZ7UQHOBHOoPctbJgvocM9rCllVwArE9xQv3397JdbCrgmxdNI8+MHWShogNPTuhQ==
+"@aneuhold/core-ts-db-lib@^1.0.28":
+  version "1.0.28"
+  resolved "https://registry.yarnpkg.com/@aneuhold/core-ts-db-lib/-/core-ts-db-lib-1.0.28.tgz#ad0bb5f72885c45104f978107ab6e23682da6f9c"
+  integrity sha512-bIZkteqhURD4Y+ZrcDgtuFN+aI5Du+5LsmIU2dX2hvS3kSo3c1yjkCE8DGPK+ZfDfJfcoftisWBt92k8VlBpdQ==
   dependencies:
     "@aneuhold/core-ts-lib" "^1.1.10"
     bson "^6.2.0"
