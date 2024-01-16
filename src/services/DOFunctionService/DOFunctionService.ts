@@ -51,8 +51,9 @@ export default class DOFunctionService {
     try {
       const output = await handler(input);
       rawOutput.body = this.serializeOutput(output);
-    } catch (error) {
-      defaultOutput.errors.push(JSON.stringify(error));
+    } catch (e) {
+      const error = e as Error;
+      defaultOutput.errors.push(error.message);
       rawOutput.body = this.serializeOutput(defaultOutput);
     }
     return rawOutput;
