@@ -3,11 +3,18 @@ import BaseDocumentWithType from './documents/BaseDocumentWithType';
 import ApiKey, { validateApiKey } from './documents/common/ApiKey';
 import User, { UserCTO, validateUser } from './documents/common/User';
 import DashboardTask, {
+  DashboardTaskMap,
   validateDashboardTask
 } from './documents/dashboard/Task';
 import DashboardUserConfig, {
   validateDashboardUserConfig
 } from './documents/dashboard/UserConfig';
+import {
+  DashboardTaskListGlobalFilterSettings,
+  DashboardTaskFilterSettings,
+  DashboardTaskListFilterSettings,
+  getDefaultTaskListFilterSettings
+} from './embedded-types/dashboard/task/FilterSettings';
 import {
   ParentRecurringTaskInfo,
   RecurrenceBasis,
@@ -16,10 +23,19 @@ import {
   RecurrenceFrequencyType,
   RecurrenceInfo
 } from './embedded-types/dashboard/task/RecurrenceInfo';
+import {
+  DashboardTaskListGlobalSortSettings,
+  DashboardTaskListSortSettings,
+  DashboardTaskSortBy,
+  DashboardTaskSortDirection,
+  DashboardTaskSortSettings,
+  DashboardTaskSortSetting,
+  getDefaultTaskListSortSettings
+} from './embedded-types/dashboard/task/SortSettings';
 import RequiredUserId from './schemas/required-refs/RequiredUserId';
 import { DocumentValidator } from './schemas/validators/DocumentValidator';
 import DocumentService from './services/DocumentService';
-import DashboardTaskService from './services/dashboard/TaskService';
+import DashboardTaskService from './services/dashboard/Task/TaskService';
 
 // Export all the functions and classes from this library
 export {
@@ -33,6 +49,10 @@ export {
   RecurrenceFrequencyType,
   RecurrenceBasis,
   RecurrenceEffect,
+  DashboardTaskSortBy,
+  DashboardTaskSortDirection,
+  getDefaultTaskListFilterSettings,
+  getDefaultTaskListSortSettings,
   validateDashboardTask,
   DashboardTaskService,
   BaseDocument,
@@ -47,5 +67,13 @@ export type {
   UserCTO,
   RecurrenceInfo,
   RecurrenceFrequency,
-  ParentRecurringTaskInfo
+  ParentRecurringTaskInfo,
+  DashboardTaskMap,
+  DashboardTaskListGlobalFilterSettings,
+  DashboardTaskFilterSettings,
+  DashboardTaskListFilterSettings,
+  DashboardTaskListGlobalSortSettings,
+  DashboardTaskSortSettings,
+  DashboardTaskListSortSettings,
+  DashboardTaskSortSetting
 };

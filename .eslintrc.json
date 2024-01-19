@@ -46,7 +46,10 @@
     "no-param-reassign": "off",
     "no-promise-executor-return": "off",
     // Turned off because mongoDB is being used and that needs the underscore
-    "no-underscore-dangle": "off"
+    "no-underscore-dangle": "off",
+    // Disabled because in some cases it is absolutely pivotal that for loops
+    // are used instead of forEach in order to exit early.
+    "no-restricted-syntax": "off"
   },
   "settings": {
     "import/resolver": {

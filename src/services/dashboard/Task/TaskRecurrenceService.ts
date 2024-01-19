@@ -1,47 +1,11 @@
-import { ObjectId } from 'bson';
 import { DateService } from '@aneuhold/core-ts-lib';
-import DashboardTask from '../../documents/dashboard/Task';
 import {
   RecurrenceFrequency,
   RecurrenceFrequencyType
-} from '../../embedded-types/dashboard/task/RecurrenceInfo';
+} from '../../../embedded-types/dashboard/task/RecurrenceInfo';
+import DashboardTask from '../../../documents/dashboard/Task';
 
-export default class DashboardTaskService {
-  /**
-   * Gets all the children task IDs for the given parent task IDs.
-   */
-  static getChildrenIds = (
-    allUserTasks: DashboardTask[],
-    parentTaskIds: ObjectId[]
-  ): ObjectId[] => {
-    const parentToTaskIdsDict: Record<string, string[]> = {};
-    const taskIdToTaskDict: Record<string, DashboardTask> = {};
-    allUserTasks.forEach((task) => {
-      taskIdToTaskDict[task._id.toString()] = task;
-      if (task.parentTaskId) {
-        if (!parentToTaskIdsDict[task.parentTaskId.toString()]) {
-          parentToTaskIdsDict[task.parentTaskId.toString()] = [];
-        }
-        parentToTaskIdsDict[task.parentTaskId.toString()].push(
-          task._id.toString()
-        );
-      }
-    });
-    const childrenIds: ObjectId[] = [];
-    parentTaskIds.forEach((taskId) => {
-      const task = taskIdToTaskDict[taskId.toString()];
-      if (task) {
-        const childrenTaskIds = this.getChildrenTaskIds(
-          taskIdToTaskDict,
-          parentToTaskIdsDict,
-          taskId.toString()
-        );
-        childrenIds.push(...childrenTaskIds.map((id) => new ObjectId(id)));
-      }
-    });
-    return childrenIds;
-  };
-
+export default class DashboardTaskRecurrenceService {
   /**
    * Gets the next frequency date from the provided basis date. Returns null
    * if the provided frequency is in an invalid state.
@@ -200,28 +164,5 @@ export default class DashboardTaskService {
       return 0;
     }
     return nextFrequencyDate.getTime() - basisDate.getTime();
-  }
-
-  private static getChildrenTaskIds(
-    taskIdToTaskDict: Record<string, DashboardTask>,
-    parentToTaskIdsDict: Record<string, string[]>,
-    taskId: string
-  ) {
-    const childrenIds = parentToTaskIdsDict[taskId];
-    if (!childrenIds) {
-      return [];
-    }
-    childrenIds.forEach((childId) => {
-      const childTask = taskIdToTaskDict[childId];
-      if (childTask) {
-        const grandchildrenIds = this.getChildrenTaskIds(
-          taskIdToTaskDict,
-          parentToTaskIdsDict,
-          childId
-        );
-        childrenIds.push(...grandchildrenIds);
-      }
-    });
-    return childrenIds;
   }
 }

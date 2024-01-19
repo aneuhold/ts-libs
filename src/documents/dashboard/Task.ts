@@ -8,6 +8,8 @@ import {
   RecurrenceInfo,
   validateRecurrenceInfo
 } from '../../embedded-types/dashboard/task/RecurrenceInfo';
+import { DashboardTaskFilterSettings } from '../../embedded-types/dashboard/task/FilterSettings';
+import { DashboardTaskSortSettings } from '../../embedded-types/dashboard/task/SortSettings';
 
 export const validateDashboardTask: DocumentValidator<DashboardTask> = (
   task: DashboardTask
@@ -21,17 +23,24 @@ export const validateDashboardTask: DocumentValidator<DashboardTask> = (
   validate.optionalString('description');
   validate.array('sharedWith', exampleTask.sharedWith);
   validate.optionalObject('recurrenceInfo');
-  validate.array('tags', exampleTask.tags);
+  validate.object('tags', {});
   validate.string('category', exampleTask.category);
   validate.object('createdDate', exampleTask.createdDate);
   validate.object('lastUpdatedDate', exampleTask.lastUpdatedDate);
   validate.optionalObject('startDate');
   validate.optionalObject('dueDate');
   validate.optionalObject('parentRecurringTaskInfo');
+  validate.object('filterSettings', {});
+  validate.object('sortSettings', {});
   validateRecurrenceInfo(task, errors);
 
   return { updatedDoc: task, errors };
 };
+
+/**
+ * A utility type for a map of tasks.
+ */
+export type DashboardTaskMap = { [taskId: string]: DashboardTask };
 
 /**
  * When thinking about the logic of tasks, the following thoughts come to mind:
@@ -128,7 +137,7 @@ export default class DashboardTask
   /**
    * User-assigned tags for this task.
    */
-  tags: string[] = [];
+  tags: { [userId: string]: string[] } = {};
 
   /**
    * System-assigned category for this task. This should be used to determine
@@ -136,8 +145,23 @@ export default class DashboardTask
    */
   category: string = 'default';
 
+  /**
+   * The filter settings for subtasks of this task specifically, keyed on
+   * each user.
+   */
+  filterSettings: DashboardTaskFilterSettings = {};
+
+  /**
+   * The sort settings for subtasks of this task specifically, keyed on
+   * each user.
+   */
+  sortSettings: DashboardTaskSortSettings = {};
+
   constructor(ownerId: ObjectId) {
     super();
     this.userId = ownerId;
+    this.tags = {
+      [ownerId.toString()]: []
+    };
   }
 }
