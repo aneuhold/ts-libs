@@ -8,7 +8,10 @@ import {
   DashboardTaskListGlobalSortSettings,
   validateSortSettings
 } from '../../embedded-types/dashboard/task/SortSettings';
-import { validateFilterSettings } from '../../embedded-types/dashboard/task/FilterSettings';
+import {
+  DashboardTaskListGlobalFilterSettings,
+  validateFilterSettings
+} from '../../embedded-types/dashboard/task/FilterSettings';
 
 export const validateDashboardUserConfig: DocumentValidator<
   DashboardUserConfig
@@ -57,7 +60,7 @@ export default class DashboardUserConfig
 
   taskListSortSettings: DashboardTaskListGlobalSortSettings = {};
 
-  taskListFilterSettings: DashboardTaskListGlobalSortSettings = {};
+  taskListFilterSettings: DashboardTaskListGlobalFilterSettings = {};
 
   constructor(ownerId: ObjectId) {
     super();
