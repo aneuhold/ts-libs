@@ -37,6 +37,14 @@ export function validateFilterSettings(
         defaultSettings.completed.show
       );
       validate.object(
+        `taskListFilterSettings.${category}.grandChildrenTasks`,
+        defaultSettings.grandChildrenTasks
+      );
+      validate.boolean(
+        `taskListFilterSettings.${category}.grandChildrenTasks.show`,
+        defaultSettings.grandChildrenTasks.show
+      );
+      validate.object(
         `taskListFilterSettings.${category}.startDate`,
         defaultSettings.startDate
       );
