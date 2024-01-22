@@ -32,6 +32,10 @@ import {
   DashboardTaskSortSetting,
   getDefaultTaskListSortSettings
 } from './embedded-types/dashboard/task/SortSettings';
+import {
+  DashboardTagSetting,
+  DashboardTagSettings
+} from './embedded-types/dashboard/userConfig/Tags';
 import RequiredUserId from './schemas/required-refs/RequiredUserId';
 import { DocumentValidator } from './schemas/validators/DocumentValidator';
 import DocumentService from './services/DocumentService';
@@ -75,5 +79,7 @@ export type {
   DashboardTaskListGlobalSortSettings,
   DashboardTaskSortSettings,
   DashboardTaskListSortSettings,
-  DashboardTaskSortSetting
+  DashboardTaskSortSetting,
+  DashboardTagSettings,
+  DashboardTagSetting
 };
