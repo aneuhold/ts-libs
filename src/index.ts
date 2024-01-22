@@ -1,5 +1,6 @@
 import datesAreOnSameDay from './helperFunctions/dateFunctions';
 import sleep from './helperFunctions/sleep';
+import ArrayService from './services/ArrayService';
 import DateService from './services/DateService/DateService';
 import DependencyService from './services/DependencyService';
 import FileSystemService from './services/FileSystemService/FileSystemService';
@@ -18,7 +19,8 @@ export {
   StringService,
   TestUtils,
   ErrorUtils,
-  DateService
+  DateService,
+  ArrayService
 };
 
 // Export TypeScript types where needed
