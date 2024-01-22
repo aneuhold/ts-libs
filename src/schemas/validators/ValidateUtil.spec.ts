@@ -57,4 +57,16 @@ describe('Validate', () => {
     validate.optionalArray('testField');
     expect(errorsArray.length).toBe(0);
   });
+
+  it('should validate required object', () => {
+    const validate = new Validate(parentObject, errorsArray);
+    parentObject.testField = [];
+    validate.object('testField', {});
+    expect(errorsArray).toContain('testField must be an object');
+    errorsArray = [];
+
+    parentObject.testField = {};
+    validate.object('testField', {});
+    expect(errorsArray.length).toBe(0);
+  });
 });

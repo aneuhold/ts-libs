@@ -94,7 +94,8 @@ export default class Validate {
   object(fieldName: string, defaultValue: object) {
     if (
       this.fieldPathIsValid(fieldName) &&
-      typeof this.getField(fieldName) !== 'object'
+      (Array.isArray(this.getField(fieldName)) ||
+        typeof this.getField(fieldName) !== 'object')
     ) {
       this.errorsArray.push(`${fieldName} must be an object`);
       this.updateField(fieldName, defaultValue);
