@@ -1,5 +1,7 @@
 export function isOptionalObject(value: unknown): value is undefined | object {
-  return value === undefined || typeof value === 'object';
+  return (
+    value === undefined || (typeof value === 'object' && !Array.isArray(value))
+  );
 }
 
 export function isOptionalArray(
