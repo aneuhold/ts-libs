@@ -45,6 +45,26 @@ export default class DashboardTaskSortService {
     });
   }
 
+  /**
+   * Gets the highest priority tag value for the provided task.
+   */
+  static getHighestPriorityTagValue(
+    task: DashboardTask,
+    userId: string,
+    tagSettings: DashboardTagSettings
+  ) {
+    const tags = task.tags[userId];
+    if (!tags || tags.length === 0) return 0;
+
+    return tags.reduce((highestPriority, tag) => {
+      const priority = tagSettings[tag]?.priority;
+      if (priority && priority > highestPriority) {
+        return priority;
+      }
+      return highestPriority;
+    }, 0);
+  }
+
   private static getTaskSortFunction(
     sortBy: DashboardTaskSortBy,
     sortDirection: DashboardTaskSortDirection,
@@ -107,22 +127,5 @@ export default class DashboardTaskSortService {
           return 0;
         };
     }
-  }
-
-  private static getHighestPriorityTagValue(
-    task: DashboardTask,
-    userId: string,
-    tagSettings: DashboardTagSettings
-  ) {
-    const tags = task.tags[userId];
-    if (!tags || tags.length === 0) return 0;
-
-    return tags.reduce((highestPriority, tag) => {
-      const priority = tagSettings[tag]?.priority;
-      if (priority && priority > highestPriority) {
-        return priority;
-      }
-      return highestPriority;
-    }, 0);
   }
 }
