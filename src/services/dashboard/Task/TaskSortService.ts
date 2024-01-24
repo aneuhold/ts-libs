@@ -88,8 +88,10 @@ export default class DashboardTaskSortService {
           const valueB = taskB[sortBy];
 
           if (!valueA && !valueB) return 0;
-          if (valueA && !valueB) return 1 * sortDirection;
-          if (!valueA && valueB) return -1 * sortDirection;
+          // One doesn't have a value, it should be sorted to the bottom.
+          // Purposefully not using the sortDirection here.
+          if (valueA && !valueB) return 1;
+          if (!valueA && valueB) return -1;
 
           if (!valueA || !valueB) return 0;
 
