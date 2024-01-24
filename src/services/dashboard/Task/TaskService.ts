@@ -8,6 +8,7 @@ import { DashboardTaskListSortSettings } from '../../../embedded-types/dashboard
 import DashboardTaskFilterService from './TaskFilterService';
 import DashboardTaskSortService from './TaskSortService';
 import { DashboardTagSettings } from '../../../embedded-types/dashboard/userConfig/Tags';
+import { RecurrenceFrequency } from '../../../embedded-types/dashboard/task/RecurrenceInfo';
 
 /**
  * A type for the task filter settings for a particular task.
@@ -57,8 +58,12 @@ export default class DashboardTaskService {
    * Gets the next frequency date from the provided basis date. Returns null
    * if the provided frequency is in an invalid state.
    */
-  static getNextFrequencyDate =
-    DashboardTaskRecurrenceService.getNextFrequencyDate;
+  static getNextFrequencyDate(basisDate: Date, frequency: RecurrenceFrequency) {
+    return DashboardTaskRecurrenceService.getNextFrequencyDate(
+      basisDate,
+      frequency
+    );
+  }
 
   /**
    * Moves the start and due date forward by one frequency.
@@ -69,8 +74,9 @@ export default class DashboardTaskService {
    * Makes no changes if the state of the task is invalid for recurrence or
    * there isn't recurrence info.
    */
-  static updateDatesForRecurrence =
-    DashboardTaskRecurrenceService.updateDatesForRecurrence;
+  static updateDatesForRecurrence(task: DashboardTask) {
+    return DashboardTaskRecurrenceService.updateDatesForRecurrence(task);
+  }
 
   /**
    * Gets the filtered and sorted set of task ids for a particular category.
@@ -115,10 +121,25 @@ export default class DashboardTaskService {
   }
 
   /**
-   * Gets the highest priority tag value for the provided task.
+   * Gets a map of task IDs to tag header names. Used only for when sorting by
+   * tags. If the first task in the list has no high-priority tags, then
+   * noPriorityTagsIndicator will be used as the header name.
    */
-  static getHighestPriorityTagValue =
-    DashboardTaskSortService.getHighestPriorityTagValue;
+  static getTagHeaderMap(
+    taskMap: DashboardTaskMap,
+    taskIds: string[],
+    userId: string,
+    tagSettings: DashboardTagSettings,
+    noPriorityTagsIndicator: string
+  ) {
+    return DashboardTaskSortService.getTagHeaderMap(
+      taskMap,
+      taskIds,
+      userId,
+      tagSettings,
+      noPriorityTagsIndicator
+    );
+  }
 
   private static getChildrenTaskIds(
     taskIdToTaskDict: Record<string, DashboardTask>,

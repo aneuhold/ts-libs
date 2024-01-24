@@ -46,23 +46,38 @@ export default class DashboardTaskSortService {
   }
 
   /**
-   * Gets the highest priority tag value for the provided task.
+   * Gets a map of task IDs to tag header names. Used only for when sorting by
+   * tags. If the first task in the list has no high-priority tags, then
+   * noPriorityTagsIndicator will be used as the header name.
    */
-  static getHighestPriorityTagValue(
-    task: DashboardTask,
+  static getTagHeaderMap(
+    taskMap: DashboardTaskMap,
+    taskIds: string[],
     userId: string,
-    tagSettings: DashboardTagSettings
-  ) {
-    const tags = task.tags[userId];
-    if (!tags || tags.length === 0) return 0;
-
-    return tags.reduce((highestPriority, tag) => {
-      const priority = tagSettings[tag]?.priority;
-      if (priority && priority > highestPriority) {
-        return priority;
+    tagSettings: DashboardTagSettings,
+    noPriorityTagsIndicator: string
+  ): Record<string, string> {
+    const tagHeaderMap: Record<string, string> = {};
+    if (taskIds.length === 0 || taskIds.length === 1) return tagHeaderMap;
+    const firstTask = taskMap[taskIds[0]];
+    if (!firstTask) return tagHeaderMap;
+    let tag = this.getHighestPriorityTag(firstTask, userId, tagSettings);
+    if (!tag) {
+      tagHeaderMap[taskIds[0]] = noPriorityTagsIndicator;
+    } else {
+      tagHeaderMap[taskIds[0]] = tag;
+    }
+    for (let i = 1; i < taskIds.length; i += 1) {
+      const task = taskMap[taskIds[i]];
+      if (task) {
+        const taskTag = this.getHighestPriorityTag(task, userId, tagSettings);
+        if (taskTag !== tag && tag !== noPriorityTagsIndicator) {
+          tag = taskTag || noPriorityTagsIndicator;
+          tagHeaderMap[taskIds[i]] = tag;
+        }
       }
-      return highestPriority;
-    }, 0);
+    }
+    return tagHeaderMap;
   }
 
   private static getTaskSortFunction(
@@ -127,5 +142,49 @@ export default class DashboardTaskSortService {
           return 0;
         };
     }
+  }
+
+  /**
+   * Gets the highest priority tag for the provided task. If there are no tags,
+   * or if there are no tags with a priority, then this will return null.
+   */
+  private static getHighestPriorityTag(
+    task: DashboardTask,
+    userId: string,
+    tagSettings: DashboardTagSettings
+  ): string | null {
+    const tags = task.tags[userId];
+    if (!tags || tags.length === 0) return null;
+
+    let highestPriorityTag: string | null = null;
+    let highestPriority = 0;
+    tags.forEach((tag) => {
+      const priority = tagSettings[tag]?.priority;
+      if (priority && priority > highestPriority) {
+        highestPriorityTag = tag;
+        highestPriority = priority;
+      }
+    });
+    return highestPriorityTag;
+  }
+
+  /**
+   * Gets the highest priority tag value for the provided task.
+   */
+  static getHighestPriorityTagValue(
+    task: DashboardTask,
+    userId: string,
+    tagSettings: DashboardTagSettings
+  ) {
+    const tags = task.tags[userId];
+    if (!tags || tags.length === 0) return 0;
+
+    return tags.reduce((highestPriority, tag) => {
+      const priority = tagSettings[tag]?.priority;
+      if (priority && priority > highestPriority) {
+        return priority;
+      }
+      return highestPriority;
+    }, 0);
   }
 }
