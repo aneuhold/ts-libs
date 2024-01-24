@@ -15,10 +15,10 @@
     "@jridgewell/gen-mapping" "^0.3.0"
     "@jridgewell/trace-mapping" "^0.3.9"
 
-"@aneuhold/core-ts-db-lib@^1.0.34":
-  version "1.0.34"
-  resolved "https://registry.yarnpkg.com/@aneuhold/core-ts-db-lib/-/core-ts-db-lib-1.0.34.tgz#a13edbb72ba24a3f2fd90beb90b1e70ac39a4868"
-  integrity sha512-W7oo7gpSAJgzOYi+TnVGbuxuuwfzcGoB/roGApDO6oxBEtq4mkEBFlzv3knhBhq52GiQo9uuTtJtbb31hdGnMg==
+"@aneuhold/core-ts-db-lib@^1.0.35":
+  version "1.0.35"
+  resolved "https://registry.yarnpkg.com/@aneuhold/core-ts-db-lib/-/core-ts-db-lib-1.0.35.tgz#f21ddf854392913ed4d056852f59690fc47e41b3"
+  integrity sha512-6dLJVdVGEdromDEEuXQ9zljUl8GhAS4A4vlFBTLT3EqFxGTJR7/RriSRYsOVWjtQKZ2J26UWFlSHlw6HEM9nbw==
   dependencies:
     "@aneuhold/core-ts-lib" "^1.1.10"
     bson "^6.2.0"
