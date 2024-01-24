@@ -2,7 +2,6 @@ import { ObjectId } from 'bson';
 import DashboardTask, {
   DashboardTaskMap
 } from '../../../documents/dashboard/Task';
-import { RecurrenceFrequency } from '../../../embedded-types/dashboard/task/RecurrenceInfo';
 import DashboardTaskRecurrenceService from './TaskRecurrenceService';
 import { DashboardTaskListFilterSettings } from '../../../embedded-types/dashboard/task/FilterSettings';
 import { DashboardTaskListSortSettings } from '../../../embedded-types/dashboard/task/SortSettings';
@@ -58,12 +57,8 @@ export default class DashboardTaskService {
    * Gets the next frequency date from the provided basis date. Returns null
    * if the provided frequency is in an invalid state.
    */
-  static getNextFrequencyDate(basisDate: Date, frequency: RecurrenceFrequency) {
-    return DashboardTaskRecurrenceService.getNextFrequencyDate(
-      basisDate,
-      frequency
-    );
-  }
+  static getNextFrequencyDate =
+    DashboardTaskRecurrenceService.getNextFrequencyDate;
 
   /**
    * Moves the start and due date forward by one frequency.
@@ -74,9 +69,8 @@ export default class DashboardTaskService {
    * Makes no changes if the state of the task is invalid for recurrence or
    * there isn't recurrence info.
    */
-  static updateDatesForRecurrence(task: DashboardTask): void {
-    return DashboardTaskRecurrenceService.updateDatesForRecurrence(task);
-  }
+  static updateDatesForRecurrence =
+    DashboardTaskRecurrenceService.updateDatesForRecurrence;
 
   /**
    * Gets the filtered and sorted set of task ids for a particular category.
@@ -119,6 +113,12 @@ export default class DashboardTaskService {
       tagSettings
     );
   }
+
+  /**
+   * Gets the highest priority tag value for the provided task.
+   */
+  static getHighestPriorityTagValue =
+    DashboardTaskSortService.getHighestPriorityTagValue;
 
   private static getChildrenTaskIds(
     taskIdToTaskDict: Record<string, DashboardTask>,
