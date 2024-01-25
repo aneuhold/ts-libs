@@ -23,6 +23,7 @@ export const validateDashboardUserConfig: DocumentValidator<
   validate.boolean('enableDevMode', exampleConfig.enableDevMode);
   validate.array('collaborators', exampleConfig.collaborators);
   validate.object('tagSettings', {});
+  validate.object('enabledFeatures', exampleConfig.enabledFeatures);
   validateSortSettings(validate, config);
   validateFilterSettings(validate, config);
 
@@ -52,6 +53,19 @@ export default class DashboardUserConfig
    * Whether or not to enable dev mode for the user.
    */
   enableDevMode = false;
+
+  /**
+   * The features that are enabled for the user.
+   */
+  enabledFeatures: {
+    financePage: boolean;
+    automationPage: boolean;
+    homePageLinks: boolean;
+  } = {
+    financePage: false,
+    automationPage: false,
+    homePageLinks: false
+  };
 
   /**
    * The user's tag settings for the dashboard.
