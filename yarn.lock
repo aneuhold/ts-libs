@@ -35,10 +35,10 @@
     "@aneuhold/core-ts-db-lib" "^1.0.8"
     "@aneuhold/core-ts-lib" "^1.1.9"
 
-"@aneuhold/core-ts-db-lib@^1.0.32":
-  version "1.0.32"
-  resolved "https://registry.yarnpkg.com/@aneuhold/core-ts-db-lib/-/core-ts-db-lib-1.0.32.tgz#2cd2c4bf4e299c4989ae217e678b73cf81bdbe6d"
-  integrity sha512-xHgDoBbLYAsdPn+qYFbp58cTiYlvqB7yHJzRsyOxUbPH7mTUwHOJVMdM833XMdfJPzozE9fNuFBFW9MEJdY7vQ==
+"@aneuhold/core-ts-db-lib@^1.0.39":
+  version "1.0.39"
+  resolved "https://registry.yarnpkg.com/@aneuhold/core-ts-db-lib/-/core-ts-db-lib-1.0.39.tgz#0773a3b08a51fa54dcd5e9480ad6a8ea8a574a56"
+  integrity sha512-T5OMYnBuwrXeVmxfEvU/eIeE2P+7ZNFoeprwcJFwe+8eZ2Dj7yVote77c9XvNzG7I/W/bbWIWlL33jSESc5hcA==
   dependencies:
     "@aneuhold/core-ts-lib" "^1.1.10"
     bson "^6.2.0"
@@ -54,6 +54,11 @@
   version "1.1.10"
   resolved "https://registry.yarnpkg.com/@aneuhold/core-ts-lib/-/core-ts-lib-1.1.10.tgz#ceb738d06b950053ad9b0327163e62f46a8d450f"
   integrity sha512-UNoYKZ41mXZVGCDGAkQegiiEQbvPYQIDF+xGH+XLhos3sPGjJ91wQZM8WulrrmKU8MJMHuCgwjd8pKl3z0eO/g==
+
+"@aneuhold/core-ts-lib@^1.1.11":
+  version "1.1.11"
+  resolved "https://registry.yarnpkg.com/@aneuhold/core-ts-lib/-/core-ts-lib-1.1.11.tgz#6c87ad75c309af9810d89db433b5beaa5e82683d"
+  integrity sha512-esMkQbdo3y4KAWZGuGpoV39l0XibpOjZ8XfJSpiNLfuSF4xRwufGawKo5tYCDyrVgAgqwQwnW6HniSHvc96E+g==
 
 "@aneuhold/core-ts-lib@^1.1.9":
   version "1.1.9"
