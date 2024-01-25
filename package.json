@@ -34,7 +34,7 @@
     "test": "jest"
   },
   "dependencies": {
-    "@aneuhold/core-ts-db-lib": "^1.0.38",
+    "@aneuhold/core-ts-db-lib": "^1.0.39",
     "@aneuhold/core-ts-lib": "^1.1.11",
     "bson": "^6.2.0"
   },
