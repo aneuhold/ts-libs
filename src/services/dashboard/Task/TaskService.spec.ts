@@ -255,13 +255,14 @@ describe('DashboardTaskService', () => {
       tasksList[0].category = 'somethingelse';
 
       // Call
-      const result = DashboardTaskService.getFilteredAndSortedTaskIds(
-        taskMap,
-        'default',
-        filterSettings,
-        sortSettings,
-        tagSettings
-      );
+      const { filteredAndSortedIds: result } =
+        DashboardTaskService.getFilteredAndSortedTaskIds(
+          taskMap,
+          'default',
+          filterSettings,
+          sortSettings,
+          tagSettings
+        );
 
       // Assert
       expect(result.length).toBe(4);
@@ -284,13 +285,14 @@ describe('DashboardTaskService', () => {
       tasksList[1].startDate = startDate2;
       tasksList[2].startDate = startDate3;
 
-      const result = DashboardTaskService.getFilteredAndSortedTaskIds(
-        taskMap,
-        'default',
-        filterSettings,
-        sortSettings,
-        tagSettings
-      );
+      const { filteredAndSortedIds: result } =
+        DashboardTaskService.getFilteredAndSortedTaskIds(
+          taskMap,
+          'default',
+          filterSettings,
+          sortSettings,
+          tagSettings
+        );
 
       expect(result.length).toBe(5);
       expect(taskMap[result[0]].startDate?.getTime()).toBe(
@@ -333,13 +335,14 @@ describe('DashboardTaskService', () => {
         [sortSettings.userId]: ['tag1']
       };
 
-      const result = DashboardTaskService.getFilteredAndSortedTaskIds(
-        taskMap,
-        'default',
-        filterSettings,
-        sortSettings,
-        tagSettings
-      );
+      const { filteredAndSortedIds: result } =
+        DashboardTaskService.getFilteredAndSortedTaskIds(
+          taskMap,
+          'default',
+          filterSettings,
+          sortSettings,
+          tagSettings
+        );
 
       expect(result.length).toBe(5);
       expect(taskMap[result[0]].tags[sortSettings.userId]).toEqual([
@@ -400,13 +403,14 @@ describe('DashboardTaskService', () => {
         [sortSettings.userId]: ['tagWithoutPriority']
       };
 
-      const sortedTaskIds = DashboardTaskService.getFilteredAndSortedTaskIds(
-        taskMap,
-        'default',
-        filterSettings,
-        sortSettings,
-        tagSettings
-      );
+      const { filteredAndSortedIds: sortedTaskIds } =
+        DashboardTaskService.getFilteredAndSortedTaskIds(
+          taskMap,
+          'default',
+          filterSettings,
+          sortSettings,
+          tagSettings
+        );
 
       expect(sortedTaskIds.length).toBe(10);
       expect(sortedTaskIds[0]).toBe(task1._id.toString());
@@ -496,13 +500,14 @@ describe('DashboardTaskService', () => {
       task5.title = 'b';
       task6.title = 'c';
 
-      const result = DashboardTaskService.getFilteredAndSortedTaskIds(
-        taskMap,
-        'default',
-        filterSettings,
-        sortSettings,
-        tagSettings
-      );
+      const { filteredAndSortedIds: result } =
+        DashboardTaskService.getFilteredAndSortedTaskIds(
+          taskMap,
+          'default',
+          filterSettings,
+          sortSettings,
+          tagSettings
+        );
 
       expect(result.length).toBe(10);
       expect(result[0]).toBe(task1._id.toString());

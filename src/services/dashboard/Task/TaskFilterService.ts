@@ -1,6 +1,19 @@
 import { DashboardTaskMap } from '../../../documents/dashboard/Task';
 import { DashboardTaskListFilterSettings } from '../../../embedded-types/dashboard/task/FilterSettings';
 
+export type DashboardTaskFilterResult = {
+  /**
+   * The IDs of the tasks that satisfy the filter settings.
+   */
+  resultIds: string[];
+  /**
+   * The IDs of the tasks that were filtered, but still apply to the same
+   * category. Does not include tasks that were filtered because of grand
+   * children tasks.
+   */
+  removedIds: string[];
+};
+
 /**
  * A service responsible for filtering
  */
@@ -23,8 +36,11 @@ export default class DashboardTaskFilterService {
     settings: DashboardTaskListFilterSettings,
     category: string,
     parentTaskId?: string
-  ) {
-    return taskIds.filter((taskId) => {
+  ): DashboardTaskFilterResult {
+    // The filtered IDs that apply to the category, and aren't grandchildren
+    // tasks.
+    const removedIds: string[] = [];
+    const resultIds = taskIds.filter((taskId) => {
       const task = taskMap[taskId];
 
       // Category
@@ -51,6 +67,7 @@ export default class DashboardTaskFilterService {
 
       // Completed
       if (!settings.completed.show && task.completed) {
+        removedIds.push(taskId);
         return false;
       }
 
@@ -60,6 +77,7 @@ export default class DashboardTaskFilterService {
         task.startDate &&
         task.startDate > new Date()
       ) {
+        removedIds.push(taskId);
         return false;
       }
 
@@ -70,14 +88,20 @@ export default class DashboardTaskFilterService {
           if (settings.tags[tag] && !settings.tags[tag].show) {
             return true;
           }
+          removedIds.push(taskId);
           return false;
         });
         if (shouldHide) {
+          removedIds.push(taskId);
           return false;
         }
       }
 
       return true;
     });
+    return {
+      resultIds,
+      removedIds
+    };
   }
 }

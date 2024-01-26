@@ -39,7 +39,9 @@ import {
 import RequiredUserId from './schemas/required-refs/RequiredUserId';
 import { DocumentValidator } from './schemas/validators/DocumentValidator';
 import DocumentService from './services/DocumentService';
-import DashboardTaskService from './services/dashboard/Task/TaskService';
+import DashboardTaskService, {
+  DashboardTaskFilterAndSortResult
+} from './services/dashboard/Task/TaskService';
 
 // Export all the functions and classes from this library
 export {
@@ -75,6 +77,7 @@ export type {
   DashboardTaskMap,
   DashboardTaskListGlobalFilterSettings,
   DashboardTaskFilterSettings,
+  DashboardTaskFilterAndSortResult,
   DashboardTaskListFilterSettings,
   DashboardTaskListGlobalSortSettings,
   DashboardTaskSortSettings,

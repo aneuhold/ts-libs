@@ -5,7 +5,9 @@ import DashboardTask, {
 import DashboardTaskRecurrenceService from './TaskRecurrenceService';
 import { DashboardTaskListFilterSettings } from '../../../embedded-types/dashboard/task/FilterSettings';
 import { DashboardTaskListSortSettings } from '../../../embedded-types/dashboard/task/SortSettings';
-import DashboardTaskFilterService from './TaskFilterService';
+import DashboardTaskFilterService, {
+  DashboardTaskFilterResult
+} from './TaskFilterService';
 import DashboardTaskSortService from './TaskSortService';
 import { DashboardTagSettings } from '../../../embedded-types/dashboard/userConfig/Tags';
 import { RecurrenceFrequency } from '../../../embedded-types/dashboard/task/RecurrenceInfo';
@@ -16,6 +18,16 @@ import { RecurrenceFrequency } from '../../../embedded-types/dashboard/task/Recu
 export type DashboardTaskFilterTaskInfo = {
   taskId: string;
   allChildrenIds: string[];
+};
+
+export type DashboardTaskFilterAndSortResult = {
+  filteredAndSortedIds: string[];
+  /**
+   * The IDs of the tasks that were filtered, but still apply to the same
+   * category. Does not include tasks that were filtered because of grand
+   * children tasks.
+   */
+  removedIds: string[];
 };
 
 export default class DashboardTaskService {
@@ -93,8 +105,8 @@ export default class DashboardTaskService {
     sortSettings: DashboardTaskListSortSettings,
     tagSettings: DashboardTagSettings,
     taskInfo?: DashboardTaskFilterTaskInfo
-  ): string[] {
-    let filterResult: string[];
+  ): DashboardTaskFilterAndSortResult {
+    let filterResult: DashboardTaskFilterResult;
 
     if (!taskInfo) {
       filterResult = DashboardTaskFilterService.filter(
@@ -112,12 +124,15 @@ export default class DashboardTaskService {
         taskInfo.taskId
       );
     }
-    return DashboardTaskSortService.sort(
-      taskMap,
-      filterResult,
-      sortSettings,
-      tagSettings
-    );
+    return {
+      filteredAndSortedIds: DashboardTaskSortService.sort(
+        taskMap,
+        filterResult.resultIds,
+        sortSettings,
+        tagSettings
+      ),
+      removedIds: filterResult.removedIds
+    };
   }
 
   /**
