@@ -88,7 +88,6 @@ export default class DashboardTaskFilterService {
           if (settings.tags[tag] && !settings.tags[tag].show) {
             return true;
           }
-          removedIds.push(taskId);
           return false;
         });
         if (shouldHide) {
