@@ -67,7 +67,6 @@ export default class DashboardTaskFilterService {
 
       // Completed
       if (!settings.completed.show && task.completed) {
-        removedIds.push(taskId);
         return false;
       }
 
