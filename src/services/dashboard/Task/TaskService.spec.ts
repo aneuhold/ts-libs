@@ -460,7 +460,7 @@ describe('DashboardTaskService', () => {
       const task4 = tasksList[2];
       const task5 = tasksList[3];
       task1.tags = {
-        [sortSettings.userId]: ['tagWithoutPriority']
+        [sortSettings.userId]: ['tagWithoutPriority', 'tag3']
       };
       task2.tags = {
         [sortSettings.userId]: ['tag3', 'tag4', 'tag1']

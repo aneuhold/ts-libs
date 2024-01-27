@@ -167,57 +167,63 @@ export default class DashboardTaskSortService {
     tagSettings: DashboardTagSettings,
     sortDirection: DashboardTaskSortDirection
   ): string | null {
-    const tags = task.tags[userId];
-    if (!tags || tags.length === 0) return null;
-
-    let highestPriorityTag: string | null = null;
-    let highestPriority = 0;
-    const sortDirectionIsAscending =
-      sortDirection === DashboardTaskSortDirection.ascending;
-    // If the sort direction is descending, then we want to start with the
-    // lowest priority number.
-    if (sortDirectionIsAscending) {
-      highestPriority = Number.MAX_SAFE_INTEGER;
-    }
-    tags.forEach((tag) => {
-      const priority = tagSettings[tag]?.priority;
-      if (
-        priority &&
-        ((sortDirectionIsAscending && priority < highestPriority) ||
-          (!sortDirectionIsAscending && priority > highestPriority))
-      ) {
-        highestPriorityTag = tag;
-        highestPriority = priority;
-      }
-    });
-    return highestPriorityTag;
+    const priorityTag = this.getPriorityTagForTask(
+      task,
+      userId,
+      tagSettings,
+      sortDirection
+    );
+    return priorityTag ? priorityTag.tag : null;
   }
 
   /**
    * Gets the highest priority tag value for the provided task.
    */
-  static getHighestPriorityTagValue(
+  private static getHighestPriorityTagValue(
     task: DashboardTask,
     userId: string,
     tagSettings: DashboardTagSettings,
     sortDirection: DashboardTaskSortDirection
   ) {
-    const tags = task.tags[userId];
-    if (!tags || tags.length === 0) return 0;
-
-    const isAscending = sortDirection === DashboardTaskSortDirection.ascending;
-    return tags.reduce(
-      (highestPriority, tag) => {
-        const priority = tagSettings[tag]?.priority ?? 0;
-        if (
-          (isAscending && priority < highestPriority) ||
-          (!isAscending && priority > highestPriority)
-        ) {
-          return priority;
-        }
-        return highestPriority;
-      },
-      isAscending ? Number.MAX_SAFE_INTEGER : 0
+    const priorityTag = this.getPriorityTagForTask(
+      task,
+      userId,
+      tagSettings,
+      sortDirection
     );
+    return priorityTag ? priorityTag.priority : 0;
+  }
+
+  private static getPriorityTagForTask(
+    task: DashboardTask,
+    userId: string,
+    tagSettings: DashboardTagSettings,
+    sortDirection: DashboardTaskSortDirection
+  ): { tag: string; priority: number } | null {
+    let priorityTag: { tag: string; priority: number } | null = null;
+    const tags = task.tags[userId];
+    if (!tags || tags.length === 0) return priorityTag;
+
+    let highestPriority = 0;
+    const isAscending = sortDirection === DashboardTaskSortDirection.ascending;
+    // If the sort direction is descending, then we want to start with the
+    // lowest priority number.
+    if (isAscending) {
+      highestPriority = Number.MAX_SAFE_INTEGER;
+    }
+    tags.forEach((tag) => {
+      const priority = tagSettings[tag]?.priority ?? 0;
+      if (
+        (isAscending && priority < highestPriority) ||
+        (!isAscending && priority > highestPriority)
+      ) {
+        highestPriority = priority;
+        priorityTag = { tag, priority };
+      }
+    });
+    if (highestPriority === 0) {
+      return null;
+    }
+    return priorityTag;
   }
 }
