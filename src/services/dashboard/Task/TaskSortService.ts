@@ -55,13 +55,19 @@ export default class DashboardTaskSortService {
     taskIds: string[],
     userId: string,
     tagSettings: DashboardTagSettings,
-    noPriorityTagsIndicator: string
+    noPriorityTagsIndicator: string,
+    sortDirection: DashboardTaskSortDirection
   ): Record<string, string> {
     const tagHeaderMap: Record<string, string> = {};
     if (taskIds.length === 0 || taskIds.length === 1) return tagHeaderMap;
     const firstTask = taskMap[taskIds[0]];
     if (!firstTask) return tagHeaderMap;
-    let tag = this.getHighestPriorityTag(firstTask, userId, tagSettings);
+    let tag = this.getHighestPriorityTag(
+      firstTask,
+      userId,
+      tagSettings,
+      sortDirection
+    );
     if (!tag) {
       tagHeaderMap[taskIds[0]] = noPriorityTagsIndicator;
     } else {
@@ -70,7 +76,12 @@ export default class DashboardTaskSortService {
     for (let i = 1; i < taskIds.length; i += 1) {
       const task = taskMap[taskIds[i]];
       if (task) {
-        const taskTag = this.getHighestPriorityTag(task, userId, tagSettings);
+        const taskTag = this.getHighestPriorityTag(
+          task,
+          userId,
+          tagSettings,
+          sortDirection
+        );
         if (taskTag !== tag && tag !== noPriorityTagsIndicator) {
           tag = taskTag || noPriorityTagsIndicator;
           tagHeaderMap[taskIds[i]] = tag;
@@ -92,12 +103,14 @@ export default class DashboardTaskSortService {
           const highestPriorityTagA = this.getHighestPriorityTagValue(
             taskA,
             userId,
-            tagSettings
+            tagSettings,
+            sortDirection
           );
           const highestPriorityTagB = this.getHighestPriorityTagValue(
             taskB,
             userId,
-            tagSettings
+            tagSettings,
+            sortDirection
           );
 
           if (highestPriorityTagA === highestPriorityTagB) {
@@ -151,16 +164,28 @@ export default class DashboardTaskSortService {
   private static getHighestPriorityTag(
     task: DashboardTask,
     userId: string,
-    tagSettings: DashboardTagSettings
+    tagSettings: DashboardTagSettings,
+    sortDirection: DashboardTaskSortDirection
   ): string | null {
     const tags = task.tags[userId];
     if (!tags || tags.length === 0) return null;
 
     let highestPriorityTag: string | null = null;
     let highestPriority = 0;
+    const sortDirectionIsAscending =
+      sortDirection === DashboardTaskSortDirection.ascending;
+    // If the sort direction is descending, then we want to start with the
+    // lowest priority number.
+    if (sortDirectionIsAscending) {
+      highestPriority = Number.MAX_SAFE_INTEGER;
+    }
     tags.forEach((tag) => {
       const priority = tagSettings[tag]?.priority;
-      if (priority && priority > highestPriority) {
+      if (
+        priority &&
+        ((sortDirectionIsAscending && priority < highestPriority) ||
+          (!sortDirectionIsAscending && priority > highestPriority))
+      ) {
         highestPriorityTag = tag;
         highestPriority = priority;
       }
@@ -174,17 +199,25 @@ export default class DashboardTaskSortService {
   static getHighestPriorityTagValue(
     task: DashboardTask,
     userId: string,
-    tagSettings: DashboardTagSettings
+    tagSettings: DashboardTagSettings,
+    sortDirection: DashboardTaskSortDirection
   ) {
     const tags = task.tags[userId];
     if (!tags || tags.length === 0) return 0;
 
-    return tags.reduce((highestPriority, tag) => {
-      const priority = tagSettings[tag]?.priority;
-      if (priority && priority > highestPriority) {
-        return priority;
-      }
-      return highestPriority;
-    }, 0);
+    const isAscending = sortDirection === DashboardTaskSortDirection.ascending;
+    return tags.reduce(
+      (highestPriority, tag) => {
+        const priority = tagSettings[tag]?.priority ?? 0;
+        if (
+          (isAscending && priority < highestPriority) ||
+          (!isAscending && priority > highestPriority)
+        ) {
+          return priority;
+        }
+        return highestPriority;
+      },
+      isAscending ? Number.MAX_SAFE_INTEGER : 0
+    );
   }
 }

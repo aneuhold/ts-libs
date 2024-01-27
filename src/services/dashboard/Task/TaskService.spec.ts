@@ -424,7 +424,8 @@ describe('DashboardTaskService', () => {
         sortedTaskIds,
         sortSettings.userId,
         tagSettings,
-        'No Priority'
+        'No Priority',
+        DashboardTaskSortDirection.descending
       );
 
       expect(Object.keys(result).length).toBe(4);
@@ -432,6 +433,79 @@ describe('DashboardTaskService', () => {
       expect(result[task3._id.toString()]).toBe('tag2');
       expect(result[task4._id.toString()]).toBe('tag1');
       expect(result[task5._id.toString()]).toBe('No Priority');
+    });
+
+    it('should return a correct tag header map when sorting tags ascending', () => {
+      const { tasksList, taskMap, filterSettings, sortSettings, tagSettings } =
+        setupSortAndFilterTest();
+      sortSettings.sortList.push({
+        sortBy: DashboardTaskSortBy.tags,
+        sortDirection: DashboardTaskSortDirection.ascending
+      });
+      tagSettings.tag1 = {
+        priority: 1
+      };
+      tagSettings.tag2 = {
+        priority: 2
+      };
+      tagSettings.tag3 = {
+        priority: 3
+      };
+      tagSettings.tag4 = {
+        priority: 4
+      };
+      const task1 = tasksList[4];
+      const task2 = tasksList[0];
+      const task3 = tasksList[1];
+      const task4 = tasksList[2];
+      const task5 = tasksList[3];
+      task1.tags = {
+        [sortSettings.userId]: ['tagWithoutPriority']
+      };
+      task2.tags = {
+        [sortSettings.userId]: ['tag3', 'tag4', 'tag1']
+      };
+      task3.tags = {
+        [sortSettings.userId]: ['tag2']
+      };
+      task4.tags = {
+        [sortSettings.userId]: ['tag3', 'tag4']
+      };
+      task5.tags = {
+        [sortSettings.userId]: ['tag4']
+      };
+
+      const { filteredAndSortedIds: sortedTaskIds } =
+        DashboardTaskService.getFilteredAndSortedTaskIds(
+          taskMap,
+          'default',
+          filterSettings,
+          sortSettings,
+          tagSettings
+        );
+
+      expect(sortedTaskIds.length).toBe(5);
+      expect(sortedTaskIds[0]).toBe(task1._id.toString());
+      expect(sortedTaskIds[1]).toBe(task2._id.toString());
+      expect(sortedTaskIds[2]).toBe(task3._id.toString());
+      expect(sortedTaskIds[3]).toBe(task4._id.toString());
+      expect(sortedTaskIds[4]).toBe(task5._id.toString());
+
+      const result = DashboardTaskService.getTagHeaderMap(
+        taskMap,
+        sortedTaskIds,
+        sortSettings.userId,
+        tagSettings,
+        'No Priority',
+        DashboardTaskSortDirection.ascending
+      );
+
+      expect(Object.keys(result).length).toBe(5);
+      expect(result[task1._id.toString()]).toBe('No Priority');
+      expect(result[task2._id.toString()]).toBe('tag1');
+      expect(result[task3._id.toString()]).toBe('tag2');
+      expect(result[task4._id.toString()]).toBe('tag3');
+      expect(result[task5._id.toString()]).toBe('tag4');
     });
 
     it('should return a sorted list of tasks by tags, start date, and title', () => {

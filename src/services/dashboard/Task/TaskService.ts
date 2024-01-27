@@ -4,7 +4,10 @@ import DashboardTask, {
 } from '../../../documents/dashboard/Task';
 import DashboardTaskRecurrenceService from './TaskRecurrenceService';
 import { DashboardTaskListFilterSettings } from '../../../embedded-types/dashboard/task/FilterSettings';
-import { DashboardTaskListSortSettings } from '../../../embedded-types/dashboard/task/SortSettings';
+import {
+  DashboardTaskListSortSettings,
+  DashboardTaskSortDirection
+} from '../../../embedded-types/dashboard/task/SortSettings';
 import DashboardTaskFilterService, {
   DashboardTaskFilterResult
 } from './TaskFilterService';
@@ -145,14 +148,16 @@ export default class DashboardTaskService {
     taskIds: string[],
     userId: string,
     tagSettings: DashboardTagSettings,
-    noPriorityTagsIndicator: string
+    noPriorityTagsIndicator: string,
+    sortDirection: DashboardTaskSortDirection
   ) {
     return DashboardTaskSortService.getTagHeaderMap(
       taskMap,
       taskIds,
       userId,
       tagSettings,
-      noPriorityTagsIndicator
+      noPriorityTagsIndicator,
+      sortDirection
     );
   }
 
