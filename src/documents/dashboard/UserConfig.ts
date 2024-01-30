@@ -24,6 +24,7 @@ export const validateDashboardUserConfig: DocumentValidator<
   validate.array('collaborators', exampleConfig.collaborators);
   validate.object('tagSettings', {});
   validate.object('enabledFeatures', exampleConfig.enabledFeatures);
+  validate.number('autoTaskDeletionDays', exampleConfig.autoTaskDeletionDays);
   validateSortSettings(validate, config);
   validateFilterSettings(validate, config);
 
@@ -66,6 +67,18 @@ export default class DashboardUserConfig
     automationPage: false,
     homePageLinks: false
   };
+
+  /**
+   * The number of days after which a task is automatically deleted. The
+   * requirement is that this number is at least 5 days, and at most 90 days.
+   *
+   * Tasks are only deleted if:
+   *
+   * - They are not recurring
+   * - They are not completed
+   * - They have not been updated in the number listed by this setting
+   */
+  autoTaskDeletionDays: number = 30;
 
   /**
    * The user's tag settings for the dashboard.
