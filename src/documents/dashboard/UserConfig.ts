@@ -62,10 +62,12 @@ export default class DashboardUserConfig
     financePage: boolean;
     automationPage: boolean;
     homePageLinks: boolean;
+    useConfettiForTasks: boolean;
   } = {
     financePage: false,
     automationPage: false,
-    homePageLinks: false
+    homePageLinks: false,
+    useConfettiForTasks: false
   };
 
   /**
