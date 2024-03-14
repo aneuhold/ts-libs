@@ -24,6 +24,10 @@ export const validateDashboardUserConfig: DocumentValidator<
   validate.array('collaborators', exampleConfig.collaborators);
   validate.object('tagSettings', {});
   validate.object('enabledFeatures', exampleConfig.enabledFeatures);
+  validate.boolean(
+    'enabledFeatures.entertainmentPage',
+    exampleConfig.enabledFeatures.entertainmentPage
+  );
   validate.number('autoTaskDeletionDays', exampleConfig.autoTaskDeletionDays);
   validateSortSettings(validate, config);
   validateFilterSettings(validate, config);
@@ -61,11 +65,13 @@ export default class DashboardUserConfig
   enabledFeatures: {
     financePage: boolean;
     automationPage: boolean;
+    entertainmentPage: boolean;
     homePageLinks: boolean;
     useConfettiForTasks: boolean;
   } = {
     financePage: false,
     automationPage: false,
+    entertainmentPage: false,
     homePageLinks: false,
     useConfettiForTasks: false
   };
