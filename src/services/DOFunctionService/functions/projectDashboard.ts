@@ -2,6 +2,8 @@ import { UUID } from 'crypto';
 import {
   DashboardTask,
   DashboardUserConfig,
+  NonogramKatanaItem,
+  NonogramKatanaUpgrade,
   UserCTO
 } from '@aneuhold/core-ts-db-lib';
 import { Translations } from '../../../types/Translations';
@@ -17,13 +19,19 @@ export interface ProjectDashboardOptions {
     userConfig?: boolean;
     tasks?: boolean;
     userNameIsValid?: string;
+    nonogramKatanaItems?: boolean;
+    nonogramKatanaUpgrades?: boolean;
   };
   insert?: {
     tasks?: DashboardTask[];
+    nonogramKatanaItems?: NonogramKatanaItem[];
+    nonogramKatanaUpgrades?: NonogramKatanaUpgrade[];
   };
   update?: {
     userConfig?: DashboardUserConfig;
     tasks?: DashboardTask[];
+    nonogramKatanaItems?: NonogramKatanaItem[];
+    nonogramKatanaUpgrades?: NonogramKatanaUpgrade[];
   };
   delete?: {
     tasks?: DashboardTask[];
@@ -41,6 +49,8 @@ export interface ProjectDashboardOutput extends DOFunctionOutput {
   tasks?: DashboardTask[];
   collaborators?: UserCTO[];
   userFromUserName?: UserCTO | null;
+  nonogramKatanaItems?: NonogramKatanaItem[];
+  nonogramKatanaUpgrades?: NonogramKatanaUpgrade[];
 }
 
 /**
