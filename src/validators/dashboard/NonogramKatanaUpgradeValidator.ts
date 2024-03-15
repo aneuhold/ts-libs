@@ -1,0 +1,77 @@
+import {
+  NonogramKatanaUpgrade,
+  validateNonogramKatanaUpgrade
+} from '@aneuhold/core-ts-db-lib';
+import { ErrorUtils, Logger } from '@aneuhold/core-ts-lib';
+import { ObjectId } from 'bson';
+import IValidator from '../BaseValidator';
+import UserRepository from '../../repositories/common/UserRepository';
+import DashboardNonogramKatanaUpgradeRepository from '../../repositories/dashboard/DashboardNonogramKatanaUpgradeRepository';
+
+export default class DashboardNonogramKatanaUpgradeValidator extends IValidator<NonogramKatanaUpgrade> {
+  async validateNewObject(newUpgrade: NonogramKatanaUpgrade): Promise<void> {
+    // Check if the item already exists for the user
+    const upgradeRepo = DashboardNonogramKatanaUpgradeRepository.getRepo();
+    const existingItem = await upgradeRepo.get({
+      userId: newUpgrade.userId,
+      upgradeName: newUpgrade.upgradeName
+    });
+    if (existingItem) {
+      ErrorUtils.throwError(
+        `Nonogram Katana upgrade already exists for user: ${newUpgrade.userId}`,
+        newUpgrade
+      );
+    }
+    const userRepo = UserRepository.getRepo();
+    const user = await userRepo.get({ _id: newUpgrade.userId });
+    if (!user) {
+      ErrorUtils.throwError(
+        `User does not exist: ${newUpgrade.userId}`,
+        newUpgrade
+      );
+    }
+  }
+
+  async validateUpdateObject(
+    updatedUpgrade: Partial<NonogramKatanaUpgrade>
+  ): Promise<void> {
+    // Check if an id is defined
+    if (!updatedUpgrade._id) {
+      ErrorUtils.throwError(
+        `No _id defined for NonogramKatanaUpgrade update.`,
+        updatedUpgrade
+      );
+    }
+  }
+
+  async validateRepositoryInDb(dryRun: boolean): Promise<void> {
+    const upgradeRepo = DashboardNonogramKatanaUpgradeRepository.getRepo();
+    const allUpgrades = await upgradeRepo.getAll();
+    const allUserIds = await UserRepository.getRepo().getAllIdsAsHash();
+
+    await this.runStandardValidationForRepository({
+      dryRun,
+      docName: 'Nonogram Katana Upgrade',
+      allDocs: allUpgrades,
+      shouldDelete: (upgrade: NonogramKatanaUpgrade) => {
+        if (!allUserIds[upgrade.userId.toString()]) {
+          Logger.error(
+            `Nonogram Katana Upgrade with ID: ${upgrade._id} has no valid associated user.`
+          );
+          return true;
+        }
+        return false;
+      },
+      documentValidator: (upgrade) => {
+        const { updatedDoc, errors } = validateNonogramKatanaUpgrade(upgrade);
+        return { updatedDoc, errors };
+      },
+      deletionFunction: async (docIdsToDelete: ObjectId[]) => {
+        await upgradeRepo.deleteList(docIdsToDelete);
+      },
+      updateFunction: async (docsToUpdate: NonogramKatanaUpgrade[]) => {
+        await upgradeRepo.updateMany(docsToUpdate);
+      }
+    });
+  }
+}

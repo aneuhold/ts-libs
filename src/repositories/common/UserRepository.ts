@@ -5,6 +5,8 @@ import UserValidator from '../../validators/common/UserValidator';
 import ApiKeyRepository from './ApiKeyRepository';
 import DashboardUserConfigRepository from '../dashboard/DashboardUserConfigRepository';
 import DashboardTaskRepository from '../dashboard/DashboardTaskRepository';
+import DashboardNonogramKatanaItemRepository from '../dashboard/DashboardNonogramKatanaItemRepository';
+import DashboardNonogramKatanaUpgradeRepository from '../dashboard/DashboardNonogramKatanaUpgradeRepository';
 
 /**
  * The repository that contains {@link User} documents.
@@ -24,6 +26,12 @@ export default class UserRepository extends BaseRepository<User> {
       DashboardUserConfigRepository.getListenersForUserRepo()
     );
     this.subscribeToChanges(DashboardTaskRepository.getListenersForUserRepo());
+    this.subscribeToChanges(
+      DashboardNonogramKatanaItemRepository.getListenersForUserRepo()
+    );
+    this.subscribeToChanges(
+      DashboardNonogramKatanaUpgradeRepository.getListenersForUserRepo()
+    );
   }
 
   /**
