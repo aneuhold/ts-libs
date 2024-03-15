@@ -1,8 +1,4 @@
-import {
-  NonogramKatanaItem,
-  NonogramKatanaUpgrade,
-  User
-} from '@aneuhold/core-ts-db-lib';
+import { NonogramKatanaUpgrade, User } from '@aneuhold/core-ts-db-lib';
 import { ObjectId } from 'bson';
 import DashboardBaseRepository from './DashboardBaseRepository';
 import CleanDocument from '../../util/DocumentCleaner';
@@ -17,7 +13,7 @@ export default class DashboardNonogramKatanaUpgradeRepository extends DashboardB
 
   private constructor() {
     super(
-      NonogramKatanaItem.docType,
+      NonogramKatanaUpgrade.docType,
       new DashboardNonogramKatanaUpgradeValidator(),
       CleanDocument.userId
     );
