@@ -84,7 +84,8 @@ enum NonogramKatanaItemName {
   SalamanderVeloure = 'salamanderVeloure',
   DragonTeeth = 'dragonTeeth',
   MALU = 'malu',
-  PunchedCard = 'punchedCard'
+  PunchedCard = 'punchedCard',
+  Steamobile = 'steamobile'
 }
 
 export default NonogramKatanaItemName;
