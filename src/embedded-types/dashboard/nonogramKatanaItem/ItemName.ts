@@ -89,7 +89,8 @@ enum NonogramKatanaItemName {
   Steamobile = 'steamobile',
   TreasureMapLvl1 = 'treasureMapLvl1',
   TreasureMapLvl2 = 'treasureMapLvl2',
-  TreasureMapLvl3 = 'treasureMapLvl3'
+  TreasureMapLvl3 = 'treasureMapLvl3',
+  SamaruiArmor = 'samaruiArmor'
 }
 
 export default NonogramKatanaItemName;
