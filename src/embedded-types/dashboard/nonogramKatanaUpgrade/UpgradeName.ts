@@ -47,6 +47,7 @@ enum NonogramKatanaUpgradeName {
   BuildingWorkshopLvl2 = 'buildingWorkshopLvl2',
   BuildingWorkshopLvl3 = 'buildingWorkshopLvl3',
   BuildingWorkshopLvl4 = 'buildingWorkshopLvl4',
+  BuildingWorkshopLvl5 = 'buildingWorkshopLvl5',
   TechnologyWorkshopShieldLvl1 = 'technologyWorkshopShieldLvl1',
   TechnologyWorkshopShieldLvl2 = 'technologyWorkshopShieldLvl2',
   TechnologyWorkshopShieldLvl3 = 'technologyWorkshopShieldLvl3',
