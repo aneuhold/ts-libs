@@ -12,6 +12,7 @@ enum NonogramKatanaItemName {
   Bomb = 'bomb',
   Firework = 'firework',
   BatteringRam = 'batteringRam',
+  ThrowingKnife = 'throwingKnife',
   Anchor = 'anchor',
   Mortar = 'mortar',
   Wood = 'wood',
