@@ -35,11 +35,7 @@ export default class NonogramKatanaUpgrade
 
   completed: boolean = false;
 
-  requiredItems: Array<{
-    itemName: NonogramKatanaItemName;
-    currentAmount: number;
-    requiredAmount: number;
-  }> = [];
+  currentItemAmounts: { [key in NonogramKatanaItemName]?: number } = {};
 
   /**
    * Priority, where the higher the number, the higher up the list it is.

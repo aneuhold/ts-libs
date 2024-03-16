@@ -19,6 +19,7 @@ enum NonogramKatanaItemName {
   Stone = 'stone',
   Steel = 'steel',
   MeteoricIron = 'meteoricIron',
+  MeteoricSteel = 'meteoricSteel',
   Charcoal = 'charcoal',
   Gunpowder = 'gunpowder',
   IronSand = 'ironSand',
@@ -33,7 +34,26 @@ enum NonogramKatanaItemName {
   Spices = 'spices',
   Salmon = 'salmon',
   Sushi = 'sushi',
-  FriedEggs = 'friedEggs'
+  FriedEggs = 'friedEggs',
+  Blueprint = 'blueprint',
+  Paper = 'paper',
+  Glass = 'glass',
+  OliveOil = 'oliveOil',
+  AncientPage = 'ancientPage',
+  Reagent = 'reagent',
+  MandrakeRoot = 'mandrakeRoot',
+  PotionOfHealing = 'potionOfHealing',
+  PotionOfHealingLvl2 = 'potionOfHealingLvl2',
+  ElixerOfInsight = 'elixerOfInsight',
+  Catalyst = 'catalyst',
+  Mechanism = 'mechanism',
+  GoldIngot = 'goldIngot',
+  Herbs = 'herbs',
+  Cinnabar = 'cinnabar',
+  Grimoire = 'grimoire',
+  GingkoBiloba = 'gingkoBiloba',
+  Arsenopyrite = 'arsenopyrite',
+  Mercury = 'mercury'
 }
 
 export default NonogramKatanaItemName;
