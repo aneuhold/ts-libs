@@ -86,7 +86,10 @@ enum NonogramKatanaItemName {
   DragonTeeth = 'dragonTeeth',
   MALU = 'malu',
   PunchedCard = 'punchedCard',
-  Steamobile = 'steamobile'
+  Steamobile = 'steamobile',
+  TreasureMapLvl1 = 'treasureMapLvl1',
+  TreasureMapLvl2 = 'treasureMapLvl2',
+  TreasureMapLvl3 = 'treasureMapLvl3'
 }
 
 export default NonogramKatanaItemName;
