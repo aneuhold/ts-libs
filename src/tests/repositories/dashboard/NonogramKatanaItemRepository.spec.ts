@@ -28,6 +28,16 @@ describe('Create operations', () => {
   });
 });
 
+/**
+ * Deletes all Nonogram Katana Items!
+ *
+ * To just do a cleanup, put `only` after `it`. So `it.only('can delete all items'`
+ */
+it.skip('can delete all items', async () => {
+  const result = await itemRepo.deleteAll();
+  expect(result.acknowledged).toBeTruthy();
+});
+
 async function createNewTestUser() {
   const newUser = new User(
     getTestUserName(`${crypto.randomUUID()}nonogramKatanaItemTest`)
