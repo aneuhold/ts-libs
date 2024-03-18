@@ -33,6 +33,7 @@ enum NonogramKatanaItemName {
   Flour = 'flour',
   Egg = 'egg',
   CoffeeBeans = 'coffeeBeans',
+  CupOfCoffee = 'cupOfCoffee',
   Spices = 'spices',
   Salmon = 'salmon',
   Tuna = 'tuna',
