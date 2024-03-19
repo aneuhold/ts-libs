@@ -28,6 +28,10 @@ export const validateDashboardUserConfig: DocumentValidator<
     'enabledFeatures.entertainmentPage',
     exampleConfig.enabledFeatures.entertainmentPage
   );
+  validate.boolean(
+    'enabledFeatures.catImageOnHomePage',
+    exampleConfig.enabledFeatures.catImageOnHomePage
+  );
   validate.number('autoTaskDeletionDays', exampleConfig.autoTaskDeletionDays);
   validateSortSettings(validate, config);
   validateFilterSettings(validate, config);
@@ -68,12 +72,14 @@ export default class DashboardUserConfig
     entertainmentPage: boolean;
     homePageLinks: boolean;
     useConfettiForTasks: boolean;
+    catImageOnHomePage: boolean;
   } = {
     financePage: false,
     automationPage: false,
     entertainmentPage: false,
     homePageLinks: false,
-    useConfettiForTasks: false
+    useConfettiForTasks: false,
+    catImageOnHomePage: false
   };
 
   /**
