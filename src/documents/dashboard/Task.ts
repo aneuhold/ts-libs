@@ -40,7 +40,7 @@ export const validateDashboardTask: DocumentValidator<DashboardTask> = (
 /**
  * A utility type for a map of tasks.
  */
-export type DashboardTaskMap = { [taskId: string]: DashboardTask };
+export type DashboardTaskMap = { [taskId: string]: DashboardTask | undefined };
 
 /**
  * When thinking about the logic of tasks, the following thoughts come to mind:
