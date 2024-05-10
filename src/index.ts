@@ -46,7 +46,7 @@ import {
 } from './embedded-types/dashboard/userConfig/Tags';
 import RequiredUserId from './schemas/required-refs/RequiredUserId';
 import { DocumentValidator } from './schemas/validators/DocumentValidator';
-import DocumentService from './services/DocumentService';
+import DocumentService, { DocumentMap } from './services/DocumentService';
 import DashboardTaskService, {
   DashboardTaskFilterAndSortResult
 } from './services/dashboard/Task/TaskService';
@@ -85,6 +85,7 @@ export {
 export type {
   DocumentValidator,
   UserCTO,
+  DocumentMap,
   RecurrenceInfo,
   RecurrenceFrequency,
   ParentRecurringTaskInfo,

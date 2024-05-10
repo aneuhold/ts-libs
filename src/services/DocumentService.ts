@@ -1,4 +1,12 @@
 import { EJSON } from 'bson';
+import BaseDocument from '../documents/BaseDocument';
+
+/**
+ * A utility type for a map of documents.
+ */
+export type DocumentMap<T extends BaseDocument> = {
+  [docId: string]: T | undefined;
+};
 
 /**
  * A service for low-level utilities related to documents.

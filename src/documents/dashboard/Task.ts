@@ -10,6 +10,7 @@ import {
 } from '../../embedded-types/dashboard/task/RecurrenceInfo';
 import { DashboardTaskFilterSettings } from '../../embedded-types/dashboard/task/FilterSettings';
 import { DashboardTaskSortSettings } from '../../embedded-types/dashboard/task/SortSettings';
+import { DocumentMap } from '../../services/DocumentService';
 
 export const validateDashboardTask: DocumentValidator<DashboardTask> = (
   task: DashboardTask
@@ -40,7 +41,7 @@ export const validateDashboardTask: DocumentValidator<DashboardTask> = (
 /**
  * A utility type for a map of tasks.
  */
-export type DashboardTaskMap = { [taskId: string]: DashboardTask | undefined };
+export type DashboardTaskMap = DocumentMap<DashboardTask>;
 
 /**
  * When thinking about the logic of tasks, the following thoughts come to mind:
