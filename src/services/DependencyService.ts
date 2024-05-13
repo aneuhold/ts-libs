@@ -22,7 +22,7 @@ export default class DependencyService {
     }
     const rootPackageJsonData = JSON.parse(
       await readFile(rootPackageJsonPath, 'utf-8')
-    );
+    ) as unknown;
 
     // Get all files and in the current directory
     const filePaths = await FileSystemService.getAllFilePathsRelative(
@@ -40,7 +40,7 @@ export default class DependencyService {
     const rootDependencies = {
       ...rootPackageJsonData.dependencies,
       ...rootPackageJsonData.devDependencies
-    };
+    } as unknown;
 
     // Iterate over all package.json files
     await Promise.all(
