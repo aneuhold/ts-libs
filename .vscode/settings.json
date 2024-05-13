@@ -10,5 +10,7 @@
   "editor.codeActionsOnSave": {
     "source.fixAll.eslint": "always",
     "source.organizeImports": "never"
-  }
+  },
+  "eslint.experimental.useFlatConfig": true,
+  "eslint.run": "onSave"
 }
