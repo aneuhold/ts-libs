@@ -74,9 +74,8 @@ export default class FileSystemService {
     await FileSystemService.checkOrCreateFolder(targetFolderPath);
 
     // Get the files in the source directory
-    const sourceFilePaths = await FileSystemService.getAllFilePathsRelative(
-      sourceFolderPath
-    );
+    const sourceFilePaths =
+      await FileSystemService.getAllFilePathsRelative(sourceFolderPath);
 
     // console.log(sourceFilePaths);
 

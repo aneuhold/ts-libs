@@ -1,5 +1,5 @@
-import path from 'path';
 import { writeFile } from 'fs/promises';
+import path from 'path';
 import FileSystemService from './FileSystemService';
 
 const TEST_FOLDER_NAME = '__fileSystemService-tests__';
@@ -36,12 +36,10 @@ describe('FileSystemService', () => {
       );
 
       // Assert
-      const expectedContents = await FileSystemService.getAllFilePathsRelative(
-        sourceFolderPath
-      );
-      const actualContents = await FileSystemService.getAllFilePathsRelative(
-        targetFolderPath
-      );
+      const expectedContents =
+        await FileSystemService.getAllFilePathsRelative(sourceFolderPath);
+      const actualContents =
+        await FileSystemService.getAllFilePathsRelative(targetFolderPath);
       expect(actualContents).toEqual(expectedContents);
     });
 
@@ -83,9 +81,8 @@ describe('FileSystemService', () => {
       const expectedContents = (
         await FileSystemService.getAllFilePathsRelative(sourceFolderPath)
       ).filter((sourceFilePath) => !sourceFilePath.endsWith('.ts'));
-      const actualContents = await FileSystemService.getAllFilePathsRelative(
-        targetFolderPath
-      );
+      const actualContents =
+        await FileSystemService.getAllFilePathsRelative(targetFolderPath);
       expect(actualContents).toEqual(expectedContents);
     });
   });
@@ -99,6 +96,7 @@ async function createTestFiles(folderPath: string, fileStructure: object) {
       if (typeof value === 'string') {
         await writeFile(path.join(folderPath, key), value);
       } else if (typeof value === 'object') {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
         await createTestFiles(path.join(folderPath, key), value);
       }
     })

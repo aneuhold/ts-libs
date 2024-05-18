@@ -2,6 +2,15 @@ import { access, readFile, writeFile } from 'fs/promises';
 import path from 'path';
 import FileSystemService from './FileSystemService/FileSystemService';
 
+export type PackageJson = {
+  name: string;
+  version: string;
+  dependencies?: Record<string, string>;
+  devDependencies?: Record<string, string>;
+  peerDependencies?: Record<string, string>;
+  optionalDependencies?: Record<string, string>;
+};
+
 /**
  * A service which can be used to manage dependencies in the current project
  * in various ways.
@@ -22,7 +31,7 @@ export default class DependencyService {
     }
     const rootPackageJsonData = JSON.parse(
       await readFile(rootPackageJsonPath, 'utf-8')
-    ) as unknown;
+    ) as PackageJson;
 
     // Get all files and in the current directory
     const filePaths = await FileSystemService.getAllFilePathsRelative(
@@ -40,7 +49,7 @@ export default class DependencyService {
     const rootDependencies = {
       ...rootPackageJsonData.dependencies,
       ...rootPackageJsonData.devDependencies
-    } as unknown;
+    };
 
     // Iterate over all package.json files
     await Promise.all(
@@ -48,21 +57,21 @@ export default class DependencyService {
         const fullPackageJsonPath = path.join(process.cwd(), packageJsonPath);
         const packageJsonData = JSON.parse(
           await readFile(fullPackageJsonPath, 'utf-8')
-        );
+        ) as PackageJson;
 
-        if (packageJsonData.dependencies) {
-          Object.keys(packageJsonData.dependencies).forEach((dependency) => {
+        const dependencies = packageJsonData.dependencies;
+        if (dependencies) {
+          Object.keys(dependencies).forEach((dependency) => {
             if (rootDependencies[dependency]) {
-              packageJsonData.dependencies[dependency] =
-                rootDependencies[dependency];
+              dependencies[dependency] = rootDependencies[dependency];
             }
           });
         }
-        if (packageJsonData.devDependencies) {
-          Object.keys(packageJsonData.devDependencies).forEach((dependency) => {
+        const devDependencies = packageJsonData.devDependencies;
+        if (devDependencies) {
+          Object.keys(devDependencies).forEach((dependency) => {
             if (rootDependencies[dependency]) {
-              packageJsonData.dependencies[dependency] =
-                rootDependencies[dependency];
+              devDependencies[dependency] = rootDependencies[dependency];
             }
           });
         }

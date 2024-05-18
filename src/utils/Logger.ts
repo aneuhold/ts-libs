@@ -111,10 +111,7 @@ export default class Logger {
   }
 
   private shouldLog(): boolean {
-    if (
-      !this.logOnlyIfVerbose ||
-      (this.logOnlyIfVerbose && Logger.verboseLoggingEnabled)
-    ) {
+    if (!this.logOnlyIfVerbose || Logger.verboseLoggingEnabled) {
       return true;
     }
     return false;
