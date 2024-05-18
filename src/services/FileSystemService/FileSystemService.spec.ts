@@ -80,9 +80,12 @@ describe('FileSystemService', () => {
       // Assert
       const expectedContents = (
         await FileSystemService.getAllFilePathsRelative(sourceFolderPath)
-      ).filter((sourceFilePath) => !sourceFilePath.endsWith('.ts'));
-      const actualContents =
-        await FileSystemService.getAllFilePathsRelative(targetFolderPath);
+      )
+        .filter((sourceFilePath) => !sourceFilePath.endsWith('.ts'))
+        .sort();
+      const actualContents = (
+        await FileSystemService.getAllFilePathsRelative(targetFolderPath)
+      ).sort();
       expect(actualContents).toEqual(expectedContents);
     });
   });
