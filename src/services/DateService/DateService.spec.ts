@@ -19,7 +19,7 @@ describe('DateService', () => {
   });
 
   describe('getWeekOfMonth', () => {
-    it('should successfully get the week of month for a date', async () => {
+    it('should successfully get the week of month for a date', () => {
       const result = DateService.getWeekOfMonth(new Date(2024, 0, 14));
       expect(result).toEqual(3);
 
