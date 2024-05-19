@@ -84,7 +84,7 @@ export default abstract class DOFunction<
     if (!this.url) {
       throw new Error(`${this.functionName} URL is not set`);
     }
-    const result = await fetch(`${this.url}`, {
+    const result = await fetch(this.url, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/octet-stream'

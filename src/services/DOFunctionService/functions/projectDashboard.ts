@@ -61,7 +61,7 @@ export default class ProjectDashboard extends DOFunction<
   ProjectDashboardInput,
   ProjectDashboardOutput
 > {
-  private static instance: ProjectDashboard;
+  private static instance: ProjectDashboard | undefined;
 
   private constructor() {
     super();

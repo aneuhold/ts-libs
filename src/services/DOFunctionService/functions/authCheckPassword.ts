@@ -11,7 +11,7 @@ export default class AuthCheckPassword extends DOFunction<
   AuthCheckPasswordInput,
   AuthCheckPasswordOutput
 > {
-  private static instance: AuthCheckPassword;
+  private static instance: AuthCheckPassword | undefined;
 
   private constructor() {
     super();

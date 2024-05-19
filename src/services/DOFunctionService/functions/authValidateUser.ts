@@ -24,7 +24,7 @@ export default class AuthValidateUser extends DOFunction<
   AuthValidateUserInput,
   AuthValidateUserOutput
 > {
-  private static instance: AuthValidateUser;
+  private static instance: AuthValidateUser | undefined;
 
   private constructor() {
     super();
