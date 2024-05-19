@@ -1,5 +1,6 @@
 import { DateService } from '@aneuhold/core-ts-lib';
 import {
+  RecurrenceBasis,
   RecurrenceFrequency,
   RecurrenceFrequencyType
 } from '../../../embedded-types/dashboard/task/RecurrenceInfo';
@@ -100,10 +101,10 @@ export default class DashboardTaskRecurrenceService {
         // No dates to move forward
         (!task.dueDate && !task.startDate) ||
         // Invalid start date recurrence basis
-        (task.recurrenceInfo.recurrenceBasis === 'startDate' &&
+        (task.recurrenceInfo.recurrenceBasis === RecurrenceBasis.startDate &&
           !task.parentRecurringTaskInfo.startDate) ||
         // Invalid due date recurrence basis
-        (task.recurrenceInfo.recurrenceBasis === 'dueDate' &&
+        (task.recurrenceInfo.recurrenceBasis === RecurrenceBasis.dueDate &&
           !task.parentRecurringTaskInfo.dueDate)
       ) {
         return;
@@ -111,9 +112,10 @@ export default class DashboardTaskRecurrenceService {
       // Validation for moving dates based on their own recurrence
     } else if (
       !task.recurrenceInfo ||
-      (task.recurrenceInfo.recurrenceBasis === 'startDate' &&
+      (task.recurrenceInfo.recurrenceBasis === RecurrenceBasis.startDate &&
         !task.startDate) ||
-      (task.recurrenceInfo.recurrenceBasis === 'dueDate' && !task.dueDate)
+      (task.recurrenceInfo.recurrenceBasis === RecurrenceBasis.dueDate &&
+        !task.dueDate)
     ) {
       return;
     }
@@ -121,7 +123,7 @@ export default class DashboardTaskRecurrenceService {
     let diff = 0;
 
     if (task.parentRecurringTaskInfo) {
-      if (task.recurrenceInfo.recurrenceBasis === 'startDate') {
+      if (task.recurrenceInfo.recurrenceBasis === RecurrenceBasis.startDate) {
         diff = this.getDiffForDateUpdate(
           task.parentRecurringTaskInfo.startDate,
           task.recurrenceInfo.frequency
@@ -132,7 +134,9 @@ export default class DashboardTaskRecurrenceService {
           task.recurrenceInfo.frequency
         );
       }
-    } else if (task.recurrenceInfo.recurrenceBasis === 'startDate') {
+    } else if (
+      task.recurrenceInfo.recurrenceBasis === RecurrenceBasis.startDate
+    ) {
       diff = this.getDiffForDateUpdate(
         task.startDate,
         task.recurrenceInfo.frequency

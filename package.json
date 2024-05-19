@@ -1,6 +1,6 @@
 {
   "name": "@aneuhold/core-ts-db-lib",
-  "version": "1.0.62",
+  "version": "1.0.63",
   "description": "A core database library used for personal projects",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",

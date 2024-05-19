@@ -622,13 +622,10 @@ function createTasksList(numTasks: number, userId: ObjectId): DashboardTask[] {
 }
 
 function createTaskMapFromList(tasks: DashboardTask[]) {
-  return tasks.reduce(
-    (acc, task) => {
-      acc[task._id.toString()] = task;
-      return acc;
-    },
-    {} as Record<string, DashboardTask>
-  );
+  return tasks.reduce<Record<string, DashboardTask>>((acc, task) => {
+    acc[task._id.toString()] = task;
+    return acc;
+  }, {});
 }
 
 function getFilterSettings(userId: ObjectId): DashboardTaskListFilterSettings {

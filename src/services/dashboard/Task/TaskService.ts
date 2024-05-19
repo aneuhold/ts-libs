@@ -90,7 +90,7 @@ export default class DashboardTaskService {
    * there isn't recurrence info.
    */
   static updateDatesForRecurrence(task: DashboardTask) {
-    return DashboardTaskRecurrenceService.updateDatesForRecurrence(task);
+    DashboardTaskRecurrenceService.updateDatesForRecurrence(task);
   }
 
   /**

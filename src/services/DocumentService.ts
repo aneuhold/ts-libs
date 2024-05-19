@@ -13,6 +13,6 @@ export type DocumentMap<T extends BaseDocument> = {
  */
 export default class DocumentService {
   static deepCopy<T extends object>(obj: T): T {
-    return EJSON.parse(EJSON.stringify(obj, { relaxed: false }));
+    return EJSON.parse(EJSON.stringify(obj, { relaxed: false })) as T;
   }
 }

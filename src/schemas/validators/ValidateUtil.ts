@@ -183,6 +183,7 @@ export default class Validate {
     let currentObject = this.parentObject;
     fieldPath.forEach((field, index) => {
       if (index === fieldPath.length - 1) {
+        // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
         delete currentObject[field];
       } else {
         currentObject = currentObject[field] as IndexableObject;
