@@ -32,7 +32,7 @@
     "unlink:coredb": "yarn unlink @aneuhold/core-ts-db-lib && yarn install --force",
     "upgrade:all": "yarn upgrade --latest",
     "upgrade:core": "yarn upgrade --latest --pattern @aneuhold",
-    "test": "jest",
+    "test": "jest --passWithNoTests",
     "lint": "yarn eslint"
   },
   "dependencies": {
