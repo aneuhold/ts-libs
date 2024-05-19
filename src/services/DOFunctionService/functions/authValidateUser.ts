@@ -33,7 +33,7 @@ export default class AuthValidateUser extends DOFunction<
   }
 
   static getFunction() {
-    if (!this.instance) {
+    if (!AuthValidateUser.instance) {
       AuthValidateUser.instance = new AuthValidateUser();
     }
     return AuthValidateUser.instance;

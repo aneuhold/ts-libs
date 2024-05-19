@@ -20,7 +20,7 @@ export default class AuthCheckPassword extends DOFunction<
   }
 
   static getFunction() {
-    if (!this.instance) {
+    if (!AuthCheckPassword.instance) {
       AuthCheckPassword.instance = new AuthCheckPassword();
     }
     return AuthCheckPassword.instance;

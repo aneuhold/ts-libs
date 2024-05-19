@@ -68,7 +68,7 @@ export default class ProjectDashboard extends DOFunction<
   }
 
   static getFunction() {
-    if (!this.instance) {
+    if (!ProjectDashboard.instance) {
       ProjectDashboard.instance = new ProjectDashboard();
     }
     return ProjectDashboard.instance;
