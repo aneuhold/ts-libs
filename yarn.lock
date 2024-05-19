@@ -26,8 +26,8 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@aneuhold/be-ts-lib@workspace:."
   dependencies:
-    "@aneuhold/core-ts-api-lib": "npm:^1.0.9"
-    "@aneuhold/core-ts-lib": "npm:^1.1.9"
+    "@aneuhold/core-ts-api-lib": "npm:^1.0.51"
+    "@aneuhold/core-ts-lib": "npm:^1.1.15"
     "@aneuhold/eslint-config": "npm:^1.0.6"
     "@types/jest": "npm:^29.5.8"
     "@types/node": "npm:^20.10.4"
@@ -45,36 +45,31 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@aneuhold/core-ts-api-lib@npm:^1.0.9":
-  version: 1.0.9
-  resolution: "@aneuhold/core-ts-api-lib@npm:1.0.9"
+"@aneuhold/core-ts-api-lib@npm:^1.0.51":
+  version: 1.0.51
+  resolution: "@aneuhold/core-ts-api-lib@npm:1.0.51"
   dependencies:
-    "@aneuhold/core-ts-db-lib": "npm:^1.0.3"
-    "@aneuhold/core-ts-lib": "npm:^1.1.7"
-  checksum: 10c0/554d1a7e42f80788aec3465f499d14db3eb45a5c0ae0eeb5a01d04e48d7c8310e7389497d2d1cd364973ad3074cf37dda3f07264c7bcf0f953500d56728166cd
-  languageName: node
-  linkType: hard
-
-"@aneuhold/core-ts-db-lib@npm:^1.0.3":
-  version: 1.0.3
-  resolution: "@aneuhold/core-ts-db-lib@npm:1.0.3"
-  dependencies:
+    "@aneuhold/core-ts-db-lib": "npm:^1.0.58"
+    "@aneuhold/core-ts-lib": "npm:^1.1.11"
     bson: "npm:^6.2.0"
-  checksum: 10c0/a13abcb61f4be134ee9158dfb4eb843ac99f8829dbe3f2fd5148cd953557bdf963c8086a47deab7498f4c660d9189aecc71b7fd0425d9915fdf1cb0318a5f2c7
+  checksum: 10c0/5899f928d07586c4009f3a9dbc5ac68227b650419af2fa54f8111030fbe41e552a1b2ddd9ed45606ba5a73879a6f7328bf788feaa91ea1aff6c00ae526dd7cca
   languageName: node
   linkType: hard
 
-"@aneuhold/core-ts-lib@npm:^1.1.7":
-  version: 1.1.8
-  resolution: "@aneuhold/core-ts-lib@npm:1.1.8"
-  checksum: 10c0/a3f1a9d189b39036face17435f3903dc73aa44f3683b8800450ced5056d4adce5500879963e7d010e13b44f9484aa98032bff29c8a2cde6001833667c5c4953a
+"@aneuhold/core-ts-db-lib@npm:^1.0.58":
+  version: 1.0.61
+  resolution: "@aneuhold/core-ts-db-lib@npm:1.0.61"
+  dependencies:
+    "@aneuhold/core-ts-lib": "npm:^1.1.10"
+    bson: "npm:^6.2.0"
+  checksum: 10c0/13a37454ca2730245dcd59f90367a65d880645c0de491ad78a21135909c9cf317a261f87a898189930afe0ce91a6f404e96ed44892aea93a728ff3d4222ea4c7
   languageName: node
   linkType: hard
 
-"@aneuhold/core-ts-lib@npm:^1.1.9":
-  version: 1.1.9
-  resolution: "@aneuhold/core-ts-lib@npm:1.1.9"
-  checksum: 10c0/e79f561c54b470ae70633df7068b05328bb74b3195706d381bfefc2dc616e269ee7b8c552e805fb2f995eb90b5fd6281e47edcae07a0e53bd1fbe0d195097807
+"@aneuhold/core-ts-lib@npm:^1.1.10, @aneuhold/core-ts-lib@npm:^1.1.11, @aneuhold/core-ts-lib@npm:^1.1.15":
+  version: 1.1.15
+  resolution: "@aneuhold/core-ts-lib@npm:1.1.15"
+  checksum: 10c0/d88e035784947b3ed55a4ccb38e4d7603e2ff8749ac74245e35cc39929bed3dbb4c43b1a49d5f62a21f5a0ec5930b84e54498406bd81bfdc7c6ad3877b47f6db
   languageName: node
   linkType: hard
 
