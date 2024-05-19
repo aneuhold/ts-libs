@@ -1,5 +1,3 @@
-/* eslint-disable no-await-in-loop */
-
 import { Logger, sleep } from '@aneuhold/core-ts-lib';
 import CurrentEnv, { OperatingSystemType } from '../../utils/CurrentEnv';
 import CLIService from '../CLIService';

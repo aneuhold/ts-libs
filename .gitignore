@@ -16,3 +16,6 @@ localData/
 
 ### Tests ###
 .env
+
+### Yarn ###
+.yarn

@@ -43,9 +43,9 @@ export default class ConfigService {
         'config',
         `${env}.jsonc`
       );
-      ConfigService.configObject = parse(jsonString);
+      ConfigService.configObject = parse(jsonString) as Config;
     } catch (error) {
-      Logger.error(`Failed to load ${env}.json, error: ${error}`);
+      Logger.error(`Failed to load ${env}.json, error: ${error as string}`);
       throw error;
     }
   }
@@ -58,9 +58,9 @@ export default class ConfigService {
   private static insertPropertiesIntoEnv(config: object) {
     Object.entries(config).forEach(([key, value]) => {
       if (typeof value === 'object') {
-        ConfigService.insertPropertiesIntoEnv(value);
+        ConfigService.insertPropertiesIntoEnv(value as object);
       } else {
-        process.env[key] = value;
+        process.env[key] = value as string;
       }
     });
   }

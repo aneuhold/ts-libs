@@ -29,7 +29,7 @@ export default class GitHubService {
       return result.data as unknown as string;
     } catch (error) {
       Logger.error(
-        `Failed to load ${filePath} from ${repoName}, error: ${error}`
+        `Failed to load ${filePath} from ${repoName}, error: ${error as string}`
       );
       throw error;
     }

@@ -85,7 +85,7 @@ export default class CLIService {
     } catch (err) {
       Logger.verbose
         .error(`There was an error executing the "exec" function. Details are printed below:
-        ${err}`);
+        ${err as string}`);
       return {
         didComplete: false,
         output: err as string
@@ -141,19 +141,19 @@ export default class CLIService {
 
       spawnedCmd.on('error', (err) => {
         Logger.error(`There was an error executing the "spawn" function. Details are printed below:
-      ${err}`);
+      ${err.message}`);
         resolve({
           didComplete: false,
           output: err.toString()
         });
       });
       spawnedCmd.stdout.on('data', (data) => {
-        output += data;
-        Logger.info(data, true);
+        output += data as string;
+        Logger.info(data as string, true);
       });
       spawnedCmd.stderr.on('data', (data) => {
-        output += data;
-        Logger.info(data, true);
+        output += data as string;
+        Logger.info(data as string, true);
       });
       spawnedCmd.on('close', (exitCode) => {
         Logger.info(`Command "${cmd}" exited with code ${exitCode}`);

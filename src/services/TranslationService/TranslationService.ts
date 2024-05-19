@@ -25,7 +25,7 @@ export default class TranslationService {
       );
       return parse(jsonString) as Translations;
     } catch (error) {
-      Logger.error(`Failed to load ${source}.json, error: ${error}`);
+      Logger.error(`Failed to load ${source}.json, error: ${error as string}`);
       throw error;
     }
   }
