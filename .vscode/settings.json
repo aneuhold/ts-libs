@@ -11,5 +11,8 @@
     "source.fixAll.eslint": "always",
     // Re-enable this when the index.ts file has exports.
     "source.organizeImports": "never"
-  }
+  },
+  "eslint.experimental.useFlatConfig": true,
+  "eslint.run": "onSave",
+  "eslint.format.enable": true
 }

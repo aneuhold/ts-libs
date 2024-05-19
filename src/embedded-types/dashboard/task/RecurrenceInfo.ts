@@ -21,7 +21,6 @@ export function validateRecurrenceInfo(task: DashboardTask, errors: string[]) {
   // can be correctly converted.
 
   if (recurrenceErrors.length > 0) {
-    // eslint-disable-next-line no-param-reassign
     task.recurrenceInfo = undefined;
   }
   errors.push(...recurrenceErrors);
