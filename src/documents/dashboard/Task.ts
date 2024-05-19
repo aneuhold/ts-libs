@@ -138,7 +138,7 @@ export default class DashboardTask
   /**
    * User-assigned tags for this task.
    */
-  tags: { [userId: string]: string[] } = {};
+  tags: { [userId: string]: string[] | undefined } = {};
 
   /**
    * System-assigned category for this task. This should be used to determine
