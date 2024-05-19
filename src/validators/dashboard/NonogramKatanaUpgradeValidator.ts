@@ -18,7 +18,7 @@ export default class DashboardNonogramKatanaUpgradeValidator extends IValidator<
     });
     if (existingItem) {
       ErrorUtils.throwError(
-        `Nonogram Katana upgrade already exists for user: ${newUpgrade.userId}`,
+        `Nonogram Katana upgrade already exists for user: ${newUpgrade.userId.toString()}`,
         newUpgrade
       );
     }
@@ -26,12 +26,13 @@ export default class DashboardNonogramKatanaUpgradeValidator extends IValidator<
     const user = await userRepo.get({ _id: newUpgrade.userId });
     if (!user) {
       ErrorUtils.throwError(
-        `User does not exist: ${newUpgrade.userId}`,
+        `User does not exist: ${newUpgrade.userId.toString()}`,
         newUpgrade
       );
     }
   }
 
+  // eslint-disable-next-line @typescript-eslint/require-await
   async validateUpdateObject(
     updatedUpgrade: Partial<NonogramKatanaUpgrade>
   ): Promise<void> {
@@ -56,7 +57,7 @@ export default class DashboardNonogramKatanaUpgradeValidator extends IValidator<
       shouldDelete: (upgrade: NonogramKatanaUpgrade) => {
         if (!allUserIds[upgrade.userId.toString()]) {
           Logger.error(
-            `Nonogram Katana Upgrade with ID: ${upgrade._id} has no valid associated user.`
+            `Nonogram Katana Upgrade with ID: ${upgrade._id.toString()} has no valid associated user.`
           );
           return true;
         }

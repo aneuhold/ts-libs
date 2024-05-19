@@ -5,9 +5,9 @@ import { Document } from 'bson';
 export default class DocumentDb {
   private static DB_NAME = 'default';
 
-  private static mongoClient: MongoClient;
+  private static mongoClient: MongoClient | undefined;
 
-  private static db: Db;
+  private static db: Db | undefined;
 
   private static async getClient(): Promise<MongoClient> {
     if (!ConfigService.isInitialized) {
@@ -30,7 +30,7 @@ export default class DocumentDb {
     collectionName: string
   ): Promise<Collection<TDocType>> {
     const client = await this.getClient();
-    if (!this.db) {
+    if (!DocumentDb.db) {
       DocumentDb.db = client.db(DocumentDb.DB_NAME);
     }
     return DocumentDb.db.collection<TDocType>(collectionName);

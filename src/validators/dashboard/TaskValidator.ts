@@ -40,7 +40,7 @@ export default class DashboardTaskValidator extends IValidator<DashboardTask> {
       });
       if (!parentTask) {
         errors.push(
-          `Parent task with ID: ${updatedTask.parentTaskId} does not exist.`
+          `Parent task with ID: ${updatedTask.parentTaskId.toString()} does not exist.`
         );
       }
     }
@@ -61,7 +61,7 @@ export default class DashboardTaskValidator extends IValidator<DashboardTask> {
       shouldDelete: (task: DashboardTask) => {
         if (!allUserIds[task.userId.toString()]) {
           Logger.error(
-            `Dashboard Task with ID: ${task._id} has no valid associated owner (user).`
+            `Dashboard Task with ID: ${task._id.toString()} has no valid associated owner (user).`
           );
           return true;
         }
@@ -73,9 +73,9 @@ export default class DashboardTaskValidator extends IValidator<DashboardTask> {
         sharedWithUserIds.forEach((userId) => {
           if (!allUserIds[userId.toString()]) {
             errors.push(
-              `User with ID: ${userId} does not exist in sharedWith property of task with ID: ${task._id}.`
+              `User with ID: ${userId.toString()} does not exist in sharedWith property of task with ID: ${task._id.toString()}.`
             );
-            // eslint-disable-next-line no-param-reassign
+
             task.sharedWith = task.sharedWith.filter(
               (id) => id.toString() !== userId.toString()
             );

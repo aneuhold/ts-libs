@@ -18,17 +18,21 @@ export default class DashboardNonogramKatanaItemValidator extends IValidator<Non
     });
     if (existingItem) {
       ErrorUtils.throwError(
-        `Nonogram Katana item already exists for user: ${newItem.userId}`,
+        `Nonogram Katana item already exists for user: ${newItem.userId.toString()}`,
         newItem
       );
     }
     const userRepo = UserRepository.getRepo();
     const user = await userRepo.get({ _id: newItem.userId });
     if (!user) {
-      ErrorUtils.throwError(`User does not exist: ${newItem.userId}`, newItem);
+      ErrorUtils.throwError(
+        `User does not exist: ${newItem.userId.toString()}`,
+        newItem
+      );
     }
   }
 
+  // eslint-disable-next-line @typescript-eslint/require-await
   async validateUpdateObject(
     updatedItem: Partial<NonogramKatanaItem>
   ): Promise<void> {
@@ -53,7 +57,7 @@ export default class DashboardNonogramKatanaItemValidator extends IValidator<Non
       shouldDelete: (item: NonogramKatanaItem) => {
         if (!allUserIds[item.userId.toString()]) {
           Logger.error(
-            `Nonogram Katana Item with ID: ${item._id} has no valid associated user.`
+            `Nonogram Katana Item with ID: ${item._id.toString()} has no valid associated user.`
           );
           return true;
         }

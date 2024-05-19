@@ -9,7 +9,9 @@ import DashboardNonogramKatanaUpgradeValidator from '../../validators/dashboard/
  * The repository that contains {@link NonogramKatanaUpgrade} documents.
  */
 export default class DashboardNonogramKatanaUpgradeRepository extends DashboardBaseRepository<NonogramKatanaUpgrade> {
-  private static singletonInstance: DashboardNonogramKatanaUpgradeRepository;
+  private static singletonInstance:
+    | DashboardNonogramKatanaUpgradeRepository
+    | undefined;
 
   private constructor() {
     super(

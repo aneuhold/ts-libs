@@ -9,7 +9,7 @@ import { RepoListeners } from '../../services/RepoSubscriptionService';
 export default class ApiKeyRepository extends BaseRepository<ApiKey> {
   private static COLLECTION_NAME = 'apiKeys';
 
-  private static singletonInstance: ApiKeyRepository;
+  private static singletonInstance: ApiKeyRepository | undefined;
 
   static getListenersForUserRepo(): RepoListeners<User> {
     const apiKeyRepo = ApiKeyRepository.getRepo();

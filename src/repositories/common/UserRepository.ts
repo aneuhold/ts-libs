@@ -14,7 +14,7 @@ import DashboardNonogramKatanaUpgradeRepository from '../dashboard/DashboardNono
 export default class UserRepository extends BaseRepository<User> {
   private static COLLECTION_NAME = 'users';
 
-  private static singletonInstance: UserRepository;
+  private static singletonInstance: UserRepository | undefined;
 
   private constructor() {
     super(UserRepository.COLLECTION_NAME, new UserValidator());

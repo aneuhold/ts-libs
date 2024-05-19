@@ -26,7 +26,9 @@ export default class UserValidator extends IValidator<User> {
     const userInDb = await userRepo.get({ _id: userToUpdate._id });
     if (!userInDb) {
       ErrorUtils.throwError(
-        `${User.name} with ID: ${userToUpdate._id} does not exist in the database.`,
+        `${
+          User.name
+        } with ID: ${userToUpdate._id?.toString()} does not exist in the database.`,
         userToUpdate
       );
       return;
@@ -50,7 +52,7 @@ export default class UserValidator extends IValidator<User> {
       shouldDelete: (user: User) => {
         if (user.userName.startsWith(TEST_USER_NAME_PREFIX)) {
           Logger.error(
-            `User with ID: ${user._id} is a test user and should be deleted`
+            `User with ID: ${user._id.toString()} is a test user and should be deleted`
           );
           return true;
         }

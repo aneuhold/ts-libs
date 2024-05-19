@@ -15,7 +15,7 @@ import DashboardUserConfigRepository from './DashboardUserConfigRepository';
  * The repository that contains {@link DashboardTask} documents.
  */
 export default class DashboardTaskRepository extends DashboardBaseRepository<DashboardTask> {
-  private static singletonInstance: DashboardTaskRepository;
+  private static singletonInstance?: DashboardTaskRepository;
 
   private constructor() {
     super(

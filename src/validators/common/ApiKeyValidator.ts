@@ -13,7 +13,7 @@ export default class ApiKeyValidator extends IValidator<ApiKey> {
     const userInDb = await userRepo.get({ _id: newApiKey.userId });
     if (!userInDb) {
       ErrorUtils.throwError(
-        `User with ID: ${newApiKey.userId} does not exist in the database.`,
+        `User with ID: ${newApiKey.userId.toString()} does not exist in the database.`,
         newApiKey
       );
       return;
@@ -23,12 +23,13 @@ export default class ApiKeyValidator extends IValidator<ApiKey> {
     const apiKeyInDb = await apiKeyRepo.get({ userId: newApiKey.userId });
     if (apiKeyInDb) {
       ErrorUtils.throwError(
-        `User with ID: ${newApiKey.userId} already has an API key.`,
+        `User with ID: ${newApiKey.userId.toString()} already has an API key.`,
         newApiKey
       );
     }
   }
 
+  // eslint-disable-next-line @typescript-eslint/require-await
   async validateUpdateObject(updatedApiKey: Partial<ApiKey>): Promise<void> {
     // Throw, because API keys should not be updated. Only created and deleted.
     ErrorUtils.throwError(
@@ -49,7 +50,7 @@ export default class ApiKeyValidator extends IValidator<ApiKey> {
       shouldDelete: (apiKey: ApiKey) => {
         if (!allUserIds[apiKey.userId.toString()]) {
           Logger.error(
-            `API Key with ID: ${apiKey._id} has no valid associated user.`
+            `API Key with ID: ${apiKey._id.toString()} has no valid associated user.`
           );
           return true;
         }

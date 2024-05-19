@@ -9,7 +9,7 @@ import DashboardNonogramKatanaItemValidator from '../../validators/dashboard/Non
  * The repository that contains {@link NonogramKatanaItem} documents.
  */
 export default class DashboardNonogramKatanaItemRepository extends DashboardBaseRepository<NonogramKatanaItem> {
-  private static singletonInstance: DashboardNonogramKatanaItemRepository;
+  private static singletonInstance?: DashboardNonogramKatanaItemRepository;
 
   private constructor() {
     super(

@@ -15,7 +15,7 @@ import { RepoListeners } from '../../services/RepoSubscriptionService';
  * The repository that contains {@link DashboardUserConfig} documents.
  */
 export default class DashboardUserConfigRepository extends DashboardBaseRepository<DashboardUserConfig> {
-  private static singletonInstance: DashboardUserConfigRepository;
+  private static singletonInstance?: DashboardUserConfigRepository;
 
   private constructor() {
     super(

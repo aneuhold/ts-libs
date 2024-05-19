@@ -1,4 +1,4 @@
-// @ts-ignore
+/* eslint-disable */
 // @ts-nocheck
 import { Logger } from '@aneuhold/core-ts-lib';
 import UserRepository from '../repositories/common/UserRepository';
@@ -6,7 +6,7 @@ import UserRepository from '../repositories/common/UserRepository';
 /**
  * A service for migrating the DB to a new state after an existing document
  * change.
- * 
+ *
  * This entire class is ignored from ESLint and TypeScript to allow for
  * manipulating the DB in any way necessary.
  */
@@ -14,7 +14,7 @@ export default class MigrationService {
   /**
    * A function that can be used to migrate the DB to a new state after an
    * existing document change.
-   * 
+   *
    * ❗️ BEWARE!!! ❗️
    * TRIPLE CHECK THAT THIS IS WHAT YOU WANT TO DO BEFORE RUNNING THIS FUNCTION.
    *

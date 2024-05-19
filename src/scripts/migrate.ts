@@ -1,3 +1,3 @@
 import MigrationService from '../services/MigrationService';
 
-MigrationService.migrateDb().then(() => process.exit(0));
+void MigrationService.migrateDb().then(() => process.exit(0));

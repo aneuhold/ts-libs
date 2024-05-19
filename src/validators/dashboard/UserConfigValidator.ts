@@ -17,7 +17,7 @@ export default class DashboardUserConfigValidator extends IValidator<DashboardUs
     });
     if (existingConfig) {
       ErrorUtils.throwError(
-        `Config already exists for user: ${newUserConfig.userId}`,
+        `Config already exists for user: ${newUserConfig.userId.toString()}`,
         newUserConfig
       );
     }
@@ -25,7 +25,7 @@ export default class DashboardUserConfigValidator extends IValidator<DashboardUs
     const user = await userRepo.get({ _id: newUserConfig.userId });
     if (!user) {
       ErrorUtils.throwError(
-        `User does not exist: ${newUserConfig.userId}`,
+        `User does not exist: ${newUserConfig.userId.toString()}`,
         newUserConfig
       );
     }
@@ -79,7 +79,7 @@ export default class DashboardUserConfigValidator extends IValidator<DashboardUs
       shouldDelete: (userConfig: DashboardUserConfig) => {
         if (!allUserIds[userConfig.userId.toString()]) {
           Logger.error(
-            `Dashboard User Config with ID: ${userConfig._id} has no valid associated user.`
+            `Dashboard User Config with ID: ${userConfig._id.toString()} has no valid associated user.`
           );
           return true;
         }
@@ -91,9 +91,9 @@ export default class DashboardUserConfigValidator extends IValidator<DashboardUs
         collaboratorIds.forEach((userId) => {
           if (!allUserIds[userId.toString()]) {
             errors.push(
-              `User with ID: ${userId} does not exist in collaborators property of Dashboard User Config with ID: ${userConfig._id}.`
+              `User with ID: ${userId.toString()} does not exist in collaborators property of Dashboard User Config with ID: ${userConfig._id.toString()}.`
             );
-            // eslint-disable-next-line no-param-reassign
+
             updatedDoc.collaborators = updatedDoc.collaborators.filter(
               (id) => id.toString() !== userId.toString()
             );
