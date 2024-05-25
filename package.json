@@ -1,6 +1,6 @@
 {
   "name": "@aneuhold/be-ts-lib",
-  "version": "1.0.14",
+  "version": "1.0.15",
   "description": "A backend TypeScript library used for common functionality in personal backend projects.",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
@@ -34,7 +34,7 @@
     "lint": "eslint"
   },
   "dependencies": {
-    "@aneuhold/core-ts-api-lib": "^1.0.55",
+    "@aneuhold/core-ts-api-lib": "^1.0.56",
     "@aneuhold/core-ts-lib": "^1.1.16",
     "dotenv": "^16.4.5",
     "jsonc-parser": "^3.2.1",
