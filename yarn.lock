@@ -26,8 +26,8 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@aneuhold/be-ts-db-lib@workspace:."
   dependencies:
-    "@aneuhold/be-ts-lib": "npm:^1.0.12"
-    "@aneuhold/core-ts-db-lib": "npm:^1.0.67"
+    "@aneuhold/be-ts-lib": "npm:^1.0.15"
+    "@aneuhold/core-ts-db-lib": "npm:^1.0.68"
     "@aneuhold/core-ts-lib": "npm:^1.1.16"
     "@aneuhold/eslint-config": "npm:^1.0.7"
     "@types/jest": "npm:^29.5.12"
@@ -44,38 +44,28 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@aneuhold/be-ts-lib@npm:^1.0.12":
-  version: 1.0.12
-  resolution: "@aneuhold/be-ts-lib@npm:1.0.12"
+"@aneuhold/be-ts-lib@npm:^1.0.15":
+  version: 1.0.15
+  resolution: "@aneuhold/be-ts-lib@npm:1.0.15"
   dependencies:
-    "@aneuhold/core-ts-api-lib": "npm:^1.0.55"
-    "@aneuhold/core-ts-lib": "npm:^1.1.15"
-    dotenv: "npm:^16.3.1"
-    jsonc-parser: "npm:^3.2.0"
+    "@aneuhold/core-ts-api-lib": "npm:^1.0.56"
+    "@aneuhold/core-ts-lib": "npm:^1.1.16"
+    dotenv: "npm:^16.4.5"
+    jsonc-parser: "npm:^3.2.1"
     node-fetch: "npm:^2"
     octokit: "npm:^3.1.2"
-  checksum: 10c0/70cec3bda4ba11051ba3f9589dc62855733524b2d37c4c2d20cbb2b6e87395de3d5b6bf5259fa7aa29eae1673b2bc856ef4ec8b07e9f21ac8b000b0b8b12d3a5
+  checksum: 10c0/bc69b6644c63ba57ed5963fa562656be440387197264f378ea0a7f5a139f90bc0363935ec713701a6b54766f44db834d0d76ae7690c2ab0fe497867f3e147b6c
   languageName: node
   linkType: hard
 
-"@aneuhold/core-ts-api-lib@npm:^1.0.55":
-  version: 1.0.55
-  resolution: "@aneuhold/core-ts-api-lib@npm:1.0.55"
+"@aneuhold/core-ts-api-lib@npm:^1.0.56":
+  version: 1.0.56
+  resolution: "@aneuhold/core-ts-api-lib@npm:1.0.56"
   dependencies:
-    "@aneuhold/core-ts-db-lib": "npm:^1.0.65"
-    "@aneuhold/core-ts-lib": "npm:^1.1.15"
+    "@aneuhold/core-ts-db-lib": "npm:^1.0.67"
+    "@aneuhold/core-ts-lib": "npm:^1.1.16"
     bson: "npm:^6.2.0"
-  checksum: 10c0/077cdfffb8be31b29c356b6f3c2180ec3e9d62dc5285d3d7a97f5e124158fbda4b484a9ccaa0890d9d231ddfe2bbd26a80e24dc6f0ed0ca511ed45d708d01665
-  languageName: node
-  linkType: hard
-
-"@aneuhold/core-ts-db-lib@npm:^1.0.65":
-  version: 1.0.65
-  resolution: "@aneuhold/core-ts-db-lib@npm:1.0.65"
-  dependencies:
-    "@aneuhold/core-ts-lib": "npm:^1.1.15"
-    bson: "npm:^6.2.0"
-  checksum: 10c0/4f40b82321c472d2b77c8ced20a2d86451b4ae2ae13b619e52b81ac732035975fb9336d4f784e4a6fccdbfc645b229ef17f2d435fb2e7b2fef191826d92839a3
+  checksum: 10c0/1990211340536cef02540be60ffafb06a8e4069f4f0292184ab175fd833bfbcac650767329b742a804fa732dabc6e2b628f44fa359b6894e20bf07566bd31ca1
   languageName: node
   linkType: hard
 
@@ -86,6 +76,16 @@ __metadata:
     "@aneuhold/core-ts-lib": "npm:^1.1.15"
     bson: "npm:^6.2.0"
   checksum: 10c0/7180ab74c3db5935a6d55e996d4a1a93add0b0188ddd81d9f3b66bd8fc62288fab769c6064a3d8dc013ca20f7ac2b388672c6805b4966f4c6a5c3a672ffc95ec
+  languageName: node
+  linkType: hard
+
+"@aneuhold/core-ts-db-lib@npm:^1.0.68":
+  version: 1.0.68
+  resolution: "@aneuhold/core-ts-db-lib@npm:1.0.68"
+  dependencies:
+    "@aneuhold/core-ts-lib": "npm:^1.1.16"
+    bson: "npm:^6.2.0"
+  checksum: 10c0/f5fc0ddd3d65be2017d21a3aa10795e05347e0a9ae1c7a8a37617ef113f50067c8129a2a07a518128278978a5c2a687f08f129ad59906753ebc459ce6f45693a
   languageName: node
   linkType: hard
 
@@ -2449,10 +2449,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"dotenv@npm:^16.3.1":
-  version: 16.3.1
-  resolution: "dotenv@npm:16.3.1"
-  checksum: 10c0/b95ff1bbe624ead85a3cd70dbd827e8e06d5f05f716f2d0cbc476532d54c7c9469c3bc4dd93ea519f6ad711cb522c00ac9a62b6eb340d5affae8008facc3fbd7
+"dotenv@npm:^16.4.5":
+  version: 16.4.5
+  resolution: "dotenv@npm:16.4.5"
+  checksum: 10c0/48d92870076832af0418b13acd6e5a5a3e83bb00df690d9812e94b24aff62b88ade955ac99a05501305b8dc8f1b0ee7638b18493deb6fe93d680e5220936292f
   languageName: node
   linkType: hard
 
@@ -4336,10 +4336,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"jsonc-parser@npm:^3.2.0":
-  version: 3.2.0
-  resolution: "jsonc-parser@npm:3.2.0"
-  checksum: 10c0/5a12d4d04dad381852476872a29dcee03a57439574e4181d91dca71904fcdcc5e8e4706c0a68a2c61ad9810e1e1c5806b5100d52d3e727b78f5cdc595401045b
+"jsonc-parser@npm:^3.2.1":
+  version: 3.2.1
+  resolution: "jsonc-parser@npm:3.2.1"
+  checksum: 10c0/ada66dec143d7f9cb0e2d0d29c69e9ce40d20f3a4cb96b0c6efb745025ac7f9ba647d7ac0990d0adfc37a2d2ae084a12009a9c833dbdbeadf648879a99b9df89
   languageName: node
   linkType: hard
 
