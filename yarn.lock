@@ -26,9 +26,9 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@aneuhold/be-ts-lib@workspace:."
   dependencies:
-    "@aneuhold/core-ts-api-lib": "npm:^1.0.57"
-    "@aneuhold/core-ts-lib": "npm:^1.1.16"
-    "@aneuhold/eslint-config": "npm:^1.0.7"
+    "@aneuhold/core-ts-api-lib": "npm:^1.0.58"
+    "@aneuhold/core-ts-lib": "npm:^1.1.17"
+    "@aneuhold/eslint-config": "npm:^1.0.9"
     "@types/jest": "npm:^29.5.12"
     "@types/node": "npm:^20.12.12"
     "@types/node-fetch": "npm:^2.6.11"
@@ -45,14 +45,14 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@aneuhold/core-ts-api-lib@npm:^1.0.57":
-  version: 1.0.57
-  resolution: "@aneuhold/core-ts-api-lib@npm:1.0.57"
+"@aneuhold/core-ts-api-lib@npm:^1.0.58":
+  version: 1.0.58
+  resolution: "@aneuhold/core-ts-api-lib@npm:1.0.58"
   dependencies:
     "@aneuhold/core-ts-db-lib": "npm:^1.0.68"
     "@aneuhold/core-ts-lib": "npm:^1.1.16"
     bson: "npm:^6.2.0"
-  checksum: 10c0/00c07a986903360a038742aeacd702853503d98f3c06cde16e08753fb7831408a4b6d6b8aedaa94cc72a6a33b396e20b74ce29b279fecccc100b8f0c96a86d44
+  checksum: 10c0/63ff5216e26f1bb6d8bb80f67c16b1a03cf6b1d415e0d8b4e0c559e604c329e2c27fe47c33bab0fff92476ae534f7438a67f7c15a7ad5afea73c6bd5a9cfc369
   languageName: node
   linkType: hard
 
@@ -73,9 +73,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@aneuhold/eslint-config@npm:^1.0.7":
-  version: 1.0.7
-  resolution: "@aneuhold/eslint-config@npm:1.0.7"
+"@aneuhold/core-ts-lib@npm:^1.1.17":
+  version: 1.1.17
+  resolution: "@aneuhold/core-ts-lib@npm:1.1.17"
+  checksum: 10c0/ff239d43a2dd4db05cdf3dbac5b3cb7136975581a916cea48c3ae3466a240e0ac45855fd7b06730458ba6be6e6ec850ae5c14072435df16ec58aa5255541b1b7
+  languageName: node
+  linkType: hard
+
+"@aneuhold/eslint-config@npm:^1.0.9":
+  version: 1.0.9
+  resolution: "@aneuhold/eslint-config@npm:1.0.9"
   dependencies:
     "@eslint/js": "npm:^9.3.0"
     "@typescript-eslint/eslint-plugin": "npm:^7.10.0"
@@ -88,7 +95,7 @@ __metadata:
     typescript-eslint: "npm:^7.10.0"
   peerDependencies:
     eslint: ">= 9.3.0"
-  checksum: 10c0/1889e1c9b5f40f3b76f7ad112bf118a93ca5ec653641d92c73cf945378f1adbe38b5533765d894692c9d4faa97e9b4f896bfa1de62340333447ebfc843638aeb
+  checksum: 10c0/d870e001f3e214ddca9989a6c288a9128372a62534356074162fba88ac7ccef16f776565b0285c8abb012f6a216a85785d4f9a69442c9e6a7bafcbaf29ab711e
   languageName: node
   linkType: hard
 
