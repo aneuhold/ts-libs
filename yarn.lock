@@ -31,14 +31,14 @@ __metadata:
     "@aneuhold/core-ts-lib": "npm:^1.1.19"
     "@aneuhold/eslint-config": "npm:^1.0.9"
     "@types/jest": "npm:^29.5.12"
-    "@types/node": "npm:^20.12.12"
+    "@types/node": "npm:^20.14.0"
     "@types/node-fetch": "npm:^2.6.11"
     bson: "npm:^6.2.0"
     eslint: "npm:^9.4.0"
     jest: "npm:^29.7.0"
     mongodb: "npm:^6.3.0"
     prettier: "npm:^3.3.0"
-    ts-jest: "npm:^29.1.3"
+    ts-jest: "npm:^29.1.4"
     ts-node: "npm:^10.9.2"
     typescript: "npm:^5.4.5"
   languageName: unknown
@@ -1471,12 +1471,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/node@npm:^20.12.12":
-  version: 20.12.12
-  resolution: "@types/node@npm:20.12.12"
+"@types/node@npm:^20.14.0":
+  version: 20.14.0
+  resolution: "@types/node@npm:20.14.0"
   dependencies:
     undici-types: "npm:~5.26.4"
-  checksum: 10c0/f374b763c744e8f16e4f38cf6e2c0eef31781ec9228c9e43a6f267880fea420fab0a238b59f10a7cb3444e49547c5e3785787e371fc242307310995b21988812
+  checksum: 10c0/29ccc7592e9ca6b81d00f3a6673241d08e9042d801b10adfd9ebcbbf326208e0a0133a8d146158db18d02a68b85d9ce1fd94e6e1e5be0da263129bf6e42eb22d
   languageName: node
   linkType: hard
 
@@ -5922,9 +5922,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ts-jest@npm:^29.1.3":
-  version: 29.1.3
-  resolution: "ts-jest@npm:29.1.3"
+"ts-jest@npm:^29.1.4":
+  version: 29.1.4
+  resolution: "ts-jest@npm:29.1.4"
   dependencies:
     bs-logger: "npm:0.x"
     fast-json-stable-stringify: "npm:2.x"
@@ -5954,7 +5954,7 @@ __metadata:
       optional: true
   bin:
     ts-jest: cli.js
-  checksum: 10c0/7810882f53c7d722dfcd9fbe65c1c80258ec4bd216a21448f27759f2f06d57a2f3f2472e1efe4a5e29fd4064dce07a93c8dbf3b13e77dac0e32419a30756f8f5
+  checksum: 10c0/97def10be26a553e529dfacafe264fa9833d638052bc2b1ebe6301262ae2d3e43954f4d91f2d2d07cf92352cdd4fa163a86f8116a1f6bb8cef7060cddfec794b
   languageName: node
   linkType: hard
 
