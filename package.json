@@ -1,6 +1,6 @@
 {
   "name": "@aneuhold/be-ts-db-lib",
-  "version": "1.0.61",
+  "version": "1.0.62",
   "description": "A backend database library meant to actually interact with various databases in personal projects",
   "author": "Anton G Neuhold Jr <agneuhold@gmail.com>",
   "license": "MIT",
@@ -53,9 +53,9 @@
     "@types/jest": "^29.5.12",
     "@types/node": "^20.14.0",
     "@types/node-fetch": "^2.6.11",
-    "eslint": "^9.4.0",
+    "eslint": "^9.5.0",
     "jest": "^29.7.0",
-    "prettier": "^3.3.1",
+    "prettier": "^3.3.2",
     "ts-jest": "^29.1.4",
     "ts-node": "^10.9.2",
     "typescript": "^5.4.5"
