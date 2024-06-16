@@ -26,10 +26,10 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@aneuhold/be-ts-db-lib@workspace:."
   dependencies:
-    "@aneuhold/be-ts-lib": "npm:^1.0.29"
-    "@aneuhold/core-ts-db-lib": "npm:^1.0.81"
+    "@aneuhold/be-ts-lib": "npm:^1.0.30"
+    "@aneuhold/core-ts-db-lib": "npm:^1.0.82"
     "@aneuhold/core-ts-lib": "npm:^1.1.25"
-    "@aneuhold/eslint-config": "npm:^1.0.12"
+    "@aneuhold/eslint-config": "npm:^1.0.13"
     "@types/jest": "npm:^29.5.12"
     "@types/node": "npm:^20.14.0"
     "@types/node-fetch": "npm:^2.6.11"
@@ -44,38 +44,48 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@aneuhold/be-ts-lib@npm:^1.0.29":
-  version: 1.0.29
-  resolution: "@aneuhold/be-ts-lib@npm:1.0.29"
+"@aneuhold/be-ts-lib@npm:^1.0.30":
+  version: 1.0.30
+  resolution: "@aneuhold/be-ts-lib@npm:1.0.30"
   dependencies:
-    "@aneuhold/core-ts-api-lib": "npm:^1.0.70"
+    "@aneuhold/core-ts-api-lib": "npm:^1.0.71"
     "@aneuhold/core-ts-lib": "npm:^1.1.25"
     dotenv: "npm:^16.4.5"
     jsonc-parser: "npm:^3.2.1"
     node-fetch: "npm:^2"
     octokit: "npm:^3.1.2"
-  checksum: 10c0/6b44609129772d6cb182afc8a8926bb57f5980165d77440f325c1038293052de0598f73a827b0f21aa3825939338fbd0c2a0df358a259b3746ab117084bc1823
+  checksum: 10c0/9cbc227f8a214b984e11356138556a0e23afe53830989d8b4192ac895cb4d4ed7d20135922401e616dba860a3dfb84de480b21c5ec38d69188793c0021607e14
   languageName: node
   linkType: hard
 
-"@aneuhold/core-ts-api-lib@npm:^1.0.70":
-  version: 1.0.71
-  resolution: "@aneuhold/core-ts-api-lib@npm:1.0.71"
+"@aneuhold/core-ts-api-lib@npm:^1.0.71":
+  version: 1.0.72
+  resolution: "@aneuhold/core-ts-api-lib@npm:1.0.72"
   dependencies:
-    "@aneuhold/core-ts-db-lib": "npm:^1.0.80"
+    "@aneuhold/core-ts-db-lib": "npm:^1.0.81"
     "@aneuhold/core-ts-lib": "npm:^1.1.25"
     bson: "npm:^6.2.0"
-  checksum: 10c0/9fa731c4a53ccadb4761331255059999973e8d0a88af4e642fa2787e9178da678f4fe560516d79dc94c9036f1e2265e98357ab50e3de0cf14e42822f5d2fc7b0
+  checksum: 10c0/a1417c45d47d1267d0e0bd7084a40decea7f45540a17fe41f837df1a914ca3398969bdc7ae6f830c483281978abf6bf33168e24d23c9f9c686d7aeff46e91ce9
   languageName: node
   linkType: hard
 
-"@aneuhold/core-ts-db-lib@npm:^1.0.80, @aneuhold/core-ts-db-lib@npm:^1.0.81":
+"@aneuhold/core-ts-db-lib@npm:^1.0.81":
   version: 1.0.81
   resolution: "@aneuhold/core-ts-db-lib@npm:1.0.81"
   dependencies:
     "@aneuhold/core-ts-lib": "npm:^1.1.25"
     bson: "npm:^6.2.0"
   checksum: 10c0/3f41300ad48d21d0f627394e4571127ae08b47ed0992e67a56e5556853bc8ac26b89bc5c233b9520b2bf58844bc0cd09605c88a5e707f87bca4038ea5fa97ae7
+  languageName: node
+  linkType: hard
+
+"@aneuhold/core-ts-db-lib@npm:^1.0.82":
+  version: 1.0.82
+  resolution: "@aneuhold/core-ts-db-lib@npm:1.0.82"
+  dependencies:
+    "@aneuhold/core-ts-lib": "npm:^1.1.25"
+    bson: "npm:^6.2.0"
+  checksum: 10c0/079f2939c0675d24f23238f894f8a31a2091f7c9cc5f78ac5cb2b01f0d145ade7811b7261d2c4bc3ddafadb4dd9682c0c62493617518778e196937bff200c980
   languageName: node
   linkType: hard
 
@@ -86,9 +96,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@aneuhold/eslint-config@npm:^1.0.12":
-  version: 1.0.12
-  resolution: "@aneuhold/eslint-config@npm:1.0.12"
+"@aneuhold/eslint-config@npm:^1.0.13":
+  version: 1.0.13
+  resolution: "@aneuhold/eslint-config@npm:1.0.13"
   dependencies:
     "@eslint/js": "npm:^9.3.0"
     "@typescript-eslint/eslint-plugin": "npm:^7.13.0"
@@ -96,12 +106,12 @@ __metadata:
     eslint-config-prettier: "npm:^9.1.0"
     eslint-plugin-import: "npm:^2.29.1"
     eslint-plugin-prettier: "npm:^5.1.3"
-    eslint-plugin-svelte: "npm:^2.39.3"
+    eslint-plugin-svelte: "npm:^2.39.4"
     prettier-plugin-svelte: "npm:^3.2.4"
     typescript-eslint: "npm:^7.13.0"
   peerDependencies:
     eslint: ">= 9.5.0"
-  checksum: 10c0/54341c3ef3deb984a20cf5f63894788756bc884fc3e1ccb12ab1de5c99027ec396a3686d8e7b675feac34515b5db7be15a92ef296d04b82cee782af80c0c9fe0
+  checksum: 10c0/8c78e68b58e0a0213add96686cfec6191c6843c7923a01ade55b47c8711cb854af6f09c1e286ded54639af679bf7cf7db328dd8874982d29b1f4fc52078d0849
   languageName: node
   linkType: hard
 
@@ -2720,7 +2730,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"eslint-plugin-svelte@npm:^2.39.3":
+"eslint-plugin-svelte@npm:^2.39.4":
   version: 2.39.4
   resolution: "eslint-plugin-svelte@npm:2.39.4"
   dependencies:
