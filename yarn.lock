@@ -26,9 +26,9 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@aneuhold/core-ts-api-lib@workspace:."
   dependencies:
-    "@aneuhold/core-ts-db-lib": "npm:^1.0.85"
-    "@aneuhold/core-ts-lib": "npm:^1.1.27"
-    "@aneuhold/eslint-config": "npm:^1.0.16"
+    "@aneuhold/core-ts-db-lib": "npm:^1.0.87"
+    "@aneuhold/core-ts-lib": "npm:^1.1.28"
+    "@aneuhold/eslint-config": "npm:^1.0.17"
     "@types/jest": "npm:^29.5.12"
     "@types/node": "npm:^20.14.9"
     "@types/node-fetch": "npm:^2.6.11"
@@ -42,26 +42,26 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@aneuhold/core-ts-db-lib@npm:^1.0.85":
-  version: 1.0.85
-  resolution: "@aneuhold/core-ts-db-lib@npm:1.0.85"
+"@aneuhold/core-ts-db-lib@npm:^1.0.87":
+  version: 1.0.87
+  resolution: "@aneuhold/core-ts-db-lib@npm:1.0.87"
   dependencies:
-    "@aneuhold/core-ts-lib": "npm:^1.1.27"
+    "@aneuhold/core-ts-lib": "npm:^1.1.28"
     bson: "npm:^6.2.0"
-  checksum: 10c0/f762362a596398187f8f528b5d2d315fe6c0270a1d219f887406ed7e3c80ffed5af3f943b62c4247d1a7f692d945e1804b872e970e4f1e3b051db9e7eb81b172
+  checksum: 10c0/67e17d61860282849fe2dce975f2237c79e34c27d53b6b8672faff4a77a5dcbcdadbf0b801df4dd308d15e95cca68d6efe7ee37c79cd4f66c7151d8248d7f240
   languageName: node
   linkType: hard
 
-"@aneuhold/core-ts-lib@npm:^1.1.27":
-  version: 1.1.27
-  resolution: "@aneuhold/core-ts-lib@npm:1.1.27"
-  checksum: 10c0/b79a9ccb4101728b5fa3ba5ac67d94c338e39fdf57b7f25b0b8474fe08710e1caa63cf2ca632a06b9684e6913c6876290090afb65b24103cf5a59362d740c880
+"@aneuhold/core-ts-lib@npm:^1.1.28":
+  version: 1.1.28
+  resolution: "@aneuhold/core-ts-lib@npm:1.1.28"
+  checksum: 10c0/a03767dcb14970ad834064ef66e2288e80349b4ca9f0fb06abe0c4debb61d3eb3b75e3d6ac39d00d818e7f5d125d279d8b8ec451b44d82e5dce902906704a164
   languageName: node
   linkType: hard
 
-"@aneuhold/eslint-config@npm:^1.0.16":
-  version: 1.0.16
-  resolution: "@aneuhold/eslint-config@npm:1.0.16"
+"@aneuhold/eslint-config@npm:^1.0.17":
+  version: 1.0.17
+  resolution: "@aneuhold/eslint-config@npm:1.0.17"
   dependencies:
     "@eslint/js": "npm:^9.3.0"
     "@typescript-eslint/eslint-plugin": "npm:^7.13.1"
@@ -74,7 +74,7 @@ __metadata:
     typescript-eslint: "npm:^7.13.1"
   peerDependencies:
     eslint: ">= 9.5.0"
-  checksum: 10c0/bba536df3bea8db2960fb2e3b6b5567e30222ed52764d0594163368645e44ec23d7149438aea9f42e0feac9623aa9b44dbe544150d2860f728b9e18b6050c528
+  checksum: 10c0/270aef18120ddf03e485cffc6cc80f78394405c9786a490503e1c51daee97a5add4b10d41cda713ceaac241b33d06bdb6c710b965ae3b2fbd7c4274e4ce6ffb0
   languageName: node
   linkType: hard
 
