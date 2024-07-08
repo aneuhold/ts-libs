@@ -26,8 +26,8 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@aneuhold/be-ts-db-lib@workspace:."
   dependencies:
-    "@aneuhold/be-ts-lib": "npm:^1.0.40"
-    "@aneuhold/core-ts-db-lib": "npm:^1.0.90"
+    "@aneuhold/be-ts-lib": "npm:^1.0.41"
+    "@aneuhold/core-ts-db-lib": "npm:^1.0.91"
     "@aneuhold/core-ts-lib": "npm:^1.1.31"
     "@aneuhold/eslint-config": "npm:^1.0.19"
     "@types/jest": "npm:^29.5.12"
@@ -44,17 +44,17 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@aneuhold/be-ts-lib@npm:^1.0.40":
-  version: 1.0.40
-  resolution: "@aneuhold/be-ts-lib@npm:1.0.40"
+"@aneuhold/be-ts-lib@npm:^1.0.41":
+  version: 1.0.41
+  resolution: "@aneuhold/be-ts-lib@npm:1.0.41"
   dependencies:
     "@aneuhold/core-ts-api-lib": "npm:^1.0.82"
-    "@aneuhold/core-ts-lib": "npm:^1.1.30"
+    "@aneuhold/core-ts-lib": "npm:^1.1.31"
     dotenv: "npm:^16.4.5"
     jsonc-parser: "npm:^3.3.1"
     node-fetch: "npm:^2"
     octokit: "npm:^3.1.2"
-  checksum: 10c0/7f5b73055cbfb43177cada6ba3ef2aff180ace111b625316de1dbfa5d33a20a7c3f72ce1aee033e88c93bcda8d42a4c91a5e9e04c59b79703188e336369be708
+  checksum: 10c0/a53ad05b852ea13498350e88a089f1cb1baafbf958bb0a65cc3341eb0a47435beac84ed3eea935cb187755f57354508d59d74778448742e4f67f5c005ae853be
   languageName: node
   linkType: hard
 
@@ -79,13 +79,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@aneuhold/core-ts-db-lib@npm:^1.0.90":
-  version: 1.0.90
-  resolution: "@aneuhold/core-ts-db-lib@npm:1.0.90"
+"@aneuhold/core-ts-db-lib@npm:^1.0.91":
+  version: 1.0.91
+  resolution: "@aneuhold/core-ts-db-lib@npm:1.0.91"
   dependencies:
-    "@aneuhold/core-ts-lib": "npm:^1.1.30"
+    "@aneuhold/core-ts-lib": "npm:^1.1.31"
     bson: "npm:^6.2.0"
-  checksum: 10c0/381bc57ec5224d1883f51011fe2c8e868cba4748ec242648b53fd0b97b0f69022efe2a0840776295926f19dca934863596aff0ec324ab00e2197c68a009d6d52
+  checksum: 10c0/735110e5cb460b0dabc8e300eeeb9a5b4e06778cf0ff7d28e71f52b9a5c29e78a351c3b099894b9c3f544bf7f4729825119ba28053d304b1adf5d7c0bc51a87c
   languageName: node
   linkType: hard
 
