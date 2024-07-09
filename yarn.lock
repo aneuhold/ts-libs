@@ -26,7 +26,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@aneuhold/be-ts-lib@workspace:."
   dependencies:
-    "@aneuhold/core-ts-api-lib": "npm:^1.0.82"
+    "@aneuhold/core-ts-api-lib": "npm:^1.0.83"
     "@aneuhold/core-ts-lib": "npm:^1.1.31"
     "@aneuhold/eslint-config": "npm:^1.0.19"
     "@types/jest": "npm:^29.5.12"
@@ -45,31 +45,24 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@aneuhold/core-ts-api-lib@npm:^1.0.82":
-  version: 1.0.82
-  resolution: "@aneuhold/core-ts-api-lib@npm:1.0.82"
+"@aneuhold/core-ts-api-lib@npm:^1.0.83":
+  version: 1.0.83
+  resolution: "@aneuhold/core-ts-api-lib@npm:1.0.83"
   dependencies:
-    "@aneuhold/core-ts-db-lib": "npm:^1.0.89"
-    "@aneuhold/core-ts-lib": "npm:^1.1.30"
+    "@aneuhold/core-ts-db-lib": "npm:^1.0.91"
+    "@aneuhold/core-ts-lib": "npm:^1.1.31"
     bson: "npm:^6.2.0"
-  checksum: 10c0/7cafaa33a2f51ca5bf77e26cb775aae945ed546b9eb2c634f5fe828543a14f5a372cbd1cbabe5c6b27d137e3eee53ff50c03d4db6c900f0147c6bd5197ceded7
+  checksum: 10c0/8088087cd77ad0a390379eb5c479dd9b04cfe9889bdc6e58fe6949ee3460c54234ad1d21c2895a8139ec7c5f23cee514260f472f5775c49625403168b855225c
   languageName: node
   linkType: hard
 
-"@aneuhold/core-ts-db-lib@npm:^1.0.89":
-  version: 1.0.89
-  resolution: "@aneuhold/core-ts-db-lib@npm:1.0.89"
+"@aneuhold/core-ts-db-lib@npm:^1.0.91":
+  version: 1.0.91
+  resolution: "@aneuhold/core-ts-db-lib@npm:1.0.91"
   dependencies:
-    "@aneuhold/core-ts-lib": "npm:^1.1.30"
+    "@aneuhold/core-ts-lib": "npm:^1.1.31"
     bson: "npm:^6.2.0"
-  checksum: 10c0/4c48567ffe58406f4581e413dd2526fc1a46f9f6ae76ef5f59b1910cf7b2605c5cbd9c7b881ca99f24420615e83afab3f29fa70860da70950efc768039351a50
-  languageName: node
-  linkType: hard
-
-"@aneuhold/core-ts-lib@npm:^1.1.30":
-  version: 1.1.30
-  resolution: "@aneuhold/core-ts-lib@npm:1.1.30"
-  checksum: 10c0/b9195938bf26cd9d0dce7859483562d4f322fd6e374f2d37a84a35611c70737dd6dff9c8719f40eff80b7ff5911715cd2eed5c24dc68866e1c3d011fc5eabaac
+  checksum: 10c0/735110e5cb460b0dabc8e300eeeb9a5b4e06778cf0ff7d28e71f52b9a5c29e78a351c3b099894b9c3f544bf7f4729825119ba28053d304b1adf5d7c0bc51a87c
   languageName: node
   linkType: hard
 
