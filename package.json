@@ -1,6 +1,6 @@
 {
   "name": "@aneuhold/be-ts-lib",
-  "version": "1.0.42",
+  "version": "1.0.43",
   "description": "A backend TypeScript library used for common functionality in personal backend projects.",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
@@ -46,9 +46,9 @@
     "@types/jest": "^29.5.12",
     "@types/node": "^20.14.9",
     "@types/node-fetch": "^2.6.11",
-    "eslint": "^9.6.0",
+    "eslint": "^9.7.0",
     "jest": "^29.7.0",
-    "prettier": "^3.3.2",
+    "prettier": "^3.3.3",
     "ts-jest": "^29.1.5",
     "ts-node": "^10.9.2",
     "typescript": "^5.5.2"
