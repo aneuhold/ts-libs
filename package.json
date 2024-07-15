@@ -1,6 +1,6 @@
 {
   "name": "@aneuhold/core-ts-db-lib",
-  "version": "1.0.93",
+  "version": "1.0.94",
   "description": "A core database library used for personal projects",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
@@ -36,11 +36,11 @@
     "lint": "eslint"
   },
   "dependencies": {
-    "@aneuhold/core-ts-lib": "^1.1.31",
+    "@aneuhold/core-ts-lib": "^1.1.32",
     "bson": "^6.2.0"
   },
   "devDependencies": {
-    "@aneuhold/eslint-config": "^1.0.19",
+    "@aneuhold/eslint-config": "^1.0.21",
     "@types/jest": "^29.5.12",
     "@types/node": "^20.14.9",
     "@types/node-fetch": "^2.6.11",
