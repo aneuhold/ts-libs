@@ -26,7 +26,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@aneuhold/core-ts-db-lib@workspace:."
   dependencies:
-    "@aneuhold/core-ts-lib": "npm:^1.1.32"
+    "@aneuhold/core-ts-lib": "npm:^1.1.33"
     "@aneuhold/eslint-config": "npm:^1.0.21"
     "@types/jest": "npm:^29.5.12"
     "@types/node": "npm:^20.14.9"
@@ -41,10 +41,10 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@aneuhold/core-ts-lib@npm:^1.1.32":
-  version: 1.1.32
-  resolution: "@aneuhold/core-ts-lib@npm:1.1.32"
-  checksum: 10c0/486bcafc2f1de04abe9ed193f813bab5e1dd137057986ee52a753d0513f057ba8704d78ca7e41cafed05cec685ec546a6e4a3617d1fb4c7af2e51ee74e37d3f9
+"@aneuhold/core-ts-lib@npm:^1.1.33":
+  version: 1.1.33
+  resolution: "@aneuhold/core-ts-lib@npm:1.1.33"
+  checksum: 10c0/25a828b459d3f1ef99d759af3a8e6b81df4a6a9a78e81ce02faf034c6151e3ecfbc5e613c2b5b9070e906f1e788541125aaacf34ff4a394174dc5f2d86703acb
   languageName: node
   linkType: hard
 
