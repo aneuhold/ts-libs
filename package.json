@@ -1,6 +1,6 @@
 {
   "name": "@aneuhold/be-ts-db-lib",
-  "version": "1.0.82",
+  "version": "1.0.83",
   "description": "A backend database library meant to actually interact with various databases in personal projects",
   "author": "Anton G Neuhold Jr <agneuhold@gmail.com>",
   "license": "MIT",
@@ -42,7 +42,7 @@
     "lint": "eslint"
   },
   "dependencies": {
-    "@aneuhold/be-ts-lib": "^1.0.44",
+    "@aneuhold/be-ts-lib": "^1.0.45",
     "@aneuhold/core-ts-db-lib": "^1.0.95",
     "@aneuhold/core-ts-lib": "^1.1.33",
     "bson": "^6.2.0",
