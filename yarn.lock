@@ -26,7 +26,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@aneuhold/be-ts-lib@workspace:."
   dependencies:
-    "@aneuhold/core-ts-api-lib": "npm:^1.0.86"
+    "@aneuhold/core-ts-api-lib": "npm:^1.0.87"
     "@aneuhold/core-ts-lib": "npm:^1.1.33"
     "@aneuhold/eslint-config": "npm:^1.0.21"
     "@types/jest": "npm:^29.5.12"
@@ -45,28 +45,28 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@aneuhold/core-ts-api-lib@npm:^1.0.86":
-  version: 1.0.86
-  resolution: "@aneuhold/core-ts-api-lib@npm:1.0.86"
+"@aneuhold/core-ts-api-lib@npm:^1.0.87":
+  version: 1.0.87
+  resolution: "@aneuhold/core-ts-api-lib@npm:1.0.87"
   dependencies:
-    "@aneuhold/core-ts-db-lib": "npm:^1.0.94"
+    "@aneuhold/core-ts-db-lib": "npm:^1.0.95"
     "@aneuhold/core-ts-lib": "npm:^1.1.33"
     bson: "npm:^6.2.0"
-  checksum: 10c0/3552bda50e06601fe3c56273893f13a76527acd5a7d1212d3f8da04c53127165a3c2534211aa94904540608e376b1ac8a87cb9dc4c2b3f6869e23b43bda77d93
+  checksum: 10c0/9832130ac174dd670ef068be248c434949dcc63076b2d8a4b50fdaf370f2581c938fcb1936168545d9f8421dc6f8241b50b98c10c876f4ca9421a7436a47331a
   languageName: node
   linkType: hard
 
-"@aneuhold/core-ts-db-lib@npm:^1.0.94":
-  version: 1.0.94
-  resolution: "@aneuhold/core-ts-db-lib@npm:1.0.94"
+"@aneuhold/core-ts-db-lib@npm:^1.0.95":
+  version: 1.0.95
+  resolution: "@aneuhold/core-ts-db-lib@npm:1.0.95"
   dependencies:
-    "@aneuhold/core-ts-lib": "npm:^1.1.32"
+    "@aneuhold/core-ts-lib": "npm:^1.1.33"
     bson: "npm:^6.2.0"
-  checksum: 10c0/073c89434bf0a940bcbdd10e8300fe04781ecad6dc11cd2cfff8ec32a8639f53e9a73dfdda97ad5bc29adf09152ff4cef0dc96ffcbe3db3929b244e27e1aa0ac
+  checksum: 10c0/d16053b9ab64f439c43e88f6de1494e44fa505d73b27aaa4da106b38cd511f371090e92b680a9dc8b2af55e07489301c8889305c9d7bd7de8914e50b652b8e1a
   languageName: node
   linkType: hard
 
-"@aneuhold/core-ts-lib@npm:^1.1.32, @aneuhold/core-ts-lib@npm:^1.1.33":
+"@aneuhold/core-ts-lib@npm:^1.1.33":
   version: 1.1.33
   resolution: "@aneuhold/core-ts-lib@npm:1.1.33"
   checksum: 10c0/25a828b459d3f1ef99d759af3a8e6b81df4a6a9a78e81ce02faf034c6151e3ecfbc5e613c2b5b9070e906f1e788541125aaacf34ff4a394174dc5f2d86703acb
