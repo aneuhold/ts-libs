@@ -32,8 +32,8 @@
     "unlink:local": "cd lib && yarn unlink",
     "unlink:coredb": "yarn unlink @aneuhold/core-ts-db-lib && yarn install --force",
     "unlink:bets": "yarn unlink @aneuhold/be-ts-lib && yarn install --force",
-    "upgrade:all": "yarn upgrade --latest",
-    "upgrade:core": "yarn upgrade --latest --pattern @aneuhold",
+    "upgrade:all": "yarn up",
+    "upgrade:core": "yarn up '@aneuhold/*'",
     "test": "jest && yarn validate:dry",
     "validate": "ts-node ./src/scripts/validateSchema.ts",
     "validate:dry": "ts-node ./src/scripts/validateSchemaDryRun.ts",
@@ -42,14 +42,14 @@
     "lint": "eslint"
   },
   "dependencies": {
-    "@aneuhold/be-ts-lib": "^1.0.45",
-    "@aneuhold/core-ts-db-lib": "^1.0.95",
-    "@aneuhold/core-ts-lib": "^1.1.33",
+    "@aneuhold/be-ts-lib": "^1.0.46",
+    "@aneuhold/core-ts-db-lib": "^1.0.97",
+    "@aneuhold/core-ts-lib": "^1.1.34",
     "bson": "^6.2.0",
     "mongodb": "^6.3.0"
   },
   "devDependencies": {
-    "@aneuhold/eslint-config": "^1.0.21",
+    "@aneuhold/eslint-config": "^1.0.22",
     "@types/jest": "^29.5.12",
     "@types/node": "^20.14.11",
     "@types/node-fetch": "^2.6.11",
