@@ -30,8 +30,8 @@
     "link:core-ts-lib": "yarn link @aneuhold/core-ts-lib",
     "unlink:local": "cd lib && yarn unlink",
     "unlink:core-ts-lib": "yarn unlink @aneuhold/core-ts-lib && yarn install --force",
-    "upgrade:all": "yarn upgrade --latest",
-    "upgrade:core": "yarn upgrade --latest --pattern @aneuhold",
+    "upgrade:all": "yarn up",
+    "upgrade:core": "yarn up '@aneuhold/*'",
     "test": "jest",
     "lint": "eslint"
   },
