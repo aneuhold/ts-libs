@@ -28,8 +28,8 @@
     "watch": "tsc -w",
     "link:local": "cd lib && yarn link",
     "unlink:local": "cd lib && yarn unlink",
-    "upgrade:all": "yarn upgrade --latest",
-    "upgrade:core": "yarn upgrade --latest --pattern @aneuhold",
+    "upgrade:all": "yarn up",
+    "upgrade:core": "yarn up '@aneuhold/*'",
     "test": "jest",
     "lint": "eslint"
   },
