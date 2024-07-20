@@ -92,6 +92,11 @@ export default class DashboardTask
   sharedWith: ObjectId[] = [];
 
   /**
+   * The user ID that this task is assigned to.
+   */
+  assignedTo?: ObjectId;
+
+  /**
    * The recurrence info for this task if there is any.
    */
   recurrenceInfo?: RecurrenceInfo;
