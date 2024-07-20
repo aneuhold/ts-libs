@@ -11,7 +11,7 @@
     "watch": "tsc -w",
     "link:local": "cd lib && yarn link",
     "unlink:local": "cd lib && yarn unlink",
-    "upgrade:all": "yarn upgrade --latest",
+    "upgrade:all": "yarn up",
     "test": "jest",
     "lint": "eslint"
   },
