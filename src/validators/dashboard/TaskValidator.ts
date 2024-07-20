@@ -69,6 +69,8 @@ export default class DashboardTaskValidator extends IValidator<DashboardTask> {
       },
       documentValidator: (task: DashboardTask) => {
         const { updatedDoc, errors } = validateDashboardTask(task);
+
+        // Check sharedWith
         const sharedWithUserIds = [...task.sharedWith];
         sharedWithUserIds.forEach((userId) => {
           if (!allUserIds[userId.toString()]) {
@@ -81,6 +83,15 @@ export default class DashboardTaskValidator extends IValidator<DashboardTask> {
             );
           }
         });
+
+        // Check assignedTo
+        if (task.assignedTo && !allUserIds[task.assignedTo.toString()]) {
+          errors.push(
+            `User with ID: ${task.assignedTo.toString()} does not exist in assignedTo property of task with ID: ${task._id.toString()}.`
+          );
+          updatedDoc.assignedTo = undefined;
+        }
+
         return { updatedDoc, errors };
       },
       deletionFunction: async (docIdsToDelete: ObjectId[]) => {

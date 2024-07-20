@@ -38,14 +38,26 @@ export default class DashboardTaskRepository extends DashboardBaseRepository<Das
     const taskRepo = DashboardTaskRepository.getRepo();
     return {
       deleteOne: async (userId) => {
-        await (await taskRepo.getCollection()).deleteMany({ userId });
+        const taskCollection = await taskRepo.getCollection();
+        // Remove all tasks for the user
+        await taskCollection.deleteMany({ userId });
+        // Remove all assignedTo references for the user
+        await taskCollection.updateMany(
+          { assignedTo: userId },
+          { $set: { assignedTo: undefined } }
+        );
       },
       deleteList: async (userIds) => {
-        await (
-          await taskRepo.getCollection()
-        ).deleteMany({
+        const taskCollection = await taskRepo.getCollection();
+        // Remove all tasks for the users
+        await taskCollection.deleteMany({
           userId: { $in: userIds }
         });
+        // Remove all assignedTo references for the users
+        await taskCollection.updateMany(
+          { assignedTo: { $in: userIds } },
+          { $set: { assignedTo: undefined } }
+        );
       }
     };
   }
