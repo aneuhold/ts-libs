@@ -30,8 +30,8 @@
     "link:coredb": "yarn link @aneuhold/core-ts-db-lib",
     "unlink:local": "cd lib && yarn unlink",
     "unlink:coredb": "yarn unlink @aneuhold/core-ts-db-lib && yarn install --force",
-    "upgrade:all": "yarn upgrade --latest",
-    "upgrade:core": "yarn upgrade --latest --pattern @aneuhold",
+    "upgrade:all": "yarn up",
+    "upgrade:core": "yarn up '@aneuhold/*'",
     "test": "jest --passWithNoTests",
     "lint": "yarn eslint"
   },
