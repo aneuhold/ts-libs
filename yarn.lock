@@ -26,8 +26,8 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@aneuhold/core-ts-api-lib@workspace:."
   dependencies:
-    "@aneuhold/core-ts-db-lib": "npm:^1.0.99"
-    "@aneuhold/core-ts-lib": "npm:^1.1.36"
+    "@aneuhold/core-ts-db-lib": "npm:^1.0.100"
+    "@aneuhold/core-ts-lib": "npm:^1.1.37"
     "@aneuhold/eslint-config": "npm:^1.0.23"
     "@types/jest": "npm:^29.5.12"
     "@types/node": "npm:^20.14.11"
@@ -42,20 +42,13 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@aneuhold/core-ts-db-lib@npm:^1.0.99":
-  version: 1.0.99
-  resolution: "@aneuhold/core-ts-db-lib@npm:1.0.99"
+"@aneuhold/core-ts-db-lib@npm:^1.0.100":
+  version: 1.0.100
+  resolution: "@aneuhold/core-ts-db-lib@npm:1.0.100"
   dependencies:
-    "@aneuhold/core-ts-lib": "npm:^1.1.35"
+    "@aneuhold/core-ts-lib": "npm:^1.1.36"
     bson: "npm:^6.2.0"
-  checksum: 10c0/7a86a0e632a3bc0362824ff8fabb6b6125e2c6d89a15aea5d618c3dc440cf986ebdf5b946f2d12787074a448ef6fb956436d8d39555cfebee99fcaa76eb23b25
-  languageName: node
-  linkType: hard
-
-"@aneuhold/core-ts-lib@npm:^1.1.35":
-  version: 1.1.35
-  resolution: "@aneuhold/core-ts-lib@npm:1.1.35"
-  checksum: 10c0/e6f4e8f2bf41da00ee2284239537dc404e37b7ead5b0779fb164fd6ae57bf5e23a70a461398d5d279a4b83e369f51e6948cb3ddf5b66b0475882ea98d9b0a50e
+  checksum: 10c0/4121096f0edead4d04801692f55ca0ad31d14bcea777b0b8b11acc03557815e590a1b3bd3533921a7a564e9b152666f4e582261348b59cdebb198cadc46e907d
   languageName: node
   linkType: hard
 
@@ -63,6 +56,13 @@ __metadata:
   version: 1.1.36
   resolution: "@aneuhold/core-ts-lib@npm:1.1.36"
   checksum: 10c0/f725d47c311150310c021e4f6ca2431d6abd795086f5a8d23e12869d4ba48296674b0ea154c2f407e470804f8c6539648419d789ed2529eed601f2cb610435bb
+  languageName: node
+  linkType: hard
+
+"@aneuhold/core-ts-lib@npm:^1.1.37":
+  version: 1.1.37
+  resolution: "@aneuhold/core-ts-lib@npm:1.1.37"
+  checksum: 10c0/7050e1a37d74c9645ffca9bafabc173c070bb8ef4b1908e7436530948991dee2bd6f82e676a2ed5acd0289e9aa22453a25ff85d31033011cb8f3b5261b81756e
   languageName: node
   linkType: hard
 

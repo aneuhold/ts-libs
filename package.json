@@ -1,6 +1,6 @@
 {
   "name": "@aneuhold/core-ts-api-lib",
-  "version": "1.0.93",
+  "version": "1.0.94",
   "description": "A library for interacting with the backend and defining the backend API for personal projects.",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
@@ -36,8 +36,8 @@
     "lint": "yarn eslint"
   },
   "dependencies": {
-    "@aneuhold/core-ts-db-lib": "^1.0.99",
-    "@aneuhold/core-ts-lib": "^1.1.36",
+    "@aneuhold/core-ts-db-lib": "^1.0.100",
+    "@aneuhold/core-ts-lib": "^1.1.37",
     "bson": "^6.2.0"
   },
   "devDependencies": {
