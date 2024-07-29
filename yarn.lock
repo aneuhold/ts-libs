@@ -26,7 +26,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@aneuhold/be-ts-lib@workspace:."
   dependencies:
-    "@aneuhold/core-ts-api-lib": "npm:^1.0.93"
+    "@aneuhold/core-ts-api-lib": "npm:^1.0.94"
     "@aneuhold/core-ts-lib": "npm:^1.1.37"
     "@aneuhold/eslint-config": "npm:^1.0.23"
     "@types/jest": "npm:^29.5.12"
@@ -45,28 +45,28 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@aneuhold/core-ts-api-lib@npm:^1.0.93":
-  version: 1.0.93
-  resolution: "@aneuhold/core-ts-api-lib@npm:1.0.93"
+"@aneuhold/core-ts-api-lib@npm:^1.0.94":
+  version: 1.0.94
+  resolution: "@aneuhold/core-ts-api-lib@npm:1.0.94"
   dependencies:
-    "@aneuhold/core-ts-db-lib": "npm:^1.0.99"
-    "@aneuhold/core-ts-lib": "npm:^1.1.36"
+    "@aneuhold/core-ts-db-lib": "npm:^1.0.100"
+    "@aneuhold/core-ts-lib": "npm:^1.1.37"
     bson: "npm:^6.2.0"
-  checksum: 10c0/0a3d2284d9f6c2ae04d306ed7505b5c01ca158c9b2603a654c571c79c132528e67b32bc9a7c24311832019c44b8a0bc4e21831078b32529fb62e8e0c61f2ccbb
+  checksum: 10c0/4ba3b4b16f284374a0071de43f6d2e2b05095cb304df3c97e2d47bef285f7a1a7b5fcfb04b09dd608945903018f27ae9f531976ce45021014ec22c42800d33e0
   languageName: node
   linkType: hard
 
-"@aneuhold/core-ts-db-lib@npm:^1.0.99":
-  version: 1.0.100
-  resolution: "@aneuhold/core-ts-db-lib@npm:1.0.100"
+"@aneuhold/core-ts-db-lib@npm:^1.0.100":
+  version: 1.0.101
+  resolution: "@aneuhold/core-ts-db-lib@npm:1.0.101"
   dependencies:
-    "@aneuhold/core-ts-lib": "npm:^1.1.36"
+    "@aneuhold/core-ts-lib": "npm:^1.1.37"
     bson: "npm:^6.2.0"
-  checksum: 10c0/4121096f0edead4d04801692f55ca0ad31d14bcea777b0b8b11acc03557815e590a1b3bd3533921a7a564e9b152666f4e582261348b59cdebb198cadc46e907d
+  checksum: 10c0/ac8349a48022ea558c02ba46ffe09985cdded7619127965be00c2b490005481cd6d064e6c597bf6b5df4845ebc13b33cad621213c5372bebc42d07d787482ddd
   languageName: node
   linkType: hard
 
-"@aneuhold/core-ts-lib@npm:^1.1.36, @aneuhold/core-ts-lib@npm:^1.1.37":
+"@aneuhold/core-ts-lib@npm:^1.1.37":
   version: 1.1.37
   resolution: "@aneuhold/core-ts-lib@npm:1.1.37"
   checksum: 10c0/7050e1a37d74c9645ffca9bafabc173c070bb8ef4b1908e7436530948991dee2bd6f82e676a2ed5acd0289e9aa22453a25ff85d31033011cb8f3b5261b81756e
