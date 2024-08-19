@@ -26,9 +26,9 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@aneuhold/be-ts-lib@workspace:."
   dependencies:
-    "@aneuhold/core-ts-api-lib": "npm:^1.0.95"
-    "@aneuhold/core-ts-lib": "npm:^1.1.38"
-    "@aneuhold/eslint-config": "npm:^1.0.24"
+    "@aneuhold/core-ts-api-lib": "npm:^1.0.96"
+    "@aneuhold/core-ts-lib": "npm:^1.1.39"
+    "@aneuhold/eslint-config": "npm:^1.0.27"
     "@types/jest": "npm:^29.5.12"
     "@types/node": "npm:^20.15.0"
     "@types/node-fetch": "npm:^2.6.11"
@@ -45,14 +45,14 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@aneuhold/core-ts-api-lib@npm:^1.0.95":
-  version: 1.0.95
-  resolution: "@aneuhold/core-ts-api-lib@npm:1.0.95"
+"@aneuhold/core-ts-api-lib@npm:^1.0.96":
+  version: 1.0.96
+  resolution: "@aneuhold/core-ts-api-lib@npm:1.0.96"
   dependencies:
     "@aneuhold/core-ts-db-lib": "npm:^1.0.101"
     "@aneuhold/core-ts-lib": "npm:^1.1.37"
     bson: "npm:^6.2.0"
-  checksum: 10c0/dc3ad6368211a4b924ea2e581135a64157697c0f8f5d006414af1e4c19146342b7a0518a5fdff00708f5c89bc3140688087467cdb63cb0d912ccd6e6f03be7cf
+  checksum: 10c0/0c63eed483abc07fcd9452da403f93f2013abf932036ae8a5f85ed38b787e57116cba5f0925e64679794244aa119b01b1f0f0d6cf71cd30e920b0ee9758633ff
   languageName: node
   linkType: hard
 
@@ -73,18 +73,18 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@aneuhold/core-ts-lib@npm:^1.1.38":
-  version: 1.1.38
-  resolution: "@aneuhold/core-ts-lib@npm:1.1.38"
-  checksum: 10c0/1bdf3b85bb0a9d64f0063fff8b17f426a75b03b6fe93e1cf61e8bf882fe0fa12a887023716a0864340a3d9ebe685c43dd818ae3bc7739df9351557196e5b246c
+"@aneuhold/core-ts-lib@npm:^1.1.39":
+  version: 1.1.39
+  resolution: "@aneuhold/core-ts-lib@npm:1.1.39"
+  checksum: 10c0/70720ba8ba4534380063e02104461e69e967a3eb1ac9e261e0d71dea5d87447b5bf1b6cf10750ce966892fac57805c8ad5403ab0326d83cbefa8202e09b90dcd
   languageName: node
   linkType: hard
 
-"@aneuhold/eslint-config@npm:^1.0.24":
-  version: 1.0.24
-  resolution: "@aneuhold/eslint-config@npm:1.0.24"
+"@aneuhold/eslint-config@npm:^1.0.27":
+  version: 1.0.27
+  resolution: "@aneuhold/eslint-config@npm:1.0.27"
   dependencies:
-    "@eslint/js": "npm:^9.8.0"
+    "@eslint/js": "npm:^9.9.0"
     "@typescript-eslint/eslint-plugin": "npm:^8.0.0"
     "@typescript-eslint/parser": "npm:^8.0.0"
     eslint-config-prettier: "npm:^9.1.0"
@@ -94,8 +94,8 @@ __metadata:
     prettier-plugin-svelte: "npm:^3.2.6"
     typescript-eslint: "npm:^8.0.0"
   peerDependencies:
-    eslint: ">= 9.8.0"
-  checksum: 10c0/4e03100a8772cc2548d1f0b8bcd84c1a6cb7a9b23248a2f1ac8b86ccd6281ff9cf4861a00a1e18885e50d925261cd8baff1209ebfef7a3c2826f4cfcb35e688f
+    eslint: ">= 9.9.0"
+  checksum: 10c0/33d081b5f00482594e6da054d0d57cbfb9e2130c7b2bdaa6fd56ad2c6e0281944130b5f09e1e2ae4f55ded26c1ae3b7c3bd79d32399cb4886c8c6edbf8457ed6
   languageName: node
   linkType: hard
 
@@ -579,10 +579,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@eslint/js@npm:9.8.0, @eslint/js@npm:^9.8.0":
+"@eslint/js@npm:9.8.0":
   version: 9.8.0
   resolution: "@eslint/js@npm:9.8.0"
   checksum: 10c0/42edaae6b020436410454579509dcb6a8cd5b260e9f18e037fd803ae28d35eb13663d4019f0ab8ba686a19d3c4a43b0e11394c148e23345377ab694da0e83262
+  languageName: node
+  linkType: hard
+
+"@eslint/js@npm:^9.9.0":
+  version: 9.9.0
+  resolution: "@eslint/js@npm:9.9.0"
+  checksum: 10c0/6ec9f1f0d576132444d6a5c66a8a08b0be9444e3ebb563fa6a6bebcf5299df3da7e454dc04c0fa601bb811197f00764b3a04430d8458cdb8e3a4677993d23f30
   languageName: node
   linkType: hard
 
