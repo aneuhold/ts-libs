@@ -1,12 +1,12 @@
 {
   "name": "@aneuhold/core-ts-db-lib",
-  "version": "1.0.105",
+  "version": "1.0.106",
   "description": "A core database library used for personal projects",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
   "author": "Anton G Neuhold Jr <agneuhold@gmail.com>",
   "license": "MIT",
-  "packageManager": "yarn@4.4.0",
+  "packageManager": "yarn@4.5.0",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/aneuhold/core-ts-db-lib.git"
