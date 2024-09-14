@@ -1,6 +1,6 @@
 {
   "name": "@aneuhold/core-ts-lib",
-  "version": "1.1.39",
+  "version": "1.1.40",
   "description": "A core library for all of my TypeScript projects",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
@@ -37,7 +37,7 @@
     "@aneuhold/eslint-config": "^1.0.24",
     "@types/jest": "^29.5.12",
     "@types/node": "^20.15.0",
-    "eslint": "^9.8.0",
+    "eslint": "^9.10.0",
     "jest": "^29.7.0",
     "prettier": "^3.3.3",
     "ts-jest": "^29.2.4",
