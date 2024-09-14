@@ -1,12 +1,12 @@
 {
   "name": "@aneuhold/core-ts-api-lib",
-  "version": "1.0.97",
+  "version": "1.0.98",
   "description": "A library for interacting with the backend and defining the backend API for personal projects.",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
   "author": "Anton G Neuhold Jr <agneuhold@gmail.com>",
   "license": "MIT",
-  "packageManager": "yarn@4.4.0",
+  "packageManager": "yarn@4.5.0",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/aneuhold/core-ts-api-lib.git"
