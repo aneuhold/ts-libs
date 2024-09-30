@@ -26,8 +26,8 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@aneuhold/core-ts-api-lib@workspace:."
   dependencies:
-    "@aneuhold/core-ts-db-lib": "npm:^1.0.112"
-    "@aneuhold/core-ts-lib": "npm:^1.1.46"
+    "@aneuhold/core-ts-db-lib": "npm:^1.0.113"
+    "@aneuhold/core-ts-lib": "npm:^1.1.47"
     "@aneuhold/eslint-config": "npm:^1.0.33"
     "@types/jest": "npm:^29.5.13"
     "@types/node": "npm:^20.16.5"
@@ -42,27 +42,20 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@aneuhold/core-ts-db-lib@npm:^1.0.112":
-  version: 1.0.112
-  resolution: "@aneuhold/core-ts-db-lib@npm:1.0.112"
+"@aneuhold/core-ts-db-lib@npm:^1.0.113":
+  version: 1.0.113
+  resolution: "@aneuhold/core-ts-db-lib@npm:1.0.113"
   dependencies:
-    "@aneuhold/core-ts-lib": "npm:^1.1.45"
+    "@aneuhold/core-ts-lib": "npm:^1.1.47"
     bson: "npm:^6.2.0"
-  checksum: 10c0/5eff128351c4d80f81e86e9498c42d27eb35648b3eeb48e0e460bba8c9fb90888fb20c91fa82e2bb3df2c37fecd9c5eef9b769d159b626fe7ca9c20d7651d74c
+  checksum: 10c0/2b920d1c831b09946a6b58fe72fed1f72ca94198e6ca93cc1876ae571b13dd41592250537f24969b63766da1a7e94101489dc331478ef18ced365a11a6db03ab
   languageName: node
   linkType: hard
 
-"@aneuhold/core-ts-lib@npm:^1.1.45":
-  version: 1.1.45
-  resolution: "@aneuhold/core-ts-lib@npm:1.1.45"
-  checksum: 10c0/b978735a49dcca68beee70348b569660557de8ecd7b3a9e98f7632f0a15699de6f5c3761c95596d91f1e1a70925ad495e4859119f99c0b3b8c02e6fa6f87c5ed
-  languageName: node
-  linkType: hard
-
-"@aneuhold/core-ts-lib@npm:^1.1.46":
-  version: 1.1.46
-  resolution: "@aneuhold/core-ts-lib@npm:1.1.46"
-  checksum: 10c0/4c05d15a6d6beda572711497aac46e4626f546da0a06e9c5c573004c6eca2989cb132af381b04a269b7b61d46f4bb67c487c6a68a20ccc675a8b57f0cff6e9ec
+"@aneuhold/core-ts-lib@npm:^1.1.47":
+  version: 1.1.47
+  resolution: "@aneuhold/core-ts-lib@npm:1.1.47"
+  checksum: 10c0/618874f447ac16e7f94082f7e7371c54f972c1b1c97ea2c993fab0bd912014d228d79e81977e6f1b0d5dd1c9514922d50b49b7bdd223fa6ddeff5196216ccf80
   languageName: node
   linkType: hard
 
