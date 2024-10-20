@@ -199,7 +199,7 @@ export default class DateService {
    * @param second the second date
    * @returns true if they are on the same day
    */
-  datesAreOnSameDay(first: Date, second: Date): boolean {
+  static datesAreOnSameDay(first: Date, second: Date): boolean {
     return (
       first.getFullYear() === second.getFullYear() &&
       first.getMonth() === second.getMonth() &&
