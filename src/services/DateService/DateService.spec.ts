@@ -1,4 +1,4 @@
-import DateService from './DateService';
+import DateService from './DateService.js';
 
 describe('DateService', () => {
   describe('addWeeks', () => {

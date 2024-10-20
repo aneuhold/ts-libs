@@ -1,3 +1,4 @@
+import { exec } from 'child_process';
 import {
   access,
   appendFile,
@@ -10,8 +11,12 @@ import {
   writeFile
 } from 'fs/promises';
 import path from 'path';
-import Logger from '../../utils/Logger';
-import StringService from '../StringService';
+import { promisify } from 'util';
+import ErrorUtils from '../../utils/ErrorUtils.js';
+import Logger from '../../utils/Logger.js';
+import StringService from '../StringService.js';
+
+const execAsync = promisify(exec);
 
 /**
  * A service which can be used to interact with the file system, only in build
@@ -158,5 +163,23 @@ export default class FileSystemService {
     return filePaths.map((filePath) => {
       return filePath.replace(dirPath, '');
     });
+  }
+
+  /**
+   * Checks if there are any pending uncommitted changes in the git repository
+   * in the current working directory.
+   *
+   * @returns true if there are pending changes, false otherwise.
+   */
+  static async hasPendingChanges(): Promise<boolean> {
+    try {
+      const { stdout } = await execAsync('git status --porcelain');
+      return stdout.trim().length > 0;
+    } catch (error) {
+      Logger.error(
+        `Failed to check for pending changes: ${ErrorUtils.getErrorString(error)}`
+      );
+      return false;
+    }
   }
 }

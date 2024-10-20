@@ -11,7 +11,7 @@
     "source.fixAll.eslint": "always",
     "source.organizeImports": "explicit"
   },
-  "eslint.experimental.useFlatConfig": true,
+  "eslint.useFlatConfig": true,
   "eslint.run": "onSave",
   "eslint.format.enable": true
 }

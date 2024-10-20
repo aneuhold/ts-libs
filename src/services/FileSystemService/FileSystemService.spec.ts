@@ -1,6 +1,6 @@
 import { writeFile } from 'fs/promises';
 import path from 'path';
-import FileSystemService from './FileSystemService';
+import FileSystemService from './FileSystemService.js';
 
 const TEST_FOLDER_NAME = '__fileSystemService-tests__';
 

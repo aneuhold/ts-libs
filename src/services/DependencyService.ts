@@ -1,15 +1,29 @@
 import { access, readFile, writeFile } from 'fs/promises';
 import path from 'path';
-import FileSystemService from './FileSystemService/FileSystemService';
+import ErrorUtils from '../utils/ErrorUtils.js';
+import Logger from '../utils/Logger.js';
+import FileSystemService from './FileSystemService/FileSystemService.js';
 
-export type PackageJson = {
+export interface PackageJson extends JsonWithVersionProperty {
   name: string;
-  version: string;
   dependencies?: Record<string, string>;
   devDependencies?: Record<string, string>;
   peerDependencies?: Record<string, string>;
   optionalDependencies?: Record<string, string>;
-};
+}
+
+export interface JsonWithVersionProperty {
+  version: string;
+}
+
+/**
+ * Standard Semantic Versioning bump types.
+ */
+export enum VersionType {
+  Patch = 'patch',
+  Minor = 'minor',
+  Major = 'major'
+}
 
 /**
  * A service which can be used to manage dependencies in the current project
@@ -83,5 +97,60 @@ export default class DependencyService {
         );
       })
     );
+  }
+
+  /**
+   * Bumps the version of the package.json and jsr.json files in the current
+   * working directory.
+   * @param versionType The type of version bump (patch, minor, major).
+   */
+  static async bumpVersion(
+    versionType: VersionType = VersionType.Patch
+  ): Promise<void> {
+    const bump = (version: string): string => {
+      const [major, minor, patch] = version.split('.').map(Number);
+      switch (versionType) {
+        case VersionType.Major:
+          return `${major + 1}.0.0`;
+        case VersionType.Minor:
+          return `${major}.${minor + 1}.0`;
+        case VersionType.Patch:
+        default:
+          return `${major}.${minor}.${patch + 1}`;
+      }
+    };
+
+    const updateVersion = async (filePath: string): Promise<void> => {
+      try {
+        await access(filePath);
+      } catch {
+        Logger.info(
+          `No ${path.basename(filePath)} file found in the current directory.`
+        );
+        return;
+      }
+
+      try {
+        const fileData = JSON.parse(
+          await readFile(filePath, 'utf-8')
+        ) as JsonWithVersionProperty;
+        const oldVersion = fileData.version;
+        const newVersion = bump(oldVersion);
+        fileData.version = newVersion;
+        await writeFile(filePath, JSON.stringify(fileData, null, 2));
+        Logger.info(
+          `Bumped ${path.basename(filePath)} from ${oldVersion} to ${newVersion}`
+        );
+      } catch (error) {
+        const errorString = ErrorUtils.getErrorString(error);
+        Logger.error(
+          `Failed to update ${path.basename(filePath)}: ${errorString}`
+        );
+      }
+    };
+
+    const rootDir = process.cwd();
+    await updateVersion(path.join(rootDir, 'package.json'));
+    await updateVersion(path.join(rootDir, 'jsr.json'));
   }
 }

@@ -23,7 +23,7 @@ export default class DateService {
    * Gets the date in date format if it is set to midnight, otherwise gets the
    * date in date time format.
    */
-  static getAutoDateString(date: Date) {
+  static getAutoDateString(date: Date): string {
     if (this.dateHasTime(date)) {
       return this.getDateTimeString(date);
     }
@@ -34,15 +34,15 @@ export default class DateService {
    * Determines if a date has a user-specified time component to it, meaning
    * that it isn't midnight.
    */
-  static dateHasTime(date: Date) {
+  static dateHasTime(date: Date): boolean {
     return !this.dateIsMidnight(date);
   }
 
-  static getDateString(date: Date) {
+  static getDateString(date: Date): string {
     return this.dateFormatter.format(date);
   }
 
-  static getDateTimeString(date: Date) {
+  static getDateTimeString(date: Date): string {
     return this.dateTimeFormatter.format(date);
   }
 
@@ -52,7 +52,7 @@ export default class DateService {
   static datesAreEqual(
     date1: Date | undefined | null,
     date2: Date | undefined | null
-  ) {
+  ): boolean {
     if (!date1 && !date2) {
       return true;
     }
@@ -159,23 +159,23 @@ export default class DateService {
    * over or under the number of days in the month, then the month will be
    * adjusted accordingly.
    */
-  static addDays(date: Date, days: number) {
+  static addDays(date: Date, days: number): Date {
     const newDate = new Date(date);
     newDate.setDate(newDate.getDate() + days);
     return newDate;
   }
 
-  static addMonths(date: Date, months: number) {
+  static addMonths(date: Date, months: number): Date {
     const newDate = new Date(date);
     newDate.setMonth(newDate.getMonth() + months);
     return newDate;
   }
 
-  static addWeeks(date: Date, weeks: number) {
+  static addWeeks(date: Date, weeks: number): Date {
     return this.addDays(date, weeks * 7);
   }
 
-  static addYears(date: Date, years: number) {
+  static addYears(date: Date, years: number): Date {
     const newDate = new Date(date);
     newDate.setFullYear(newDate.getFullYear() + years);
     return newDate;
@@ -185,10 +185,25 @@ export default class DateService {
    * For personal projects, midnight can mean exactly midnight, or 11:59pm.
    * It acts as a border between two dates.
    */
-  static dateIsMidnight(date: Date) {
+  static dateIsMidnight(date: Date): boolean {
     return (
       (date.getHours() === 0 && date.getMinutes() === 0) ||
       (date.getHours() === 23 && date.getMinutes() === 59)
+    );
+  }
+
+  /**
+   * Determines if the dates are on the same day.
+   *
+   * @param first the first date
+   * @param second the second date
+   * @returns true if they are on the same day
+   */
+  datesAreOnSameDay(first: Date, second: Date): boolean {
+    return (
+      first.getFullYear() === second.getFullYear() &&
+      first.getMonth() === second.getMonth() &&
+      first.getDate() === second.getDate()
     );
   }
 }

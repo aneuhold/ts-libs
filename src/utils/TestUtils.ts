@@ -1,3 +1,6 @@
+/**
+ * Utility class used for jest testing.
+ */
 export default class TestUtils {
   private static consoleLoggers = {
     error: console.error,

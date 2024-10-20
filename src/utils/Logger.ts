@@ -1,3 +1,6 @@
+/**
+ * A standard logger that can be used to log messages to the console.
+ */
 export default class Logger {
   public static verboseLoggingEnabled = false;
 
