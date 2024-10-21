@@ -1,6 +1,6 @@
 {
   "name": "@aneuhold/be-ts-db-lib",
-  "version": "1.0.114",
+  "version": "1.0.115",
   "description": "A backend database library meant to actually interact with various databases in personal projects",
   "author": "Anton G Neuhold Jr <agneuhold@gmail.com>",
   "license": "MIT",
@@ -42,14 +42,14 @@
     "lint": "eslint"
   },
   "dependencies": {
-    "@aneuhold/be-ts-lib": "^1.0.75",
-    "@aneuhold/core-ts-db-lib": "^1.0.119",
-    "@aneuhold/core-ts-lib": "^1.1.50",
+    "@aneuhold/be-ts-lib": "^1.0.78",
+    "@aneuhold/core-ts-db-lib": "^1.0.121",
+    "@aneuhold/core-ts-lib": "^1.1.52",
     "bson": "^6.2.0",
     "mongodb": "^6.3.0"
   },
   "devDependencies": {
-    "@aneuhold/eslint-config": "^1.0.35",
+    "@aneuhold/eslint-config": "^1.0.37",
     "@types/jest": "^29.5.13",
     "@types/node": "^20.16.10",
     "@types/node-fetch": "^2.6.11",
