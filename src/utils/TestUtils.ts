@@ -1,5 +1,5 @@
 /**
- * Utility class used for jest testing.
+ * Utility class used for testing purposes.
  */
 export default class TestUtils {
   private static consoleLoggers = {
@@ -14,10 +14,10 @@ export default class TestUtils {
    * Use `restoreConsole` when the test is finished to restore the console.
    */
   public static suppressConsole() {
-    console.error = jest.fn();
-    console.log = jest.fn();
-    console.info = jest.fn();
-    console.warn = jest.fn();
+    console.error = () => {};
+    console.log = () => {};
+    console.info = () => {};
+    console.warn = () => {};
   }
 
   /**
