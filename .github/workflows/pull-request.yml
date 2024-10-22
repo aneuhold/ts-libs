@@ -22,9 +22,8 @@ jobs:
 
       - name: Get yarn cache directory path
         id: yarn-cache-dir-path
-        run: echo "::set-output name=dir::$(yarn cache dir)"
+        run: echo "dir=$(yarn config get cacheFolder)" >> $GITHUB_OUTPUT
 
-      # Cache yarn packages
       - uses: actions/cache@v4
         id: yarn-cache # use this to check for `cache-hit` (`steps.yarn-cache.outputs.cache-hit != 'true'`)
         with:
@@ -36,8 +35,8 @@ jobs:
       - name: Install dependencies
         run: yarn
 
-      - name: Run tscheck
-        run: yarn tscheck
+      - name: Run build
+        run: yarn build
 
       - name: Run tests
         run: yarn test
@@ -47,3 +46,9 @@ jobs:
 
       - name: Dry run publish to JSR
         run: yarn jsr:validate
+
+      - name: Add Auth Token for npm
+        run: echo "//registry.npmjs.org/:_authToken=${{secrets.NPM_TOKEN}}" > ~/.npmrc
+
+      - name: Dry run publish to NPM
+        run: npm publish --access public --dry-run

@@ -1,12 +1,22 @@
 # core-ts-lib
 
 [![JSR](https://jsr.io/badges/@aneuhold/core-ts-lib)](https://jsr.io/@aneuhold/core-ts-lib)
+[![NPM](https://img.shields.io/npm/v/%40aneuhold%2Fcore-ts-lib)](https://www.npmjs.com/package/@aneuhold/core-ts-lib)
+[![License](https://img.shields.io/github/license/aneuhold/core-ts-lib)](https://github.com/aneuhold/core-ts-lib/blob/main/LICENSE)
 
-A library containing TypeScript that I am sharing among most TypeScript-based projects.
+A library containing TypeScript that I am sharing among most TypeScript-based projects. This package is published using ES Modules only.
 
 ## 📦 Installation
 
-To add to a repo, do the following:
+To add to a repo, follow the instructions below for your environment:
+
+### For Node using NPM
+
+Run `yarn add @aneuhold/core-ts-lib`
+
+### For Node using JSR
+
+The below instructions still allow for things like Renovate to work, and normal commands with yarn such as `yarn up`.
 
 1. Add the required JSR configuration to a `.yarnrc.yml` file if not there already:
    ```yml
@@ -16,17 +26,25 @@ To add to a repo, do the following:
    ```
 1. Add the package with `yarn add @jsr/aneuhold__core-ts-lib`
 
+### For Deno
+
+Run `deno add jsr:@aneuhold/core-ts-lib`
+
 ## 🟢 Usage
 
-Pull in one of the services and use it. For example:
+Pull in one of the services and use it like so:
 
 ```ts
-import { Logger } from '@jsr/aneuhold__core-ts-lib';
+import { Logger } from '@aneuhold/core-ts-lib';
+// If using Node with JSR
+// import { Logger } from '@jsr/aneuhold__core-ts-lib';
 
 export default function logSomething() {
   Logger.info('Something');
 }
 ```
+
+[See full documentation on usage at JSR!](https://jsr.io/@aneuhold/core-ts-lib/doc)
 
 ## 🛠️ Development
 

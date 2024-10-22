@@ -7,19 +7,26 @@
   "packageManager": "yarn@4.5.1",
   "type": "module",
   "scripts": {
-    "tscheck": "tsc --project tsconfig.build.json --noEmit",
+    "build": "rimraf lib && tsc --project tsconfig.build.json && tsx ./scripts/copyTsFiles.ts",
     "lint": "eslint",
     "test": "jest",
     "jsr:validate": "tsx ./scripts/validateJsrPublish.ts",
-    "checkAll": "yarn tscheck && yarn lint && yarn test && yarn jsr:validate",
+    "checkAll": "yarn build && yarn lint && yarn test && yarn jsr:validate",
     "jsr:publish": "tsx ./scripts/publishJsr.ts",
     "upgrade:all": "yarn up"
   },
   "main": "lib/index.js",
+  "module": "lib/index.js",
   "types": "lib/index.d.ts",
   "files": [
     "lib/**/*"
   ],
+  "exports": {
+    ".": {
+      "types": "./lib/index.d.ts",
+      "import": "./lib/index.js"
+    }
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/aneuhold/core-ts-lib.git"
@@ -40,6 +47,7 @@
     "jest": "^29.7.0",
     "jsr": "*",
     "prettier": "^3.3.3",
+    "rimraf": "^6.0.1",
     "ts-jest": "^29.2.5",
     "tsx": "^4.19.1",
     "typescript": "^5.6.3"

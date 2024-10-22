@@ -10,5 +10,6 @@
     "skipLibCheck": true
     // "allowImportingTsExtensions": true
   },
-  "include": ["**/*.ts", "eslint.config.js"]
+  "include": ["**/*.ts", "eslint.config.js"],
+  "exclude": ["lib/**/*"]
 }
