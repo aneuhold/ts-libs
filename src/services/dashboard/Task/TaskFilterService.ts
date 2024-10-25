@@ -1,5 +1,5 @@
-import { DashboardTaskMap } from '../../../documents/dashboard/Task';
-import { DashboardTaskListFilterSettings } from '../../../embedded-types/dashboard/task/FilterSettings';
+import { DashboardTaskMap } from '../../../documents/dashboard/Task.js';
+import { DashboardTaskListFilterSettings } from '../../../embedded-types/dashboard/task/FilterSettings.js';
 
 export type DashboardTaskFilterResult = {
   /**

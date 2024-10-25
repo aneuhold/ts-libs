@@ -1,17 +1,17 @@
 import { ObjectId } from 'bson';
-import BaseDocumentWithType from '../BaseDocumentWithType';
-import RequiredUserId from '../../schemas/required-refs/RequiredUserId';
-import Validate from '../../schemas/validators/ValidateUtil';
-import { DocumentValidator } from '../../schemas/validators/DocumentValidator';
-import { DashboardTagSettings } from '../../embedded-types/dashboard/userConfig/Tags';
+import BaseDocumentWithType from '../BaseDocumentWithType.js';
+import RequiredUserId from '../../schemas/required-refs/RequiredUserId.js';
+import Validate from '../../schemas/validators/ValidateUtil.js';
+import { DocumentValidator } from '../../schemas/validators/DocumentValidator.js';
+import { DashboardTagSettings } from '../../embedded-types/dashboard/userConfig/Tags.js';
 import {
   DashboardTaskListGlobalSortSettings,
   validateSortSettings
-} from '../../embedded-types/dashboard/task/SortSettings';
+} from '../../embedded-types/dashboard/task/SortSettings.js';
 import {
   DashboardTaskListGlobalFilterSettings,
   validateFilterSettings
-} from '../../embedded-types/dashboard/task/FilterSettings';
+} from '../../embedded-types/dashboard/task/FilterSettings.js';
 
 export const validateDashboardUserConfig: DocumentValidator<
   DashboardUserConfig

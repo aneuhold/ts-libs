@@ -1,20 +1,63 @@
 # Personal Core Database Library
 
-![npm](https://img.shields.io/npm/v/%40aneuhold%2Fcore-ts-db-lib)
+[![JSR](https://jsr.io/badges/@aneuhold/core-ts-db-lib)](https://jsr.io/@aneuhold/core-ts-db-lib)
+[![NPM](https://img.shields.io/npm/v/%40aneuhold%2Fcore-ts-db-lib)](https://www.npmjs.com/package/@aneuhold/core-ts-db-lib)
 
 This is used to export types used in various places for database interactions in personal projects.
 
-## Document structure
+## 📦 Installation
+
+To add to a repo, follow the instructions below for your environment:
+
+### For Node using NPM
+
+Run `yarn add @aneuhold/core-ts-db-lib`
+
+### For Node using JSR
+
+The below instructions still allow for things like Renovate to work, and normal commands with yarn such as `yarn up`.
+
+1. Add the required JSR configuration to a `.yarnrc.yml` file if not there already:
+   ```yml
+   npmScopes:
+     jsr:
+       npmRegistryServer: 'https://npm.jsr.io'
+   ```
+1. Add the package with `yarn add @jsr/aneuhold__core-ts-db-lib`
+
+### For Deno
+
+Run `deno add jsr:@aneuhold/core-ts-db-lib`
+
+## 🟢 Usage
+
+Pull in one of the services and use it like so:
+
+```ts
+import { DocumentService } from '@aneuhold/core-ts-db-lib';
+// If using Node with JSR
+// import { DocumentService } from '@jsr/aneuhold__core-ts-db-lib';
+
+export default function deepCopy() {
+  DocumentService.deepCopy({ someProperty: 'someString' });
+}
+```
+
+[See full documentation on usage at JSR!](https://jsr.io/@aneuhold/core-ts-db-lib/doc)
+
+## 🛠️ Development
+
+### Document structure
 
 Project-specific documents can be held in a single collection. So those should inherit from the `BaseDocumentWithType` class.
 
 When different document types are held under a specific collection, they should get their own folder.
 
-## Guidelines
+### Guidelines
 
-- Note that documents cannot have really special types or classes with functions. For example `Set` cannot be used.
+> Note that documents cannot have really special types or classes with functions. For example `Set` cannot be used.
 
-## Updating an existing document
+### Updating an existing document
 
 If a property is being moved or a new required property is added, then take the
 following steps

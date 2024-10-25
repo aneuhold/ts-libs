@@ -1,19 +1,19 @@
 import { ObjectId } from 'bson';
 import DashboardTask, {
   DashboardTaskMap
-} from '../../../documents/dashboard/Task';
-import DashboardTaskRecurrenceService from './TaskRecurrenceService';
-import { DashboardTaskListFilterSettings } from '../../../embedded-types/dashboard/task/FilterSettings';
+} from '../../../documents/dashboard/Task.js';
+import { DashboardTaskListFilterSettings } from '../../../embedded-types/dashboard/task/FilterSettings.js';
+import { RecurrenceFrequency } from '../../../embedded-types/dashboard/task/RecurrenceInfo.js';
 import {
   DashboardTaskListSortSettings,
   DashboardTaskSortDirection
-} from '../../../embedded-types/dashboard/task/SortSettings';
+} from '../../../embedded-types/dashboard/task/SortSettings.js';
+import { DashboardTagSettings } from '../../../embedded-types/dashboard/userConfig/Tags.js';
 import DashboardTaskFilterService, {
   DashboardTaskFilterResult
-} from './TaskFilterService';
-import DashboardTaskSortService from './TaskSortService';
-import { DashboardTagSettings } from '../../../embedded-types/dashboard/userConfig/Tags';
-import { RecurrenceFrequency } from '../../../embedded-types/dashboard/task/RecurrenceInfo';
+} from './TaskFilterService.js';
+import DashboardTaskRecurrenceService from './TaskRecurrenceService.js';
+import DashboardTaskSortService from './TaskSortService.js';
 
 /**
  * A type for the task filter settings for a particular task.
@@ -73,7 +73,10 @@ export default class DashboardTaskService {
    * Gets the next frequency date from the provided basis date. Returns null
    * if the provided frequency is in an invalid state.
    */
-  static getNextFrequencyDate(basisDate: Date, frequency: RecurrenceFrequency) {
+  static getNextFrequencyDate(
+    basisDate: Date,
+    frequency: RecurrenceFrequency
+  ): Date | null {
     return DashboardTaskRecurrenceService.getNextFrequencyDate(
       basisDate,
       frequency
@@ -89,7 +92,7 @@ export default class DashboardTaskService {
    * Makes no changes if the state of the task is invalid for recurrence or
    * there isn't recurrence info.
    */
-  static updateDatesForRecurrence(task: DashboardTask) {
+  static updateDatesForRecurrence(task: DashboardTask): void {
     DashboardTaskRecurrenceService.updateDatesForRecurrence(task);
   }
 
@@ -150,7 +153,7 @@ export default class DashboardTaskService {
     tagSettings: DashboardTagSettings,
     noPriorityTagsIndicator: string,
     sortDirection: DashboardTaskSortDirection
-  ) {
+  ): Record<string, string> {
     return DashboardTaskSortService.getTagHeaderMap(
       taskMap,
       taskIds,
@@ -165,7 +168,7 @@ export default class DashboardTaskService {
     taskIdToTaskDict: Record<string, DashboardTask>,
     parentToTaskIdsDict: Record<string, string[]>,
     taskId: string
-  ) {
+  ): string[] {
     const childrenIds = parentToTaskIdsDict[taskId];
     if (!childrenIds) {
       return [];

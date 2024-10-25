@@ -1,5 +1,5 @@
 import { ObjectId } from 'bson';
-import BaseDocument from '../../documents/BaseDocument';
+import BaseDocument from '../../documents/BaseDocument.js';
 
 /**
  * A document that has a `userId` that must be associated to be valid.

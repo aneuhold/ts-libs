@@ -1,5 +1,5 @@
 import { EJSON } from 'bson';
-import BaseDocument from '../documents/BaseDocument';
+import BaseDocument from '../documents/BaseDocument.js';
 
 /**
  * A utility type for a map of documents.

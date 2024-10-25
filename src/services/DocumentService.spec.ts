@@ -1,5 +1,6 @@
 import { ObjectId } from 'bson';
-import DocumentService from './DocumentService';
+import { describe, expect, it } from 'vitest';
+import DocumentService from './DocumentService.js';
 
 describe('DocumentService', () => {
   describe('deepCopy', () => {

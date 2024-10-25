@@ -1,5 +1,5 @@
 import { ObjectId } from 'bson';
-import DashboardTask from '../../../documents/dashboard/Task';
+import DashboardTask from '../../../documents/dashboard/Task.js';
 
 export function validateRecurrenceInfo(task: DashboardTask, errors: string[]) {
   const recurrenceErrors: string[] = [];

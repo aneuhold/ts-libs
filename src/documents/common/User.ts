@@ -1,7 +1,7 @@
 import { ObjectId } from 'bson';
-import BaseDocument from '../BaseDocument';
-import { DocumentValidator } from '../../schemas/validators/DocumentValidator';
-import Validate from '../../schemas/validators/ValidateUtil';
+import { DocumentValidator } from '../../schemas/validators/DocumentValidator.js';
+import Validate from '../../schemas/validators/ValidateUtil.js';
+import BaseDocument from '../BaseDocument.js';
 
 /**
  * A User CTO which can be used to reference a User with only the necessary
@@ -38,7 +38,7 @@ export const validateUser: DocumentValidator<User> = (user) => {
  * key user information.
  */
 export default class User extends BaseDocument {
-  _id = new ObjectId();
+  _id: ObjectId = new ObjectId();
 
   userName: string;
 

@@ -1,4 +1,5 @@
-import Validate from './ValidateUtil';
+import { beforeEach, describe, expect, it } from 'vitest';
+import Validate from './ValidateUtil.js';
 
 describe('Validate', () => {
   let errorsArray: string[];

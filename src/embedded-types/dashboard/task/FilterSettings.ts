@@ -1,5 +1,5 @@
-import DashboardUserConfig from '../../../documents/dashboard/UserConfig';
-import Validate from '../../../schemas/validators/ValidateUtil';
+import DashboardUserConfig from '../../../documents/dashboard/UserConfig.js';
+import Validate from '../../../schemas/validators/ValidateUtil.js';
 
 export function getDefaultTaskListFilterSettings(
   userId: string

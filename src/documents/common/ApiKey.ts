@@ -1,9 +1,9 @@
 import { ObjectId } from 'bson';
-import crypto from 'crypto';
-import BaseDocument from '../BaseDocument';
-import RequiredUserId from '../../schemas/required-refs/RequiredUserId';
-import Validate from '../../schemas/validators/ValidateUtil';
-import { DocumentValidator } from '../../schemas/validators/DocumentValidator';
+import crypto, { UUID } from 'crypto';
+import RequiredUserId from '../../schemas/required-refs/RequiredUserId.js';
+import { DocumentValidator } from '../../schemas/validators/DocumentValidator.js';
+import Validate from '../../schemas/validators/ValidateUtil.js';
+import BaseDocument from '../BaseDocument.js';
 
 export const validateApiKey: DocumentValidator<ApiKey> = (apiKey: ApiKey) => {
   const errors: string[] = [];
@@ -23,7 +23,7 @@ export default class ApiKey extends BaseDocument implements RequiredUserId {
   /**
    * The API key for the user. This is indexed in the DB.
    */
-  key = crypto.randomUUID();
+  key: UUID = crypto.randomUUID();
 
   /**
    * The user ID that this key is for. This field is indexed in the database.

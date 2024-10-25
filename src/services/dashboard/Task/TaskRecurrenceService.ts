@@ -1,10 +1,10 @@
 import { DateService } from '@aneuhold/core-ts-lib';
+import DashboardTask from '../../../documents/dashboard/Task.js';
 import {
   RecurrenceBasis,
   RecurrenceFrequency,
   RecurrenceFrequencyType
-} from '../../../embedded-types/dashboard/task/RecurrenceInfo';
-import DashboardTask from '../../../documents/dashboard/Task';
+} from '../../../embedded-types/dashboard/task/RecurrenceInfo.js';
 
 export default class DashboardTaskRecurrenceService {
   /**

@@ -1,0 +1,9 @@
+{
+  "name": "@aneuhold/core-ts-db-lib",
+  "version": "WILL-BE-REPLACED",
+  "exports": "./src/index.ts",
+  "publish": {
+    "include": ["LICENSE", "readme.md", "src/**/*.ts"],
+    "exclude": ["src/**/*.spec.ts"]
+  }
+}

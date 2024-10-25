@@ -1,4 +1,4 @@
-import BaseDocument from '../../documents/BaseDocument';
+import BaseDocument from '../../documents/BaseDocument.js';
 
 export type DocumentValidator<TDocType extends BaseDocument> = (
   doc: TDocType

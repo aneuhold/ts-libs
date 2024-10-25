@@ -4,7 +4,7 @@ import {
   isOptionalNumber,
   isOptionalObject,
   isOptionalString
-} from '../type-guards/commonTypeGuards';
+} from '../type-guards/commonTypeGuards.js';
 
 type IndexableObject = { [keyName: string]: unknown };
 

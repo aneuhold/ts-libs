@@ -1,8 +1,8 @@
 import { ObjectId } from 'bson';
-import RequiredUserId from '../../schemas/required-refs/RequiredUserId';
-import BaseDocumentWithType from '../BaseDocumentWithType';
-import NonogramKatanaItemName from '../../embedded-types/dashboard/nonogramKatanaItem/ItemName';
-import { DocumentValidator } from '../../schemas/validators/DocumentValidator';
+import RequiredUserId from '../../schemas/required-refs/RequiredUserId.js';
+import BaseDocumentWithType from '../BaseDocumentWithType.js';
+import NonogramKatanaItemName from '../../embedded-types/dashboard/nonogramKatanaItem/ItemName.js';
+import { DocumentValidator } from '../../schemas/validators/DocumentValidator.js';
 
 export const validateNonogramKatanaItem: DocumentValidator<
   NonogramKatanaItem
