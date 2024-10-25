@@ -8,10 +8,16 @@ import {
 
 export default class DashboardTaskRecurrenceService {
   /**
-   * Gets the next frequency date from the provided basis date. Returns null
-   * if the provided frequency is in an invalid state.
+   * Gets the next frequency date from the provided basis date.
+   *
+   * @param basisDate - The date from which to calculate the next frequency date.
+   * @param frequency - The recurrence frequency details.
+   * @returns The next frequency date or null if the frequency is in an invalid state.
    */
-  static getNextFrequencyDate(basisDate: Date, frequency: RecurrenceFrequency) {
+  static getNextFrequencyDate(
+    basisDate: Date,
+    frequency: RecurrenceFrequency
+  ): Date | null {
     // Last day of month
     if (frequency.type === RecurrenceFrequencyType.lastDayOfMonth) {
       return DateService.getLastDayOfGivenMonth(basisDate);
@@ -89,6 +95,8 @@ export default class DashboardTaskRecurrenceService {
    *
    * Makes no changes if the state of the task is invalid for recurrence or
    * there isn't recurrence info.
+   *
+   * @param task - The task whose dates need to be updated.
    */
   static updateDatesForRecurrence(task: DashboardTask): void {
     // Initial basic validation
@@ -156,6 +164,13 @@ export default class DashboardTaskRecurrenceService {
     }
   }
 
+  /**
+   * Calculates the difference in time between the basis date and the next frequency date.
+   *
+   * @param basisDate - The date from which to calculate the difference.
+   * @param frequency - The recurrence frequency details.
+   * @returns The difference in time in milliseconds.
+   */
   private static getDiffForDateUpdate(
     basisDate: Date | undefined,
     frequency: RecurrenceFrequency

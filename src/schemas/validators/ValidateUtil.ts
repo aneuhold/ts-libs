@@ -31,6 +31,11 @@ export default class Validate {
     this.parentObject = parentObject as IndexableObject;
   }
 
+  /**
+   * Validates if the field is an optional string.
+   *
+   * @param fieldName - The name of the field to validate.
+   */
   optionalString(fieldName: string) {
     if (
       this.fieldPathIsValid(fieldName) &&
@@ -41,6 +46,11 @@ export default class Validate {
     }
   }
 
+  /**
+   * Validates if the field is an optional number.
+   *
+   * @param fieldName - The name of the field to validate.
+   */
   optionalNumber(fieldName: string) {
     if (
       this.fieldPathIsValid(fieldName) &&
@@ -51,6 +61,11 @@ export default class Validate {
     }
   }
 
+  /**
+   * Validates if the field is an optional boolean.
+   *
+   * @param fieldName - The name of the field to validate.
+   */
   optionalBoolean(fieldName: string) {
     if (
       this.fieldPathIsValid(fieldName) &&
@@ -61,6 +76,11 @@ export default class Validate {
     }
   }
 
+  /**
+   * Validates if the field is an optional array.
+   *
+   * @param fieldName - The name of the field to validate.
+   */
   optionalArray(fieldName: string) {
     if (
       this.fieldPathIsValid(fieldName) &&
@@ -71,6 +91,11 @@ export default class Validate {
     }
   }
 
+  /**
+   * Validates if the field is an optional object.
+   *
+   * @param fieldName - The name of the field to validate.
+   */
   optionalObject(fieldName: string) {
     if (
       this.fieldPathIsValid(fieldName) &&
@@ -81,6 +106,12 @@ export default class Validate {
     }
   }
 
+  /**
+   * Validates if the field is a string.
+   *
+   * @param fieldName - The name of the field to validate.
+   * @param defaultValue - The default value to set if validation fails.
+   */
   string(fieldName: string, defaultValue: string) {
     if (
       this.fieldPathIsValid(fieldName) &&
@@ -91,6 +122,12 @@ export default class Validate {
     }
   }
 
+  /**
+   * Validates if the field is an object.
+   *
+   * @param fieldName - The name of the field to validate.
+   * @param defaultValue - The default value to set if validation fails.
+   */
   object(fieldName: string, defaultValue: object) {
     if (
       this.fieldPathIsValid(fieldName) &&
@@ -102,6 +139,12 @@ export default class Validate {
     }
   }
 
+  /**
+   * Validates if the field is a number.
+   *
+   * @param fieldName - The name of the field to validate.
+   * @param defaultValue - The default value to set if validation fails.
+   */
   number(fieldName: string, defaultValue: number) {
     if (
       this.fieldPathIsValid(fieldName) &&
@@ -112,6 +155,12 @@ export default class Validate {
     }
   }
 
+  /**
+   * Validates if the field is a boolean.
+   *
+   * @param fieldName - The name of the field to validate.
+   * @param defaultValue - The default value to set if validation fails.
+   */
   boolean(fieldName: string, defaultValue: boolean) {
     if (
       this.fieldPathIsValid(fieldName) &&
@@ -122,6 +171,12 @@ export default class Validate {
     }
   }
 
+  /**
+   * Validates if the field is an array.
+   *
+   * @param fieldName - The name of the field to validate.
+   * @param defaultValue - The default value to set if validation fails.
+   */
   array(fieldName: string, defaultValue: unknown[]) {
     if (
       this.fieldPathIsValid(fieldName) &&
@@ -141,6 +196,9 @@ export default class Validate {
    * The idea is that if the field path is invalid, then this class will
    * not report an error, because it is assumed that the parent of the field
    * path will report the error.
+   *
+   * @param fieldName - The name of the field to check.
+   * @returns boolean - True if the field path is valid, false otherwise.
    */
   private fieldPathIsValid(fieldName: string): boolean {
     const fieldPath = fieldName.split('.');
@@ -157,6 +215,12 @@ export default class Validate {
     return true;
   }
 
+  /**
+   * Updates the field with the provided default value.
+   *
+   * @param fieldName - The name of the field to update.
+   * @param defaultValue - The default value to set.
+   */
   private updateField(fieldName: string, defaultValue: unknown) {
     const fieldPath = fieldName.split('.');
     let currentObject = this.parentObject;
@@ -169,6 +233,12 @@ export default class Validate {
     });
   }
 
+  /**
+   * Retrieves the value of the field.
+   *
+   * @param fieldName - The name of the field to retrieve.
+   * @returns unknown - The value of the field.
+   */
   private getField(fieldName: string): unknown {
     const fieldPath = fieldName.split('.');
     let currentObject = this.parentObject;
@@ -178,6 +248,11 @@ export default class Validate {
     return currentObject;
   }
 
+  /**
+   * Deletes the field from the parent object.
+   *
+   * @param fieldName - The name of the field to delete.
+   */
   private deleteField(fieldName: string) {
     const fieldPath = fieldName.split('.');
     let currentObject = this.parentObject;

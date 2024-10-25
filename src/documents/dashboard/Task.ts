@@ -109,6 +109,9 @@ export default class DashboardTask
    */
   parentRecurringTaskInfo?: ParentRecurringTaskInfo;
 
+  /**
+   * The title of the task.
+   */
   title = '';
 
   completed = false;

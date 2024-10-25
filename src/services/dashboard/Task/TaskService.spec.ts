@@ -595,6 +595,12 @@ describe('DashboardTaskService', () => {
   });
 });
 
+/**
+ * Sets up the test environment for sorting and filtering tasks.
+ *
+ * @param numTasks - The number of tasks to create for the test.
+ * @returns An object containing tasksList, taskMap, taskIds, filterSettings, sortSettings, and tagSettings.
+ */
 function setupSortAndFilterTest(numTasks = 5) {
   const userId = new ObjectId();
   const tasksList = createTasksList(numTasks, userId);
@@ -613,6 +619,13 @@ function setupSortAndFilterTest(numTasks = 5) {
   };
 }
 
+/**
+ * Creates a list of tasks for the given user.
+ *
+ * @param numTasks - The number of tasks to create.
+ * @param userId - The ID of the user for whom the tasks are created.
+ * @returns An array of DashboardTask objects.
+ */
 function createTasksList(numTasks: number, userId: ObjectId): DashboardTask[] {
   const tasks: DashboardTask[] = [];
   for (let i = 0; i < numTasks; i += 1) {
@@ -622,6 +635,12 @@ function createTasksList(numTasks: number, userId: ObjectId): DashboardTask[] {
   return tasks;
 }
 
+/**
+ * Creates a map of tasks from a list of tasks.
+ *
+ * @param tasks - The list of tasks to convert into a map.
+ * @returns A map where the keys are task IDs and the values are DashboardTask objects.
+ */
 function createTaskMapFromList(tasks: DashboardTask[]) {
   return tasks.reduce<Record<string, DashboardTask>>((acc, task) => {
     acc[task._id.toString()] = task;
@@ -629,6 +648,12 @@ function createTaskMapFromList(tasks: DashboardTask[]) {
   }, {});
 }
 
+/**
+ * Gets the filter settings for the given user.
+ *
+ * @param userId - The ID of the user for whom the filter settings are retrieved.
+ * @returns The filter settings for the user.
+ */
 function getFilterSettings(userId: ObjectId): DashboardTaskListFilterSettings {
   return {
     userId: userId.toString(),
@@ -645,6 +670,12 @@ function getFilterSettings(userId: ObjectId): DashboardTaskListFilterSettings {
   };
 }
 
+/**
+ * Gets the sort settings for the given user.
+ *
+ * @param userId - The ID of the user for whom the sort settings are retrieved.
+ * @returns The sort settings for the user.
+ */
 function getSortSettings(userId: ObjectId): DashboardTaskListSortSettings {
   return {
     userId: userId.toString(),

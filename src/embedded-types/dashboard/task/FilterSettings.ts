@@ -1,6 +1,12 @@
 import DashboardUserConfig from '../../../documents/dashboard/UserConfig.js';
 import Validate from '../../../schemas/validators/ValidateUtil.js';
 
+/**
+ * Returns the default filter settings for a task list for a given user.
+ *
+ * @param userId - The ID of the user.
+ * @returns The default filter settings for the user's task list.
+ */
 export function getDefaultTaskListFilterSettings(
   userId: string
 ): DashboardTaskListFilterSettings {
@@ -13,6 +19,12 @@ export function getDefaultTaskListFilterSettings(
   };
 }
 
+/**
+ * Validates the filter settings in the user configuration.
+ *
+ * @param validate - The validation utility.
+ * @param config - The user configuration containing the filter settings.
+ */
 export function validateFilterSettings(
   validate: Validate,
   config: DashboardUserConfig

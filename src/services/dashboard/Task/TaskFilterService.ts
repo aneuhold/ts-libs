@@ -15,7 +15,7 @@ export type DashboardTaskFilterResult = {
 };
 
 /**
- * A service responsible for filtering
+ * A service responsible for filtering tasks based on provided settings.
  */
 export default class DashboardTaskFilterService {
   /**
@@ -25,10 +25,16 @@ export default class DashboardTaskFilterService {
    * cases, then the less common or more heavy cases later on to increase
    * performance.
    *
-   * @param taskMap the map of tasks to use for filtering. This is used so that
+   * @param taskMap - The map of tasks to use for filtering. This is used so that
    * the task map doesn't need to be generated multiple times.
-   * @param parentTaskId determines if the current list is for a parent task
-   * or not
+   * @param taskIds - The IDs of the tasks to be filtered.
+   * @param settings - The filter settings to apply.
+   * @param category - The category to filter tasks by.
+   * @param parentTaskId - (Optional) Determines if the current list is for a parent task
+   * or not.
+   * @returns An object containing the IDs of the tasks that satisfy the filter settings
+   * (`resultIds`) and the IDs of the tasks that were filtered but still apply to the same
+   * category (`removedIds`).
    */
   static filter(
     taskMap: DashboardTaskMap,

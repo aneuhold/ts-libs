@@ -32,6 +32,8 @@ export default class ApiKey extends BaseDocument implements RequiredUserId {
 
   /**
    * Constructs a new {@link ApiKey} for the provided user.
+   *
+   * @param userId - The ID of the user.
    */
   constructor(userId: ObjectId) {
     super();

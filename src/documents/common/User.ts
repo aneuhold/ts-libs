@@ -12,6 +12,12 @@ export type UserCTO = {
   userName: string;
 };
 
+/**
+ * Validates a User document.
+ *
+ * @param user - The user document to validate.
+ * @returns An object containing the updated user document and an array of error messages, if any.
+ */
 export const validateUser: DocumentValidator<User> = (user) => {
   const errors: string[] = [];
   const validate = new Validate(user, errors);
@@ -55,6 +61,8 @@ export default class User extends BaseDocument {
 
   /**
    * Constructs a new {@link User} with default values.
+   *
+   * @param userName - The username of the user.
    */
   constructor(userName: string) {
     super();

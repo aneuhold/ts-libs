@@ -1,6 +1,12 @@
 import DashboardUserConfig from '../../../documents/dashboard/UserConfig.js';
 import Validate from '../../../schemas/validators/ValidateUtil.js';
 
+/**
+ * Gets the default task list sort settings for a user.
+ *
+ * @param userId - The ID of the user.
+ * @returns The default task list sort settings for the user.
+ */
 export function getDefaultTaskListSortSettings(
   userId: string
 ): DashboardTaskListSortSettings {
@@ -10,6 +16,12 @@ export function getDefaultTaskListSortSettings(
   };
 }
 
+/**
+ * Validates the sort settings for the task list.
+ *
+ * @param validate - The validation utility.
+ * @param config - The user configuration for the dashboard.
+ */
 export function validateSortSettings(
   validate: Validate,
   config: DashboardUserConfig
@@ -33,6 +45,9 @@ export function validateSortSettings(
   }
 }
 
+/**
+ * Represents the global sort settings for the task list.
+ */
 export type DashboardTaskListGlobalSortSettings = {
   [category: string]: DashboardTaskListSortSettings;
 };
@@ -68,6 +83,9 @@ export enum DashboardTaskSortBy {
   lastUpdatedDate = 'lastUpdatedDate'
 }
 
+/**
+ * Represents a sort setting for a task list.
+ */
 export type DashboardTaskSortSetting = {
   sortBy: DashboardTaskSortBy;
   sortDirection: DashboardTaskSortDirection;

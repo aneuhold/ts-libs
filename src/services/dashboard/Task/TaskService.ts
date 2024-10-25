@@ -36,6 +36,10 @@ export type DashboardTaskFilterAndSortResult = {
 export default class DashboardTaskService {
   /**
    * Gets all the children task IDs for the given parent task IDs.
+   *
+   * @param allUserTasks - All tasks of the user.
+   * @param parentTaskIds - The IDs of the parent tasks.
+   * @returns An array of ObjectId representing the children task IDs.
    */
   static getChildrenIds = (
     allUserTasks: DashboardTask[],
@@ -72,6 +76,10 @@ export default class DashboardTaskService {
   /**
    * Gets the next frequency date from the provided basis date. Returns null
    * if the provided frequency is in an invalid state.
+   *
+   * @param basisDate - The basis date to calculate the next frequency date.
+   * @param frequency - The recurrence frequency.
+   * @returns The next frequency date or null if the frequency is invalid.
    */
   static getNextFrequencyDate(
     basisDate: Date,
@@ -91,6 +99,8 @@ export default class DashboardTaskService {
    *
    * Makes no changes if the state of the task is invalid for recurrence or
    * there isn't recurrence info.
+   *
+   * @param task - The task to update dates for.
    */
   static updateDatesForRecurrence(task: DashboardTask): void {
     DashboardTaskRecurrenceService.updateDatesForRecurrence(task);
@@ -99,10 +109,13 @@ export default class DashboardTaskService {
   /**
    * Gets the filtered and sorted set of task ids for a particular category.
    *
-   * @param category the category of the tasks to filter
-   * @param filterSettings the filter settings for a task if there are any.
-   * Otherwise, this will use the default filter settings for the user. If
-   * the user does not have filter settings, then it will use the default.
+   * @param taskMap - The map of tasks.
+   * @param category - The category of the tasks to filter.
+   * @param filterSettings - The filter settings for a task.
+   * @param sortSettings - The sort settings for the tasks.
+   * @param tagSettings - The tag settings for the user.
+   * @param taskInfo - Optional task info for filtering.
+   * @returns The filtered and sorted task IDs and the removed task IDs.
    */
   static getFilteredAndSortedTaskIds(
     taskMap: DashboardTaskMap,
@@ -145,6 +158,14 @@ export default class DashboardTaskService {
    * Gets a map of task IDs to tag header names. Used only for when sorting by
    * tags. If the first task in the list has no high-priority tags, then
    * noPriorityTagsIndicator will be used as the header name.
+   *
+   * @param taskMap - The map of tasks.
+   * @param taskIds - The IDs of the tasks.
+   * @param userId - The ID of the user.
+   * @param tagSettings - The tag settings for the user.
+   * @param noPriorityTagsIndicator - The indicator for no priority tags.
+   * @param sortDirection - The direction to sort the tasks.
+   * @returns A map of task IDs to tag header names.
    */
   static getTagHeaderMap(
     taskMap: DashboardTaskMap,
@@ -164,6 +185,14 @@ export default class DashboardTaskService {
     );
   }
 
+  /**
+   * Gets all the children task IDs for a given task ID.
+   *
+   * @param taskIdToTaskDict - A dictionary mapping task IDs to tasks.
+   * @param parentToTaskIdsDict - A dictionary mapping parent task IDs to their children task IDs.
+   * @param taskId - The ID of the task to get children for.
+   * @returns An array of strings representing the children task IDs.
+   */
   private static getChildrenTaskIds(
     taskIdToTaskDict: Record<string, DashboardTask>,
     parentToTaskIdsDict: Record<string, string[]>,

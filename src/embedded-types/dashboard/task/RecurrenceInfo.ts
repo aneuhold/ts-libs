@@ -1,7 +1,16 @@
 import { ObjectId } from 'bson';
 import DashboardTask from '../../../documents/dashboard/Task.js';
 
-export function validateRecurrenceInfo(task: DashboardTask, errors: string[]) {
+/**
+ * Validates the recurrence information of a given task.
+ *
+ * @param task - The dashboard task to validate.
+ * @param errors - An array to collect validation error messages.
+ */
+export function validateRecurrenceInfo(
+  task: DashboardTask,
+  errors: string[]
+): void {
   const recurrenceErrors: string[] = [];
   if (!task.recurrenceInfo) {
     return;
@@ -17,7 +26,7 @@ export function validateRecurrenceInfo(task: DashboardTask, errors: string[]) {
     recurrenceErrors.push('RecurrenceInfo recurrenceEffect is required.');
   }
 
-  // Write more if this later if there are any changes to the data model so it
+  // Write more of this later if there are any changes to the data model so it
   // can be correctly converted.
 
   if (recurrenceErrors.length > 0) {

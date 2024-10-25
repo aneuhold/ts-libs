@@ -14,13 +14,19 @@ import { DashboardTagSettings } from '../../../embedded-types/dashboard/userConf
 export default class DashboardTaskSortService {
   /**
    * Sorts the provided task IDs based on the provided sort settings.
+   *
+   * @param taskMap The map of tasks.
+   * @param taskIds The IDs of the tasks to sort.
+   * @param sortSettings The settings to sort by.
+   * @param tagSettings The tag settings.
+   * @returns The sorted task IDs.
    */
   static sort(
     taskMap: DashboardTaskMap,
     taskIds: string[],
     sortSettings: DashboardTaskListSortSettings,
     tagSettings: DashboardTagSettings
-  ) {
+  ): string[] {
     return taskIds.sort((idA, idB) => {
       const taskA = taskMap[idA];
       const taskB = taskMap[idB];
@@ -49,6 +55,14 @@ export default class DashboardTaskSortService {
    * Gets a map of task IDs to tag header names. Used only for when sorting by
    * tags. If the first task in the list has no high-priority tags, then
    * noPriorityTagsIndicator will be used as the header name.
+   *
+   * @param taskMap The map of tasks.
+   * @param taskIds The IDs of the tasks.
+   * @param userId The user ID.
+   * @param tagSettings The tag settings.
+   * @param noPriorityTagsIndicator The indicator for no priority tags.
+   * @param sortDirection The sort direction.
+   * @returns A map of task IDs to tag header names.
    */
   static getTagHeaderMap(
     taskMap: DashboardTaskMap,
@@ -91,12 +105,21 @@ export default class DashboardTaskSortService {
     return tagHeaderMap;
   }
 
+  /**
+   * Gets the task sort function based on the sort by and sort direction.
+   *
+   * @param sortBy The field to sort by.
+   * @param sortDirection The direction to sort.
+   * @param tagSettings The tag settings.
+   * @param userId The user ID.
+   * @returns A function that compares two tasks.
+   */
   private static getTaskSortFunction(
     sortBy: DashboardTaskSortBy,
     sortDirection: DashboardTaskSortDirection,
     tagSettings: DashboardTagSettings,
     userId: string
-  ) {
+  ): (taskA: DashboardTask, taskB: DashboardTask) => number {
     switch (sortBy) {
       case DashboardTaskSortBy.tags:
         return (taskA: DashboardTask, taskB: DashboardTask) => {
@@ -160,6 +183,12 @@ export default class DashboardTaskSortService {
   /**
    * Gets the highest priority tag for the provided task. If there are no tags,
    * or if there are no tags with a priority, then this will return null.
+   *
+   * @param task The task.
+   * @param userId The user ID.
+   * @param tagSettings The tag settings.
+   * @param sortDirection The sort direction.
+   * @returns The highest priority tag or null.
    */
   private static getHighestPriorityTag(
     task: DashboardTask,
@@ -178,13 +207,19 @@ export default class DashboardTaskSortService {
 
   /**
    * Gets the highest priority tag value for the provided task.
+   *
+   * @param task The task.
+   * @param userId The user ID.
+   * @param tagSettings The tag settings.
+   * @param sortDirection The sort direction.
+   * @returns The highest priority tag value.
    */
   private static getHighestPriorityTagValue(
     task: DashboardTask,
     userId: string,
     tagSettings: DashboardTagSettings,
     sortDirection: DashboardTaskSortDirection
-  ) {
+  ): number {
     const priorityTag = this.getPriorityTagForTask(
       task,
       userId,
@@ -194,6 +229,15 @@ export default class DashboardTaskSortService {
     return priorityTag ? priorityTag.priority : 0;
   }
 
+  /**
+   * Gets the priority tag for the provided task.
+   *
+   * @param task The task.
+   * @param userId The user ID.
+   * @param tagSettings The tag settings.
+   * @param sortDirection The sort direction.
+   * @returns The priority tag or null.
+   */
   private static getPriorityTagForTask(
     task: DashboardTask,
     userId: string,
