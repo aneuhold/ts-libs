@@ -123,14 +123,9 @@ export default abstract class DOFunction<
    * @returns The decoded output.
    */
   private decodeResponse(responseText: string): DOFunctionCallOutput<TOutput> {
-    const binaryString = atob(responseText);
-    const len = binaryString.length;
-    const bytes = new Uint8Array(len);
-    for (let i = 0; i < len; i += 1) {
-      bytes[i] = binaryString.charCodeAt(i);
-    }
+    const buffer = Buffer.from(responseText, 'base64');
     try {
-      return BSON.deserialize(bytes) as DOFunctionCallOutput<TOutput>;
+      return BSON.deserialize(buffer) as DOFunctionCallOutput<TOutput>;
     } catch (error) {
       console.error('Deserialization error:', error);
       throw error;
