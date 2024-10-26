@@ -1,0 +1,9 @@
+{
+  "name": "@aneuhold/core-ts-api-lib",
+  "version": "WILL-BE-REPLACED",
+  "exports": "./src/index.ts",
+  "publish": {
+    "include": ["LICENSE", "README.md", "src/**/*.ts"],
+    "exclude": ["src/**/*.spec.ts"]
+  }
+}

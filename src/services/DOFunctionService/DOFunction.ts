@@ -46,6 +46,9 @@ export interface DOFunctionRawOutput {
   };
 }
 
+/**
+ * A generic interface representing the output of a Digital Ocean function call.
+ */
 export interface DOFunctionCallOutput<TOutput extends DOFunctionOutput> {
   success: boolean;
   errors: string[];
@@ -55,6 +58,12 @@ export interface DOFunctionCallOutput<TOutput extends DOFunctionOutput> {
 /**
  * An abstract class that can be extended to define a Digital Ocean
  * function.
+ */
+/**
+ * An abstract class representing a Digital Ocean Function.
+ *
+ * @template TInput - The type of the input to the function, extending {@link DOFunctionInput}.
+ * @template TOutput - The type of the output from the function, extending {@link DOFunctionOutput}.
  */
 export default abstract class DOFunction<
   TInput extends DOFunctionInput,
@@ -71,6 +80,11 @@ export default abstract class DOFunction<
     this.functionName = this.constructor.name;
   }
 
+  /**
+   * Sets the URL of the Digital Ocean function.
+   *
+   * @param url - The URL to set.
+   */
   setUrl(url: string) {
     this.url = url;
   }
@@ -79,6 +93,10 @@ export default abstract class DOFunction<
    * A generic call method for any Digital Ocean Function from the client.
    * This gets pretty crazy with the serialization logic. It has been tested
    * heavily.
+   *
+   * @param input - The input to the function.
+   * @returns A promise that resolves to the output of the function call, wrapped in {@link DOFunctionCallOutput}.
+   * @throws Will throw an error if the URL is not set.
    */
   async call(input: TInput): Promise<DOFunctionCallOutput<TOutput>> {
     if (!this.url) {
@@ -96,6 +114,12 @@ export default abstract class DOFunction<
     return this.decodeArrayBuffer(await result.arrayBuffer());
   }
 
+  /**
+   * Decodes an {@link ArrayBuffer} into a {@link DOFunctionCallOutput}.
+   *
+   * @param buffer - The buffer to decode.
+   * @returns The decoded output.
+   */
   private decodeArrayBuffer(
     buffer: ArrayBuffer
   ): DOFunctionCallOutput<TOutput> {
