@@ -1,3 +1,6 @@
+/**
+ * Enum for nonogram katana upgrade names.
+ */
 enum NonogramKatanaUpgradeName {
   BuildingGuildLvl2 = 'buildingGuildLvl2',
   BuildingGuildLvl3 = 'buildingGuildLvl3',

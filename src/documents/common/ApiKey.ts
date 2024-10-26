@@ -5,6 +5,12 @@ import { DocumentValidator } from '../../schemas/validators/DocumentValidator.js
 import Validate from '../../schemas/validators/ValidateUtil.js';
 import BaseDocument from '../BaseDocument.js';
 
+/**
+ * Validates the provided {@link ApiKey} instance.
+ *
+ * @param apiKey - The {@link ApiKey} instance to validate.
+ * @returns An object containing the updated document and any validation errors.
+ */
 export const validateApiKey: DocumentValidator<ApiKey> = (apiKey: ApiKey) => {
   const errors: string[] = [];
   const exampleApiKey = new ApiKey(new ObjectId());

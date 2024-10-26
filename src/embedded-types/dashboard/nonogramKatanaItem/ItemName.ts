@@ -1,3 +1,6 @@
+/**
+ * Nonogram Katana item name enum.
+ */
 enum NonogramKatanaItemName {
   Coin = 'coin',
   CryptoCoin = 'cryptoCoin',

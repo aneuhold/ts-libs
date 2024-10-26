@@ -12,6 +12,12 @@ import Validate from '../../schemas/validators/ValidateUtil.js';
 import { DocumentMap } from '../../services/DocumentService.js';
 import BaseDocumentWithType from '../BaseDocumentWithType.js';
 
+/**
+ * Validates a {@link DashboardTask} object.
+ *
+ * @param task - The {@link DashboardTask} object to validate.
+ * @returns An object containing the updated document and any validation errors.
+ */
 export const validateDashboardTask: DocumentValidator<DashboardTask> = (
   task: DashboardTask
 ) => {

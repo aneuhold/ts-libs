@@ -23,6 +23,9 @@ export type DashboardTaskFilterTaskInfo = {
   allChildrenIds: string[];
 };
 
+/**
+ * The result of filtering and sorting tasks.
+ */
 export type DashboardTaskFilterAndSortResult = {
   filteredAndSortedIds: string[];
   /**
@@ -33,6 +36,9 @@ export type DashboardTaskFilterAndSortResult = {
   removedIds: string[];
 };
 
+/**
+ * A service for handling many different operations related to {@link DashboardTask}s.
+ */
 export default class DashboardTaskService {
   /**
    * Gets all the children task IDs for the given parent task IDs.

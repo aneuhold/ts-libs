@@ -1,10 +1,16 @@
 import { ObjectId } from 'bson';
-import RequiredUserId from '../../schemas/required-refs/RequiredUserId.js';
-import BaseDocumentWithType from '../BaseDocumentWithType.js';
 import NonogramKatanaItemName from '../../embedded-types/dashboard/nonogramKatanaItem/ItemName.js';
 import NonogramKatanaUpgradeName from '../../embedded-types/dashboard/nonogramKatanaUpgrade/UpgradeName.js';
+import RequiredUserId from '../../schemas/required-refs/RequiredUserId.js';
 import { DocumentValidator } from '../../schemas/validators/DocumentValidator.js';
+import BaseDocumentWithType from '../BaseDocumentWithType.js';
 
+/**
+ * Validates a {@link NonogramKatanaUpgrade} document.
+ *
+ * @param upgrade The {@link NonogramKatanaUpgrade} document to validate.
+ * @returns An object containing the updated document and any validation errors.
+ */
 export const validateNonogramKatanaUpgrade: DocumentValidator<
   NonogramKatanaUpgrade
 > = (upgrade: NonogramKatanaUpgrade) => {
@@ -16,7 +22,14 @@ export const validateNonogramKatanaUpgrade: DocumentValidator<
 };
 
 /**
- * An upgrade in the Nonogram Katana game.
+ * Represents an upgrade for a Nonogram Katana.
+ *
+ * @example
+ * ```typescript
+ * const upgrade = new NonogramKatanaUpgrade(ownerId, upgradeName);
+ * upgrade.completed = true;
+ * upgrade.priority = 5;
+ * ```
  */
 export default class NonogramKatanaUpgrade
   extends BaseDocumentWithType
@@ -42,6 +55,12 @@ export default class NonogramKatanaUpgrade
    */
   priority: number = 0;
 
+  /**
+   * Creates an instance of NonogramKatanaUpgrade.
+   *
+   * @param ownerId - The ID of the owner of this upgrade.
+   * @param upgradeName - The name of the upgrade.
+   */
   constructor(ownerId: ObjectId, upgradeName: NonogramKatanaUpgradeName) {
     super();
     this.userId = ownerId;

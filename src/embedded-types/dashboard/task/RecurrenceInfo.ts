@@ -35,12 +35,18 @@ export function validateRecurrenceInfo(
   errors.push(...recurrenceErrors);
 }
 
+/**
+ * Represents the recurrence information for a task.
+ */
 export type RecurrenceInfo = {
   frequency: RecurrenceFrequency;
   recurrenceBasis: RecurrenceBasis;
   recurrenceEffect: RecurrenceEffect;
 };
 
+/**
+ * Represents the frequency of recurrence for a task.
+ */
 export type RecurrenceFrequency = {
   type: RecurrenceFrequencyType;
   everyXTimeUnit?: {
@@ -69,6 +75,9 @@ export type RecurrenceFrequency = {
   };
 };
 
+/**
+ * Enum representing the different types of recurrence frequencies.
+ */
 export enum RecurrenceFrequencyType {
   everyXTimeUnit = 'everyXTimeUnit',
   weekDaySet = 'weekDaySet',
@@ -84,6 +93,9 @@ export enum RecurrenceBasis {
   dueDate = 'dueDate'
 }
 
+/**
+ * The effect of recurrence for a recurring task.
+ */
 export enum RecurrenceEffect {
   /**
    * Automatically refreshes the task when the {@link RecurrenceBasis} triggers.
@@ -102,6 +114,12 @@ export enum RecurrenceEffect {
   stack = 'stack'
 }
 
+/**
+ * The recurring task info for the parent recurring task if there is one.
+ *
+ * If this is set, then the current tasks's recurrence info should be the
+ * same as the parent recurring task.
+ */
 export type ParentRecurringTaskInfo = {
   taskId: ObjectId;
   startDate?: Date;

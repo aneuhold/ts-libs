@@ -1,18 +1,24 @@
 import { ObjectId } from 'bson';
-import BaseDocumentWithType from '../BaseDocumentWithType.js';
-import RequiredUserId from '../../schemas/required-refs/RequiredUserId.js';
-import Validate from '../../schemas/validators/ValidateUtil.js';
-import { DocumentValidator } from '../../schemas/validators/DocumentValidator.js';
-import { DashboardTagSettings } from '../../embedded-types/dashboard/userConfig/Tags.js';
-import {
-  DashboardTaskListGlobalSortSettings,
-  validateSortSettings
-} from '../../embedded-types/dashboard/task/SortSettings.js';
 import {
   DashboardTaskListGlobalFilterSettings,
   validateFilterSettings
 } from '../../embedded-types/dashboard/task/FilterSettings.js';
+import {
+  DashboardTaskListGlobalSortSettings,
+  validateSortSettings
+} from '../../embedded-types/dashboard/task/SortSettings.js';
+import { DashboardTagSettings } from '../../embedded-types/dashboard/userConfig/Tags.js';
+import RequiredUserId from '../../schemas/required-refs/RequiredUserId.js';
+import { DocumentValidator } from '../../schemas/validators/DocumentValidator.js';
+import Validate from '../../schemas/validators/ValidateUtil.js';
+import BaseDocumentWithType from '../BaseDocumentWithType.js';
 
+/**
+ * Validates a {@link DashboardUserConfig} object.
+ *
+ * @param config - The {@link DashboardUserConfig} to validate.
+ * @returns An object containing the updated document and any validation errors.
+ */
 export const validateDashboardUserConfig: DocumentValidator<
   DashboardUserConfig
 > = (config: DashboardUserConfig) => {
@@ -39,6 +45,9 @@ export const validateDashboardUserConfig: DocumentValidator<
   return { updatedDoc: config, errors };
 };
 
+/**
+ * Represents the user configuration for the dashboard.
+ */
 export default class DashboardUserConfig
   extends BaseDocumentWithType
   implements RequiredUserId
@@ -99,10 +108,21 @@ export default class DashboardUserConfig
    */
   tagSettings: DashboardTagSettings = {};
 
+  /**
+   * The global sort settings for the user's task list.
+   */
   taskListSortSettings: DashboardTaskListGlobalSortSettings = {};
 
+  /**
+   * The global filter settings for the user's task list.
+   */
   taskListFilterSettings: DashboardTaskListGlobalFilterSettings = {};
 
+  /**
+   * Creates an instance of {@link DashboardUserConfig}.
+   *
+   * @param ownerId - The {@link ObjectId} of the owner of this config.
+   */
   constructor(ownerId: ObjectId) {
     super();
     this.userId = ownerId;
