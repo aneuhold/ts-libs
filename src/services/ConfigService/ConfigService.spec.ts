@@ -1,4 +1,5 @@
-import ConfigService from './ConfigService';
+import { describe, expect, it } from 'vitest';
+import ConfigService from './ConfigService.js';
 
 describe('ConfigService', () => {
   describe('useConfig', () => {

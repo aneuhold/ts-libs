@@ -1,4 +1,5 @@
-import TranslationService, { TranslationSource } from './TranslationService';
+import { describe, expect, it } from 'vitest';
+import TranslationService, { TranslationSource } from './TranslationService.js';
 
 describe('TranslationService', () => {
   describe('getTranslations', () => {

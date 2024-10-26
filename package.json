@@ -1,12 +1,33 @@
 {
   "name": "@aneuhold/be-ts-lib",
-  "version": "1.0.79",
-  "description": "A backend TypeScript library used for common functionality in personal backend projects.",
-  "main": "lib/index.js",
-  "types": "lib/index.d.ts",
-  "author": "Anton G Neuhold Jr <agneuhold@gmail.com>",
+  "author": "Anton G. Neuhold Jr.",
   "license": "MIT",
+  "version": "2.0.0",
+  "description": "A backend TypeScript library used for common functionality in personal backend projects.",
   "packageManager": "yarn@4.5.1",
+  "type": "module",
+  "scripts": {
+    "build": "rimraf lib && tsc --project tsconfig.build.json && tsx ./scripts/copyTsFiles.ts",
+    "lint": "eslint",
+    "test": "vitest run",
+    "jsr:validate": "tb pkg validateJsr",
+    "checkAll": "yarn build && yarn lint && yarn test && yarn jsr:validate",
+    "jsr:publish": "tb pkg publishJsr",
+    "upgrade:core": "yarn up '@aneuhold/*'",
+    "upgrade:all": "yarn up"
+  },
+  "main": "lib/index.js",
+  "module": "lib/index.js",
+  "types": "lib/index.d.ts",
+  "files": [
+    "lib/**/*"
+  ],
+  "exports": {
+    ".": {
+      "types": "./lib/index.d.ts",
+      "import": "./lib/index.js"
+    }
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/aneuhold/be-ts-lib.git"
@@ -15,42 +36,30 @@
     "url": "https://github.com/aneuhold/be-ts-lib/issues"
   },
   "homepage": "https://github.com/aneuhold/be-ts-lib#readme",
-  "files": [
-    "lib/**/*"
-  ],
   "keywords": [
-    "Scripting",
-    "Node.js"
+    "Backend",
+    "Node.js",
+    "TypeScript"
   ],
-  "scripts": {
-    "pushpub": "yarn build && npm version patch && git push",
-    "build": "tsc",
-    "watch": "tsc -w",
-    "link:local": "cd lib && yarn link",
-    "unlink:local": "cd lib && yarn unlink",
-    "upgrade:all": "yarn up",
-    "upgrade:core": "yarn up '@aneuhold/*'",
-    "test": "jest",
-    "lint": "eslint"
-  },
   "dependencies": {
-    "@aneuhold/core-ts-api-lib": "^1.0.115",
-    "@aneuhold/core-ts-lib": "^1.1.52",
+    "@aneuhold/core-ts-api-lib": "^2.0.0",
+    "@aneuhold/core-ts-lib": "^2.0.6",
     "dotenv": "^16.4.5",
     "jsonc-parser": "^3.3.1",
     "node-fetch": "^2",
     "octokit": "^3.1.2"
   },
   "devDependencies": {
-    "@aneuhold/eslint-config": "^1.0.37",
-    "@types/jest": "^29.5.13",
+    "@aneuhold/eslint-config": "^1.0.40",
+    "@aneuhold/main-scripts": "^2.0.6",
     "@types/node": "^20.16.13",
     "@types/node-fetch": "^2.6.11",
     "eslint": "^9.13.0",
-    "jest": "^29.7.0",
+    "jsr": "^0.13.2",
     "prettier": "^3.3.3",
-    "ts-jest": "^29.2.5",
-    "ts-node": "^10.9.2",
-    "typescript": "^5.6.3"
+    "rimraf": "^6.0.1",
+    "tsx": "^4.19.1",
+    "typescript": "^5.6.3",
+    "vitest": "^2.1.3"
   }
 }

@@ -9,10 +9,9 @@
   },
   "editor.codeActionsOnSave": {
     "source.fixAll.eslint": "always",
-    // Re-enable this when the index.ts file has exports.
-    "source.organizeImports": "never"
+    "source.organizeImports": "explicit"
   },
-  "eslint.experimental.useFlatConfig": true,
+  "eslint.useFlatConfig": true,
   "eslint.run": "onSave",
   "eslint.format.enable": true
 }

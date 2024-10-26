@@ -1,6 +1,6 @@
-import { Octokit } from 'octokit';
-import 'dotenv/config';
 import { Logger } from '@aneuhold/core-ts-lib';
+import 'dotenv/config';
+import { Octokit } from 'octokit';
 
 export type ConfigEnv = 'local' | 'dev' | 'prod';
 
@@ -10,6 +10,14 @@ export type ConfigEnv = 'local' | 'dev' | 'prod';
 export default class GitHubService {
   private static gitHub: Octokit | null = null;
 
+  /**
+   * Retrieves the content of a file from a specified GitHub repository.
+   *
+   * @param repoName - The name of the repository.
+   * @param filePath - The path to the file within the repository.
+   * @returns The content of the file as a string.
+   * @throws Will throw an error if the content cannot be retrieved.
+   */
   static async getContentFromRepo(
     repoName: string,
     filePath: string
@@ -38,6 +46,8 @@ export default class GitHubService {
   /**
    * Creates a new GitHub client using `CONFIG_GITHUB_TOKEN` from the
    * local environment or .env file.
+   *
+   * @returns A new GitHub client.
    */
   private static getGitHubClient(): Octokit {
     const authToken = process.env.CONFIG_GITHUB_TOKEN;

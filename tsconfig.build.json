@@ -1,0 +1,12 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "outDir": "./lib",
+    "sourceMap": true,
+    "sourceRoot": "./src",
+    "declaration": true /* Generate .d.ts files from TypeScript and JavaScript files in your project. */,
+    "declarationMap": true /* Create sourcemaps for d.ts files. */
+  },
+  "include": ["src/**/*.ts"],
+  "exclude": ["**/*.spec.ts", "./scripts"]
+}

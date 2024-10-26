@@ -7,9 +7,12 @@ on:
       - main
 
 jobs:
-  buildAndPublish:
-    name: 'Build and Publish'
+  publish:
+    name: 'Publish'
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
 
     steps:
       - uses: actions/checkout@v4
@@ -19,9 +22,8 @@ jobs:
 
       - name: Get yarn cache directory path
         id: yarn-cache-dir-path
-        run: echo "::set-output name=dir::$(yarn cache dir)"
+        run: echo "dir=$(yarn config get cacheFolder)" >> $GITHUB_OUTPUT
 
-      # Cache yarn packages
       - uses: actions/cache@v4
         id: yarn-cache # use this to check for `cache-hit` (`steps.yarn-cache.outputs.cache-hit != 'true'`)
         with:
@@ -33,11 +35,14 @@ jobs:
       - name: Install dependencies
         run: yarn
 
-      - name: Build
+      - name: Publish to JSR
+        run: yarn jsr:publish
+
+      - name: Run build
         run: yarn build
 
       - name: Add Auth Token for npm
         run: echo "//registry.npmjs.org/:_authToken=${{secrets.NPM_TOKEN}}" > ~/.npmrc
 
-      - name: Publish to npm
+      - name: Publish to NPM
         run: npm publish --access public

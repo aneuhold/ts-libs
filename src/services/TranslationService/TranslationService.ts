@@ -1,9 +1,12 @@
-import 'dotenv/config';
-import { Logger } from '@aneuhold/core-ts-lib';
 import { Translations } from '@aneuhold/core-ts-api-lib';
+import { Logger } from '@aneuhold/core-ts-lib';
+import 'dotenv/config';
 import { parse } from 'jsonc-parser';
-import GitHubService from '../GitHubService';
+import GitHubService from '../GitHubService.js';
 
+/**
+ * An enum which defines the sources of translations which can be loaded.
+ */
 export enum TranslationSource {
   dashboard = 'dashboard'
 }
@@ -16,8 +19,13 @@ export enum TranslationSource {
 export default class TranslationService {
   /**
    * Gets translations for the provided source.
+   *
+   * @param source - The source of the translations.
+   * @returns The translations for the provided source.
    */
-  static async getTranslations(source: TranslationSource) {
+  static async getTranslations(
+    source: TranslationSource
+  ): Promise<Translations> {
     try {
       const jsonString = await GitHubService.getContentFromRepo(
         'translations',
