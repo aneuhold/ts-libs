@@ -102,6 +102,7 @@ export default abstract class DOFunction<
     if (!this.url) {
       throw new Error(`${this.functionName} URL is not set`);
     }
+    const serializedInput = BSON.serialize(input);
     const result = await fetch(this.url, {
       method: 'POST',
       headers: {
@@ -109,7 +110,7 @@ export default abstract class DOFunction<
       },
       // It isn't clear why this works by itself. It comes in to the function
       // as a base64 string.
-      body: BSON.serialize(input)
+      body: serializedInput
     });
     return this.decodeArrayBuffer(await result.arrayBuffer());
   }
@@ -124,6 +125,13 @@ export default abstract class DOFunction<
     buffer: ArrayBuffer
   ): DOFunctionCallOutput<TOutput> {
     const bytes = new Uint8Array(buffer);
-    return BSON.deserialize(bytes) as DOFunctionCallOutput<TOutput>;
+    console.log('Buffer length:', bytes.length);
+    console.log('Buffer content:', bytes);
+    try {
+      return BSON.deserialize(bytes) as DOFunctionCallOutput<TOutput>;
+    } catch (error) {
+      console.error('Deserialization error:', error);
+      throw error;
+    }
   }
 }
