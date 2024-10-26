@@ -103,30 +103,32 @@ export default abstract class DOFunction<
       throw new Error(`${this.functionName} URL is not set`);
     }
     const serializedInput = BSON.serialize(input);
-    const result = await fetch(this.url, {
+    const base64Input = Buffer.from(serializedInput).toString('base64');
+    const response = await fetch(this.url, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/octet-stream'
       },
       // It isn't clear why this works by itself. It comes in to the function
       // as a base64 string.
-      body: serializedInput
+      body: base64Input
     });
-    return this.decodeArrayBuffer(await result.arrayBuffer());
+    return this.decodeResponse(await response.text());
   }
 
   /**
-   * Decodes an {@link ArrayBuffer} into a {@link DOFunctionCallOutput}.
+   * Decodes an {@link Response} into a {@link DOFunctionCallOutput}.
    *
-   * @param buffer - The buffer to decode.
+   * @param responseText - The response to decode.
    * @returns The decoded output.
    */
-  private decodeArrayBuffer(
-    buffer: ArrayBuffer
-  ): DOFunctionCallOutput<TOutput> {
-    const bytes = new Uint8Array(buffer);
-    console.log('Buffer length:', bytes.length);
-    console.log('Buffer content:', bytes);
+  private decodeResponse(responseText: string): DOFunctionCallOutput<TOutput> {
+    const binaryString = atob(responseText);
+    const len = binaryString.length;
+    const bytes = new Uint8Array(len);
+    for (let i = 0; i < len; i += 1) {
+      bytes[i] = binaryString.charCodeAt(i);
+    }
     try {
       return BSON.deserialize(bytes) as DOFunctionCallOutput<TOutput>;
     } catch (error) {
