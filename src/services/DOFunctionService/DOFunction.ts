@@ -23,25 +23,25 @@ export interface DOFunctionRawInput {
      */
     body: string;
     headers: {
-      accept: string;
-      'accept-encoding': string;
+      accept?: string;
+      'accept-encoding'?: string;
       /**
        * This is important.
        */
-      'content-type': string;
-      host: string;
-      'user-agent': string;
-      'x-forwarded-for': string;
-      'x-forwarded-proto': string;
-      'x-request-id': string;
+      'content-type'?: string;
+      host?: string;
+      'user-agent'?: string;
+      'x-forwarded-for'?: string;
+      'x-forwarded-proto'?: string;
+      'x-request-id'?: string;
     };
     /**
      * This needs to be used to determine if the body is base64 encoded.
      */
     isBase64Encoded: boolean;
-    method: string;
-    path: string;
-    queryString: string;
+    method?: string;
+    path?: string;
+    queryString?: string;
   };
 }
 
