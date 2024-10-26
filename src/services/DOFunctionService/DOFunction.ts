@@ -13,20 +13,35 @@ export type DOFunctionInput = object;
 export type DOFunctionOutput = object;
 
 /**
- * Raw input to a Digital Ocean function will always have a data property
- * which is a string. This string must be parsed using EJSON.parse.
+ * Raw input to a Digital Ocean function. This is with the expectation that
+ * `web: raw` is set in the `project.yml` file.
  */
 export interface DOFunctionRawInput {
-  /**
-   * There are many other properties in the `http` object, but only the body
-   * property is used.
-   */
   http: {
     /**
-     * The body property needs to be parsed with atob, then put through some
-     * other processing.
+     * The body to be parsed or deserialized.
      */
     body: string;
+    headers: {
+      accept: string;
+      'accept-encoding': string;
+      /**
+       * This is important.
+       */
+      'content-type': string;
+      host: string;
+      'user-agent': string;
+      'x-forwarded-for': string;
+      'x-forwarded-proto': string;
+      'x-request-id': string;
+    };
+    /**
+     * This needs to be used to determine if the body is base64 encoded.
+     */
+    isBase64Encoded: boolean;
+    method: string;
+    path: string;
+    queryString: string;
   };
 }
 
@@ -41,8 +56,14 @@ export interface DOFunctionRawOutput {
    * The body is a base64 encoded string.
    */
   body: string;
+  statusCode: number;
   headers: {
-    'Content-Type': 'application/octet-stream';
+    /**
+     * This is different than what gets passed in. This is on purpose. DO
+     * functions changes the header name when being passed in, but not when
+     * being passed out.
+     */
+    'Content-Type': string;
   };
 }
 
@@ -55,10 +76,6 @@ export interface DOFunctionCallOutput<TOutput extends DOFunctionOutput> {
   data: TOutput;
 }
 
-/**
- * An abstract class that can be extended to define a Digital Ocean
- * function.
- */
 /**
  * An abstract class representing a Digital Ocean Function.
  *
@@ -102,28 +119,29 @@ export default abstract class DOFunction<
     if (!this.url) {
       throw new Error(`${this.functionName} URL is not set`);
     }
-    const result = await fetch(this.url, {
+    const body = Buffer.from(BSON.serialize(input)).toString('base64');
+    const response = await fetch(this.url, {
       method: 'POST',
       headers: {
+        Connection: 'keep-alive',
         'Content-Type': 'application/octet-stream'
       },
-      // It isn't clear why this works by itself. It comes in to the function
-      // as a base64 string.
-      body: BSON.serialize(input)
+      body: body
     });
-    return this.decodeArrayBuffer(await result.arrayBuffer());
+    return await this.decodeResponse(response);
   }
 
   /**
-   * Decodes an {@link ArrayBuffer} into a {@link DOFunctionCallOutput}.
+   * Decodes the response from the Digital Ocean function.
    *
-   * @param buffer - The buffer to decode.
+   * @param response - The response to decode.
    * @returns The decoded output.
    */
-  private decodeArrayBuffer(
-    buffer: ArrayBuffer
-  ): DOFunctionCallOutput<TOutput> {
-    const bytes = new Uint8Array(buffer);
-    return BSON.deserialize(bytes) as DOFunctionCallOutput<TOutput>;
+  private async decodeResponse(
+    response: Response
+  ): Promise<DOFunctionCallOutput<TOutput>> {
+    const bodyText = await response.text();
+    const buffer = Buffer.from(bodyText, 'base64');
+    return BSON.deserialize(buffer) as DOFunctionCallOutput<TOutput>;
   }
 }

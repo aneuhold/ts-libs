@@ -51,6 +51,7 @@ export default class DOFunctionService {
     const input: TInput = this.deserializeInput(rawInput);
     const rawOutput: DOFunctionRawOutput = {
       body: '',
+      statusCode: 200,
       headers: {
         'Content-Type': 'application/octet-stream'
       }
@@ -81,17 +82,33 @@ export default class DOFunctionService {
   private static deserializeInput<TInput extends DOFunctionInput>(
     rawInput: DOFunctionRawInput
   ): TInput {
-    const binaryString = atob(rawInput.http.body);
-    const len = binaryString.length;
-    const bytes = new Uint8Array(len);
-    for (let i = 0; i < len; i += 1) {
-      bytes[i] = binaryString.charCodeAt(i);
+    const { http } = rawInput;
+    const { body, isBase64Encoded, headers } = http;
+
+    let decodedBody: Buffer;
+    if (isBase64Encoded) {
+      decodedBody = Buffer.from(body, 'base64');
+    } else {
+      decodedBody = Buffer.from(body, 'utf8');
     }
-    return BSON.deserialize(bytes) as TInput;
+
+    // Determine if the incoming content type is BSON
+    const isBson = headers['content-type'] === 'application/octet-stream';
+    let requestData: TInput;
+    if (isBson) {
+      // Deserialize BSON data
+      requestData = BSON.deserialize(decodedBody) as TInput;
+    } else {
+      // Parse JSON data
+      requestData = JSON.parse(decodedBody.toString('utf8')) as TInput;
+    }
+
+    return requestData;
   }
 
   /**
-   * Serializes the output object into a base64 string.
+   * Serializes the output object into a base64 string. This could be updated
+   * to support other serialization methods in the future.
    *
    * @param output - The output object to serialize.
    * @returns The serialized output as a base64 string.
@@ -99,7 +116,7 @@ export default class DOFunctionService {
   private static serializeOutput<TOutput extends DOFunctionOutput>(
     output: DOFunctionCallOutput<TOutput>
   ): string {
-    const uInt8Array = BSON.serialize(output);
-    return Buffer.from(uInt8Array).toString('base64');
+    const bsonBuffer = BSON.serialize(output);
+    return Buffer.from(bsonBuffer).toString('base64');
   }
 }
