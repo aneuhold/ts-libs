@@ -7,9 +7,12 @@ on:
       - main
 
 jobs:
-  buildAndTest:
-    name: 'Build and Test'
+  test:
+    name: 'Test'
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
 
     steps:
       - uses: actions/checkout@v4
@@ -19,9 +22,8 @@ jobs:
 
       - name: Get yarn cache directory path
         id: yarn-cache-dir-path
-        run: echo "::set-output name=dir::$(yarn cache dir)"
+        run: echo "dir=$(yarn config get cacheFolder)" >> $GITHUB_OUTPUT
 
-      # Cache yarn packages
       - uses: actions/cache@v4
         id: yarn-cache # use this to check for `cache-hit` (`steps.yarn-cache.outputs.cache-hit != 'true'`)
         with:
@@ -43,3 +45,12 @@ jobs:
 
       - name: Run Linting
         run: yarn lint
+
+      - name: Dry run publish to JSR
+        run: yarn jsr:validate
+
+      - name: Add Auth Token for npm
+        run: echo "//registry.npmjs.org/:_authToken=${{secrets.NPM_TOKEN}}" > ~/.npmrc
+
+      - name: Dry run publish to NPM
+        run: npm publish --access public --dry-run

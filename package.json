@@ -1,12 +1,37 @@
 {
   "name": "@aneuhold/be-ts-db-lib",
-  "version": "1.0.115",
-  "description": "A backend database library meant to actually interact with various databases in personal projects",
-  "author": "Anton G Neuhold Jr <agneuhold@gmail.com>",
+  "author": "Anton G. Neuhold Jr.",
   "license": "MIT",
+  "version": "2.0.0",
+  "description": "A backend database library meant to actually interact with various databases in personal projects",
+  "packageManager": "yarn@4.5.1",
+  "type": "module",
+  "scripts": {
+    "build": "rimraf lib && tsc --project tsconfig.build.json && tsx ./scripts/copyTsFiles.ts",
+    "lint": "eslint",
+    "test": "vitest run && yarn validate:dry",
+    "validate": "tsx ./scripts/validateSchema.ts",
+    "validate:dry": "tsx ./scripts/validateSchemaDryRun.ts",
+    "jsr:validate": "tb pkg validateJsr",
+    "checkAll": "yarn build && yarn lint && yarn test && yarn jsr:validate",
+    "jsr:publish": "tb pkg publishJsr",
+    "upgrade:core": "yarn up '@aneuhold/*'",
+    "upgrade:all": "yarn up",
+    "migrate": "tsx ./scripts/migrate.ts",
+    "migrate:dry": "tsx ./scripts/migrateDry.ts"
+  },
   "main": "lib/index.js",
+  "module": "lib/index.js",
   "types": "lib/index.d.ts",
-  "packageManager": "yarn@4.5.0",
+  "files": [
+    "lib/**/*"
+  ],
+  "exports": {
+    ".": {
+      "types": "./lib/index.d.ts",
+      "import": "./lib/index.js"
+    }
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/aneuhold/be-ts-db-lib.git"
@@ -15,49 +40,30 @@
     "url": "https://github.com/aneuhold/be-ts-db-lib/issues"
   },
   "homepage": "https://github.com/aneuhold/be-ts-db-lib#readme",
-  "files": [
-    "lib/**/*"
-  ],
   "keywords": [
-    "Scripting",
-    "Node.js"
+    "Database",
+    "Node.js",
+    "TypeScript",
+    "MongoDB"
   ],
-  "scripts": {
-    "pushpub": "yarn build && npm version patch && git push",
-    "build": "tsc",
-    "watch": "tsc -w",
-    "link:local": "cd lib && yarn link",
-    "link:coredb": "yarn link @aneuhold/core-ts-db-lib",
-    "link:bets": "yarn link @aneuhold/be-ts-lib",
-    "unlink:local": "cd lib && yarn unlink",
-    "unlink:coredb": "yarn unlink @aneuhold/core-ts-db-lib && yarn install --force",
-    "unlink:bets": "yarn unlink @aneuhold/be-ts-lib && yarn install --force",
-    "upgrade:all": "yarn up",
-    "upgrade:core": "yarn up '@aneuhold/*'",
-    "test": "jest && yarn validate:dry",
-    "validate": "ts-node ./src/scripts/validateSchema.ts",
-    "validate:dry": "ts-node ./src/scripts/validateSchemaDryRun.ts",
-    "migrate": "ts-node ./src/scripts/migrate.ts",
-    "migrate:dry": "ts-node ./src/scripts/migrateDry.ts",
-    "lint": "eslint"
-  },
   "dependencies": {
-    "@aneuhold/be-ts-lib": "^1.0.78",
-    "@aneuhold/core-ts-db-lib": "^1.0.121",
-    "@aneuhold/core-ts-lib": "^1.1.52",
+    "@aneuhold/be-ts-lib": "^2.0.0",
+    "@aneuhold/core-ts-db-lib": "^2.0.4",
+    "@aneuhold/core-ts-lib": "^2.0.6",
     "bson": "^6.2.0",
     "mongodb": "^6.3.0"
   },
   "devDependencies": {
-    "@aneuhold/eslint-config": "^1.0.37",
-    "@types/jest": "^29.5.13",
-    "@types/node": "^20.16.10",
+    "@aneuhold/eslint-config": "^1.0.40",
+    "@aneuhold/main-scripts": "^2.0.6",
+    "@types/node": "^20.17.1",
     "@types/node-fetch": "^2.6.11",
     "eslint": "^9.13.0",
-    "jest": "^29.7.0",
+    "jsr": "^0.13.2",
     "prettier": "^3.3.3",
-    "ts-jest": "^29.2.5",
-    "ts-node": "^10.9.2",
-    "typescript": "^5.6.2"
+    "rimraf": "^6.0.1",
+    "tsx": "^4.19.1",
+    "typescript": "^5.6.3",
+    "vitest": "^2.1.3"
   }
 }

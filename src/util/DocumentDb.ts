@@ -1,7 +1,10 @@
 import { ConfigService } from '@aneuhold/be-ts-lib';
-import { Collection, Db, MongoClient } from 'mongodb';
 import { Document } from 'bson';
+import { Collection, Db, MongoClient } from 'mongodb';
 
+/**
+ * A utility class for interacting with a MongoDB database.
+ */
 export default class DocumentDb {
   private static DB_NAME = 'default';
 

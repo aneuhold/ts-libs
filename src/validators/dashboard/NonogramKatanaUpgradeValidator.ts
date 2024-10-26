@@ -4,9 +4,9 @@ import {
 } from '@aneuhold/core-ts-db-lib';
 import { ErrorUtils, Logger } from '@aneuhold/core-ts-lib';
 import { ObjectId } from 'bson';
-import IValidator from '../BaseValidator';
-import UserRepository from '../../repositories/common/UserRepository';
-import DashboardNonogramKatanaUpgradeRepository from '../../repositories/dashboard/DashboardNonogramKatanaUpgradeRepository';
+import UserRepository from '../../repositories/common/UserRepository.js';
+import DashboardNonogramKatanaUpgradeRepository from '../../repositories/dashboard/DashboardNonogramKatanaUpgradeRepository.js';
+import IValidator from '../BaseValidator.js';
 
 export default class DashboardNonogramKatanaUpgradeValidator extends IValidator<NonogramKatanaUpgrade> {
   async validateNewObject(newUpgrade: NonogramKatanaUpgrade): Promise<void> {

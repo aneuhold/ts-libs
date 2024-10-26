@@ -1,9 +1,9 @@
 import { NonogramKatanaUpgrade, User } from '@aneuhold/core-ts-db-lib';
 import { ObjectId } from 'bson';
-import DashboardBaseRepository from './DashboardBaseRepository';
-import CleanDocument from '../../util/DocumentCleaner';
-import { RepoListeners } from '../../services/RepoSubscriptionService';
-import DashboardNonogramKatanaUpgradeValidator from '../../validators/dashboard/NonogramKatanaUpgradeValidator';
+import { RepoListeners } from '../../services/RepoSubscriptionService.js';
+import CleanDocument from '../../util/DocumentCleaner.js';
+import DashboardNonogramKatanaUpgradeValidator from '../../validators/dashboard/NonogramKatanaUpgradeValidator.js';
+import DashboardBaseRepository from './DashboardBaseRepository.js';
 
 /**
  * The repository that contains {@link NonogramKatanaUpgrade} documents.
@@ -42,7 +42,7 @@ export default class DashboardNonogramKatanaUpgradeRepository extends DashboardB
   /**
    * Gets the singleton instance of the {@link DashboardNonogramKatanaUpgradeRepository}.
    */
-  public static getRepo() {
+  public static getRepo(): DashboardNonogramKatanaUpgradeRepository {
     if (!DashboardNonogramKatanaUpgradeRepository.singletonInstance) {
       DashboardNonogramKatanaUpgradeRepository.singletonInstance =
         new DashboardNonogramKatanaUpgradeRepository();

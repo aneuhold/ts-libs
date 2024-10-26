@@ -5,11 +5,11 @@ import {
 } from '@aneuhold/core-ts-db-lib';
 import { ObjectId } from 'bson';
 import { DeleteResult } from 'mongodb';
-import DashboardBaseRepository from './DashboardBaseRepository';
-import CleanDocument from '../../util/DocumentCleaner';
-import { RepoListeners } from '../../services/RepoSubscriptionService';
-import DashboardTaskValidator from '../../validators/dashboard/TaskValidator';
-import DashboardUserConfigRepository from './DashboardUserConfigRepository';
+import { RepoListeners } from '../../services/RepoSubscriptionService.js';
+import CleanDocument from '../../util/DocumentCleaner.js';
+import DashboardTaskValidator from '../../validators/dashboard/TaskValidator.js';
+import DashboardBaseRepository from './DashboardBaseRepository.js';
+import DashboardUserConfigRepository from './DashboardUserConfigRepository.js';
 
 /**
  * The repository that contains {@link DashboardTask} documents.
@@ -17,6 +17,9 @@ import DashboardUserConfigRepository from './DashboardUserConfigRepository';
 export default class DashboardTaskRepository extends DashboardBaseRepository<DashboardTask> {
   private static singletonInstance?: DashboardTaskRepository;
 
+  /**
+   * Private constructor to enforce singleton pattern.
+   */
   private constructor() {
     super(
       DashboardTask.docType,
@@ -33,6 +36,8 @@ export default class DashboardTaskRepository extends DashboardBaseRepository<Das
   /**
    * Doesn't handle removing sharedWith references, as that should be handled
    * by the User Config updates.
+   *
+   * @returns The repository listeners for user repository.
    */
   static getListenersForUserRepo(): RepoListeners<User> {
     const taskRepo = DashboardTaskRepository.getRepo();
@@ -66,8 +71,10 @@ export default class DashboardTaskRepository extends DashboardBaseRepository<Das
 
   /**
    * Gets the singleton instance of the {@link DashboardTaskRepository}.
+   *
+   * @returns The singleton instance of the repository.
    */
-  public static getRepo() {
+  public static getRepo(): DashboardTaskRepository {
     if (!DashboardTaskRepository.singletonInstance) {
       DashboardTaskRepository.singletonInstance = new DashboardTaskRepository();
     }
@@ -78,7 +85,8 @@ export default class DashboardTaskRepository extends DashboardBaseRepository<Das
    * Deletes a task and removes the reference to this task from any other tasks
    * that have it as a parent.
    *
-   * @override
+   * @param docId The ID of the document to delete.
+   * @returns The result of the delete operation.
    */
   async delete(docId: ObjectId): Promise<DeleteResult> {
     const docIdsToDelete = await this.getAllTaskIDsToDelete([docId]);
@@ -89,7 +97,8 @@ export default class DashboardTaskRepository extends DashboardBaseRepository<Das
   /**
    * Deletes a list of tasks and all children of those tasks.
    *
-   * @override
+   * @param docIds The IDs of the documents to delete.
+   * @returns The result of the delete operation.
    */
   async deleteList(docIds: ObjectId[]): Promise<DeleteResult> {
     const docIdsToDelete = await this.getAllTaskIDsToDelete(docIds);
@@ -103,6 +112,7 @@ export default class DashboardTaskRepository extends DashboardBaseRepository<Das
    * will be returned.
    *
    * @param userId The ID of the user to get tasks for.
+   * @returns The list of tasks for the user.
    */
   async getAllForUser(userId: ObjectId): Promise<DashboardTask[]> {
     const userConfigRepo = DashboardUserConfigRepository.getRepo();
@@ -132,8 +142,13 @@ export default class DashboardTaskRepository extends DashboardBaseRepository<Das
   /**
    * Gets all the task IDs that need to be deleted if the provided list of
    * tasks is deleted.
+   *
+   * @param taskIds The IDs of the tasks to delete.
+   * @returns The list of task IDs to delete.
    */
-  private async getAllTaskIDsToDelete(taskIds: ObjectId[]) {
+  private async getAllTaskIDsToDelete(
+    taskIds: ObjectId[]
+  ): Promise<ObjectId[]> {
     if (taskIds.length === 0) {
       return taskIds;
     }

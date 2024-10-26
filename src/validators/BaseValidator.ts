@@ -41,9 +41,17 @@ export default abstract class IValidator<TBaseType extends BaseDocument> {
   /**
    * Runs the standard validation for a repository.
    *
+   * @param input
    * @param shouldDelete A function that returns true if the document should be
    * deleted. This should also log the specific error because it will not be
    * logged elsewhere.
+   * @param input.dryRun
+   * @param input.docName
+   * @param input.allDocs
+   * @param input.shouldDelete
+   * @param input.documentValidator
+   * @param input.deletionFunction
+   * @param input.updateFunction
    */
   protected async runStandardValidationForRepository(input: {
     dryRun: boolean;
@@ -129,11 +137,14 @@ export default abstract class IValidator<TBaseType extends BaseDocument> {
 
   /**
    * Checks that all elements that exist in array1, exist in array2.
+   *
+   * @param array1
+   * @param array2
    */
   protected checkAllElementsExistInArr(
     array1: Array<unknown>,
     array2: Array<unknown>
-  ) {
+  ): boolean {
     return array1.every((value) => array2.includes(value));
   }
 }

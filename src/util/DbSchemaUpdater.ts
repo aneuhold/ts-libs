@@ -1,7 +1,7 @@
-import ApiKeyValidator from '../validators/common/ApiKeyValidator';
-import UserValidator from '../validators/common/UserValidator';
-import DashboardTaskValidator from '../validators/dashboard/TaskValidator';
-import DashboardUserConfigValidator from '../validators/dashboard/UserConfigValidator';
+import ApiKeyValidator from '../validators/common/ApiKeyValidator.js';
+import UserValidator from '../validators/common/UserValidator.js';
+import DashboardTaskValidator from '../validators/dashboard/TaskValidator.js';
+import DashboardUserConfigValidator from '../validators/dashboard/UserConfigValidator.js';
 
 /**
  * A class that can be used to validate and update the DB and all repositories.

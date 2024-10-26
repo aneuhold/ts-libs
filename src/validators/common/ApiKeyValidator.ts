@@ -1,10 +1,9 @@
-import { ApiKey } from '@aneuhold/core-ts-db-lib';
+import { ApiKey, validateApiKey } from '@aneuhold/core-ts-db-lib';
 import { ErrorUtils, Logger } from '@aneuhold/core-ts-lib';
 import { ObjectId } from 'bson';
-import { validateApiKey } from '@aneuhold/core-ts-db-lib/lib/documents/common/ApiKey';
-import UserRepository from '../../repositories/common/UserRepository';
-import IValidator from '../BaseValidator';
-import ApiKeyRepository from '../../repositories/common/ApiKeyRepository';
+import ApiKeyRepository from '../../repositories/common/ApiKeyRepository.js';
+import UserRepository from '../../repositories/common/UserRepository.js';
+import IValidator from '../BaseValidator.js';
 
 export default class ApiKeyValidator extends IValidator<ApiKey> {
   async validateNewObject(newApiKey: ApiKey): Promise<void> {

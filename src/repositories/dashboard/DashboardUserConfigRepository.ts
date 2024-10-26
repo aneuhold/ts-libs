@@ -6,10 +6,10 @@ import {
   UpdateFilter,
   UpdateResult
 } from 'mongodb';
-import DashboardBaseRepository from './DashboardBaseRepository';
-import DashboardUserConfigValidator from '../../validators/dashboard/UserConfigValidator';
-import CleanDocument from '../../util/DocumentCleaner';
-import { RepoListeners } from '../../services/RepoSubscriptionService';
+import { RepoListeners } from '../../services/RepoSubscriptionService.js';
+import CleanDocument from '../../util/DocumentCleaner.js';
+import DashboardUserConfigValidator from '../../validators/dashboard/UserConfigValidator.js';
+import DashboardBaseRepository from './DashboardBaseRepository.js';
 
 /**
  * The repository that contains {@link DashboardUserConfig} documents.
@@ -17,6 +17,9 @@ import { RepoListeners } from '../../services/RepoSubscriptionService';
 export default class DashboardUserConfigRepository extends DashboardBaseRepository<DashboardUserConfig> {
   private static singletonInstance?: DashboardUserConfigRepository;
 
+  /**
+   * Private constructor to enforce singleton pattern.
+   */
   private constructor() {
     super(
       DashboardUserConfig.docType,
@@ -25,6 +28,11 @@ export default class DashboardUserConfigRepository extends DashboardBaseReposito
     );
   }
 
+  /**
+   * Gets the listeners for the user repository.
+   *
+   * @returns The listeners for the user repository.
+   */
   static getListenersForUserRepo(): RepoListeners<User> {
     const userConfigRepo = DashboardUserConfigRepository.getRepo();
     return {
@@ -65,8 +73,10 @@ export default class DashboardUserConfigRepository extends DashboardBaseReposito
 
   /**
    * Gets the singleton instance of the {@link DashboardUserConfigRepository}.
+   *
+   * @returns The singleton instance.
    */
-  public static getRepo() {
+  public static getRepo(): DashboardUserConfigRepository {
     if (!DashboardUserConfigRepository.singletonInstance) {
       DashboardUserConfigRepository.singletonInstance =
         new DashboardUserConfigRepository();
@@ -78,7 +88,8 @@ export default class DashboardUserConfigRepository extends DashboardBaseReposito
    * Inserts a new config for a user. If the user has collaborators, those
    * collaborators will have the current user added to their collaborators list.
    *
-   * @override
+   * @param newDoc The new {@link DashboardUserConfig} document to insert.
+   * @returns The inserted document or null if insertion failed.
    */
   async insertNew(
     newDoc: DashboardUserConfig
@@ -100,7 +111,8 @@ export default class DashboardUserConfigRepository extends DashboardBaseReposito
    * those collaborators will have the current user added to their collaborators
    * list.
    *
-   * @override
+   * @param newDocs The list of new {@link DashboardUserConfig} documents to insert.
+   * @returns The list of inserted documents.
    */
   async insertMany(
     newDocs: DashboardUserConfig[]
@@ -120,7 +132,8 @@ export default class DashboardUserConfigRepository extends DashboardBaseReposito
    * Updates a user config. If the user has collaborators, those collaborators
    * will have the current user added to their collaborators list.
    *
-   * @override
+   * @param updatedDoc The updated {@link DashboardUserConfig} document.
+   * @returns The result of the update operation.
    */
   async update(
     updatedDoc: Partial<DashboardUserConfig>
@@ -136,6 +149,13 @@ export default class DashboardUserConfigRepository extends DashboardBaseReposito
     return result;
   }
 
+  /**
+   * Updates multiple user configs. If the users have collaborators, those collaborators
+   * will have the current user added to their collaborators list.
+   *
+   * @param updatedDocs The list of updated {@link DashboardUserConfig} documents.
+   * @returns The result of the bulk update operation.
+   */
   async updateMany(
     updatedDocs: Partial<DashboardUserConfig>[]
   ): Promise<BulkWriteResult> {
@@ -158,7 +178,9 @@ export default class DashboardUserConfigRepository extends DashboardBaseReposito
 
   /**
    * Gets the config for a given user.
+   *
    * @param userId The ID of the user to get the config for.
+   * @returns The user config or null if not found.
    */
   async getForUser(userId: ObjectId): Promise<DashboardUserConfig | null> {
     const collection = await this.getCollection();
@@ -175,6 +197,8 @@ export default class DashboardUserConfigRepository extends DashboardBaseReposito
    *
    * If a collaborator is added to a user config, the collaborator will have
    * the user added to their collaborators list.
+   *
+   * @param docSets The array of document sets containing original and updated documents.
    */
   private async updateCollaboratorsIfNeeded(
     docSets: Array<{

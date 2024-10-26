@@ -1,7 +1,7 @@
 /* eslint-disable */
 // @ts-nocheck
 import { Logger } from '@aneuhold/core-ts-lib';
-import UserRepository from '../repositories/common/UserRepository';
+import UserRepository from '../repositories/common/UserRepository.js';
 
 /**
  * A service for migrating the DB to a new state after an existing document

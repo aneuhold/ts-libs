@@ -1,9 +1,9 @@
 import { NonogramKatanaItem, User } from '@aneuhold/core-ts-db-lib';
 import { ObjectId } from 'bson';
-import DashboardBaseRepository from './DashboardBaseRepository';
-import CleanDocument from '../../util/DocumentCleaner';
-import { RepoListeners } from '../../services/RepoSubscriptionService';
-import DashboardNonogramKatanaItemValidator from '../../validators/dashboard/NonogramKatanaItemValidator';
+import { RepoListeners } from '../../services/RepoSubscriptionService.js';
+import CleanDocument from '../../util/DocumentCleaner.js';
+import DashboardNonogramKatanaItemValidator from '../../validators/dashboard/NonogramKatanaItemValidator.js';
+import DashboardBaseRepository from './DashboardBaseRepository.js';
 
 /**
  * The repository that contains {@link NonogramKatanaItem} documents.
@@ -40,7 +40,7 @@ export default class DashboardNonogramKatanaItemRepository extends DashboardBase
   /**
    * Gets the singleton instance of the {@link DashboardNonogramKatanaItemRepository}.
    */
-  public static getRepo() {
+  public static getRepo(): DashboardNonogramKatanaItemRepository {
     if (!DashboardNonogramKatanaItemRepository.singletonInstance) {
       DashboardNonogramKatanaItemRepository.singletonInstance =
         new DashboardNonogramKatanaItemRepository();

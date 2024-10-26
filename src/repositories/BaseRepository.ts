@@ -1,4 +1,5 @@
 import { BaseDocument } from '@aneuhold/core-ts-db-lib';
+import { Document, ObjectId } from 'bson';
 import {
   AnyBulkWriteOperation,
   BulkWriteResult,
@@ -8,32 +9,34 @@ import {
   OptionalUnlessRequiredId,
   UpdateResult
 } from 'mongodb';
-import { Document, ObjectId } from 'bson';
-import DocumentDb from '../util/DocumentDb';
-import IValidator from '../validators/BaseValidator';
-import DocumentCleaner from '../util/DocumentCleaner';
 import RepoSubscriptionService, {
-  RepoListeners
-} from '../services/RepoSubscriptionService';
+  RepoListeners,
+  RepoSubscribers
+} from '../services/RepoSubscriptionService.js';
+import DocumentCleaner from '../util/DocumentCleaner.js';
+import DocumentDb from '../util/DocumentDb.js';
+import IValidator from '../validators/BaseValidator.js';
 
 /**
- * A base repository that implements a lot of the normal CRUD operations.
+ * Base repository class for handling common database operations.
+ *
+ * @template TBasetype - The type of the documents in the collection.
  */
 export default abstract class BaseRepository<TBasetype extends BaseDocument> {
   protected collectionName: string;
 
   private collection?: Collection<TBasetype>;
 
-  protected subscribers =
+  protected subscribers: RepoSubscribers<TBasetype> =
     RepoSubscriptionService.getDefaultSubscribers<TBasetype>();
 
   /**
    * Constructs a new base repository.
    *
-   * @param defaultUpdateCleaner this is a function that will be run on the
-   * update object before it is sent to the DB. This is useful for removing
-   * fields that should not be updated. Only remove fields that are at the
-   * top-level of the object. _id is already removed.
+   * @param collectionName - The name of the collection.
+   * @param validator - The validator for the document type.
+   * @param defaultFilter - The default filter to apply to queries.
+   * @param defaultUpdateCleaner - A function to clean update objects before sending to the DB.
    */
   constructor(
     collectionName: string,
@@ -46,7 +49,12 @@ export default abstract class BaseRepository<TBasetype extends BaseDocument> {
     this.collectionName = collectionName;
   }
 
-  protected async getCollection() {
+  /**
+   * Gets the collection, initializing it if necessary.
+   *
+   * @returns The collection.
+   */
+  protected async getCollection(): Promise<Collection<TBasetype>> {
     if (!this.collection) {
       this.collection = await DocumentDb.getCollection(this.collectionName);
       this.setupSubscribers();
@@ -59,6 +67,8 @@ export default abstract class BaseRepository<TBasetype extends BaseDocument> {
   /**
    * Registers a set of functions that will be called when a change happens
    * in this repository.
+   *
+   * @param listeners - The listeners to register.
    */
   subscribeToChanges(listeners: RepoListeners<TBasetype>) {
     const { insertNew, updateOne, updateMany, deleteOne, deleteList } =
@@ -80,6 +90,12 @@ export default abstract class BaseRepository<TBasetype extends BaseDocument> {
     }
   }
 
+  /**
+   * Inserts a new document into the collection.
+   *
+   * @param newDoc - The new document to insert.
+   * @returns The inserted document or null if the insertion failed.
+   */
   async insertNew(newDoc: TBasetype): Promise<TBasetype | null> {
     const collection = await this.getCollection();
     await this.validator.validateNewObject(newDoc);
@@ -95,6 +111,12 @@ export default abstract class BaseRepository<TBasetype extends BaseDocument> {
     return newDoc;
   }
 
+  /**
+   * Inserts multiple new documents into the collection.
+   *
+   * @param newDocs - The new documents to insert.
+   * @returns The inserted documents or an empty array if the insertion failed.
+   */
   async insertMany(newDocs: TBasetype[]): Promise<TBasetype[]> {
     const collection = await this.getCollection();
     await Promise.all(
@@ -112,12 +134,23 @@ export default abstract class BaseRepository<TBasetype extends BaseDocument> {
     return newDocs;
   }
 
+  /**
+   * Retrieves a document matching the given filter.
+   *
+   * @param filter - The filter to apply.
+   * @returns The matching document or null if no document was found.
+   */
   async get(filter: Partial<TBasetype>): Promise<TBasetype | null> {
     const collection = await this.getCollection();
     const result = await collection.findOne(this.getFilterWithDefault(filter));
     return result as TBasetype | null;
   }
 
+  /**
+   * Retrieves all documents in the collection.
+   *
+   * @returns An array of all documents in the collection.
+   */
   async getAll(): Promise<TBasetype[]> {
     const collection = await this.getCollection();
     const result = await collection.find(this.getFilterWithDefault()).toArray();
@@ -127,6 +160,8 @@ export default abstract class BaseRepository<TBasetype extends BaseDocument> {
 
   /**
    * Gets all the IDs in the collection as a hash for performant lookups.
+   *
+   * @returns An object where the keys are document IDs and the values are true.
    */
   async getAllIdsAsHash(): Promise<{ [id: string]: boolean }> {
     const allDocs = await this.getAll();
@@ -136,6 +171,12 @@ export default abstract class BaseRepository<TBasetype extends BaseDocument> {
     }, {});
   }
 
+  /**
+   * Retrieves a list of documents matching the given IDs.
+   *
+   * @param docIds - The IDs of the documents to retrieve.
+   * @returns An array of matching documents.
+   */
   async getList(docIds: ObjectId[]): Promise<TBasetype[]> {
     const collection = await this.getCollection();
     const result = await collection
@@ -144,6 +185,12 @@ export default abstract class BaseRepository<TBasetype extends BaseDocument> {
     return result as TBasetype[];
   }
 
+  /**
+   * Deletes a document by its ID.
+   *
+   * @param docId - The ID of the document to delete.
+   * @returns The result of the delete operation.
+   */
   async delete(docId: ObjectId): Promise<DeleteResult> {
     const collection = await this.getCollection();
     await Promise.all(
@@ -152,6 +199,12 @@ export default abstract class BaseRepository<TBasetype extends BaseDocument> {
     return collection.deleteOne({ _id: docId } as Filter<TBasetype>);
   }
 
+  /**
+   * Deletes multiple documents by their IDs.
+   *
+   * @param docIds - The IDs of the documents to delete.
+   * @returns The result of the delete operation.
+   */
   async deleteList(docIds: ObjectId[]): Promise<DeleteResult> {
     const collection = await this.getCollection();
     const deleteResult = collection.deleteMany({
@@ -165,6 +218,8 @@ export default abstract class BaseRepository<TBasetype extends BaseDocument> {
 
   /**
    * This should not be used except for testing purposes
+   *
+   * @returns The result of the delete operation.
    */
   async deleteAll(): Promise<DeleteResult> {
     const collection = await this.getCollection();
@@ -172,9 +227,12 @@ export default abstract class BaseRepository<TBasetype extends BaseDocument> {
   }
 
   /**
-   * Updates the provided doc in the DB.
+   * Updates the provided document in the DB.
    *
    * This base method strips the `_id` before updating.
+   *
+   * @param updatedDoc - The document to update.
+   * @returns The result of the update operation.
    */
   async update(updatedDoc: Partial<TBasetype>): Promise<UpdateResult> {
     const collection = await this.getCollection();
@@ -194,9 +252,12 @@ export default abstract class BaseRepository<TBasetype extends BaseDocument> {
   }
 
   /**
-   * Updates the provided docs in the DB.
+   * Updates the provided documents in the DB.
    *
    * This base method strips the `_id` before updating.
+   *
+   * @param updatedDocs - The documents to update.
+   * @returns The result of the bulk update operation.
    */
   async updateMany(
     updatedDocs: Array<Partial<TBasetype>>
@@ -229,6 +290,9 @@ export default abstract class BaseRepository<TBasetype extends BaseDocument> {
    *
    * This is purposefully changing the type because of some weird restrictions
    * with the `mongodb` package types.
+   *
+   * @param filter - The filter to apply.
+   * @returns The filter with the default filter applied.
    */
   protected getFilterWithDefault(
     filter: Filter<Document> = {}
@@ -239,6 +303,13 @@ export default abstract class BaseRepository<TBasetype extends BaseDocument> {
     return { ...filter, ...this.defaultFilter };
   }
 
+  /**
+   * Checks if two arrays of {@link ObjectId} are equal.
+   *
+   * @param array1 - The first array.
+   * @param array2 - The second array.
+   * @returns True if the arrays are equal, false otherwise.
+   */
   protected objectIdArraysAreEqual(
     array1: ObjectId[],
     array2: ObjectId[]
@@ -254,6 +325,9 @@ export default abstract class BaseRepository<TBasetype extends BaseDocument> {
    * default update cleaner if there is one.
    *
    * Returns a shallow copy of the object.
+   *
+   * @param updatedDoc - The document to clean.
+   * @returns The cleaned document.
    */
   private cleanUpdateObject(
     updatedDoc: Partial<TBasetype>

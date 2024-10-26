@@ -1,7 +1,7 @@
 import { BaseDocumentWithType } from '@aneuhold/core-ts-db-lib';
-import BaseRepository from '../BaseRepository';
-import IValidator from '../../validators/BaseValidator';
-import CleanDocument from '../../util/DocumentCleaner';
+import CleanDocument from '../../util/DocumentCleaner.js';
+import IValidator from '../../validators/BaseValidator.js';
+import BaseRepository from '../BaseRepository.js';
 
 /**
  * A base repository for the `dashboard` collection.

@@ -1,10 +1,13 @@
 import { User, validateUser } from '@aneuhold/core-ts-db-lib';
 import { ErrorUtils, Logger } from '@aneuhold/core-ts-lib';
 import { ObjectId } from 'bson';
-import IValidator from '../BaseValidator';
-import UserRepository from '../../repositories/common/UserRepository';
-import { TEST_USER_NAME_PREFIX } from '../../tests/testsUtil';
+import UserRepository from '../../repositories/common/UserRepository.js';
+import { TEST_USER_NAME_PREFIX } from '../../tests/globalTestVariables.js';
+import IValidator from '../BaseValidator.js';
 
+/**
+ * Validator for the User class.
+ */
 export default class UserValidator extends IValidator<User> {
   async validateNewObject(newUser: User): Promise<void> {
     // Check if the username already exists
@@ -12,6 +15,12 @@ export default class UserValidator extends IValidator<User> {
     await this.checkIfUserNameExists(userRepo, newUser.userName);
   }
 
+  /**
+   * Validates the object to be updated.
+   *
+   * @param userToUpdate - The user to be updated.
+   * @returns A promise that resolves when the validation is complete.
+   */
   async validateUpdateObject(userToUpdate: Partial<User>): Promise<void> {
     // Check if an id is defined
     if (!userToUpdate._id) {
@@ -70,6 +79,10 @@ export default class UserValidator extends IValidator<User> {
 
   /**
    * Checks if the username exists already and throws an error if it does.
+   *
+   * @param userRepo - The user repository
+   * @param userName - The username to check
+   * @throws An error if the username already exists
    */
   private async checkIfUserNameExists(
     userRepo: UserRepository,

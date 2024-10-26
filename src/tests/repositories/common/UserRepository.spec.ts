@@ -1,8 +1,9 @@
 import { User } from '@aneuhold/core-ts-db-lib';
-import UserRepository from '../../../repositories/common/UserRepository';
-import { cleanupDoc, expectToThrow, getTestUserName } from '../../testsUtil';
-import ApiKeyRepository from '../../../repositories/common/ApiKeyRepository';
-import DocumentDb from '../../../util/DocumentDb';
+import { afterAll, describe, expect, it } from 'vitest';
+import ApiKeyRepository from '../../../repositories/common/ApiKeyRepository.js';
+import UserRepository from '../../../repositories/common/UserRepository.js';
+import DocumentDb from '../../../util/DocumentDb.js';
+import { cleanupDoc, expectToThrow, getTestUserName } from '../../testsUtil.js';
 
 const userRepo = UserRepository.getRepo();
 
@@ -105,19 +106,6 @@ describe('Update operations', () => {
       await userRepo.update(newUser);
     });
   });
-});
-
-/**
- * Deletes all users!
- *
- * Make sure that the local DB you are working on doesn't have important
- * state before turning skip off on this one.
- *
- * To just do a cleanup, put `only` after `it`. So `it.only('can delete all users'`
- */
-it.skip('can delete all users', async () => {
-  const result = await userRepo.deleteAll();
-  expect(result.acknowledged).toBeTruthy();
 });
 
 afterAll(async () => {

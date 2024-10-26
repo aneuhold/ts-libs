@@ -1,4 +1,5 @@
-import DashboardNonogramKatanaUpgradeRepository from '../../../repositories/dashboard/DashboardNonogramKatanaUpgradeRepository';
+import { expect, it } from 'vitest';
+import DashboardNonogramKatanaUpgradeRepository from '../../../repositories/dashboard/DashboardNonogramKatanaUpgradeRepository.js';
 
 const upgradeRepo = DashboardNonogramKatanaUpgradeRepository.getRepo();
 

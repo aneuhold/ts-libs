@@ -4,9 +4,10 @@ import {
   User
 } from '@aneuhold/core-ts-db-lib';
 import crypto from 'crypto';
-import UserRepository from '../../../repositories/common/UserRepository';
-import DashboardNonogramKatanaItemRepository from '../../../repositories/dashboard/DashboardNonogramKatanaItemRepository';
-import { cleanupDoc, getTestUserName } from '../../testsUtil';
+import { describe, expect, it } from 'vitest';
+import UserRepository from '../../../repositories/common/UserRepository.js';
+import DashboardNonogramKatanaItemRepository from '../../../repositories/dashboard/DashboardNonogramKatanaItemRepository.js';
+import { cleanupDoc, getTestUserName } from '../../testsUtil.js';
 
 const userRepo = UserRepository.getRepo();
 const itemRepo = DashboardNonogramKatanaItemRepository.getRepo();
@@ -38,6 +39,11 @@ it.skip('can delete all items', async () => {
   expect(result.acknowledged).toBeTruthy();
 });
 
+/**
+ * Create a new test user
+ *
+ * @returns The new user
+ */
 async function createNewTestUser() {
   const newUser = new User(
     getTestUserName(`${crypto.randomUUID()}nonogramKatanaItemTest`)

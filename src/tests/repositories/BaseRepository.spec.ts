@@ -1,14 +1,15 @@
-import crypto from 'crypto';
 import {
   DashboardTask,
   DashboardUserConfig,
   User
 } from '@aneuhold/core-ts-db-lib';
-import UserRepository from '../../repositories/common/UserRepository';
-import { cleanupDoc, getTestUserName } from '../testsUtil';
-import DocumentDb from '../../util/DocumentDb';
-import DashboardUserConfigRepository from '../../repositories/dashboard/DashboardUserConfigRepository';
-import DashboardTaskRepository from '../../repositories/dashboard/DashboardTaskRepository';
+import crypto from 'crypto';
+import { afterAll, expect, it } from 'vitest';
+import UserRepository from '../../repositories/common/UserRepository.js';
+import DashboardTaskRepository from '../../repositories/dashboard/DashboardTaskRepository.js';
+import DashboardUserConfigRepository from '../../repositories/dashboard/DashboardUserConfigRepository.js';
+import DocumentDb from '../../util/DocumentDb.js';
+import { cleanupDoc, getTestUserName } from '../testsUtil.js';
 
 it('can create a new document and delete it', async () => {
   const userRepository = UserRepository.getRepo();

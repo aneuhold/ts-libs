@@ -4,9 +4,9 @@ import {
 } from '@aneuhold/core-ts-db-lib';
 import { ErrorUtils, Logger } from '@aneuhold/core-ts-lib';
 import { ObjectId } from 'bson';
-import IValidator from '../BaseValidator';
-import DashboardUserConfigRepository from '../../repositories/dashboard/DashboardUserConfigRepository';
-import UserRepository from '../../repositories/common/UserRepository';
+import UserRepository from '../../repositories/common/UserRepository.js';
+import DashboardUserConfigRepository from '../../repositories/dashboard/DashboardUserConfigRepository.js';
+import IValidator from '../BaseValidator.js';
 
 export default class DashboardUserConfigValidator extends IValidator<DashboardUserConfig> {
   async validateNewObject(newUserConfig: DashboardUserConfig): Promise<void> {

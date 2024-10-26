@@ -1,10 +1,11 @@
-import crypto from 'crypto';
 import { DashboardTask, User } from '@aneuhold/core-ts-db-lib';
-import UserRepository from '../../../repositories/common/UserRepository';
-import { cleanupDoc, getTestUserName } from '../../testsUtil';
-import DocumentDb from '../../../util/DocumentDb';
-import DashboardTaskRepository from '../../../repositories/dashboard/DashboardTaskRepository';
-import DashboardUserConfigRepository from '../../../repositories/dashboard/DashboardUserConfigRepository';
+import crypto from 'crypto';
+import { afterAll, describe, expect, it } from 'vitest';
+import UserRepository from '../../../repositories/common/UserRepository.js';
+import DashboardTaskRepository from '../../../repositories/dashboard/DashboardTaskRepository.js';
+import DashboardUserConfigRepository from '../../../repositories/dashboard/DashboardUserConfigRepository.js';
+import DocumentDb from '../../../util/DocumentDb.js';
+import { cleanupDoc, getTestUserName } from '../../testsUtil.js';
 
 const userRepo = UserRepository.getRepo();
 const taskRepo = DashboardTaskRepository.getRepo();
@@ -43,7 +44,7 @@ describe('Get operations', () => {
 
     const tasks = await taskRepo.getAllForUser(newUser._id);
     expect(tasks.length).toBe(1);
-    expect(tasks[0]._id).toEqual(newTask._id);
+    expect(tasks[0]._id.toString()).toEqual(newTask._id.toString());
 
     await cleanupDoc(userRepo, newUser);
     await cleanupDoc(userRepo, otherUser);
@@ -73,8 +74,8 @@ describe('Get operations', () => {
 
     const tasks = await taskRepo.getAllForUser(newUser._id);
     expect(tasks.length).toBe(2);
-    expect(tasks[0]._id).toEqual(newTask._id);
-    expect(tasks[1]._id).toEqual(otherUserTask._id);
+    expect(tasks[0]._id.toString()).toEqual(newTask._id.toString());
+    expect(tasks[1]._id.toString()).toEqual(otherUserTask._id.toString());
 
     await cleanupDoc(userRepo, newUser);
     await cleanupDoc(userRepo, otherUser);
@@ -85,7 +86,12 @@ afterAll(async () => {
   return DocumentDb.closeDbConnection();
 });
 
-async function createNewTestUser() {
+/**
+ * Create a new test user
+ *
+ * @returns The new user
+ */
+async function createNewTestUser(): Promise<User> {
   const newUser = new User(
     getTestUserName(`${crypto.randomUUID()}dashboardTaskTest`)
   );

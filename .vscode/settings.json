@@ -4,15 +4,14 @@
   "editor.formatOnSave": true,
   // Use ESLint for all file types that it supports (which still uses prettier behind the scenes)
   "[typescript][javascript][javascriptreact][typescriptreact]": {
-    "editor.defaultFormatter": null,
-    "editor.formatOnSave": false
+    "editor.defaultFormatter": "dbaeumer.vscode-eslint",
+    "editor.formatOnSave": true
   },
   "editor.codeActionsOnSave": {
     "source.fixAll.eslint": "always",
-    // Re-enable this when the index.ts file has exports.
-    "source.organizeImports": "never"
+    "source.organizeImports": "explicit"
   },
-  "eslint.experimental.useFlatConfig": true,
+  "eslint.useFlatConfig": true,
   "eslint.run": "onSave",
   "eslint.format.enable": true
 }

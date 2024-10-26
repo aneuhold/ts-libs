@@ -1,9 +1,9 @@
 import { DashboardTask, validateDashboardTask } from '@aneuhold/core-ts-db-lib';
 import { ErrorUtils, Logger } from '@aneuhold/core-ts-lib';
 import { ObjectId } from 'bson';
-import IValidator from '../BaseValidator';
-import UserRepository from '../../repositories/common/UserRepository';
-import DashboardTaskRepository from '../../repositories/dashboard/DashboardTaskRepository';
+import UserRepository from '../../repositories/common/UserRepository.js';
+import DashboardTaskRepository from '../../repositories/dashboard/DashboardTaskRepository.js';
+import IValidator from '../BaseValidator.js';
 
 export default class DashboardTaskValidator extends IValidator<DashboardTask> {
   async validateNewObject(newTask: DashboardTask): Promise<void> {
