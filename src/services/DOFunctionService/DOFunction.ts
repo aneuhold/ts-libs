@@ -102,33 +102,28 @@ export default abstract class DOFunction<
     if (!this.url) {
       throw new Error(`${this.functionName} URL is not set`);
     }
-    const serializedInput = BSON.serialize(input);
-    const base64Input = Buffer.from(serializedInput).toString('base64');
-    const response = await fetch(this.url, {
+    const result = await fetch(this.url, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/octet-stream'
       },
       // It isn't clear why this works by itself. It comes in to the function
       // as a base64 string.
-      body: base64Input
+      body: BSON.serialize(input)
     });
-    return this.decodeResponse(await response.text());
+    return this.decodeArrayBuffer(await result.arrayBuffer());
   }
 
   /**
-   * Decodes an {@link Response} into a {@link DOFunctionCallOutput}.
+   * Decodes an {@link ArrayBuffer} into a {@link DOFunctionCallOutput}.
    *
-   * @param responseText - The response to decode.
+   * @param buffer - The buffer to decode.
    * @returns The decoded output.
    */
-  private decodeResponse(responseText: string): DOFunctionCallOutput<TOutput> {
-    const buffer = Buffer.from(responseText, 'base64');
-    try {
-      return BSON.deserialize(buffer) as DOFunctionCallOutput<TOutput>;
-    } catch (error) {
-      console.error('Deserialization error:', error);
-      throw error;
-    }
+  private decodeArrayBuffer(
+    buffer: ArrayBuffer
+  ): DOFunctionCallOutput<TOutput> {
+    const bytes = new Uint8Array(buffer);
+    return BSON.deserialize(bytes) as DOFunctionCallOutput<TOutput>;
   }
 }
