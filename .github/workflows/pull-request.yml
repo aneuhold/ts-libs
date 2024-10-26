@@ -38,9 +38,8 @@ jobs:
       - name: Run build
         run: yarn build
 
-      # No tests for this project yet
-      # - name: Run tests
-      #   run: yarn test
+      - name: Run tests
+        run: yarn test
 
       - name: Run Linting
         run: yarn lint
