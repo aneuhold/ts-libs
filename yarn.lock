@@ -11,7 +11,7 @@ __metadata:
   dependencies:
     "@aneuhold/core-ts-db-lib": "npm:^2.0.4"
     "@aneuhold/core-ts-lib": "npm:^2.0.6"
-    "@aneuhold/eslint-config": "npm:^1.0.40"
+    "@aneuhold/eslint-config": "npm:^1.0.41"
     "@aneuhold/main-scripts": "npm:^2.0.6"
     "@types/node": "npm:^20.17.1"
     bson: "npm:^6.2.0"
@@ -42,7 +42,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@aneuhold/eslint-config@npm:^1.0.40":
+"@aneuhold/eslint-config@npm:^1.0.41":
   version: 1.0.41
   resolution: "@aneuhold/eslint-config@npm:1.0.41"
   dependencies:
