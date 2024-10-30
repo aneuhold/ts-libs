@@ -140,8 +140,20 @@ export default abstract class DOFunction<
   private async decodeResponse(
     response: Response
   ): Promise<DOFunctionCallOutput<TOutput>> {
-    const bodyText = await response.text();
-    const buffer = Buffer.from(bodyText, 'base64');
-    return BSON.deserialize(buffer) as DOFunctionCallOutput<TOutput>;
+    const isBson =
+      response.headers.get('Content-Type') === 'application/octet-stream';
+    if (isBson) {
+      const bodyText = await response.text();
+      const buffer = Buffer.from(bodyText, 'base64');
+      return BSON.deserialize(buffer) as DOFunctionCallOutput<TOutput>;
+    } else {
+      // This normally only happens if there is an error
+      const result = (await response.json()) as unknown;
+      return {
+        success: false,
+        errors: [JSON.stringify(result, null, 2)],
+        data: {} as TOutput
+      };
+    }
   }
 }

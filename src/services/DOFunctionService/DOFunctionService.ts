@@ -48,7 +48,7 @@ export default class DOFunctionService {
     rawInput: DOFunctionRawInput,
     handler: (input: TInput) => Promise<DOFunctionCallOutput<TOutput>>
   ): Promise<DOFunctionRawOutput> {
-    const input: TInput = this.deserializeInput(rawInput);
+    // Default raw output
     const rawOutput: DOFunctionRawOutput = {
       body: '',
       statusCode: 200,
@@ -56,19 +56,26 @@ export default class DOFunctionService {
         'Content-Type': 'application/octet-stream'
       }
     };
-    // Default output if something goes wrong
+    // Default output
     const defaultOutput: DOFunctionCallOutput<TOutput> = {
       success: false,
       errors: [],
       data: {} as TOutput
     };
     try {
+      // Deserialize the input
+      const input: TInput = this.deserializeInput(rawInput);
+      // Call the handler
       const output = await handler(input);
+      // Serialize the output
       rawOutput.body = this.serializeOutput(output);
     } catch (e) {
+      // Serialize as JSON if something fails to simplify in case the error
+      // happened in the normal serialization.
       const error = e as Error;
-      defaultOutput.errors.push(error.message);
-      rawOutput.body = this.serializeOutput(defaultOutput);
+      defaultOutput.errors.push(JSON.stringify(error, null, 2));
+      rawOutput.body = JSON.stringify(defaultOutput);
+      rawOutput.headers['Content-Type'] = 'application/json';
     }
     return rawOutput;
   }
