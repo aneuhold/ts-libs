@@ -119,14 +119,15 @@ export default abstract class DOFunction<
     if (!this.url) {
       throw new Error(`${this.functionName} URL is not set`);
     }
-    const body = Buffer.from(BSON.serialize(input)).toString('base64');
     const response = await fetch(this.url, {
       method: 'POST',
       headers: {
         Connection: 'keep-alive',
         'Content-Type': 'application/octet-stream'
       },
-      body: body
+      // The DO Function handles turning this into a base 64 string. See docs
+      // here: https://docs.digitalocean.com/products/functions/reference/project-configuration/#web
+      body: BSON.serialize(input)
     });
     return await this.decodeResponse(response);
   }
