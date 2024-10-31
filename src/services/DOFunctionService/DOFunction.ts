@@ -144,9 +144,9 @@ export default abstract class DOFunction<
     const isBson =
       response.headers.get('Content-Type') === 'application/octet-stream';
     if (isBson) {
-      const bodyText = await response.text();
-      const buffer = Buffer.from(bodyText, 'base64');
-      return BSON.deserialize(buffer) as DOFunctionCallOutput<TOutput>;
+      const buffer = await response.arrayBuffer();
+      const uint8Array = new Uint8Array(buffer);
+      return BSON.deserialize(uint8Array) as DOFunctionCallOutput<TOutput>;
     } else {
       // This normally only happens if there is an error
       const result = (await response.json()) as unknown;
