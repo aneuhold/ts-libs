@@ -102,6 +102,7 @@ export default class DependencyService {
   /**
    * Bumps the version of the package.json and jsr.json files in the current
    * working directory.
+   *
    * @param versionType The type of version bump (patch, minor, major).
    */
   static async bumpVersion(

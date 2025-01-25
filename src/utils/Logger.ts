@@ -2,6 +2,9 @@
  * A standard logger that can be used to log messages to the console.
  */
 export default class Logger {
+  /**
+   * Indicates if verbose logging is enabled.
+   */
   public static verboseLoggingEnabled = false;
 
   /**
@@ -10,6 +13,11 @@ export default class Logger {
    */
   private logOnlyIfVerbose = false;
 
+  /**
+   * Creates an instance of Logger.
+   *
+   * @param logOnlyIfVerbose - If true, logging will only occur if verbose logging is enabled.
+   */
   constructor(logOnlyIfVerbose?: boolean) {
     if (logOnlyIfVerbose) {
       this.logOnlyIfVerbose = logOnlyIfVerbose;
@@ -19,6 +27,8 @@ export default class Logger {
   /**
    * Sets the logging of the next chained function to only be activated
    * if verbose logging is turned on.
+   *
+   * @returns A new Logger instance with verbose logging enabled.
    */
   static get verbose(): Logger {
     return new Logger(true);
@@ -26,6 +36,9 @@ export default class Logger {
 
   /**
    * Logs info to the console. Prepends `ℹ️` to each message.
+   *
+   * @param msg - The message to log.
+   * @param skipNewline - If true, the message will be logged without a newline.
    */
   info(msg: string, skipNewline?: boolean): void {
     if (this.shouldLog()) {
@@ -41,6 +54,8 @@ export default class Logger {
   /**
    * Static version of {@link Logger.prototype.info}.
    *
+   * @param msg - The message to log.
+   * @param skipNewline - If true, the message will be logged without a newline.
    * @see Logger.prototype.info
    */
   static info(msg: string, skipNewline?: boolean): void {
@@ -50,7 +65,7 @@ export default class Logger {
   /**
    * Logs a success message to the console. Prepends `✅` to each message.
    *
-   * @param msg
+   * @param msg - The message to log.
    */
   success(msg: string): void {
     if (this.shouldLog()) {
@@ -61,6 +76,7 @@ export default class Logger {
   /**
    * Static version of {@link Logger.prototype.success}.
    *
+   * @param msg - The message to log.
    * @see Logger.prototype.success
    */
   static success(msg: string): void {
@@ -73,7 +89,8 @@ export default class Logger {
    * See {@link error} for logging errors.
    *
    * This doesn't use a `console.error` entry. Just a `console.log` entry.
-   * @param msg
+   *
+   * @param msg - The message to log.
    */
   failure(msg: string): void {
     if (this.shouldLog()) {
@@ -84,6 +101,7 @@ export default class Logger {
   /**
    * Static version of {@link Logger.prototype.failure}.
    *
+   * @param msg - The message to log.
    * @see Logger.prototype.failure
    */
   static failure(msg: string): void {
@@ -96,7 +114,7 @@ export default class Logger {
    *
    * See {@link failure} for logging simple failures.
    *
-   * @param msg
+   * @param msg - The message to log.
    */
   error(msg: string): void {
     if (this.shouldLog()) {
@@ -107,12 +125,18 @@ export default class Logger {
   /**
    * Static version of {@link Logger.prototype.error}.
    *
+   * @param msg - The message to log.
    * @see Logger.prototype.error
    */
   static error(msg: string): void {
     new Logger().error(msg);
   }
 
+  /**
+   * Determines if the message should be logged based on the verbose logging settings.
+   *
+   * @returns True if the message should be logged, false otherwise.
+   */
   private shouldLog(): boolean {
     if (!this.logOnlyIfVerbose || Logger.verboseLoggingEnabled) {
       return true;

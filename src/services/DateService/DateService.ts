@@ -22,6 +22,9 @@ export default class DateService {
   /**
    * Gets the date in date format if it is set to midnight, otherwise gets the
    * date in date time format.
+   *
+   * @param date - The date to format.
+   * @returns The formatted date string.
    */
   static getAutoDateString(date: Date): string {
     if (this.dateHasTime(date)) {
@@ -33,21 +36,40 @@ export default class DateService {
   /**
    * Determines if a date has a user-specified time component to it, meaning
    * that it isn't midnight.
+   *
+   * @param date - The date to check.
+   * @returns True if the date has a time component, false if it is midnight.
    */
   static dateHasTime(date: Date): boolean {
     return !this.dateIsMidnight(date);
   }
 
+  /**
+   * Formats the date as a string.
+   *
+   * @param date - The date to format.
+   * @returns The formatted date string.
+   */
   static getDateString(date: Date): string {
     return this.dateFormatter.format(date);
   }
 
+  /**
+   * Formats the date and time as a string.
+   *
+   * @param date - The date to format.
+   * @returns The formatted date and time string.
+   */
   static getDateTimeString(date: Date): string {
     return this.dateTimeFormatter.format(date);
   }
 
   /**
    * Determines if two dates are equal. This is strict, down to the ms.
+   *
+   * @param date1 - The first date to compare.
+   * @param date2 - The second date to compare.
+   * @returns True if the dates are equal, false otherwise.
    */
   static datesAreEqual(
     date1: Date | undefined | null,
@@ -65,6 +87,9 @@ export default class DateService {
   /**
    * Gets the last day of the month for the provided date. This will retain the
    * time that was provided in the date.
+   *
+   * @param date - The date to get the last day of the month for.
+   * @returns The last day of the month.
    */
   static getLastDayOfGivenMonth(date: Date): Date {
     // Setting the day to 0, makes the date move to the last day of the
@@ -77,6 +102,9 @@ export default class DateService {
 
   /**
    * Gets the week of the month for the provided date. This starts at 1.
+   *
+   * @param date - The date to get the week of the month for.
+   * @returns The week of the month.
    */
   static getWeekOfMonth(date: Date): number {
     const firstDayOfMonth = new Date(date.getFullYear(), date.getMonth(), 1);
@@ -97,11 +125,24 @@ export default class DateService {
     return weeksSinceFirstDayOfSecondWeek + 2;
   }
 
+  /**
+   * Gets the last week of the month for the provided date.
+   *
+   * @param date - The date to get the last week of the month for.
+   * @returns The last week of the month.
+   */
   static getLastWeekOfMonth(date: Date): number {
     const lastDayOfMonth = this.getLastDayOfGivenMonth(date);
     return this.getWeekOfMonth(lastDayOfMonth);
   }
 
+  /**
+   * Gets the number of days until the specified weekday.
+   *
+   * @param date - The date to start from.
+   * @param day - The weekday to get the number of days until.
+   * @returns The number of days until the specified weekday.
+   */
   static getDaysUntilWeekDay(date: Date, day: number): number {
     const daysUntilWeekDay = day - date.getDay();
     if (daysUntilWeekDay < 0) {
@@ -116,6 +157,11 @@ export default class DateService {
    *
    * For example, the 2nd Monday of the month, or the last Saturday of the
    * month.
+   *
+   * @param date - The date to start from.
+   * @param day - The weekday to get the date for.
+   * @param week - The week of the month to get the date for.
+   * @returns The date of the specified weekday in the specified week of the month.
    */
   static getWeekDayOfXWeekOfMonth(
     date: Date,
@@ -158,6 +204,10 @@ export default class DateService {
    * Adds the provided number of days to the provided date. If the days are
    * over or under the number of days in the month, then the month will be
    * adjusted accordingly.
+   *
+   * @param date - The date to add days to.
+   * @param days - The number of days to add.
+   * @returns The new date with the added days.
    */
   static addDays(date: Date, days: number): Date {
     const newDate = new Date(date);
@@ -165,16 +215,37 @@ export default class DateService {
     return newDate;
   }
 
+  /**
+   * Adds the provided number of months to the provided date.
+   *
+   * @param date - The date to add months to.
+   * @param months - The number of months to add.
+   * @returns The new date with the added months.
+   */
   static addMonths(date: Date, months: number): Date {
     const newDate = new Date(date);
     newDate.setMonth(newDate.getMonth() + months);
     return newDate;
   }
 
+  /**
+   * Adds the provided number of weeks to the provided date.
+   *
+   * @param date - The date to add weeks to.
+   * @param weeks - The number of weeks to add.
+   * @returns The new date with the added weeks.
+   */
   static addWeeks(date: Date, weeks: number): Date {
     return this.addDays(date, weeks * 7);
   }
 
+  /**
+   * Adds the provided number of years to the provided date.
+   *
+   * @param date - The date to add years to.
+   * @param years - The number of years to add.
+   * @returns The new date with the added years.
+   */
   static addYears(date: Date, years: number): Date {
     const newDate = new Date(date);
     newDate.setFullYear(newDate.getFullYear() + years);
@@ -184,6 +255,9 @@ export default class DateService {
   /**
    * For personal projects, midnight can mean exactly midnight, or 11:59pm.
    * It acts as a border between two dates.
+   *
+   * @param date - The date to check.
+   * @returns True if the date is midnight, false otherwise.
    */
   static dateIsMidnight(date: Date): boolean {
     return (
@@ -195,9 +269,9 @@ export default class DateService {
   /**
    * Determines if the dates are on the same day.
    *
-   * @param first the first date
-   * @param second the second date
-   * @returns true if they are on the same day
+   * @param first - The first date.
+   * @param second - The second date.
+   * @returns True if they are on the same day, false otherwise.
    */
   static datesAreOnSameDay(first: Date, second: Date): boolean {
     return (
