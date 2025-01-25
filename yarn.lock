@@ -16,7 +16,7 @@ __metadata:
     "@types/node": "npm:^20.17.1"
     bson: "npm:^6.2.0"
     eslint: "npm:^9.13.0"
-    jsr: "npm:^0.13.2"
+    jsr: "npm:^0.13.3"
     prettier: "npm:^3.3.3"
     rimraf: "npm:^6.0.1"
     tsx: "npm:^4.19.1"
@@ -2793,16 +2793,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"jsr@npm:^0.13.2":
-  version: 0.13.2
-  resolution: "jsr@npm:0.13.2"
+"jsr@npm:^0.13.3":
+  version: 0.13.3
+  resolution: "jsr@npm:0.13.3"
   dependencies:
     kolorist: "npm:^1.8.0"
     node-stream-zip: "npm:^1.15.0"
     semiver: "npm:^1.1.0"
   bin:
     jsr: dist/bin.js
-  checksum: 10c0/96dd6a0821bcff65ac0de6b8724cc75cf0bdc2981824708e31232360c23403473bf0cc083b3ea4a9ea15b285f4415df197353fc22ab3611de22cc24ccd94ad4a
+  checksum: 10c0/f89528f82edca14a21eef295112d832b31f4a6f5696d0c067b63fda87bb9e3a583eea696cd14038f56d4aadca9293e4b731e03fe83dade73a8b5411713616fdc
   languageName: node
   linkType: hard
 
