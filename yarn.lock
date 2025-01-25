@@ -22,10 +22,10 @@ __metadata:
     "@types/node": "npm:^22.10.10"
     bson: "npm:^6.2.0"
     eslint: "npm:^9.18.0"
-    jsr: "npm:^0.13.2"
+    jsr: "npm:^0.13.3"
     prettier: "npm:^3.4.2"
     rimraf: "npm:^6.0.1"
-    tsx: "npm:^4.19.1"
+    tsx: "npm:^4.19.2"
     typescript: "npm:^5.7.3"
     vitest: "npm:^3.0.4"
   languageName: unknown
@@ -2984,16 +2984,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"jsr@npm:^0.13.2":
-  version: 0.13.2
-  resolution: "jsr@npm:0.13.2"
+"jsr@npm:^0.13.3":
+  version: 0.13.3
+  resolution: "jsr@npm:0.13.3"
   dependencies:
     kolorist: "npm:^1.8.0"
     node-stream-zip: "npm:^1.15.0"
     semiver: "npm:^1.1.0"
   bin:
     jsr: dist/bin.js
-  checksum: 10c0/96dd6a0821bcff65ac0de6b8724cc75cf0bdc2981824708e31232360c23403473bf0cc083b3ea4a9ea15b285f4415df197353fc22ab3611de22cc24ccd94ad4a
+  checksum: 10c0/f89528f82edca14a21eef295112d832b31f4a6f5696d0c067b63fda87bb9e3a583eea696cd14038f56d4aadca9293e4b731e03fe83dade73a8b5411713616fdc
   languageName: node
   linkType: hard
 
@@ -4360,9 +4360,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"tsx@npm:^4.19.1":
-  version: 4.19.1
-  resolution: "tsx@npm:4.19.1"
+"tsx@npm:^4.19.2":
+  version: 4.19.2
+  resolution: "tsx@npm:4.19.2"
   dependencies:
     esbuild: "npm:~0.23.0"
     fsevents: "npm:~2.3.3"
@@ -4372,7 +4372,7 @@ __metadata:
       optional: true
   bin:
     tsx: dist/cli.mjs
-  checksum: 10c0/cbea9baf57e7406fa0ecc2c03b9bb2501ee740dc28c938f949180a646a28e5d65e7cccbfba340508923bfd45e90320ef9eef7f815cae4515b6ef2ee429edc7ee
+  checksum: 10c0/63164b889b1d170403e4d8753a6755dec371f220f5ce29a8e88f1f4d6085a784a12d8dc2ee669116611f2c72757ac9beaa3eea5c452796f541bdd2dc11753721
   languageName: node
   linkType: hard
 
@@ -4463,11 +4463,11 @@ __metadata:
 
 "typescript@patch:typescript@npm%3A^5.7.3#optional!builtin<compat/typescript>":
   version: 5.7.3
-  resolution: "typescript@patch:typescript@npm%3A5.7.3#optional!builtin<compat/typescript>::version=5.7.3&hash=cef18b"
+  resolution: "typescript@patch:typescript@npm%3A5.7.3#optional!builtin<compat/typescript>::version=5.7.3&hash=5786d5"
   bin:
     tsc: bin/tsc
     tsserver: bin/tsserver
-  checksum: 10c0/3b56d6afa03d9f6172d0b9cdb10e6b1efc9abc1608efd7a3d2f38773d5d8cfb9bbc68dfb72f0a7de5e8db04fc847f4e4baeddcd5ad9c9feda072234f0d788896
+  checksum: 10c0/6fd7e0ed3bf23a81246878c613423730c40e8bdbfec4c6e4d7bf1b847cbb39076e56ad5f50aa9d7ebd89877999abaee216002d3f2818885e41c907caaa192cc4
   languageName: node
   linkType: hard
 
