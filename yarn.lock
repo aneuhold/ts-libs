@@ -20,8 +20,8 @@ __metadata:
   resolution: "@aneuhold/core-ts-lib@workspace:."
   dependencies:
     "@aneuhold/eslint-config": "npm:^1.0.54"
-    "@types/jest": "npm:^29.*"
-    "@types/node": "npm:^22.*"
+    "@types/jest": "npm:^29.5.14"
+    "@types/node": "npm:^22.10.10"
     eslint: "npm:^9.19.0"
     jest: "npm:^29.7.*"
     jsr: "npm:*"
@@ -1230,7 +1230,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/jest@npm:^29.*":
+"@types/jest@npm:^29.5.14":
   version: 29.5.14
   resolution: "@types/jest@npm:29.5.14"
   dependencies:
@@ -1263,7 +1263,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/node@npm:^22.*":
+"@types/node@npm:^22.10.10":
   version: 22.10.10
   resolution: "@types/node@npm:22.10.10"
   dependencies:
