@@ -19,7 +19,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@aneuhold/core-ts-lib@workspace:."
   dependencies:
-    "@aneuhold/eslint-config": "npm:^1.0.54"
+    "@aneuhold/eslint-config": "npm:^1.0.56"
     "@types/jest": "npm:^29.5.14"
     "@types/node": "npm:^22.10.10"
     eslint: "npm:^9.19.0"
@@ -33,23 +33,23 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@aneuhold/eslint-config@npm:^1.0.54":
-  version: 1.0.54
-  resolution: "@aneuhold/eslint-config@npm:1.0.54"
+"@aneuhold/eslint-config@npm:^1.0.56":
+  version: 1.0.56
+  resolution: "@aneuhold/eslint-config@npm:1.0.56"
   dependencies:
-    "@eslint/js": "npm:^9.18.0"
-    "@typescript-eslint/eslint-plugin": "npm:^8.20.0"
-    "@typescript-eslint/parser": "npm:^8.20.0"
+    "@eslint/js": "npm:^9.19.0"
+    "@typescript-eslint/eslint-plugin": "npm:^8.21.0"
+    "@typescript-eslint/parser": "npm:^8.21.0"
     eslint-config-prettier: "npm:^10.0.1"
     eslint-plugin-import: "npm:^2.31.0"
-    eslint-plugin-jsdoc: "npm:^50.6.2"
+    eslint-plugin-jsdoc: "npm:^50.6.3"
     eslint-plugin-prettier: "npm:^5.2.3"
     eslint-plugin-svelte: "npm:^2.46.1"
     prettier-plugin-svelte: "npm:^3.3.3"
-    typescript-eslint: "npm:^8.20.0"
+    typescript-eslint: "npm:^8.21.0"
   peerDependencies:
-    eslint: ">= 9.18.0"
-  checksum: 10c0/c811bce35959ab55c80985fad6024c0a6a2d9ebc656358546fa44e3afde8ef4bc8fa34514367187fc871de23757a7ae76eb7d876f1b5dd4e4791d879e063e6d7
+    eslint: ">= 9.19.0"
+  checksum: 10c0/ab5f71d0a35ae9a073f7d6772963881ee267393837f562636d68bbaa9aac4cad058907e2befaf8e83297db65db8ca47b39a77af39711c5e84a87ea1f86d8f930
   languageName: node
   linkType: hard
 
@@ -685,7 +685,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@eslint/js@npm:9.19.0, @eslint/js@npm:^9.18.0":
+"@eslint/js@npm:9.19.0, @eslint/js@npm:^9.19.0":
   version: 9.19.0
   resolution: "@eslint/js@npm:9.19.0"
   checksum: 10c0/45dc544c8803984f80a438b47a8e578fae4f6e15bc8478a703827aaf05e21380b42a43560374ce4dad0d5cb6349e17430fc9ce1686fed2efe5d1ff117939ff90
@@ -1295,7 +1295,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@typescript-eslint/eslint-plugin@npm:8.21.0, @typescript-eslint/eslint-plugin@npm:^8.20.0":
+"@typescript-eslint/eslint-plugin@npm:8.21.0, @typescript-eslint/eslint-plugin@npm:^8.21.0":
   version: 8.21.0
   resolution: "@typescript-eslint/eslint-plugin@npm:8.21.0"
   dependencies:
@@ -1316,7 +1316,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@typescript-eslint/parser@npm:8.21.0, @typescript-eslint/parser@npm:^8.20.0":
+"@typescript-eslint/parser@npm:8.21.0, @typescript-eslint/parser@npm:^8.21.0":
   version: 8.21.0
   resolution: "@typescript-eslint/parser@npm:8.21.0"
   dependencies:
@@ -2567,7 +2567,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"eslint-plugin-jsdoc@npm:^50.6.2":
+"eslint-plugin-jsdoc@npm:^50.6.3":
   version: 50.6.3
   resolution: "eslint-plugin-jsdoc@npm:50.6.3"
   dependencies:
@@ -5884,7 +5884,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"typescript-eslint@npm:^8.20.0":
+"typescript-eslint@npm:^8.21.0":
   version: 8.21.0
   resolution: "typescript-eslint@npm:8.21.0"
   dependencies:
