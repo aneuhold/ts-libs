@@ -9,9 +9,9 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@aneuhold/core-ts-api-lib@workspace:."
   dependencies:
-    "@aneuhold/core-ts-db-lib": "npm:^2.0.4"
-    "@aneuhold/core-ts-lib": "npm:^2.0.6"
-    "@aneuhold/eslint-config": "npm:^1.0.54"
+    "@aneuhold/core-ts-db-lib": "npm:^2.0.26"
+    "@aneuhold/core-ts-lib": "npm:^2.0.10"
+    "@aneuhold/eslint-config": "npm:^1.0.56"
     "@aneuhold/main-scripts": "npm:^2.0.6"
     "@types/node": "npm:^22.10.10"
     bson: "npm:^6.2.0"
@@ -25,13 +25,20 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@aneuhold/core-ts-db-lib@npm:^2.0.4":
-  version: 2.0.4
-  resolution: "@aneuhold/core-ts-db-lib@npm:2.0.4"
+"@aneuhold/core-ts-db-lib@npm:^2.0.26":
+  version: 2.0.26
+  resolution: "@aneuhold/core-ts-db-lib@npm:2.0.26"
   dependencies:
     "@aneuhold/core-ts-lib": "npm:^2.0.6"
     bson: "npm:^6.2.0"
-  checksum: 10c0/e4dd488ef1fea79765183d832992cad749e15adc64a23b036496119c6fac3dfce8ab63b1f4284749b15d0f16816b1b90b4cd1b61b07e184f74e611668c9900f6
+  checksum: 10c0/4c7b503bf97d8e008a5e6cd79ecd72ed9d2276e054dbbd4b0f97defc6a28f94c7efea5efd4d7469cdfc96be5804a799f0225220839a7daf8dab9841b7d1d8c5e
+  languageName: node
+  linkType: hard
+
+"@aneuhold/core-ts-lib@npm:^2.0.10":
+  version: 2.0.10
+  resolution: "@aneuhold/core-ts-lib@npm:2.0.10"
+  checksum: 10c0/5ce83c1dfe8b3e6d5a1242244863293bb7c68f5cfdaee9714368123a2d040981c173d33d0268644e400985ddfb947f21c5d8fa986ee94d7c7f4e83a8826767f1
   languageName: node
   linkType: hard
 
@@ -42,23 +49,23 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@aneuhold/eslint-config@npm:^1.0.54":
-  version: 1.0.54
-  resolution: "@aneuhold/eslint-config@npm:1.0.54"
+"@aneuhold/eslint-config@npm:^1.0.56":
+  version: 1.0.56
+  resolution: "@aneuhold/eslint-config@npm:1.0.56"
   dependencies:
-    "@eslint/js": "npm:^9.18.0"
-    "@typescript-eslint/eslint-plugin": "npm:^8.20.0"
-    "@typescript-eslint/parser": "npm:^8.20.0"
+    "@eslint/js": "npm:^9.19.0"
+    "@typescript-eslint/eslint-plugin": "npm:^8.21.0"
+    "@typescript-eslint/parser": "npm:^8.21.0"
     eslint-config-prettier: "npm:^10.0.1"
     eslint-plugin-import: "npm:^2.31.0"
-    eslint-plugin-jsdoc: "npm:^50.6.2"
+    eslint-plugin-jsdoc: "npm:^50.6.3"
     eslint-plugin-prettier: "npm:^5.2.3"
     eslint-plugin-svelte: "npm:^2.46.1"
     prettier-plugin-svelte: "npm:^3.3.3"
-    typescript-eslint: "npm:^8.20.0"
+    typescript-eslint: "npm:^8.21.0"
   peerDependencies:
-    eslint: ">= 9.18.0"
-  checksum: 10c0/c811bce35959ab55c80985fad6024c0a6a2d9ebc656358546fa44e3afde8ef4bc8fa34514367187fc871de23757a7ae76eb7d876f1b5dd4e4791d879e063e6d7
+    eslint: ">= 9.19.0"
+  checksum: 10c0/ab5f71d0a35ae9a073f7d6772963881ee267393837f562636d68bbaa9aac4cad058907e2befaf8e83297db65db8ca47b39a77af39711c5e84a87ea1f86d8f930
   languageName: node
   linkType: hard
 
@@ -492,7 +499,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@eslint/js@npm:9.19.0, @eslint/js@npm:^9.18.0":
+"@eslint/js@npm:9.19.0, @eslint/js@npm:^9.19.0":
   version: 9.19.0
   resolution: "@eslint/js@npm:9.19.0"
   checksum: 10c0/45dc544c8803984f80a438b47a8e578fae4f6e15bc8478a703827aaf05e21380b42a43560374ce4dad0d5cb6349e17430fc9ce1686fed2efe5d1ff117939ff90
@@ -808,7 +815,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@typescript-eslint/eslint-plugin@npm:8.21.0, @typescript-eslint/eslint-plugin@npm:^8.20.0":
+"@typescript-eslint/eslint-plugin@npm:8.21.0, @typescript-eslint/eslint-plugin@npm:^8.21.0":
   version: 8.21.0
   resolution: "@typescript-eslint/eslint-plugin@npm:8.21.0"
   dependencies:
@@ -829,7 +836,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@typescript-eslint/parser@npm:8.21.0, @typescript-eslint/parser@npm:^8.20.0":
+"@typescript-eslint/parser@npm:8.21.0, @typescript-eslint/parser@npm:^8.21.0":
   version: 8.21.0
   resolution: "@typescript-eslint/parser@npm:8.21.0"
   dependencies:
@@ -1941,7 +1948,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"eslint-plugin-jsdoc@npm:^50.6.2":
+"eslint-plugin-jsdoc@npm:^50.6.3":
   version: 50.6.3
   resolution: "eslint-plugin-jsdoc@npm:50.6.3"
   dependencies:
@@ -4280,7 +4287,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"typescript-eslint@npm:^8.20.0":
+"typescript-eslint@npm:^8.21.0":
   version: 8.21.0
   resolution: "typescript-eslint@npm:8.21.0"
   dependencies:
