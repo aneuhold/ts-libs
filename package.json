@@ -2,7 +2,7 @@
   "name": "@aneuhold/core-ts-db-lib",
   "author": "Anton G. Neuhold Jr.",
   "license": "MIT",
-  "version": "2.0.34",
+  "version": "2.0.35",
   "description": "A core database library used for personal projects",
   "packageManager": "yarn@4.6.0",
   "type": "module",
@@ -49,7 +49,7 @@
   "devDependencies": {
     "@aneuhold/eslint-config": "^1.0.63",
     "@aneuhold/main-scripts": "^2.0.6",
-    "@types/node": "^22.13.1",
+    "@types/node": "^22.13.4",
     "eslint": "^9.20.1",
     "jsr": "^0.13.3",
     "prettier": "^3.5.1",
