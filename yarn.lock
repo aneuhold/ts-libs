@@ -18,7 +18,7 @@ __metadata:
   dependencies:
     "@aneuhold/core-ts-api-lib": "npm:^2.0.13"
     "@aneuhold/core-ts-lib": "npm:^2.0.10"
-    "@aneuhold/eslint-config": "npm:^1.0.63"
+    "@aneuhold/eslint-config": "npm:^1.0.65"
     "@aneuhold/main-scripts": "npm:^2.0.6"
     "@types/node": "npm:^22.13.4"
     "@types/node-fetch": "npm:^2.6.12"
@@ -71,15 +71,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@aneuhold/eslint-config@npm:^1.0.63":
-  version: 1.0.63
-  resolution: "@aneuhold/eslint-config@npm:1.0.63"
+"@aneuhold/eslint-config@npm:^1.0.65":
+  version: 1.0.65
+  resolution: "@aneuhold/eslint-config@npm:1.0.65"
   dependencies:
     "@eslint/js": "npm:^9.20.0"
     "@stylistic/eslint-plugin-js": "npm:^3.0.0"
     "@stylistic/eslint-plugin-ts": "npm:^3.0.0"
-    "@typescript-eslint/eslint-plugin": "npm:^8.23.0"
-    "@typescript-eslint/parser": "npm:^8.23.0"
+    "@typescript-eslint/eslint-plugin": "npm:^8.24.0"
+    "@typescript-eslint/parser": "npm:^8.24.0"
     angular-eslint: "npm:^18.4.2"
     eslint-config-prettier: "npm:^10.0.1"
     eslint-plugin-import: "npm:^2.31.0"
@@ -89,10 +89,10 @@ __metadata:
     eslint-plugin-svelte: "npm:^2.46.1"
     eslint-plugin-unused-imports: "npm:^4.1.4"
     prettier-plugin-svelte: "npm:^3.3.3"
-    typescript-eslint: "npm:^8.23.0"
+    typescript-eslint: "npm:^8.24.0"
   peerDependencies:
-    eslint: ">= 9.20.0"
-  checksum: 10c0/37ee5757ed0b4c5f147b27ebeef9f639a1816f4bd713c8b15891e9df687021401a5b2c680e87baf9465c5a96f58962fe738f52576a27310da57f7858eb99f7b2
+    eslint: ">= 9.20.1"
+  checksum: 10c0/422f26c8899f97219764dcc5e84fc3f9886f7366cbbc7a4928c07876dcdf7dbce8c825feb56b40264523a28baa65abbeddc4609d27dafbe22dc1ac4f88945ecc
   languageName: node
   linkType: hard
 
@@ -1357,7 +1357,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@typescript-eslint/eslint-plugin@npm:8.24.0, @typescript-eslint/eslint-plugin@npm:^8.23.0":
+"@typescript-eslint/eslint-plugin@npm:8.24.0, @typescript-eslint/eslint-plugin@npm:^8.24.0":
   version: 8.24.0
   resolution: "@typescript-eslint/eslint-plugin@npm:8.24.0"
   dependencies:
@@ -1378,7 +1378,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@typescript-eslint/parser@npm:8.24.0, @typescript-eslint/parser@npm:^8.23.0":
+"@typescript-eslint/parser@npm:8.24.0, @typescript-eslint/parser@npm:^8.24.0":
   version: 8.24.0
   resolution: "@typescript-eslint/parser@npm:8.24.0"
   dependencies:
@@ -5957,7 +5957,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"typescript-eslint@npm:^8.23.0":
+"typescript-eslint@npm:^8.24.0":
   version: 8.24.0
   resolution: "typescript-eslint@npm:8.24.0"
   dependencies:
