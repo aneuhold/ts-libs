@@ -19,7 +19,7 @@ __metadata:
     "@aneuhold/core-ts-api-lib": "npm:^2.0.13"
     "@aneuhold/core-ts-lib": "npm:^2.0.10"
     "@aneuhold/eslint-config": "npm:^1.0.65"
-    "@aneuhold/main-scripts": "npm:^2.0.7"
+    "@aneuhold/main-scripts": "npm:^2.0.9"
     "@types/node": "npm:^22.13.4"
     "@types/node-fetch": "npm:^2.6.12"
     dotenv: "npm:^16.4.7"
@@ -96,9 +96,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@aneuhold/main-scripts@npm:^2.0.7":
-  version: 2.0.7
-  resolution: "@aneuhold/main-scripts@npm:2.0.7"
+"@aneuhold/main-scripts@npm:^2.0.9":
+  version: 2.0.9
+  resolution: "@aneuhold/main-scripts@npm:2.0.9"
   dependencies:
     "@aneuhold/core-ts-lib": "npm:^2.0.6"
     "@inquirer/prompts": "npm:^7.3.2"
@@ -107,7 +107,7 @@ __metadata:
     node-fetch: "npm:^2"
   bin:
     tb: lib/src/index.js
-  checksum: 10c0/ba19478b9254a1b456a837540e5b92d6ac7d254c643c693cb2d8ae33a2a7b0e075f466810d2f00bb1336efdfb5df691136fd282b527391e3cb9f8df4271395da
+  checksum: 10c0/9d03d0f5e4b65d25c7355c56d354b7c62e5005816208cc90bb57891a2c9ceec15c22aeb532344ce3464aa436c3799bee7a9d071034034ec615b269de37f5b3c2
   languageName: node
   linkType: hard
 
