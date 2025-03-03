@@ -2,7 +2,7 @@
   "name": "@aneuhold/be-ts-lib",
   "author": "Anton G. Neuhold Jr.",
   "license": "MIT",
-  "version": "2.0.42",
+  "version": "2.0.43",
   "description": "A backend TypeScript library used for common functionality in personal backend projects.",
   "packageManager": "yarn@4.6.0",
   "type": "module",
@@ -50,7 +50,7 @@
     "octokit": "^3.1.2"
   },
   "devDependencies": {
-    "@aneuhold/eslint-config": "^1.0.67",
+    "@aneuhold/eslint-config": "^1.0.70",
     "@aneuhold/main-scripts": "^2.0.13",
     "@types/node": "^22.13.8",
     "@types/node-fetch": "^2.6.12",
