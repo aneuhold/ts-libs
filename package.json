@@ -2,7 +2,7 @@
   "name": "@aneuhold/core-ts-lib",
   "author": "Anton G. Neuhold Jr.",
   "license": "MIT",
-  "version": "2.0.34",
+  "version": "2.0.35",
   "description": "A core library for all of my TypeScript projects",
   "packageManager": "yarn@4.6.0",
   "type": "module",
@@ -40,7 +40,7 @@
     "Node.js"
   ],
   "devDependencies": {
-    "@aneuhold/eslint-config": "^1.0.75",
+    "@aneuhold/eslint-config": "^1.0.79",
     "@types/jest": "^29.5.14",
     "@types/node": "^22.13.11",
     "eslint": "^9.23.0",
