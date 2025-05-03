@@ -142,7 +142,9 @@ export default abstract class DOFunction<
       method: 'POST',
       headers: {
         Connection: 'keep-alive',
-        'Content-Type': 'application/octet-stream'
+        'Content-Type': 'application/octet-stream',
+        // Add an Accept header, mirroring the Content-Type
+        Accept: 'application/octet-stream'
       },
       // The DO Function handles turning this into a base 64 string. See docs
       // here: https://docs.digitalocean.com/products/functions/reference/project-configuration/#web
