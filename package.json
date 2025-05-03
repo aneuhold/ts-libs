@@ -2,7 +2,7 @@
   "name": "@aneuhold/core-ts-api-lib",
   "author": "Anton G. Neuhold Jr.",
   "license": "MIT",
-  "version": "2.1.5",
+  "version": "2.1.6",
   "description": "A library for interacting with the backend and defining the backend API for personal projects.",
   "packageManager": "yarn@4.6.0",
   "type": "module",
@@ -50,12 +50,12 @@
   "devDependencies": {
     "@aneuhold/eslint-config": "^1.0.89",
     "@aneuhold/main-scripts": "^2.0.13",
-    "@types/node": "^22.15.2",
+    "@types/node": "^22.15.3",
     "eslint": "^9.25.1",
     "jsr": "^0.13.4",
     "prettier": "^3.5.3",
     "rimraf": "^6.0.1",
-    "tsx": "^4.19.3",
+    "tsx": "^4.19.4",
     "typescript": "^5.8.3",
     "vitest": "^3.1.2"
   }
