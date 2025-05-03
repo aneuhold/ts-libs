@@ -52,8 +52,16 @@ export default class DOFunctionService {
     rawInput: DOFunctionRawInput,
     handler: (input: TInput) => Promise<DOFunctionCallOutput<TOutput>>
   ): Promise<DOFunctionRawOutput> {
+    DR.logger.info(
+      `[DOFunctionService] handleApiRequest called for "${functionName}".`
+    ); // Log entry
+    DR.logger.info(
+      `[DOFunctionService] Calling DR.tracer.startSpan for "${functionName}"...`
+    ); // Log before startSpan
     return DR.tracer.startSpan(functionName, async (span) => {
-      // Default raw output
+      DR.logger.info(
+        `[DOFunctionService] Tracer span callback started for "${functionName}".`
+      ); // Log span callback start
       const rawOutput: DOFunctionRawOutput = {
         body: '',
         statusCode: 200,
@@ -61,43 +69,57 @@ export default class DOFunctionService {
           'Content-Type': 'application/octet-stream'
         }
       };
-      // Default output
       const defaultOutput: DOFunctionCallOutput<TOutput> = {
         success: false,
         errors: [],
         data: {} as TOutput
       };
+
       try {
-        // Deserialize the input
+        DR.logger.info(
+          `[DOFunctionService] Deserializing input for "${functionName}"...`
+        ); // Log before deserialize
         const input: TInput = this.deserializeInput(rawInput);
-        // Call the handler
+        DR.logger.info(
+          `[DOFunctionService] Calling handler function for "${functionName}"...`
+        ); // Log before handler
         const output = await handler(input);
-        // Serialize the output
+        DR.logger.info(
+          `[DOFunctionService] Handler function finished for "${functionName}".`
+        ); // Log after handler
+        DR.logger.info(
+          `[DOFunctionService] Serializing output for "${functionName}"...`
+        ); // Log before serialize
         rawOutput.body = this.serializeOutput(output);
+
         if (!output.success) {
-          rawOutput.statusCode = 400; // Bad Request if handler indicates failure
-          span?.setStatus({ code: 2, message: 'handler_error' }); // Indicate error in span
+          DR.logger.failure(
+            `[DOFunctionService] Handler reported failure for "${functionName}". Setting status code 400.`
+          ); // Log handler failure
+          rawOutput.statusCode = 400;
+          span?.setStatus({ code: 2, message: 'handler_error' });
         } else {
-          span?.setStatus({ code: 1, message: 'ok' }); // OK
+          DR.logger.success(
+            `[DOFunctionService] Handler reported success for "${functionName}". Setting status code 200.`
+          ); // Log handler success
+          span?.setStatus({ code: 1, message: 'ok' });
         }
       } catch (e) {
-        // Capture unexpected errors
+        DR.logger.error(
+          `[DOFunctionService] Error caught in handleApiRequest for "${functionName}": ${String(e)}`
+        ); // Log error
         DR.tracer.captureException(e);
-        span?.setStatus({ code: 2, message: 'internal_error' }); // Internal Server Error
+        span?.setStatus({ code: 2, message: 'internal_error' });
 
-        // Serialize as JSON if something fails to simplify in case the error
-        // happened in the normal serialization.
         const error = e as Error;
         defaultOutput.errors.push(JSON.stringify(error, null, 2));
         rawOutput.body = JSON.stringify(defaultOutput);
         rawOutput.headers['Content-Type'] = 'application/json';
         rawOutput.statusCode = 500;
-      } finally {
-        // Ensure traces are flushed in serverless environments
-        if (DR.tracer.isEnabled()) {
-          await DR.tracer.flush(2000);
-        }
       }
+      DR.logger.info(
+        `[DOFunctionService] Tracer span callback finished for "${functionName}". Returning rawOutput.`
+      ); // Log span callback end
       return rawOutput;
     });
   }
