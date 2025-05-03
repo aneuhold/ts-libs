@@ -133,8 +133,21 @@ export default class DOFunctionService {
   private static deserializeInput<TInput extends DOFunctionInput>(
     rawInput: DOFunctionRawInput
   ): TInput {
-    const { http } = rawInput;
-    const { body, isBase64Encoded, headers } = http;
+    DR.logger.info(
+      `[DOFunctionService] deserializeInput received rawInput: ${JSON.stringify(rawInput)}`
+    ); // Log the raw input
+    const { http } = rawInput; // Potential error source
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+    if (!http) {
+      DR.logger.error(
+        '[DOFunctionService] deserializeInput: rawInput.http is undefined!'
+      );
+      // Optionally throw a more specific error here if needed
+      throw new Error(
+        'Internal error: rawInput.http is undefined during deserialization.'
+      );
+    }
+    const { body, isBase64Encoded, headers } = http; // This line throws if http is undefined
 
     let decodedBody: Buffer;
     if (isBase64Encoded) {
