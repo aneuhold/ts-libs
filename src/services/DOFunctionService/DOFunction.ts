@@ -77,6 +77,25 @@ export interface DOFunctionCallOutput<TOutput extends DOFunctionOutput> {
 }
 
 /**
+ * Type guard to check if an input object conforms to the DOFunctionRawInput structure.
+ *
+ * @param input - The input object to check.
+ * @returns True if the input is DOFunctionRawInput, false otherwise.
+ */
+export function isDOFunctionRawInput(
+  input: unknown
+): input is DOFunctionRawInput {
+  return (
+    !!input &&
+    typeof input === 'object' &&
+    'http' in input &&
+    typeof (input as DOFunctionRawInput).http === 'object' &&
+    'body' in (input as DOFunctionRawInput).http && // Check for essential http properties
+    'isBase64Encoded' in (input as DOFunctionRawInput).http
+  );
+}
+
+/**
  * An abstract class representing a Digital Ocean Function.
  *
  * @template TInput - The type of the input to the function, extending {@link DOFunctionInput}.

@@ -5,7 +5,8 @@ import {
   DOFunctionInput,
   DOFunctionOutput,
   DOFunctionRawInput,
-  DOFunctionRawOutput
+  DOFunctionRawOutput,
+  isDOFunctionRawInput
 } from './DOFunction.js';
 import AuthCheckPassword from './functions/authCheckPassword.js';
 import AuthValidateUser from './functions/authValidateUser.js';
@@ -40,7 +41,7 @@ export default class DOFunctionService {
    * unexpected happened.
    *
    * @param functionName - The name to use for the root tracing span.
-   * @param rawInput - The raw input for the function.
+   * @param rawInputFromDO - The raw input for the function.
    * @param handler - The handler function to process the input.
    * @returns The raw output of the function call.
    */
@@ -49,7 +50,7 @@ export default class DOFunctionService {
     TOutput extends DOFunctionOutput
   >(
     functionName: string,
-    rawInput: DOFunctionRawInput,
+    rawInputFromDO: DOFunctionRawInput | TInput,
     handler: (input: TInput) => Promise<DOFunctionCallOutput<TOutput>>
   ): Promise<DOFunctionRawOutput> {
     DR.logger.info(
@@ -79,7 +80,7 @@ export default class DOFunctionService {
         DR.logger.info(
           `[DOFunctionService] Deserializing input for "${functionName}"...`
         ); // Log before deserialize
-        const input: TInput = this.deserializeInput(rawInput);
+        const input: TInput = this.deserializeInput(rawInputFromDO);
         DR.logger.info(
           `[DOFunctionService] Calling handler function for "${functionName}"...`
         ); // Log before handler
@@ -125,49 +126,84 @@ export default class DOFunctionService {
   }
 
   /**
-   * Deserializes the raw input into a typed input object.
+   * Deserializes the raw input into a typed input object using type guards.
+   * Handles raw HTTP input, the DO UI wrapper, or already deserialized input.
    *
-   * @param rawInput - The raw input to deserialize.
-   * @returns The deserialized input object.
+   * @param inputFromDO - The raw input received from the DO environment.
+   * @returns The deserialized input object of type TInput.
    */
   private static deserializeInput<TInput extends DOFunctionInput>(
-    rawInput: DOFunctionRawInput
+    inputFromDO: DOFunctionRawInput | TInput
   ): TInput {
     DR.logger.info(
-      `[DOFunctionService] deserializeInput received rawInput: ${JSON.stringify(rawInput)}`
-    ); // Log the raw input
-    const { http } = rawInput; // Potential error source
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-    if (!http) {
-      DR.logger.error(
-        '[DOFunctionService] deserializeInput: rawInput.http is undefined!'
+      `[DOFunctionService] deserializeInput received: ${JSON.stringify(inputFromDO)}`
+    );
+
+    // 1. Check if it's the standard DOFunctionRawInput (from web: raw)
+    if (isDOFunctionRawInput(inputFromDO)) {
+      DR.logger.info(
+        '[DOFunctionService] Input matches DOFunctionRawInput (via type guard). Proceeding with raw deserialization.'
       );
-      // Optionally throw a more specific error here if needed
-      throw new Error(
-        'Internal error: rawInput.http is undefined during deserialization.'
+      const { http } = inputFromDO;
+      const { body, isBase64Encoded, headers } = http;
+
+      let decodedBody: Buffer;
+      if (isBase64Encoded) {
+        DR.logger.info(
+          '[DOFunctionService] Body is base64 encoded, decoding...'
+        );
+        decodedBody = Buffer.from(body, 'base64');
+      } else {
+        DR.logger.info(
+          '[DOFunctionService] Body is not base64 encoded, using utf8.'
+        );
+        decodedBody = Buffer.from(body, 'utf8');
+      }
+
+      const isBson = headers['content-type'] === 'application/octet-stream';
+      let requestData: TInput;
+
+      if (isBson) {
+        DR.logger.info('[DOFunctionService] Deserializing BSON body.');
+        try {
+          requestData = BSON.deserialize(decodedBody) as TInput;
+        } catch (bsonError) {
+          DR.logger.error(
+            `[DOFunctionService] BSON deserialization failed: ${String(bsonError)}. Falling back to JSON parse.`
+          );
+          try {
+            requestData = JSON.parse(decodedBody.toString('utf8')) as TInput;
+          } catch (jsonError) {
+            DR.logger.error(
+              `[DOFunctionService] JSON fallback parse failed: ${String(jsonError)}`
+            );
+            throw new Error(
+              'Failed to deserialize input body as BSON or JSON.'
+            );
+          }
+        }
+      } else {
+        DR.logger.info(
+          '[DOFunctionService] Deserializing non-BSON body (assuming JSON).'
+        );
+        try {
+          requestData = JSON.parse(decodedBody.toString('utf8')) as TInput;
+        } catch (jsonError) {
+          DR.logger.error(
+            `[DOFunctionService] JSON parse failed: ${String(jsonError)}`
+          );
+          throw new Error('Failed to deserialize input body as JSON.');
+        }
+      }
+      return requestData;
+    }
+    // 2. Assume it's already the correct TInput type
+    else {
+      DR.logger.info(
+        '[DOFunctionService] Input does not match RawInput or DataWrapper. Assuming input is already deserialized TInput.'
       );
+      return inputFromDO;
     }
-    const { body, isBase64Encoded, headers } = http; // This line throws if http is undefined
-
-    let decodedBody: Buffer;
-    if (isBase64Encoded) {
-      decodedBody = Buffer.from(body, 'base64');
-    } else {
-      decodedBody = Buffer.from(body, 'utf8');
-    }
-
-    // Determine if the incoming content type is BSON
-    const isBson = headers['content-type'] === 'application/octet-stream';
-    let requestData: TInput;
-    if (isBson) {
-      // Deserialize BSON data
-      requestData = BSON.deserialize(decodedBody) as TInput;
-    } else {
-      // Parse JSON data
-      requestData = JSON.parse(decodedBody.toString('utf8')) as TInput;
-    }
-
-    return requestData;
   }
 
   /**
