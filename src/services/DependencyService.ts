@@ -1,7 +1,7 @@
 import { access, readFile, writeFile } from 'fs/promises';
 import path from 'path';
 import ErrorUtils from '../utils/ErrorUtils.js';
-import Logger from '../utils/Logger.js';
+import { DR } from './DependencyRegistry.js';
 import FileSystemService from './FileSystemService/FileSystemService.js';
 
 export interface PackageJson extends JsonWithVersionProperty {
@@ -125,7 +125,7 @@ export default class DependencyService {
       try {
         await access(filePath);
       } catch {
-        Logger.info(
+        DR.logger.info(
           `No ${path.basename(filePath)} file found in the current directory.`
         );
         return;
@@ -139,12 +139,12 @@ export default class DependencyService {
         const newVersion = bump(oldVersion);
         fileData.version = newVersion;
         await writeFile(filePath, JSON.stringify(fileData, null, 2));
-        Logger.info(
+        DR.logger.info(
           `Bumped ${path.basename(filePath)} from ${oldVersion} to ${newVersion}`
         );
       } catch (error) {
         const errorString = ErrorUtils.getErrorString(error);
-        Logger.error(
+        DR.logger.error(
           `Failed to update ${path.basename(filePath)}: ${errorString}`
         );
       }

@@ -35,12 +35,15 @@ Run `deno add jsr:@aneuhold/core-ts-lib`
 Pull in one of the services and use it like so:
 
 ```ts
-import { Logger } from '@aneuhold/core-ts-lib';
+import { DependencyRegistry, ILogger } from '@aneuhold/core-ts-lib';
 // If using Node with JSR
-// import { Logger } from '@jsr/aneuhold__core-ts-lib';
+// import { DependencyRegistry, ILogger } from '@jsr/aneuhold__core-ts-lib';
+
+// Get the logger instance from the registry
+const logger: ILogger = DependencyRegistry.logger;
 
 export default function logSomething() {
-  Logger.info('Something');
+  logger.info('Something');
 }
 ```
 

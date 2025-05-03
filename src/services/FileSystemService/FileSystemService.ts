@@ -13,7 +13,7 @@ import {
 import path from 'path';
 import { promisify } from 'util';
 import ErrorUtils from '../../utils/ErrorUtils.js';
-import Logger from '../../utils/Logger.js';
+import { DR } from '../DependencyRegistry.js';
 import StringService from '../StringService.js';
 
 const execAsync = promisify(exec);
@@ -30,6 +30,8 @@ export default class FileSystemService {
    *
    * @param folderPath the path to the folder which contains the file that should
    * be updated
+   * @param fileName
+   * @param textToInsert
    */
   static async findAndInsertText(
     folderPath: string,
@@ -45,12 +47,12 @@ export default class FileSystemService {
       const fileContents = await readFile(filePath);
       if (!fileContents.includes(textToInsert)) {
         await appendFile(filePath, `\n${textToInsert}`);
-        Logger.info(`Added "${textToInsert}" to "${filePath}"`);
+        DR.logger.info(`Added "${textToInsert}" to "${filePath}"`);
       } else {
-        Logger.info(`"${textToInsert}" already exists in "${filePath}"`);
+        DR.logger.info(`"${textToInsert}" already exists in "${filePath}"`);
       }
     } catch {
-      Logger.info(
+      DR.logger.info(
         `File at "${filePath}" didn't exist. Creating it now and adding "${textToInsert}" to it.`
       );
       await writeFile(filePath, textToInsert);
@@ -60,6 +62,8 @@ export default class FileSystemService {
   /**
    * Copies the contents of one folder to another folder.
    *
+   * @param sourceFolderPath
+   * @param targetFolderPath
    * @param ignoreExtensions is an array with extensions that should be
    * ignored. For example, if you want to ignore all .ts files, you would pass
    * in ['ts'].
@@ -73,7 +77,7 @@ export default class FileSystemService {
     try {
       await access(sourceFolderPath);
     } catch {
-      Logger.error(`Source directory "${sourceFolderPath}" does not exist.`);
+      DR.logger.error(`Source directory "${sourceFolderPath}" does not exist.`);
       return;
     }
     await FileSystemService.checkOrCreateFolder(targetFolderPath);
@@ -107,7 +111,7 @@ export default class FileSystemService {
     try {
       await access(folderPath);
     } catch {
-      Logger.verbose.info(
+      DR.logger.verbose.info(
         `Directory "${folderPath}" does not exist. Creating it now...`
       );
       await mkdir(folderPath, { recursive: true });
@@ -118,7 +122,7 @@ export default class FileSystemService {
     try {
       await access(folderPath);
     } catch {
-      Logger.error(`Directory "${folderPath}" does not exist.`);
+      DR.logger.error(`Directory "${folderPath}" does not exist.`);
       return;
     }
     await rm(folderPath, { recursive: true });
@@ -130,6 +134,8 @@ export default class FileSystemService {
    * the directory path provided.
    *
    * If only relative file paths are needed, use {@link getAllFilePathsRelative}.
+   *
+   * @param dirPath
    */
   static async getAllFilePaths(dirPath: string): Promise<string[]> {
     const filePaths: string[] = [];
@@ -157,6 +163,8 @@ export default class FileSystemService {
    * include the directory path provided.
    *
    * If absolute file paths are needed, use {@link getAllFilePaths}.
+   *
+   * @param dirPath
    */
   static async getAllFilePathsRelative(dirPath: string): Promise<string[]> {
     const filePaths = await this.getAllFilePaths(dirPath);
@@ -176,7 +184,7 @@ export default class FileSystemService {
       const { stdout } = await execAsync('git status --porcelain');
       return stdout.trim().length > 0;
     } catch (error) {
-      Logger.error(
+      DR.logger.error(
         `Failed to check for pending changes: ${ErrorUtils.getErrorString(error)}`
       );
       return false;

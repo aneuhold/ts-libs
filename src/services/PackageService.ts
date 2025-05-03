@@ -3,7 +3,7 @@ import { access, readFile, writeFile } from 'fs/promises';
 import path from 'path';
 import { promisify } from 'util';
 import ErrorUtils from '../utils/ErrorUtils.js';
-import Logger from '../utils/Logger.js';
+import { DR } from './DependencyRegistry.js';
 import { JsonWithVersionProperty, PackageJson } from './DependencyService.js';
 import FileSystemService from './FileSystemService/FileSystemService.js';
 
@@ -22,7 +22,7 @@ export default class PackageService {
    */
   static async validateJsrPublish(): Promise<void> {
     if (await FileSystemService.hasPendingChanges()) {
-      Logger.error('Please commit or stash your changes before publishing.');
+      DR.logger.error('Please commit or stash your changes before publishing.');
       process.exit(1);
     }
     await PackageService.updateJsrFromPackageJson();
@@ -31,13 +31,13 @@ export default class PackageService {
     if (!successfulDryRun) {
       process.exit(1);
     } else {
-      Logger.success('Successfully validated JSR publishing.');
+      DR.logger.success('Successfully validated JSR publishing.');
     }
   }
 
   static async publishToJsr(): Promise<void> {
     if (await FileSystemService.hasPendingChanges()) {
-      Logger.error('Please commit or stash your changes before publishing.');
+      DR.logger.error('Please commit or stash your changes before publishing.');
       process.exit(1);
     }
     await PackageService.updateJsrFromPackageJson();
@@ -46,7 +46,7 @@ export default class PackageService {
     if (!result) {
       process.exit(1);
     } else {
-      Logger.success('Successfully published to JSR.');
+      DR.logger.success('Successfully published to JSR.');
     }
   }
 
@@ -58,14 +58,14 @@ export default class PackageService {
     try {
       await access(packageJsonPath);
     } catch {
-      Logger.error('No package.json file found in the current directory.');
+      DR.logger.error('No package.json file found in the current directory.');
       return;
     }
 
     try {
       await access(jsrJsonPath);
     } catch {
-      Logger.error('No jsr.json file found in the current directory.');
+      DR.logger.error('No jsr.json file found in the current directory.');
       return;
     }
 
@@ -78,12 +78,12 @@ export default class PackageService {
       ) as JsonWithVersionProperty;
       jsrJsonData.version = packageJsonData.version;
       await writeFile(jsrJsonPath, JSON.stringify(jsrJsonData, null, 2));
-      Logger.info(
+      DR.logger.info(
         'Updated jsr.json from package.json to version ' + jsrJsonData.version
       );
     } catch (error) {
       const errorString = ErrorUtils.getErrorString(error);
-      Logger.error(
+      DR.logger.error(
         `Failed to update jsr.json from package.json: ${errorString}`
       );
     }
@@ -94,17 +94,17 @@ export default class PackageService {
    * successful, false otherwise.
    */
   private static async publishJsrDryRun(): Promise<boolean> {
-    Logger.info('Running `jsr publish --dry-run`');
+    DR.logger.info('Running `jsr publish --dry-run`');
     try {
       const { stdout, stderr } = await execAsync(
         'jsr publish --allow-dirty --dry-run'
       );
       if (stderr) {
-        Logger.info(stderr);
+        DR.logger.info(stderr);
       }
-      Logger.info(stdout);
+      DR.logger.info(stdout);
     } catch (error) {
-      Logger.error(
+      DR.logger.error(
         `Failed to run 'jsr publish --dry-run': ${ErrorUtils.getErrorString(error)}`
       );
       return false;
@@ -118,7 +118,7 @@ export default class PackageService {
    * @returns true if the publish was successful, false otherwise.
    */
   private static async publishJsr(): Promise<boolean> {
-    Logger.info('Running `jsr publish`');
+    DR.logger.info('Running `jsr publish`');
     return new Promise((resolve) => {
       const child = spawn('jsr publish', ['--allow-dirty'], {
         stdio: 'inherit',
@@ -136,11 +136,11 @@ export default class PackageService {
   }
 
   private static async revertGitChanges(): Promise<void> {
-    Logger.info('Reverting changes made to jsr.json');
+    DR.logger.info('Reverting changes made to jsr.json');
     try {
       await execAsync('git checkout jsr.json');
     } catch (error) {
-      Logger.error(
+      DR.logger.error(
         `Failed to revert changes made to jsr.json: ${ErrorUtils.getErrorString(error)}`
       );
     }
