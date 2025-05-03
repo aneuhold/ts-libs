@@ -200,7 +200,7 @@ export default class DOFunctionService {
     // 2. Assume it's already the correct TInput type
     else {
       DR.logger.info(
-        '[DOFunctionService] Input does not match RawInput or DataWrapper. Assuming input is already deserialized TInput.'
+        '[DOFunctionService] Input does not match RawInput. Assuming input is already deserialized TInput.'
       );
       return inputFromDO;
     }

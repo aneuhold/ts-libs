@@ -29,7 +29,8 @@ describe('DOFunction', () => {
       method: 'POST',
       headers: {
         Connection: 'keep-alive',
-        'Content-Type': 'application/octet-stream'
+        'Content-Type': 'application/octet-stream',
+        Accept: 'application/octet-stream'
       },
       body: Buffer.from(BSON.serialize(input))
     });
