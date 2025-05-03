@@ -1,5 +1,5 @@
 import { User, validateUser } from '@aneuhold/core-ts-db-lib';
-import { ErrorUtils, Logger } from '@aneuhold/core-ts-lib';
+import { DR, ErrorUtils } from '@aneuhold/core-ts-lib';
 import { ObjectId } from 'bson';
 import UserRepository from '../../repositories/common/UserRepository.js';
 import { TEST_USER_NAME_PREFIX } from '../../tests/globalTestVariables.js';
@@ -60,7 +60,7 @@ export default class UserValidator extends IValidator<User> {
       allDocs: allUsers,
       shouldDelete: (user: User) => {
         if (user.userName.startsWith(TEST_USER_NAME_PREFIX)) {
-          Logger.error(
+          DR.logger.error(
             `User with ID: ${user._id.toString()} is a test user and should be deleted`
           );
           return true;
@@ -92,6 +92,7 @@ export default class UserValidator extends IValidator<User> {
       userName
     });
     if (userNameSearchResult) {
+      DR.logger.error('Username already exists');
       ErrorUtils.throwError('Username already exists', { userName });
     }
   }

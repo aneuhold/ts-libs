@@ -1,5 +1,5 @@
 import { BaseDocument, DocumentValidator } from '@aneuhold/core-ts-db-lib';
-import { Logger } from '@aneuhold/core-ts-lib';
+import { DR } from '@aneuhold/core-ts-lib';
 import { ObjectId } from 'bson';
 
 export enum ObjectSchemaState {
@@ -88,28 +88,28 @@ export default abstract class IValidator<TBaseType extends BaseDocument> {
     docsToValidate.forEach((doc) => {
       const { updatedDoc, errors } = documentValidator(doc);
       if (errors.length !== 0) {
-        Logger.error(
+        DR.logger.error(
           `${docName} with ID: ${doc._id.toString()} is invalid. Errors:`
         );
         numInvalidDocs += 1;
         errors.forEach((error) => {
-          Logger.error(error);
+          DR.logger.error(error);
         });
         docsToUpdate.push(updatedDoc);
       }
     });
     if (dryRun) {
       if (numInvalidDocs === 0) {
-        Logger.success(`No invalid ${docName}s found.`);
+        DR.logger.success(`No invalid ${docName}s found.`);
       } else {
-        Logger.info(
+        DR.logger.info(
           `Would update ${numInvalidDocs} ${docName}s in the database.`
         );
       }
       if (docIdsToDelete.length === 0) {
-        Logger.success(`No ${docName}s to delete found.`);
+        DR.logger.success(`No ${docName}s to delete found.`);
       } else {
-        Logger.info(
+        DR.logger.info(
           `Would delete ${docIdsToDelete.length} ${docName}s in the database.`
         );
       }
@@ -117,21 +117,21 @@ export default abstract class IValidator<TBaseType extends BaseDocument> {
     }
     // Delete all invalid
     if (docIdsToDelete.length !== 0) {
-      Logger.info(
+      DR.logger.info(
         `Deleting ${docIdsToDelete.length} ${docName}s from the database.`
       );
       await deletionFunction(docIdsToDelete);
     } else {
-      Logger.success(`No ${docName}s to delete found.`);
+      DR.logger.success(`No ${docName}s to delete found.`);
     }
     // Update all that need to be updated
     if (docsToUpdate.length !== 0) {
-      Logger.info(
+      DR.logger.info(
         `Updating ${docsToUpdate.length} ${docName}s in the database.`
       );
       await updateFunction(docsToUpdate);
     } else {
-      Logger.success(`No ${docName}s to update found.`);
+      DR.logger.success(`No ${docName}s to update found.`);
     }
   }
 

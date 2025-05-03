@@ -1,5 +1,5 @@
 import { DashboardTask, validateDashboardTask } from '@aneuhold/core-ts-db-lib';
-import { ErrorUtils, Logger } from '@aneuhold/core-ts-lib';
+import { DR, ErrorUtils } from '@aneuhold/core-ts-lib';
 import { ObjectId } from 'bson';
 import UserRepository from '../../repositories/common/UserRepository.js';
 import DashboardTaskRepository from '../../repositories/dashboard/DashboardTaskRepository.js';
@@ -60,7 +60,7 @@ export default class DashboardTaskValidator extends IValidator<DashboardTask> {
       allDocs: allTasks,
       shouldDelete: (task: DashboardTask) => {
         if (!allUserIds[task.userId.toString()]) {
-          Logger.error(
+          DR.logger.error(
             `Dashboard Task with ID: ${task._id.toString()} has no valid associated owner (user).`
           );
           return true;

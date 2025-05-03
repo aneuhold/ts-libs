@@ -47,15 +47,15 @@
     "MongoDB"
   ],
   "dependencies": {
-    "@aneuhold/be-ts-lib": "^2.0.24",
-    "@aneuhold/core-ts-db-lib": "^2.0.26",
-    "@aneuhold/core-ts-lib": "^2.0.10",
+    "@aneuhold/be-ts-lib": "^2.0.64",
+    "@aneuhold/core-ts-db-lib": "^2.0.66",
+    "@aneuhold/core-ts-lib": "^2.1.1",
     "bson": "^6.2.0",
-    "mongodb": "^6.3.0"
+    "mongodb": "^6.8.0"
   },
   "devDependencies": {
-    "@aneuhold/eslint-config": "^1.0.88",
-    "@aneuhold/main-scripts": "^2.0.13",
+    "@aneuhold/eslint-config": "^1.0.89",
+    "@aneuhold/main-scripts": "^2.1.0",
     "@types/node": "^22.15.3",
     "@types/node-fetch": "^2.6.12",
     "eslint": "^9.26.0",

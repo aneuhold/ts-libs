@@ -2,7 +2,7 @@ import {
   NonogramKatanaItem,
   validateNonogramKatanaItem
 } from '@aneuhold/core-ts-db-lib';
-import { ErrorUtils, Logger } from '@aneuhold/core-ts-lib';
+import { DR, ErrorUtils } from '@aneuhold/core-ts-lib';
 import { ObjectId } from 'bson';
 import UserRepository from '../../repositories/common/UserRepository.js';
 import DashboardNonogramKatanaItemRepository from '../../repositories/dashboard/DashboardNonogramKatanaItemRepository.js';
@@ -56,7 +56,7 @@ export default class DashboardNonogramKatanaItemValidator extends IValidator<Non
       allDocs: allItems,
       shouldDelete: (item: NonogramKatanaItem) => {
         if (!allUserIds[item.userId.toString()]) {
-          Logger.error(
+          DR.logger.error(
             `Nonogram Katana Item with ID: ${item._id.toString()} has no valid associated user.`
           );
           return true;

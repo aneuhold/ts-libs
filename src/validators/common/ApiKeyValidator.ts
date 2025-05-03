@@ -1,5 +1,5 @@
 import { ApiKey, validateApiKey } from '@aneuhold/core-ts-db-lib';
-import { ErrorUtils, Logger } from '@aneuhold/core-ts-lib';
+import { DR, ErrorUtils } from '@aneuhold/core-ts-lib';
 import { ObjectId } from 'bson';
 import ApiKeyRepository from '../../repositories/common/ApiKeyRepository.js';
 import UserRepository from '../../repositories/common/UserRepository.js';
@@ -11,6 +11,9 @@ export default class ApiKeyValidator extends IValidator<ApiKey> {
     const userRepo = UserRepository.getRepo();
     const userInDb = await userRepo.get({ _id: newApiKey.userId });
     if (!userInDb) {
+      DR.logger.error(
+        `User with ID: ${newApiKey.userId.toString()} does not exist in the database.`
+      );
       ErrorUtils.throwError(
         `User with ID: ${newApiKey.userId.toString()} does not exist in the database.`,
         newApiKey
@@ -21,6 +24,9 @@ export default class ApiKeyValidator extends IValidator<ApiKey> {
     const apiKeyRepo = ApiKeyRepository.getRepo();
     const apiKeyInDb = await apiKeyRepo.get({ userId: newApiKey.userId });
     if (apiKeyInDb) {
+      DR.logger.error(
+        `User with ID: ${newApiKey.userId.toString()} already has an API key.`
+      );
       ErrorUtils.throwError(
         `User with ID: ${newApiKey.userId.toString()} already has an API key.`,
         newApiKey
@@ -31,6 +37,9 @@ export default class ApiKeyValidator extends IValidator<ApiKey> {
   // eslint-disable-next-line @typescript-eslint/require-await
   async validateUpdateObject(updatedApiKey: Partial<ApiKey>): Promise<void> {
     // Throw, because API keys should not be updated. Only created and deleted.
+    DR.logger.error(
+      `API keys should not be updated at this time. Only created and deleted.`
+    );
     ErrorUtils.throwError(
       `API keys should not be updated at this time. Only created and deleted.`,
       updatedApiKey
@@ -48,7 +57,7 @@ export default class ApiKeyValidator extends IValidator<ApiKey> {
       allDocs: allApiKeys,
       shouldDelete: (apiKey: ApiKey) => {
         if (!allUserIds[apiKey.userId.toString()]) {
-          Logger.error(
+          DR.logger.error(
             `API Key with ID: ${apiKey._id.toString()} has no valid associated user.`
           );
           return true;

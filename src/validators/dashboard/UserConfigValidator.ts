@@ -2,7 +2,7 @@ import {
   DashboardUserConfig,
   validateDashboardUserConfig
 } from '@aneuhold/core-ts-db-lib';
-import { ErrorUtils, Logger } from '@aneuhold/core-ts-lib';
+import { DR, ErrorUtils } from '@aneuhold/core-ts-lib';
 import { ObjectId } from 'bson';
 import UserRepository from '../../repositories/common/UserRepository.js';
 import DashboardUserConfigRepository from '../../repositories/dashboard/DashboardUserConfigRepository.js';
@@ -16,6 +16,9 @@ export default class DashboardUserConfigValidator extends IValidator<DashboardUs
       userId: newUserConfig.userId
     });
     if (existingConfig) {
+      DR.logger.error(
+        `Config already exists for user: ${newUserConfig.userId.toString()}`
+      );
       ErrorUtils.throwError(
         `Config already exists for user: ${newUserConfig.userId.toString()}`,
         newUserConfig
@@ -24,6 +27,9 @@ export default class DashboardUserConfigValidator extends IValidator<DashboardUs
     const userRepo = UserRepository.getRepo();
     const user = await userRepo.get({ _id: newUserConfig.userId });
     if (!user) {
+      DR.logger.error(
+        `User does not exist: ${newUserConfig.userId.toString()}`
+      );
       ErrorUtils.throwError(
         `User does not exist: ${newUserConfig.userId.toString()}`,
         newUserConfig
@@ -32,6 +38,9 @@ export default class DashboardUserConfigValidator extends IValidator<DashboardUs
     if (newUserConfig.collaborators.length > 0) {
       const collaborators = await userRepo.getList(newUserConfig.collaborators);
       if (collaborators.length !== newUserConfig.collaborators.length) {
+        DR.logger.error(
+          `Some collaborators not found. Expected ${newUserConfig.collaborators.length}, found ${collaborators.length}`
+        );
         ErrorUtils.throwError(
           `Some collaborators not found. Expected ${newUserConfig.collaborators.length}, found ${collaborators.length}`,
           newUserConfig
@@ -45,6 +54,7 @@ export default class DashboardUserConfigValidator extends IValidator<DashboardUs
   ): Promise<void> {
     // Check if an id is defined
     if (!updatedUserConfig._id) {
+      DR.logger.error(`No _id defined for DashboardUserConfig update.`);
       ErrorUtils.throwError(
         `No _id defined for DashboardUserConfig update.`,
         updatedUserConfig
@@ -59,6 +69,9 @@ export default class DashboardUserConfigValidator extends IValidator<DashboardUs
         updatedUserConfig.collaborators
       );
       if (collaborators.length !== updatedUserConfig.collaborators.length) {
+        DR.logger.error(
+          `Some collaborators not found. Expected ${updatedUserConfig.collaborators.length}, found ${collaborators.length}`
+        );
         ErrorUtils.throwError(
           `Some collaborators not found. Expected ${updatedUserConfig.collaborators.length}, found ${collaborators.length}`,
           updatedUserConfig
@@ -78,7 +91,7 @@ export default class DashboardUserConfigValidator extends IValidator<DashboardUs
       allDocs: allUserConfigs,
       shouldDelete: (userConfig: DashboardUserConfig) => {
         if (!allUserIds[userConfig.userId.toString()]) {
-          Logger.error(
+          DR.logger.error(
             `Dashboard User Config with ID: ${userConfig._id.toString()} has no valid associated user.`
           );
           return true;
