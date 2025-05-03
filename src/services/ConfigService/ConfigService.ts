@@ -1,4 +1,4 @@
-import { Logger } from '@aneuhold/core-ts-lib';
+import { DR } from '@aneuhold/core-ts-lib';
 import 'dotenv/config';
 import { parse } from 'jsonc-parser';
 import GitHubService from '../GitHubService.js';
@@ -64,7 +64,7 @@ export default class ConfigService {
       );
       ConfigService.configObject = parse(jsonString) as Config;
     } catch (error) {
-      Logger.error(`Failed to load ${env}.json, error: ${error as string}`);
+      DR.logger.error(`Failed to load ${env}.json, error: ${error as string}`);
       throw error;
     }
   }

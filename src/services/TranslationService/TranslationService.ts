@@ -1,5 +1,5 @@
 import { Translations } from '@aneuhold/core-ts-api-lib';
-import { Logger } from '@aneuhold/core-ts-lib';
+import { DR } from '@aneuhold/core-ts-lib';
 import 'dotenv/config';
 import { parse } from 'jsonc-parser';
 import GitHubService from '../GitHubService.js';
@@ -33,7 +33,9 @@ export default class TranslationService {
       );
       return parse(jsonString) as Translations;
     } catch (error) {
-      Logger.error(`Failed to load ${source}.json, error: ${error as string}`);
+      DR.logger.error(
+        `Failed to load ${source}.json, error: ${error as string}`
+      );
       throw error;
     }
   }

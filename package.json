@@ -42,15 +42,15 @@
     "TypeScript"
   ],
   "dependencies": {
-    "@aneuhold/core-ts-api-lib": "^2.0.13",
-    "@aneuhold/core-ts-lib": "^2.0.10",
+    "@aneuhold/core-ts-api-lib": "^2.1.5",
+    "@aneuhold/core-ts-lib": "^2.1.1",
     "dotenv": "^16.4.7",
     "jsonc-parser": "^3.3.1",
     "node-fetch": "^2",
     "octokit": "^3.1.2"
   },
   "devDependencies": {
-    "@aneuhold/eslint-config": "^1.0.88",
+    "@aneuhold/eslint-config": "^1.0.89",
     "@aneuhold/main-scripts": "^2.0.13",
     "@types/node": "^22.15.3",
     "@types/node-fetch": "^2.6.12",

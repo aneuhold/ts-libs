@@ -1,4 +1,4 @@
-import { Logger } from '@aneuhold/core-ts-lib';
+import { DR } from '@aneuhold/core-ts-lib';
 import 'dotenv/config';
 import { Octokit } from 'octokit';
 
@@ -36,7 +36,7 @@ export default class GitHubService {
       });
       return result.data as unknown as string;
     } catch (error) {
-      Logger.error(
+      DR.logger.error(
         `Failed to load ${filePath} from ${repoName}, error: ${error as string}`
       );
       throw error;
