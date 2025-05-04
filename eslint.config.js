@@ -7,10 +7,7 @@ import nx from '@nx/eslint-plugin';
 export default [
   ...nx.configs['flat/base'],
   ...tsLibConfig,
-  {  
-    ignores: ['**/dist'],
-  },
-  {
+  {    
     files: ['**/*.ts', '**/*.js'],
     rules: {
       '@nx/enforce-module-boundaries': [
@@ -21,17 +18,18 @@ export default [
           depConstraints: [
             {
               sourceTag: '*',
-              onlyDependOnLibsWithTags: ['*'],
-            },
-          ],
-        },
-      ],
-    },
-  },
-  {  
-    // other override settings. e.g. for `files: ['**/*.test.*']`
-    rules: {
-      '@typescript-eslint/unbound-method': 'off'
+              onlyDependOnLibsWithTags: ['*']
+            }
+          ]
+        }
+      ]
     }
   },
+  {
+    // other override settings. e.g. for `files: ['**/*.test.*']`
+    rules: {}
+  },
+  {
+    ignores: ['**/dist']
+  }
 ];

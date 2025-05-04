@@ -13,6 +13,7 @@ localData/
 ### Build things ###
 lib/
 localData/
+dist
 
 ### Tests ###
 .env

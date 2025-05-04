@@ -24,6 +24,9 @@
         "assets": ["packages/be-ts-db-lib/*.md"]
       }
     },
+    "lint": {
+      "executor": "@nx/eslint:lint"
+    },
     "nx-release-publish": {
       "options": {
         "packageRoot": "dist/{projectRoot}"
