@@ -1,0 +1,15 @@
+{
+  "compilerOptions": {
+    "target": "ESNEXT",
+    "module": "NodeNext",
+    "resolveJsonModule": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "strict": true,
+    "noImplicitAny": true,
+    "skipLibCheck": true
+    // "allowImportingTsExtensions": true
+  },
+  "include": ["**/*.ts", "eslint.config.js"],
+  "exclude": ["lib/**/*"]
+}

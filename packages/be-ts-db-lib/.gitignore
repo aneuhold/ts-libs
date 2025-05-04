@@ -1,0 +1,21 @@
+### macOS ###
+# General
+.DS_Store
+.AppleDouble
+.LSOverride
+
+### Node ###
+node_modules/
+
+### Script Data ###
+localData/
+
+### Build things ###
+lib/
+localData/
+
+### Tests ###
+.env
+
+### Yarn ###
+.yarn
