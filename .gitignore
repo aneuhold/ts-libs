@@ -19,3 +19,8 @@ localData/
 
 ### Yarn ###
 .yarn
+
+### NX Monorepo tooling files ###
+.nx/installation
+.nx/cache
+.nx/workspace-data
