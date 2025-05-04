@@ -1,9 +1,4 @@
 {
   "extends": "../../tsconfig.base.json",
-  "include": ["**/*.ts", "eslint.config.js"],
-  "references": [
-    {
-      "path": "./tsconfig.build.json"
-    }
-  ]
+  "include": ["**/*.ts", "eslint.config.js"]
 }
