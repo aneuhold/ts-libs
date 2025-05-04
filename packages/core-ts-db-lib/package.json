@@ -1,0 +1,61 @@
+{
+  "name": "@aneuhold/core-ts-db-lib",
+  "author": "Anton G. Neuhold Jr.",
+  "license": "MIT",
+  "version": "2.0.66",
+  "description": "A core database library used for personal projects",
+  "packageManager": "yarn@4.6.0",
+  "type": "module",
+  "scripts": {
+    "build": "rimraf lib && tsc --project tsconfig.build.json && tsx ./scripts/copyTsFiles.ts",
+    "lint": "eslint",
+    "test": "vitest run",
+    "jsr:validate": "tb pkg validateJsr",
+    "checkAll": "yarn build && yarn lint && yarn test && yarn jsr:validate",
+    "jsr:publish": "tb pkg publishJsr",
+    "upgrade:core": "yarn up '@aneuhold/*'",
+    "upgrade:all": "yarn up"
+  },
+  "main": "lib/index.js",
+  "module": "lib/index.js",
+  "types": "lib/index.d.ts",
+  "files": [
+    "lib/**/*"
+  ],
+  "exports": {
+    ".": {
+      "types": "./lib/index.d.ts",
+      "import": "./lib/index.js"
+    }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/aneuhold/core-ts-db-lib.git"
+  },
+  "bugs": {
+    "url": "https://github.com/aneuhold/core-ts-db-lib/issues"
+  },
+  "homepage": "https://github.com/aneuhold/core-ts-db-lib#readme",
+  "keywords": [
+    "Database",
+    "MongoDB",
+    "TypeScript",
+    "Node.js"
+  ],
+  "dependencies": {
+    "@aneuhold/core-ts-lib": "^2.1.1",
+    "bson": "^6.2.0"
+  },
+  "devDependencies": {
+    "@aneuhold/eslint-config": "^1.0.89",
+    "@aneuhold/main-scripts": "^2.0.13",
+    "@types/node": "^22.15.3",
+    "eslint": "^9.26.0",
+    "jsr": "^0.13.4",
+    "prettier": "^3.5.3",
+    "rimraf": "^6.0.1",
+    "tsx": "^4.19.4",
+    "typescript": "^5.8.3",
+    "vitest": "^3.1.2"
+  }
+}
