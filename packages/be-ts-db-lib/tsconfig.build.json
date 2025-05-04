@@ -1,11 +1,14 @@
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
-    "outDir": "./lib",
-    "sourceMap": true,
+    "composite": true,
+    "outDir": "../../dist/out-tsc",
     "sourceRoot": "./src",
+    "sourceMap": true,
     "declaration": true /* Generate .d.ts files from TypeScript and JavaScript files in your project. */,
-    "declarationMap": true /* Create sourcemaps for d.ts files. */
+    "declarationMap": true /* Create sourcemaps for d.ts files. */,
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
   },
   "include": ["src/**/*.ts"],
   "exclude": ["**/*.spec.ts", "./scripts"]
