@@ -12,20 +12,10 @@
   },
   "devDependencies": {
     "@aneuhold/eslint-config": "^1.0.91",
-    "@nx/eslint": "20.8.1",
-    "@nx/eslint-plugin": "20.8.1",
-    "@nx/js": "^20.8.1",
-    "@swc-node/register": "~1.9.1",
-    "@swc/core": "~1.5.7",
-    "@swc/helpers": "~0.5.11",
-    "@types/node": "18.16.9",
-    "jsonc-eslint-parser": "^2.1.0",
-    "nx": "20.8.1",
     "prettier": "^3.5.3",
     "tslib": "^2.3.0",
     "typescript": "^5.8.3",
     "verdaccio": "^6.0.5"
   },
-  "nx": {},
   "dependencies": {}
 }
