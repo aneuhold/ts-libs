@@ -3,10 +3,7 @@
   "private": true,
   "license": "MIT",
   "type": "module",
-  "packageManager": "pnpm@10.10.0",
-  "workspaces": [
-    "packages/*"
-  ],
+  "packageManager": "pnpm@10.11.0",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },

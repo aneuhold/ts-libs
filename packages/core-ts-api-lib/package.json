@@ -4,7 +4,6 @@
   "license": "MIT",
   "version": "2.1.7",
   "description": "A library for interacting with the backend and defining the backend API for personal projects.",
-  "packageManager": "yarn@4.6.0",
   "type": "module",
   "scripts": {
     "build": "rimraf lib && tsc --project tsconfig.build.json && tsx ./scripts/copyTsFiles.ts",
@@ -43,8 +42,8 @@
     "TypeScript"
   ],
   "dependencies": {
-    "@aneuhold/core-ts-db-lib": "^2.0.66",
-    "@aneuhold/core-ts-lib": "^2.1.1",
+    "@aneuhold/core-ts-db-lib": "workspace:^",
+    "@aneuhold/core-ts-lib": "workspace:^",
     "bson": "^6.2.0"
   },
   "devDependencies": {

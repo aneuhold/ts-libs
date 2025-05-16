@@ -27,14 +27,14 @@ importers:
   packages/be-ts-db-lib:
     dependencies:
       '@aneuhold/be-ts-lib':
-        specifier: ^2.0.64
-        version: 2.0.64
+        specifier: workspace:^
+        version: link:../be-ts-lib
       '@aneuhold/core-ts-db-lib':
-        specifier: ^2.0.66
-        version: 2.0.66
+        specifier: workspace:^
+        version: link:../core-ts-db-lib
       '@aneuhold/core-ts-lib':
-        specifier: ^2.1.1
-        version: 2.1.1
+        specifier: workspace:^
+        version: link:../core-ts-lib
       bson:
         specifier: ^6.2.0
         version: 6.10.3
@@ -82,11 +82,11 @@ importers:
   packages/be-ts-lib:
     dependencies:
       '@aneuhold/core-ts-api-lib':
-        specifier: ^2.1.5
-        version: 2.1.5
+        specifier: workspace:^
+        version: link:../core-ts-api-lib
       '@aneuhold/core-ts-lib':
-        specifier: ^2.1.1
-        version: 2.1.1
+        specifier: workspace:^
+        version: link:../core-ts-lib
       dotenv:
         specifier: ^16.4.7
         version: 16.4.7
@@ -137,11 +137,11 @@ importers:
   packages/core-ts-api-lib:
     dependencies:
       '@aneuhold/core-ts-db-lib':
-        specifier: ^2.0.66
-        version: 2.0.66
+        specifier: workspace:^
+        version: link:../core-ts-db-lib
       '@aneuhold/core-ts-lib':
-        specifier: ^2.1.1
-        version: 2.1.1
+        specifier: workspace:^
+        version: link:../core-ts-lib
       bson:
         specifier: ^6.2.0
         version: 6.10.3
@@ -180,8 +180,8 @@ importers:
   packages/core-ts-db-lib:
     dependencies:
       '@aneuhold/core-ts-lib':
-        specifier: ^2.1.1
-        version: 2.1.1
+        specifier: workspace:^
+        version: link:../core-ts-lib
       bson:
         specifier: ^6.2.0
         version: 6.10.3
@@ -258,15 +258,6 @@ packages:
   '@ampproject/remapping@2.3.0':
     resolution: {integrity: sha512-30iZtAPgz+LTIYoeivqYo853f02jBYSd5uGnGpkFV0M3xOt9aN73erkgYAmZU43x4VfqcnLxW9Kpg3R5LC4YYw==}
     engines: {node: '>=6.0.0'}
-
-  '@aneuhold/be-ts-lib@2.0.64':
-    resolution: {integrity: sha512-3A9++r9YfciB3GqhQ/6nnkcEFVlJoCTTuE5xGfkd4mSfQFsYQ8BjT48U6BsAxNceyspVkEkV0rjqarKmVSxBHA==}
-
-  '@aneuhold/core-ts-api-lib@2.1.5':
-    resolution: {integrity: sha512-0zuRemCL3SZuYYrG5S2HEECOAVSYZIUw7GbfdJcRc9HlU5MB0oK4cqmQCvaU5klEzYcQvGll0W1vf1CaACSskQ==}
-
-  '@aneuhold/core-ts-db-lib@2.0.66':
-    resolution: {integrity: sha512-2m8Lb6toc7mpEqGL9Nf0quBRZblu/k01oc61zYEXSAWAz40QrPJHOyVi4EN10cu0iITJB1MlRfPUozqCCIiSDw==}
 
   '@aneuhold/core-ts-lib@2.1.1':
     resolution: {integrity: sha512-XtkLa7K1Q5nTMSDUoQNGDgw9VFvu7OdP8jhcjbk61WZEIuVa17PskCgdeCVA7MzWETMbp8iieKkoNLnn7l3A6Q==}
@@ -4475,28 +4466,6 @@ snapshots:
     dependencies:
       '@jridgewell/gen-mapping': 0.3.8
       '@jridgewell/trace-mapping': 0.3.25
-
-  '@aneuhold/be-ts-lib@2.0.64':
-    dependencies:
-      '@aneuhold/core-ts-api-lib': 2.1.5
-      '@aneuhold/core-ts-lib': 2.1.1
-      dotenv: 16.4.7
-      jsonc-parser: 3.3.1
-      node-fetch: 2.7.0
-      octokit: 3.2.1
-    transitivePeerDependencies:
-      - encoding
-
-  '@aneuhold/core-ts-api-lib@2.1.5':
-    dependencies:
-      '@aneuhold/core-ts-db-lib': 2.0.66
-      '@aneuhold/core-ts-lib': 2.1.1
-      bson: 6.10.3
-
-  '@aneuhold/core-ts-db-lib@2.0.66':
-    dependencies:
-      '@aneuhold/core-ts-lib': 2.1.1
-      bson: 6.10.3
 
   '@aneuhold/core-ts-lib@2.1.1': {}
 

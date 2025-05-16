@@ -47,9 +47,9 @@
     "MongoDB"
   ],
   "dependencies": {
-    "@aneuhold/be-ts-lib": "^2.0.64",
-    "@aneuhold/core-ts-db-lib": "^2.0.66",
-    "@aneuhold/core-ts-lib": "^2.1.1",
+    "@aneuhold/be-ts-lib": "workspace:^",
+    "@aneuhold/core-ts-db-lib": "workspace:^",
+    "@aneuhold/core-ts-lib": "workspace:^",
     "bson": "^6.2.0",
     "mongodb": "^6.8.0"
   },
