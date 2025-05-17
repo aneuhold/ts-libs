@@ -9,6 +9,7 @@
   },
   "devDependencies": {
     "@aneuhold/eslint-config": "^1.0.94",
+    "nodemon": "^3.1.10",
     "prettier": "^3.5.3",
     "tslib": "^2.3.0",
     "typescript": "^5.8.3",

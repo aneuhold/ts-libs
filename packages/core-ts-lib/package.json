@@ -12,7 +12,9 @@
     "jsr:validate": "tsx ./scripts/validateJsrPublish.ts",
     "checkAll": "yarn build && yarn lint && yarn test && yarn jsr:validate",
     "jsr:publish": "tsx ./scripts/publishJsr.ts",
-    "upgrade:all": "yarn up"
+    "upgrade:all": "yarn up",
+    "publish:local": "pnpm publish --registry http://localhost:4873",
+    "watch": "nodemon --watch src -e ts --exec 'pnpm run build && pnpm publish:local'"
   },
   "main": "lib/index.js",
   "module": "lib/index.js",
