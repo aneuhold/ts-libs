@@ -4,6 +4,15 @@ import ErrorUtils from '../utils/ErrorUtils.js';
 import { DR } from './DependencyRegistry.js';
 import FileSystemService from './FileSystemService/FileSystemService.js';
 
+interface PackageJsonMap {
+  [packageName: string]: PackageJsonInfo;
+}
+
+interface PackageJsonInfo {
+  packageJsonContents: PackageJson;
+  packageJsonPath: string;
+}
+
 export interface PackageJson extends JsonWithVersionProperty {
   name: string;
   dependencies?: Record<string, string>;
@@ -38,42 +47,35 @@ export default class DependencyService {
   static async updateChildPackageJsons(): Promise<void> {
     // Read the root package.json file
     const rootPackageJsonPath = path.join(process.cwd(), 'package.json');
+    let rootPackageJsonData: PackageJson;
     try {
       await access(rootPackageJsonPath);
-    } catch {
-      throw new Error('No package.json file found in the current directory.');
+      const rootPackageJsonContent = await readFile(
+        rootPackageJsonPath,
+        'utf-8'
+      );
+      rootPackageJsonData = JSON.parse(rootPackageJsonContent) as PackageJson;
+    } catch (error) {
+      const originalError = ErrorUtils.getErrorString(error);
+      throw new Error(
+        `No package.json file found in the current directory or it's unreadable. Original error: ${originalError}`
+      );
     }
-    const rootPackageJsonData = JSON.parse(
-      await readFile(rootPackageJsonPath, 'utf-8')
-    ) as PackageJson;
-
-    // Get all files and in the current directory
-    const filePaths = await FileSystemService.getAllFilePathsRelative(
-      process.cwd()
-    );
-    const packageJsonPaths = filePaths.filter(
-      (filePath) =>
-        !filePath.includes('node_modules') &&
-        !filePath.includes('dist') &&
-        !filePath.includes('build') &&
-        filePath !== '/package.json' &&
-        filePath.endsWith('package.json')
-    );
 
     const rootDependencies = {
       ...rootPackageJsonData.dependencies,
       ...rootPackageJsonData.devDependencies
     };
 
-    // Iterate over all package.json files
-    await Promise.all(
-      packageJsonPaths.map(async (packageJsonPath) => {
-        const fullPackageJsonPath = path.join(process.cwd(), packageJsonPath);
-        const packageJsonData = JSON.parse(
-          await readFile(fullPackageJsonPath, 'utf-8')
-        ) as PackageJson;
+    const childPackagesData = await this.getChildPackageJsons();
 
-        const dependencies = packageJsonData.dependencies;
+    // Iterate over all child package.json files
+    await Promise.all(
+      Object.values(childPackagesData).map(async (childPackageInfo) => {
+        const { packageJsonContents, packageJsonPath } = childPackageInfo;
+
+        const { dependencies, devDependencies } = packageJsonContents;
+
         if (dependencies) {
           Object.keys(dependencies).forEach((dependency) => {
             if (rootDependencies[dependency]) {
@@ -81,7 +83,7 @@ export default class DependencyService {
             }
           });
         }
-        const devDependencies = packageJsonData.devDependencies;
+
         if (devDependencies) {
           Object.keys(devDependencies).forEach((dependency) => {
             if (rootDependencies[dependency]) {
@@ -92,8 +94,8 @@ export default class DependencyService {
 
         // Write the updated package.json file
         await writeFile(
-          fullPackageJsonPath,
-          JSON.stringify(packageJsonData, null, 2)
+          packageJsonPath,
+          JSON.stringify(packageJsonContents, null, 2)
         );
       })
     );
@@ -153,5 +155,51 @@ export default class DependencyService {
     const rootDir = process.cwd();
     await updateVersion(path.join(rootDir, 'package.json'));
     await updateVersion(path.join(rootDir, 'jsr.json'));
+  }
+
+  /**
+   * Retrieves all package.json files from subdirectories, excluding specified folders
+   * and the root package.json.
+   */
+  private static async getChildPackageJsons(): Promise<PackageJsonMap> {
+    const childPackages: PackageJsonMap = {};
+    const baseDir = process.cwd();
+    const filePaths = await FileSystemService.getAllFilePathsRelative(baseDir);
+
+    // Filter for package.json files in subdirectories
+    const packageJsonRelativePaths = filePaths.filter(
+      (filePath) =>
+        filePath.endsWith('package.json') && // Must be a package.json file
+        filePath !== 'package.json' && // Exclude the root package.json
+        !filePath.includes('node_modules') &&
+        !filePath.includes('dist') &&
+        !filePath.includes('build')
+    );
+
+    await Promise.all(
+      packageJsonRelativePaths.map(async (relativePath) => {
+        const fullPath = path.join(baseDir, relativePath);
+        try {
+          const fileContents = await readFile(fullPath, 'utf-8');
+          const packageJsonData = JSON.parse(fileContents) as PackageJson;
+          if (packageJsonData.name) {
+            childPackages[packageJsonData.name] = {
+              packageJsonContents: packageJsonData,
+              packageJsonPath: fullPath
+            };
+          } else {
+            DR.logger.info(
+              `Package.json at ${fullPath} is missing the 'name' property. It will not be indexed by name.`
+            );
+          }
+        } catch (error) {
+          const errorString = ErrorUtils.getErrorString(error);
+          DR.logger.error(
+            `Failed to read or parse package.json at ${fullPath}: ${errorString}`
+          );
+        }
+      })
+    );
+    return childPackages;
   }
 }

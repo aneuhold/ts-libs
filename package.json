@@ -5,14 +5,13 @@
   "type": "module",
   "packageManager": "pnpm@10.11.0",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "upgrade:core": "pnpm update '@aneuhold/*' --latest"
   },
   "devDependencies": {
-    "@aneuhold/eslint-config": "^1.0.91",
+    "@aneuhold/eslint-config": "^1.0.94",
     "prettier": "^3.5.3",
     "tslib": "^2.3.0",
     "typescript": "^5.8.3",
     "verdaccio": "^6.0.5"
-  },
-  "dependencies": {}
+  }
 }
