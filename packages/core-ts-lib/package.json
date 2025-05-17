@@ -14,7 +14,7 @@
     "jsr:publish": "tsx ./scripts/publishJsr.ts",
     "upgrade:all": "yarn up",
     "publish:local": "pnpm publish --registry http://localhost:4873",
-    "watch": "nodemon --watch src -e ts --exec 'pnpm run build && pnpm publish:local'"
+    "watch": "nodemon --watch src -e ts --exec 'pnpm run build && pnpm publish:local --access public'"
   },
   "main": "lib/index.js",
   "module": "lib/index.js",
