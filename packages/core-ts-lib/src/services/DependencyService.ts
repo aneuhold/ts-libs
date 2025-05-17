@@ -1,29 +1,11 @@
 import { access, readFile, writeFile } from 'fs/promises';
 import path from 'path';
+import { JsonWithVersionProperty } from '../types/JsonWithVersionProperty.js';
+import { PackageJson } from '../types/PackageJson.js';
+import { PackageJsonMap } from '../types/PackageJsonMap.js';
 import ErrorUtils from '../utils/ErrorUtils.js';
 import { DR } from './DependencyRegistry.js';
 import FileSystemService from './FileSystemService/FileSystemService.js';
-
-interface PackageJsonMap {
-  [packageName: string]: PackageJsonInfo;
-}
-
-interface PackageJsonInfo {
-  packageJsonContents: PackageJson;
-  packageJsonPath: string;
-}
-
-export interface PackageJson extends JsonWithVersionProperty {
-  name: string;
-  dependencies?: Record<string, string>;
-  devDependencies?: Record<string, string>;
-  peerDependencies?: Record<string, string>;
-  optionalDependencies?: Record<string, string>;
-}
-
-export interface JsonWithVersionProperty {
-  version: string;
-}
 
 /**
  * Standard Semantic Versioning bump types.

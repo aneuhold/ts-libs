@@ -47,7 +47,6 @@
     "bson": "^6.2.0"
   },
   "devDependencies": {
-    "@aneuhold/eslint-config": "^1.0.89",
     "@aneuhold/main-scripts": "^2.0.13",
     "@types/node": "^22.15.3",
     "eslint": "^9.26.0",
