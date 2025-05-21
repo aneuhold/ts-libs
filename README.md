@@ -30,3 +30,7 @@ Monrepo for TypeScript libraries that I work on
 
    - Build home-grown solutions without relying on monorepo frameworks
    - Leverage existing tooling you've already created. For example, the code in `core-ts-lib` or `main-scripts`.
+
+WIP Implementation notes:
+
+- It seems like the first step is going to be to publish a package locally that has some timestamp at the end of the package version. Like version `1.2.3-reallylongtimestamp`. Or, maybe unpublish from verdaccio (to keep things clean) and publish again the same version. Need to see if that works.

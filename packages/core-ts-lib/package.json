@@ -13,8 +13,9 @@
     "checkAll": "yarn build && yarn lint && yarn test && yarn jsr:validate",
     "jsr:publish": "tsx ./scripts/publishJsr.ts",
     "upgrade:all": "yarn up",
-    "publish:local": "pnpm publish --registry http://localhost:4873",
-    "watch": "nodemon --watch src -e ts --exec 'pnpm run build && pnpm publish:local --access public --force'"
+    "publish:local": "pnpm publish --registry http://localhost:4873 --access public --no-git-checks --force",
+    "unpublish:local": "npm unpublish --registry http://localhost:4873 --force",
+    "watch": "nodemon --watch src -e ts --exec 'pnpm run unpublish:local && pnpm run build && pnpm run publish:local'"
   },
   "main": "lib/index.js",
   "module": "lib/index.js",

@@ -17,4 +17,3 @@ Unless otherwise specified, always make suggested edits in the files directly in
 - Always order methods in a class by visibility (public, protected, private). If multiple methods have the same visibility, the order doesn't matter.
 - Use `async` and `await` for asynchronous code instead of `.then()`.
 - Use `const` and `let` instead of `var`.
-- Use `===` and `!==` instead of `==` and `!=`.
