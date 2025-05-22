@@ -34,3 +34,13 @@ Monrepo for TypeScript libraries that I work on
 WIP Implementation notes:
 
 - It seems like the first step is going to be to publish a package locally that has some timestamp at the end of the package version. Like version `1.2.3-reallylongtimestamp`. Or, maybe unpublish from verdaccio (to keep things clean) and publish again the same version. Need to see if that works.
+- The system for verdaccio could potentially be another package, called @aneuhold/local-npm-registry.
+- The way it could potentially work:
+  1. On startup, check if the `verdaccio-memory` system is running. If it isn't, then turn it on.
+  2. Check if there is a local JSON file of some kind that will act as the "store". This store will just handle the package names (unless verdaccio has this feature built in?), and what folder paths have installed a package / where a package has come from.
+  3. Build the local JSON file but make it empty at first
+  4. Setup a nodemon script that will watch the folder where the initial command was ran for changes. When that folder changes it will publish a new package version to the local registry.
+  5. In another folder, hook it up so that when a new command is ran from @aneuhold/local-npm-registry for a particular package (like `local-install package-name`) it will try and find that package in the local JSON file. If it finds it then two things happen:
+     1. The version of the package in the current folder's package.json is set to the one that was published locally (version-sometimestamp).
+     2. A nodemon process is setup that will watch the local JSON file for changes. When changes occur, it will re-install the latest package for any packages that have a different version from the `package.json` that is setup locally.
+  6. This should result in the flow being "Change is made to 1 package that is publishing to local" -> "Package is published locally" -> "Local JSON store is updated with new version for that package" -> "Nodemon script is triggered in all packages watching" -> "All packages watching compare versions, and update their local package.json version + install the new package they are watching if there is a difference".
