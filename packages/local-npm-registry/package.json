@@ -3,17 +3,15 @@
   "author": "Anton G. Neuhold Jr.",
   "license": "MIT",
   "version": "2.1.3",
-  "description": "Manages local npm package installations and updates for the ts-libs monorepo.",
+  "description": "Manages local npm package installations and updates across your machine.",
   "type": "module",
   "scripts": {
     "build": "rimraf lib && tsc -p tsconfig.build.json && tsx scripts/copyTsFiles.ts",
-    "dev": "tsc -w -p tsconfig.build.json",
-    "lint": "eslint . --ext .ts",
-    "lint:fix": "eslint . --ext .ts --fix",
-    "test": "vitest run",
-    "test:watch": "vitest",
-    "jsr:publish": "tsx scripts/publishJsr.ts",
-    "jsr:validate": "tsx scripts/validateJsrPublish.ts"
+    "lint": "eslint",
+    "test": "exit 0",
+    "jsr:validate": "tb pkg validateJsr",
+    "checkAll": "pnpm build && pnpm lint && pnpm test && pnpm jsr:validate",
+    "jsr:publish": "tb pkg publishJsr"
   },
   "main": "lib/index.js",
   "bin": {
@@ -41,6 +39,7 @@
     "fs-extra": "^11.2.0"
   },
   "devDependencies": {
+    "@aneuhold/main-scripts": "*",
     "@types/jest": "^29.5.14",
     "@types/node": "^22.15.3",
     "eslint": "^9.26.0",

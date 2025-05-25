@@ -63,6 +63,9 @@ importers:
       '@types/node-fetch':
         specifier: ^2.6.12
         version: 2.6.12
+      dotenv:
+        specifier: ^16.5.0
+        version: 16.5.0
       eslint:
         specifier: ^9.26.0
         version: 9.27.0(jiti@2.4.2)
@@ -262,6 +265,9 @@ importers:
         specifier: ^11.2.0
         version: 11.3.0
     devDependencies:
+      '@aneuhold/main-scripts':
+        specifier: '*'
+        version: 2.1.2(@types/node@22.15.18)
       '@types/fs-extra':
         specifier: ^11.0.4
         version: 11.0.4
