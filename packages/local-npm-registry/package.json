@@ -6,8 +6,7 @@
   "description": "Manages local npm package installations and updates for the ts-libs monorepo.",
   "type": "module",
   "scripts": {
-    "build": "rimraf lib && pnpm run copy-files && tsc -p tsconfig.build.json",
-    "copy-files": "tsx scripts/copyTsFiles.ts",
+    "build": "rimraf lib && tsc -p tsconfig.build.json && tsx scripts/copyTsFiles.ts",
     "dev": "tsc -w -p tsconfig.build.json",
     "lint": "eslint . --ext .ts",
     "lint:fix": "eslint . --ext .ts --fix",
@@ -37,7 +36,7 @@
     "Node.js"
   ],
   "dependencies": {
-    "@aneuhold/core-ts-lib": "workspace:*",
+    "@aneuhold/core-ts-lib": "*",
     "commander": "^12.1.0",
     "fs-extra": "^11.2.0"
   },

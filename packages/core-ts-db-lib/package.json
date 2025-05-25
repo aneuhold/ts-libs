@@ -42,7 +42,7 @@
     "Node.js"
   ],
   "dependencies": {
-    "@aneuhold/core-ts-lib": "workspace:*",
+    "@aneuhold/core-ts-lib": "*",
     "bson": "^6.2.0"
   },
   "devDependencies": {
