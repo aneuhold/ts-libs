@@ -7,7 +7,6 @@
   "scripts": {
     "build": "pnpm -r --stream build",
     "watch": "tsx scripts/watchAll.ts",
-    "watch:pnpm": "pnpm -r --parallel --stream watch",
     "upgrade:core": "pnpm update '@aneuhold/*' --latest"
   },
   "devDependencies": {
