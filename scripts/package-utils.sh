@@ -178,32 +178,21 @@ test_changed_packages() {
 
 # CI-specific functions for GitHub Actions
 detect_changed_packages_ci() {
-    # Get the list of changed files
-    CHANGED_FILES=$(git diff --name-only origin/main...HEAD)
-    echo "Changed files:"
-    echo "$CHANGED_FILES"
+    echo "Detecting changed packages for CI..."
     
-    # Find changed packages
-    CHANGED_PACKAGES=""
-    HAS_CHANGES="false"
+    # Call the main detect_changed_packages function to do the heavy lifting
+    detect_changed_packages
     
-    for file in $CHANGED_FILES; do
-        if [[ $file == packages/* ]]; then
-            PACKAGE_NAME=$(echo $file | cut -d'/' -f2)
-            if [[ ! " $CHANGED_PACKAGES " =~ " $PACKAGE_NAME " ]]; then
-                if [ -z "$CHANGED_PACKAGES" ]; then
-                    CHANGED_PACKAGES="$PACKAGE_NAME"
-                else
-                    CHANGED_PACKAGES="$CHANGED_PACKAGES,$PACKAGE_NAME"
-                fi
-                HAS_CHANGES="true"
-            fi
-        fi
-    done
-    
-    echo "Changed packages: $CHANGED_PACKAGES"
-    echo "packages=$CHANGED_PACKAGES" >> $GITHUB_OUTPUT
-    echo "has-changes=$HAS_CHANGES" >> $GITHUB_OUTPUT
+    # Convert the results to CI format
+    if [ -z "$DETECTED_PACKAGES" ]; then
+        echo "packages=" >> $GITHUB_OUTPUT
+        echo "has-changes=false" >> $GITHUB_OUTPUT
+    else
+        # Convert space-separated to comma-separated format for GitHub Actions
+        COMMA_SEPARATED_PACKAGES=$(echo "$DETECTED_PACKAGES" | tr ' ' ',')
+        echo "packages=$COMMA_SEPARATED_PACKAGES" >> $GITHUB_OUTPUT
+        echo "has-changes=true" >> $GITHUB_OUTPUT
+    fi
 }
 
 check_version_bumps_ci() {
