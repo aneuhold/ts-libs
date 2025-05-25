@@ -32,7 +32,7 @@ jobs:
     if: needs.detect-version-bumps.outputs.has-packages == 'true'
     strategy:
       matrix:
-        package: ${{ fromJson(needs.detect-version-bumps.outputs.packages-to-publish == '' && '["none"]' || format('["{{0}}"]', join(split(needs.detect-version-bumps.outputs.packages-to-publish, ','), '","'))) }}
+        package: ${{ fromJson(needs.detect-version-bumps.outputs.packages-to-publish) }}
     permissions:
       contents: read
       id-token: write

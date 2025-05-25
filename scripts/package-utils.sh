@@ -23,9 +23,9 @@ print_usage() {
     echo "  help              Show this help message"
     echo ""
     echo "CI Commands (used by GitHub Actions):"
-    echo "  detect-changes-ci         Detect changed packages for CI (outputs to GITHUB_OUTPUT)"
-    echo "  check-versions-ci <pkgs>  Check version bumps for CI (comma-separated package list)"
-    echo "  detect-version-bumps-ci   Detect version bumps for publishing (outputs to GITHUB_OUTPUT)"
+    echo "  detect-changes-ci         Detect changed packages for CI (outputs JSON array to GITHUB_OUTPUT)"
+    echo "  check-versions-ci <pkgs>  Check version bumps for CI (JSON array of packages)"
+    echo "  detect-version-bumps-ci   Detect version bumps for publishing (outputs JSON array to GITHUB_OUTPUT)"
     echo ""
     echo "Examples:"
     echo "  $0 detect-changes"
@@ -249,19 +249,35 @@ detect_changed_packages_ci() {
     
     # Convert the results to CI format
     if [ -z "$DETECTED_PACKAGES" ]; then
-        echo "packages=" >> $GITHUB_OUTPUT
+        echo "packages=[]" >> $GITHUB_OUTPUT
         echo "has-changes=false" >> $GITHUB_OUTPUT
     else
-        # Convert space-separated to comma-separated format for GitHub Actions
-        COMMA_SEPARATED_PACKAGES=$(echo "$DETECTED_PACKAGES" | tr ' ' ',')
-        echo "packages=$COMMA_SEPARATED_PACKAGES" >> $GITHUB_OUTPUT
+        # Convert space-separated to JSON array format for GitHub Actions
+        # Use printf to properly format the JSON array
+        JSON_ARRAY=$(echo "$DETECTED_PACKAGES" | awk '{
+            printf "["
+            for(i=1; i<=NF; i++) {
+                if(i > 1) printf ","
+                printf "\"%s\"", $i
+            }
+            printf "]"
+        }')
+        echo "packages=$JSON_ARRAY" >> $GITHUB_OUTPUT
         echo "has-changes=true" >> $GITHUB_OUTPUT
     fi
 }
 
 check_version_bumps_ci() {
-    local packages_string="$1"
-    IFS=',' read -ra PACKAGES <<< "$packages_string"
+    local packages_json="$1"
+    
+    # Parse JSON array using node to get package list
+    if [ "$packages_json" = "[]" ] || [ -z "$packages_json" ]; then
+        echo "No packages to check"
+        return 0
+    fi
+    
+    # Convert JSON array to bash array
+    readarray -t PACKAGES < <(echo "$packages_json" | node -e "JSON.parse(require('fs').readFileSync('/dev/stdin', 'utf8')).forEach(p => console.log(p))")
     FAILED_PACKAGES=""
     
     for package in "${PACKAGES[@]}"; do
@@ -342,7 +358,7 @@ detect_version_bumps_ci() {
                     if [ -z "$PACKAGES_TO_PUBLISH" ]; then
                         PACKAGES_TO_PUBLISH="$PACKAGE_NAME"
                     else
-                        PACKAGES_TO_PUBLISH="$PACKAGES_TO_PUBLISH,$PACKAGE_NAME"
+                        PACKAGES_TO_PUBLISH="$PACKAGES_TO_PUBLISH $PACKAGE_NAME"
                     fi
                     HAS_PACKAGES="true"
                 else
@@ -353,7 +369,22 @@ detect_version_bumps_ci() {
     done
     
     echo "Packages to publish: $PACKAGES_TO_PUBLISH"
-    echo "packages=$PACKAGES_TO_PUBLISH" >> $GITHUB_OUTPUT
+    
+    # Convert to JSON array format
+    if [ -z "$PACKAGES_TO_PUBLISH" ]; then
+        echo "packages=[]" >> $GITHUB_OUTPUT
+    else
+        # Use awk to properly format the JSON array
+        JSON_ARRAY=$(echo "$PACKAGES_TO_PUBLISH" | awk '{
+            printf "["
+            for(i=1; i<=NF; i++) {
+                if(i > 1) printf ","
+                printf "\"%s\"", $i
+            }
+            printf "]"
+        }')
+        echo "packages=$JSON_ARRAY" >> $GITHUB_OUTPUT
+    fi
     echo "has-packages=$HAS_PACKAGES" >> $GITHUB_OUTPUT
 }
 
