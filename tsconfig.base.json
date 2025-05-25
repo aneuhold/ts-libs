@@ -14,18 +14,8 @@
     "noPropertyAccessFromIndexSignature": true,
     "noImplicitOverride": true,
     "noImplicitReturns": true,
-    "skipLibCheck": true,
+    "skipLibCheck": true
     // "allowImportingTsExtensions": true
-    "paths": {
-      "@aneuhold/be-ts-db-lib": ["packages/be-ts-db-lib/src/index.ts"],
-      "@aneuhold/be-ts-lib": ["packages/be-ts-lib/src/index.ts"],
-      "@aneuhold/core-ts-api-lib": ["packages/core-ts-api-lib/src/index.ts"],
-      "@aneuhold/core-ts-db-lib": ["packages/core-ts-db-lib/src/index.ts"],
-      "@aneuhold/core-ts-lib": ["packages/core-ts-lib/src/index.ts"],
-      "@aneuhold/local-npm-registry": [
-        "packages/local-npm-registry/src/index.ts"
-      ]
-    }
   },
   "exclude": ["node_modules"]
 }

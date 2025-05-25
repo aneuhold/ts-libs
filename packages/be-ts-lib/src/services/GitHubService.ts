@@ -50,7 +50,7 @@ export default class GitHubService {
    * @returns A new GitHub client.
    */
   private static getGitHubClient(): Octokit {
-    const authToken = process.env.CONFIG_GITHUB_TOKEN;
+    const authToken = process.env['CONFIG_GITHUB_TOKEN'];
     if (!authToken) {
       throw new Error(
         'No CONFIG_GITHUB_TOKEN key found in environment variables.'

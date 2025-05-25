@@ -44,8 +44,6 @@ export const validateUser: DocumentValidator<User> = (user) => {
  * key user information.
  */
 export default class User extends BaseDocument {
-  _id: ObjectId = new ObjectId();
-
   userName: string;
 
   email?: string;

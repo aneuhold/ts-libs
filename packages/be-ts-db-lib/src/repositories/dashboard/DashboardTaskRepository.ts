@@ -88,7 +88,7 @@ export default class DashboardTaskRepository extends DashboardBaseRepository<Das
    * @param docId The ID of the document to delete.
    * @returns The result of the delete operation.
    */
-  async delete(docId: ObjectId): Promise<DeleteResult> {
+  override async delete(docId: ObjectId): Promise<DeleteResult> {
     const docIdsToDelete = await this.getAllTaskIDsToDelete([docId]);
     const deleteResult = await super.deleteList(docIdsToDelete);
     return deleteResult;
@@ -100,7 +100,7 @@ export default class DashboardTaskRepository extends DashboardBaseRepository<Das
    * @param docIds The IDs of the documents to delete.
    * @returns The result of the delete operation.
    */
-  async deleteList(docIds: ObjectId[]): Promise<DeleteResult> {
+  override async deleteList(docIds: ObjectId[]): Promise<DeleteResult> {
     const docIdsToDelete = await this.getAllTaskIDsToDelete(docIds);
     const result = await super.deleteList(docIdsToDelete);
     return result;

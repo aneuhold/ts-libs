@@ -91,7 +91,7 @@ export default class DashboardUserConfigRepository extends DashboardBaseReposito
    * @param newDoc The new {@link DashboardUserConfig} document to insert.
    * @returns The inserted document or null if insertion failed.
    */
-  async insertNew(
+  override async insertNew(
     newDoc: DashboardUserConfig
   ): Promise<DashboardUserConfig | null> {
     const result = await super.insertNew(newDoc);
@@ -114,7 +114,7 @@ export default class DashboardUserConfigRepository extends DashboardBaseReposito
    * @param newDocs The list of new {@link DashboardUserConfig} documents to insert.
    * @returns The list of inserted documents.
    */
-  async insertMany(
+  override async insertMany(
     newDocs: DashboardUserConfig[]
   ): Promise<DashboardUserConfig[]> {
     const result = await super.insertMany(newDocs);
@@ -135,7 +135,7 @@ export default class DashboardUserConfigRepository extends DashboardBaseReposito
    * @param updatedDoc The updated {@link DashboardUserConfig} document.
    * @returns The result of the update operation.
    */
-  async update(
+  override async update(
     updatedDoc: Partial<DashboardUserConfig>
   ): Promise<UpdateResult<DashboardUserConfig>> {
     // Get the config before the update
@@ -156,7 +156,7 @@ export default class DashboardUserConfigRepository extends DashboardBaseReposito
    * @param updatedDocs The list of updated {@link DashboardUserConfig} documents.
    * @returns The result of the bulk update operation.
    */
-  async updateMany(
+  override async updateMany(
     updatedDocs: Partial<DashboardUserConfig>[]
   ): Promise<BulkWriteResult> {
     const docIds: ObjectId[] = [];
