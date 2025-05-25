@@ -13,21 +13,8 @@ jobs:
       changed-packages: ${{ steps.changes.outputs.packages }}
       has-changes: ${{ steps.changes.outputs.has-changes }}
     steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'pnpm'
-
-      - name: Install dependencies
-        run: pnpm install
+      - name: Setup Node.js and pnpm
+        uses: ./.github/actions/setup-node-pnpm
 
       - name: Detect changed packages
         id: changes
@@ -39,20 +26,8 @@ jobs:
     needs: detect-changes
     if: needs.detect-changes.outputs.has-changes == 'true'
     steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: latest
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'pnpm'
+      - name: Setup Node.js and pnpm
+        uses: ./.github/actions/setup-node-pnpm
 
       - name: Check version bumps for changed packages
         run: ./scripts/package-utils.sh check-versions-ci "${{ needs.detect-changes.outputs.changed-packages }}"
@@ -70,39 +45,12 @@ jobs:
       id-token: write
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Setup Node.js and pnpm
+        uses: ./.github/actions/setup-node-pnpm
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
+      - name: Test and validate ${{ matrix.package }}
+        uses: ./.github/actions/package-test-validate
         with:
-          version: latest
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'pnpm'
-
-      - name: Install dependencies
-        run: pnpm install
-
-      - name: Run build for ${{ matrix.package }}
-        run: pnpm --filter ${{ matrix.package }} build
-
-      - name: Run tests for ${{ matrix.package }}
-        run: pnpm --filter ${{ matrix.package }} test
-        env:
-          CONFIG_GITHUB_TOKEN: ${{ secrets.CONFIG_GITHUB_TOKEN }}
-
-      - name: Run linting for ${{ matrix.package }}
-        run: pnpm --filter ${{ matrix.package }} lint
-
-      - name: Dry run JSR publish for ${{ matrix.package }}
-        run: pnpm --filter ${{ matrix.package }} jsr:validate
-
-      - name: Add Auth Token for npm
-        run: echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > ~/.npmrc
-
-      - name: Dry run NPM publish for ${{ matrix.package }}
-        working-directory: packages/${{ matrix.package }}
-        run: npm publish --access public --dry-run
+          package-name: ${{ matrix.package }}
+          npm-token: ${{ secrets.NPM_TOKEN }}
+          github-token: ${{ secrets.CONFIG_GITHUB_TOKEN }}

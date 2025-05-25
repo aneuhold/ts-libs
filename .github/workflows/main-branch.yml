@@ -13,21 +13,8 @@ jobs:
       packages-to-publish: ${{ steps.versions.outputs.packages }}
       has-packages: ${{ steps.versions.outputs.has-packages }}
     steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'pnpm'
-
-      - name: Install dependencies
-        run: pnpm install
+      - name: Setup Node.js and pnpm
+        uses: ./.github/actions/setup-node-pnpm
 
       - name: Detect packages with version bumps
         id: versions
@@ -46,32 +33,14 @@ jobs:
       id-token: write
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Setup Node.js and pnpm
+        uses: ./.github/actions/setup-node-pnpm
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - name: Build and publish ${{ matrix.package }}
+        uses: ./.github/actions/package-build-publish
         with:
-          node-version: '20'
-          cache: 'pnpm'
-
-      - name: Install dependencies
-        run: pnpm install
-
-      - name: Build ${{ matrix.package }}
-        run: pnpm --filter ${{ matrix.package }} build
-
-      - name: Publish ${{ matrix.package }} to JSR
-        run: pnpm --filter ${{ matrix.package }} jsr:publish
-
-      - name: Add Auth Token for npm
-        run: echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > ~/.npmrc
-
-      - name: Publish ${{ matrix.package }} to NPM
-        working-directory: packages/${{ matrix.package }}
-        run: npm publish --access public
+          package-name: ${{ matrix.package }}
+          npm-token: ${{ secrets.NPM_TOKEN }}
 
   summary:
     name: 'Publish Summary'
