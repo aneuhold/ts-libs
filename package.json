@@ -6,7 +6,7 @@
   "packageManager": "pnpm@10.11.0",
   "scripts": {
     "build": "pnpm -r --stream build",
-    "build:parallel": "pnpm -r --parallel --stream build",
+    "watch": "pnpm -r --parallel --stream watch",
     "upgrade:core": "pnpm update '@aneuhold/*' --latest"
   },
   "devDependencies": {

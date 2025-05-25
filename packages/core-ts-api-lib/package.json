@@ -7,6 +7,7 @@
   "type": "module",
   "scripts": {
     "build": "rimraf lib && tsc --project tsconfig.build.json && tsx ./scripts/copyTsFiles.ts",
+    "watch": "tsc -w -p tsconfig.build.json",
     "lint": "eslint",
     "test": "vitest run",
     "jsr:validate": "tb pkg validateJsr",
