@@ -6,7 +6,8 @@
   "packageManager": "pnpm@10.11.0",
   "scripts": {
     "build": "pnpm -r --stream build",
-    "watch": "pnpm -r --parallel --stream watch",
+    "watch": "tsx scripts/watchAll.ts",
+    "watch:pnpm": "pnpm -r --parallel --stream watch",
     "upgrade:core": "pnpm update '@aneuhold/*' --latest"
   },
   "devDependencies": {
