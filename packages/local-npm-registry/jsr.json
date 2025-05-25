@@ -1,5 +1,5 @@
 {
-  "name": "@aneuhold/core-ts-lib",
+  "name": "@aneuhold/local-npm-registry",
   "version": "WILL-BE-REPLACED",
   "exports": "./src/index.ts",
   "publish": {

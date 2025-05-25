@@ -1,4 +1,4 @@
-import FileSystemService from '../src/services/FileSystemService/FileSystemService.js';
+import { FileSystemService } from '@aneuhold/core-ts-lib';
 
 /**
  * Copies the original TypeScript files to the lib folder. This can make it

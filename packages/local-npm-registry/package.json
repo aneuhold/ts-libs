@@ -6,29 +6,24 @@
   "description": "Manages local npm package installations and updates for the ts-libs monorepo.",
   "type": "module",
   "scripts": {
-    "build": "pnpm run clean && pnpm run copy-files && tsc -p tsconfig.build.json",
-    "clean": "rm -rf dist",
-    "copy-files": "ts-node scripts/copyTsFiles.ts",
+    "build": "rimraf lib && pnpm run copy-files && tsc -p tsconfig.build.json",
+    "copy-files": "tsx scripts/copyTsFiles.ts",
     "dev": "tsc -w -p tsconfig.build.json",
     "lint": "eslint . --ext .ts",
     "lint:fix": "eslint . --ext .ts --fix",
     "test": "vitest run",
     "test:watch": "vitest",
-    "jsr:publish": "ts-node scripts/publishJsr.ts",
-    "jsr:validate": "ts-node scripts/validateJsrPublish.ts"
+    "jsr:publish": "tsx scripts/publishJsr.ts",
+    "jsr:validate": "tsx scripts/validateJsrPublish.ts"
   },
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "main": "lib/index.js",
+  "bin": {
+    "local-npm": "lib/index.js"
+  },
   "files": [
-    "dist",
+    "lib",
     "src"
   ],
-  "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js"
-    }
-  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/aneuhold/core-ts-lib.git"
@@ -42,7 +37,9 @@
     "Node.js"
   ],
   "dependencies": {
-    "@aneuhold/core-ts-lib": "workspace:*"
+    "@aneuhold/core-ts-lib": "workspace:*",
+    "commander": "^12.1.0",
+    "fs-extra": "^11.2.0"
   },
   "devDependencies": {
     "@types/jest": "^29.5.14",
@@ -54,6 +51,7 @@
     "rimraf": "^6.0.1",
     "ts-jest": "^29.3.2",
     "tsx": "^4.19.4",
-    "typescript": "~5.8.3"
+    "typescript": "~5.8.3",
+    "@types/fs-extra": "^11.0.4"
   }
 }
