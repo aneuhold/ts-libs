@@ -49,7 +49,7 @@ jobs:
     if: needs.detect-changes.outputs.has-changes == 'true'
     strategy:
       matrix:
-        package: ${{ fromJson(format('["{0}"]', needs.detect-changes.outputs.changed-packages == '' && 'none' || join(fromJson(format('["{0}"]', needs.detect-changes.outputs.changed-packages)), '","'))) }}
+        package: ${{ fromJson(needs.detect-changes.outputs.changed-packages == '' && '["none"]' || format('["{{0}}"]', join(split(needs.detect-changes.outputs.changed-packages, ','), '","'))) }}
     permissions:
       contents: read
       id-token: write
