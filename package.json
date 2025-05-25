@@ -8,7 +8,8 @@
     "build": "pnpm -r --stream build",
     "watch": "tsx scripts/watchAll.ts",
     "upgrade:core": "pnpm update '@aneuhold/*' --latest",
-    "detectChanges": "./scripts/package-utils.sh detect-changes"
+    "detectChanges": "./scripts/package-utils.sh detect-changes",
+    "bumpVersions": "./scripts/package-utils.sh bump-versions"
   },
   "devDependencies": {
     "@aneuhold/eslint-config": "^1.0.94",

@@ -18,6 +18,7 @@ print_usage() {
     echo "Local Commands:"
     echo "  detect-changes    Detect which packages have changed compared to main"
     echo "  check-versions    Check if changed packages have version bumps"
+    echo "  bump-versions     Bump versions for all changed packages that need it (patch by default)"
     echo "  test-changed      Run tests only for changed packages"
     echo "  help              Show this help message"
     echo ""
@@ -29,6 +30,7 @@ print_usage() {
     echo "Examples:"
     echo "  $0 detect-changes"
     echo "  $0 check-versions"
+    echo "  $0 bump-versions"
     echo "  $0 test-changed"
 }
 
@@ -98,7 +100,23 @@ check_version_bumps() {
         return 0
     fi
     
-    FAILED_PACKAGES=""
+    # Get packages that need version bumps
+    get_packages_needing_version_bumps
+    
+    if [ ! -z "$PACKAGES_NEEDING_BUMPS" ]; then
+        echo -e "${RED}The following packages need version bumps:${NC}"
+        for package in $PACKAGES_NEEDING_BUMPS; do
+            echo -e "  ${RED}✗${NC} $package"
+        done
+        echo -e "${YELLOW}Use: $0 bump-versions${NC}"
+        exit 1
+    else
+        echo -e "${GREEN}All changed packages have appropriate version bumps${NC}"
+    fi
+}
+
+get_packages_needing_version_bumps() {
+    PACKAGES_NEEDING_BUMPS=""
     
     for package in $DETECTED_PACKAGES; do
         if [ -d "packages/$package" ]; then
@@ -119,27 +137,73 @@ check_version_bumps() {
             
             if [ "$CURRENT_VERSION" = "$MAIN_VERSION" ] && [ "$MAIN_VERSION" != "new" ]; then
                 echo -e "  ${RED}❌ Version not bumped${NC}"
-                if [ -z "$FAILED_PACKAGES" ]; then
-                    FAILED_PACKAGES="$package"
+                if [ -z "$PACKAGES_NEEDING_BUMPS" ]; then
+                    PACKAGES_NEEDING_BUMPS="$package"
                 else
-                    FAILED_PACKAGES="$FAILED_PACKAGES $package"
+                    PACKAGES_NEEDING_BUMPS="$PACKAGES_NEEDING_BUMPS $package"
                 fi
             else
                 echo -e "  ${GREEN}✅ Version bumped or new package${NC}"
             fi
         fi
     done
+}
+
+bump_versions() {
+    echo -e "${BLUE}Bumping versions for changed packages that need it...${NC}"
     
-    if [ ! -z "$FAILED_PACKAGES" ]; then
-        echo -e "${RED}The following packages need version bumps:${NC}"
-        for package in $FAILED_PACKAGES; do
-            echo -e "  ${RED}✗${NC} $package"
-        done
-        echo -e "${YELLOW}Use: $0 bump-version <package> <patch|minor|major>${NC}"
-        exit 1
-    else
-        echo -e "${GREEN}All changed packages have appropriate version bumps${NC}"
+    if [ -z "$DETECTED_PACKAGES" ]; then
+        detect_changed_packages
     fi
+    
+    if [ -z "$DETECTED_PACKAGES" ]; then
+        echo -e "${YELLOW}No changed packages to check${NC}"
+        return 0
+    fi
+    
+    # Get packages that need version bumps
+    get_packages_needing_version_bumps
+    
+    if [ -z "$PACKAGES_NEEDING_BUMPS" ]; then
+        echo -e "${GREEN}All changed packages already have appropriate version bumps${NC}"
+        return 0
+    fi
+    
+    echo -e "${BLUE}The following packages will have their versions bumped:${NC}"
+    for package in $PACKAGES_NEEDING_BUMPS; do
+        echo -e "  ${BLUE}•${NC} $package"
+    done
+    
+    # Prompt for confirmation
+    echo -e "${YELLOW}Do you want to proceed with bumping patch versions? (y/N)${NC}"
+    read -r response
+    case "$response" in
+        [yY][eE][sS]|[yY]) 
+            ;;
+        *)
+            echo -e "${YELLOW}Aborted${NC}"
+            return 0
+            ;;
+    esac
+    
+    # Bump versions
+    for package in $PACKAGES_NEEDING_BUMPS; do
+        echo -e "${BLUE}Bumping version for $package...${NC}"
+        
+        if command -v pnpm > /dev/null 2>&1; then
+            cd "packages/$package"
+            pnpm version patch --no-git-tag-version
+            cd - > /dev/null
+            
+            NEW_VERSION=$(node -p "require('./packages/$package/package.json').version")
+            echo -e "  ${GREEN}✅ Bumped to version $NEW_VERSION${NC}"
+        else
+            echo -e "  ${RED}❌ pnpm not found, cannot bump version${NC}"
+            exit 1
+        fi
+    done
+    
+    echo -e "${GREEN}All versions bumped successfully!${NC}"
 }
 
 test_changed_packages() {
@@ -300,6 +364,9 @@ case "${1:-help}" in
         ;;
     "check-versions")
         check_version_bumps
+        ;;
+    "bump-versions")
+        bump_versions
         ;;
     "test-changed")
         test_changed_packages
