@@ -13,6 +13,9 @@ jobs:
       packages-to-publish: ${{ steps.versions.outputs.packages }}
       has-packages: ${{ steps.versions.outputs.has-packages }}
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
       - name: Setup Node.js and pnpm
         uses: ./.github/actions/setup-node-pnpm
 
@@ -33,6 +36,9 @@ jobs:
       id-token: write
 
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
       - name: Setup Node.js and pnpm
         uses: ./.github/actions/setup-node-pnpm
 
