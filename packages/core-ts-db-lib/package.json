@@ -30,12 +30,12 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/aneuhold/core-ts-db-lib.git"
+    "url": "git+https://github.com/aneuhold/ts-libs.git"
   },
   "bugs": {
-    "url": "https://github.com/aneuhold/core-ts-db-lib/issues"
+    "url": "https://github.com/aneuhold/ts-libs/issues"
   },
-  "homepage": "https://github.com/aneuhold/core-ts-db-lib#readme",
+  "homepage": "https://github.com/aneuhold/ts-libs/tree/main/packages/core-ts-db-lib#readme",
   "keywords": [
     "Database",
     "MongoDB",
