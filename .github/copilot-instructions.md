@@ -22,4 +22,5 @@ Unless otherwise specified, always make suggested edits in the files directly in
 
 ## Structure
 
-- For TypeScript libraries, always include an `index.ts` file at the root of the package that exports all public types and functions. Never include an `index.ts` file anywhere else in the package.
+- For TypeScript libraries (with exception of libraries that are CLI tools), always include an `index.ts` file at the root of the package that exports all public types and functions. Never include an `index.ts` file anywhere else in the package.
+  - Libraries that are CLI tools should still have an `index.ts` file, but it will contain the CLI entry point instead of exports.
