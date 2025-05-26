@@ -6,6 +6,7 @@
   "description": "Manages local npm package installations and updates across your machine.",
   "type": "module",
   "scripts": {
+    "refresh": "pnpm build && npm uninstall -g @aneuhold/local-npm-registry && npm i -g",
     "build": "rimraf lib && tsc -p tsconfig.build.json && tsx scripts/copyTsFiles.ts",
     "lint": "eslint",
     "test": "exit 0",

@@ -190,4 +190,51 @@ export default class FileSystemService {
       return false;
     }
   }
+
+  /**
+   * Searches for a file by traversing up the directory tree starting from the
+   * specified directory. This is useful for finding configuration files,
+   * project root markers, or other files that should be found by walking up
+   * the directory hierarchy.
+   *
+   * @param startDir - The directory to start searching from
+   * @param fileName - The name of the file to search for
+   * @param stopAt - Optional directory path to stop searching at (defaults to root)
+   */
+  static async findFileUpTree(
+    startDir: string,
+    fileName: string,
+    stopAt?: string
+  ): Promise<string | null> {
+    let currentDir = path.resolve(startDir);
+    const rootDir = stopAt ? path.resolve(stopAt) : path.parse(currentDir).root;
+
+    while (currentDir !== rootDir) {
+      const filePath = path.join(currentDir, fileName);
+
+      try {
+        await access(filePath);
+        return filePath;
+      } catch {
+        // File doesn't exist, continue searching
+      }
+
+      const parentDir = path.dirname(currentDir);
+      if (parentDir === currentDir) {
+        // Reached the root directory
+        break;
+      }
+      currentDir = parentDir;
+    }
+
+    // Check the root/stop directory as well
+    const filePath = path.join(currentDir, fileName);
+    try {
+      await access(filePath);
+      return filePath;
+    } catch {
+      // File not found
+      return null;
+    }
+  }
 }

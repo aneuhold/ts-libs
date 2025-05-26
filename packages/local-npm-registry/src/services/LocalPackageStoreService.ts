@@ -1,5 +1,6 @@
 import fs from 'fs-extra';
 import path from 'path';
+import { ConfigService } from './ConfigService.js';
 
 /**
  * Defines the structure for the local package store.
@@ -14,30 +15,26 @@ const STORE_FILE_NAME = '.local-package-store.json';
  * Service to manage the local package store.
  */
 export class LocalPackageStoreService {
-  private storeFilePath: string;
-
   /**
-   * Initializes a new instance of the `LocalPackageStoreService` class.
-   *
-   * @param workspaceRoot - The root directory of the workspace.
+   * Gets the store file path from configuration.
    */
-  constructor(private workspaceRoot: string) {
-    this.storeFilePath = path.join(this.workspaceRoot, STORE_FILE_NAME);
+  private static async getStoreFilePath(): Promise<string> {
+    const config = await ConfigService.loadConfig();
+    return path.join(config.storeLocation || process.cwd(), STORE_FILE_NAME);
   }
 
   /**
    * Reads the local package store from the file system.
    * If the store file does not exist, it returns an empty store.
    */
-  public async getStore(): Promise<LocalPackageStore> {
+  static async getStore(): Promise<LocalPackageStore> {
     try {
-      const fileExists = await fs.pathExists(this.storeFilePath);
+      const storeFilePath = await this.getStoreFilePath();
+      const fileExists = await fs.pathExists(storeFilePath);
       if (!fileExists) {
         return {};
       }
-      const store = (await fs.readJson(
-        this.storeFilePath
-      )) as LocalPackageStore;
+      const store = (await fs.readJson(storeFilePath)) as LocalPackageStore;
       return store;
     } catch (error) {
       console.error('Error reading local package store:', error);
@@ -51,7 +48,7 @@ export class LocalPackageStoreService {
    * @param packageName - The name of the package to update.
    * @param version - The new version of the package.
    */
-  public async updatePackageVersion(
+  static async updatePackageVersion(
     packageName: string,
     version: string
   ): Promise<void> {
@@ -65,9 +62,10 @@ export class LocalPackageStoreService {
    *
    * @param store - The store object to write.
    */
-  private async writeStore(store: LocalPackageStore): Promise<void> {
+  private static async writeStore(store: LocalPackageStore): Promise<void> {
     try {
-      await fs.writeJson(this.storeFilePath, store, { spaces: 2 });
+      const storeFilePath = await this.getStoreFilePath();
+      await fs.writeJson(storeFilePath, store, { spaces: 2 });
     } catch (error) {
       console.error('Error writing local package store:', error);
     }
