@@ -4,7 +4,6 @@ import type { Config as VerdaccioConfig } from '@verdaccio/types';
 import { type ChildProcess } from 'child_process';
 import { execa } from 'execa';
 import http from 'http';
-import { Http2Server } from 'http2';
 import path from 'path';
 import { runServer } from 'verdaccio';
 import type { LocalNpmConfig } from '../types/LocalNpmConfig.js';
@@ -30,50 +29,14 @@ export class VerdaccioService {
   }
 
   /**
-   * Checks if Verdaccio is running on the configured port.
-   */
-  async isRunning(): Promise<boolean> {
-    const config = await ConfigService.loadConfig();
-    const port = config.watch?.registryPort || 4873;
-
-    return new Promise((resolve) => {
-      const req = http.request(
-        {
-          hostname: 'localhost',
-          port,
-          path: '/',
-          method: 'GET',
-          timeout: 1000
-        },
-        (res) => {
-          resolve(res.statusCode === 200);
-        }
-      );
-
-      req.on('error', () => {
-        resolve(false);
-      });
-
-      req.on('timeout', () => {
-        req.destroy();
-        resolve(false);
-      });
-
-      req.end();
-    });
-  }
-
-  /**
    * Gets the status of the Verdaccio registry.
    */
   async getStatus(): Promise<RegistryStatus> {
     const config = await ConfigService.loadConfig();
     const port = config.watch?.registryPort || 4873;
     const url = config.watch?.registryUrl || `http://localhost:${port}`;
-    const isRunning = await this.isRunning();
 
     return {
-      isRunning,
       port,
       url
     };
@@ -102,7 +65,7 @@ export class VerdaccioService {
       DR.logger.info(`Starting Verdaccio on port ${port}...`);
 
       // Start Verdaccio using the fork method
-      await this.startVerdaccioFork(config);
+      await this.startVerdaccio(config);
 
       DR.logger.info(
         `Verdaccio started successfully on http://localhost:${port}`
@@ -123,28 +86,26 @@ export class VerdaccioService {
    * @param config
    * @param port - Port to listen on
    */
-  private async startVerdaccioFork(config: LocalNpmConfig): Promise<void> {
+  private async startVerdaccio(config: LocalNpmConfig): Promise<void> {
     return new Promise(async (resolve, reject) => {
       try {
         DR.logger.info('Starting Verdaccio server...');
 
-        const app = (await runServer(
+        const verdaccioServer = (await runServer(
           VerdaccioService.createVerdaccioConfig(config) as unknown as string
-        )) as Http2Server;
+        )) as http.Server;
 
-        DR.logger.info('Verdaccio fork created, waiting for startup...');
+        DR.logger.info('Verdaccio server created, waiting for startup...');
 
-        app.listen(4873, (event: string) => {
-          DR.logger.info(
-            `Received message from Verdaccio: ${JSON.stringify(event)}`
-          );
+        verdaccioServer.on('verdaccio_started', () => {
+          DR.logger.info(`Verdaccio server started`);
           resolve();
         });
       } catch (error) {
         reject(
           error instanceof Error
             ? error
-            : new Error(`Failed to start Verdaccio fork: ${String(error)}`)
+            : new Error(`Failed to start Verdaccio server: ${String(error)}`)
         );
       }
     });
