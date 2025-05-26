@@ -4,6 +4,8 @@ Functionality to manage local package installations and updates. See the main [R
 
 ### Detailed Command Flowcharts
 
+> **Note:** Verdaccio is only started for commands that need to publish packages (`publish` and `subscribe`). The `unpublish` and `unsubscribe` commands only modify package.json files and the local store, so they don't require Verdaccio to be running.
+
 <details>
 
 <summary><code>local-npm publish</code> Command Flow</summary>
@@ -14,25 +16,24 @@ flowchart TD
     B --> C{"Package found?"}
     C -->|No| D["Error: No package.json found"]
     C -->|Yes| E["Extract package name and version"]
-    E --> F["Check if Verdaccio is running"]
-    F --> G{"Verdaccio running?"}
-    G -->|No| H["Start Verdaccio server"]
-    G -->|Yes| I["Generate timestamp version"]
-    H --> I
-    I --> J["Update package.json with timestamp version<br/>e.g., 1.2.3-20250526123456"]
-    J --> K["Build package if needed"]
-    K --> L["Publish to Verdaccio registry"]
-    L --> M["Read local JSON store"]
-    M --> N["Update package entry in store<br/>with new timestamp version"]
-    N --> O["Get all subscribers for this package"]
-    O --> P{"Subscribers exist?"}
-    P -->|No| Q["Complete - No subscribers to update"]
-    P -->|Yes| R["For each subscriber project"]
-    R --> S["Update subscriber's package.json<br/>with new timestamp version"]
-    S --> T["Run install command in subscriber project<br/>npm install or pnpm install"]
-    T --> U{"More subscribers?"}
-    U -->|Yes| R
-    U -->|No| V["Complete - All subscribers updated"]
+    E --> F["Start Verdaccio server"]
+    F --> G["Generate timestamp version"]
+    G --> H["Update package.json with timestamp version<br/>e.g., 1.2.3-20250526123456"]
+    H --> I["Build package if needed"]
+    I --> J["Publish to Verdaccio registry"]
+    J --> K["Read local JSON store"]
+    K --> L["Update package entry in store<br/>with new timestamp version"]
+    L --> M["Get all subscribers for this package"]
+    M --> N{"Subscribers exist?"}
+    N -->|No| O["Shut down Verdaccio server"]
+    N -->|Yes| P["For each subscriber project"]
+    P --> Q["Update subscriber's package.json<br/>with new timestamp version"]
+    Q --> R["Run install command in subscriber project<br/>npm install or pnpm install"]
+    R --> S{"More subscribers?"}
+    S -->|Yes| P
+    S -->|No| T["Shut down Verdaccio server"]
+    O --> U["Complete - No subscribers to update"]
+    T --> V["Complete - All subscribers updated"]
 ```
 
 </details>
@@ -47,20 +48,18 @@ flowchart TD
     B --> C{"Package exists in store?"}
     C -->|No| D["List available packages from store"]
     D --> E["Error: Package not found"]
-    C -->|Yes| F["Check if Verdaccio is running"]
-    F --> G{"Verdaccio running?"}
-    G -->|No| H["Start Verdaccio server"]
-    G -->|Yes| I["Get package version from store"]
-    H --> I
-    I --> J["Re-publish package to Verdaccio<br/>with stored timestamp version"]
-    J --> K["Add current project to subscribers list<br/>in local JSON store"]
-    K --> L["Get all subscribers for this package"]
-    L --> M["For each subscriber project<br/>including new one"]
-    M --> N["Update subscriber's package.json<br/>with timestamp version"]
-    N --> O["Run install command in subscriber project<br/>npm install or pnpm install"]
-    O --> P{"More subscribers?"}
-    P -->|Yes| M
-    P -->|No| Q["Complete - All subscribers updated"]
+    C -->|Yes| F["Start Verdaccio server"]
+    F --> G["Get package version from store"]
+    G --> H["Re-publish package to Verdaccio<br/>with stored timestamp version"]
+    H --> I["Add current project to subscribers list<br/>in local JSON store"]
+    I --> J["Get all subscribers for this package"]
+    J --> K["For each subscriber project<br/>including new one"]
+    K --> L["Update subscriber's package.json<br/>with timestamp version"]
+    L --> M["Run install command in subscriber project<br/>npm install or pnpm install"]
+    M --> N{"More subscribers?"}
+    N -->|Yes| K
+    N -->|No| O["Shut down Verdaccio server"]
+    O --> P["Complete - All subscribers updated"]
 ```
 
 </details>
