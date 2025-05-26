@@ -1,6 +1,6 @@
+import { DR } from '@aneuhold/core-ts-lib';
 import 'dotenv/config';
 import { parse } from 'jsonc-parser';
-import { DR } from 'npm:@aneuhold/core-ts-lib';
 import GitHubService from '../GitHubService.js';
 import Config from './ConfigDefinition.js';
 

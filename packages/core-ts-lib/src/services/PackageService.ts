@@ -27,9 +27,11 @@ export default class PackageService {
       DR.logger.error('Please commit or stash your changes before publishing.');
       process.exit(1);
     }
+    await PackageService.replaceMonorepoImportsWithNpmSpecifiers();
     await PackageService.updateJsrFromPackageJson();
     const successfulDryRun = await PackageService.publishJsrDryRun();
     await PackageService.revertGitChanges();
+
     if (!successfulDryRun) {
       process.exit(1);
     } else {
@@ -42,9 +44,11 @@ export default class PackageService {
       DR.logger.error('Please commit or stash your changes before publishing.');
       process.exit(1);
     }
+    await PackageService.replaceMonorepoImportsWithNpmSpecifiers();
     await PackageService.updateJsrFromPackageJson();
     const result = await PackageService.publishJsr();
     await PackageService.revertGitChanges();
+
     if (!result) {
       process.exit(1);
     } else {
@@ -56,7 +60,7 @@ export default class PackageService {
    * Updates the jsr.json file from the package.json file and resolves wildcard
    * dependencies in package.json for JSR compatibility.
    */
-  static async updateJsrFromPackageJson(): Promise<void> {
+  private static async updateJsrFromPackageJson(): Promise<void> {
     const rootDir = process.cwd();
     const packageJsonPath = path.join(rootDir, 'package.json');
     const jsrJsonPath = path.join(rootDir, 'jsr.json');
@@ -204,13 +208,95 @@ export default class PackageService {
     });
   }
 
-  private static async revertGitChanges(): Promise<void> {
-    DR.logger.info('Reverting changes made to jsr.json and package.json');
+  /**
+   * Replaces imports of monorepo dependencies with npm: specifiers in all TypeScript files.
+   * This is needed for JSR compatibility when publishing packages that depend on other packages in the monorepo.
+   */
+  private static async replaceMonorepoImportsWithNpmSpecifiers(): Promise<void> {
+    const rootDir = process.cwd();
+    const srcDir = path.join(rootDir, 'src');
+
     try {
-      await execAsync('git checkout jsr.json package.json');
+      await access(srcDir);
+    } catch {
+      DR.logger.error('No src directory found in the current directory.');
+      return;
+    }
+
+    // Get all packages in the monorepo to know which ones to replace
+    const childPackages = await DependencyService.getChildPackageJsons('../');
+    const monorepoPackageNames = Object.keys(childPackages);
+
+    if (monorepoPackageNames.length === 0) {
+      DR.logger.info('No monorepo packages found to replace.');
+      return;
+    }
+
+    // Get all TypeScript files in the src directory
+    const allFiles = await FileSystemService.getAllFilePathsRelative(srcDir);
+    const tsFiles = allFiles
+      .filter(
+        (filePath) => filePath.endsWith('.ts') && !filePath.endsWith('.spec.ts')
+      )
+      .map((filePath) => path.join(srcDir, filePath));
+
+    DR.logger.info(
+      `Replacing monorepo imports with npm: specifiers in ${tsFiles.length} TypeScript files...`
+    );
+
+    let totalReplacements = 0;
+
+    for (const filePath of tsFiles) {
+      try {
+        const content = await readFile(filePath, 'utf-8');
+        let newContent = content;
+        let fileReplacements = 0;
+
+        for (const packageName of monorepoPackageNames) {
+          // Use a more precise regex to match import statements
+          const importRegex = new RegExp(
+            `(import\\s+[^;]+from\\s+['"])${packageName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(['"])`,
+            'g'
+          );
+          const matches = newContent.match(importRegex);
+
+          if (matches) {
+            newContent = newContent.replace(
+              importRegex,
+              `$1npm:${packageName}$2`
+            );
+            fileReplacements += matches.length;
+          }
+        }
+
+        if (fileReplacements > 0) {
+          await writeFile(filePath, newContent);
+          totalReplacements += fileReplacements;
+          DR.logger.info(
+            `  Updated: ${path.relative(rootDir, filePath)} (${fileReplacements} replacements)`
+          );
+        }
+      } catch (error) {
+        DR.logger.error(
+          `Failed to process file ${filePath}: ${ErrorUtils.getErrorString(error)}`
+        );
+      }
+    }
+
+    DR.logger.info(
+      `✅ Completed monorepo import replacement: ${totalReplacements} total replacements made`
+    );
+  }
+
+  private static async revertGitChanges(): Promise<void> {
+    DR.logger.info(
+      'Reverting changes made to jsr.json, package.json, and source files'
+    );
+    try {
+      await execAsync('git checkout -- jsr.json package.json src/');
     } catch (error) {
       DR.logger.error(
-        `Failed to revert changes made to jsr.json and package.json: ${ErrorUtils.getErrorString(error)}`
+        `Failed to revert changes: ${ErrorUtils.getErrorString(error)}`
       );
     }
   }
