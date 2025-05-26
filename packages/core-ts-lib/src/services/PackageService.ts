@@ -284,7 +284,7 @@ export default class PackageService {
     }
 
     DR.logger.info(
-      `✅ Completed monorepo import replacement: ${totalReplacements} total replacements made`
+      `Completed monorepo import replacement: ${totalReplacements} total replacements made`
     );
   }
 
