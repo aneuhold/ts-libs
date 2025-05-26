@@ -1,38 +1,142 @@
 #!/usr/bin/env node --no-warnings
 
+// Export types and services for use as a library
+export { CommandService } from './services/CommandService.js';
+export { ConfigService } from './services/ConfigService.js';
+export {
+  LocalPackageStoreService,
+  type LocalPackageStore,
+  type PackageEntry
+} from './services/LocalPackageStoreService.js';
+export { VerdaccioService } from './services/VerdaccioService.js';
+export type { LocalNpmConfig } from './types/LocalNpmConfig.js';
+export type { RegistryStatus, WatchConfig } from './types/WatchConfig.js';
+
+// CLI implementation only runs when executed directly
 import { DR } from '@aneuhold/core-ts-lib';
 import { program } from 'commander';
+import { CommandService } from './services/CommandService.js';
 import { ConfigService } from './services/ConfigService.js';
-import { LocalPackageInstallService } from './services/LocalPackageInstallService.js';
 import { LocalPackageStoreService } from './services/LocalPackageStoreService.js';
-import { PackageWatchService } from './services/PackageWatchService.js';
 import { VerdaccioService } from './services/VerdaccioService.js';
-
 program
   .name('local-npm')
   .description(
     'CLI to manage local npm package installations and updates for the ts-libs monorepo.'
   );
 
-// Store management commands
+// Main commands as described in README.md
+program
+  .command('publish')
+  .description(
+    'Publish a package and update all subscribers with timestamp version'
+  )
+  .action(async () => {
+    try {
+      await CommandService.publish();
+    } catch (error) {
+      DR.logger.error(`Failed to publish: ${String(error)}`);
+      process.exit(1);
+    }
+  });
+
+program
+  .command('subscribe')
+  .description(
+    'Subscribe to a package and install its latest timestamp version'
+  )
+  .argument('<package-name>', 'The name of the package to subscribe to')
+  .action(async (packageName: string) => {
+    try {
+      await CommandService.subscribe(packageName);
+    } catch (error) {
+      DR.logger.error(`Failed to subscribe: ${String(error)}`);
+      process.exit(1);
+    }
+  });
+
+program
+  .command('unpublish')
+  .description(
+    'Unpublish a package and reset all subscribers to original versions'
+  )
+  .argument(
+    '[package-name]',
+    'The name of the package to unpublish (defaults to current directory package)'
+  )
+  .action(async (packageName?: string) => {
+    try {
+      await CommandService.unpublish(packageName);
+    } catch (error) {
+      DR.logger.error(`Failed to unpublish: ${String(error)}`);
+      process.exit(1);
+    }
+  });
+
+program
+  .command('unsubscribe')
+  .description('Unsubscribe from packages and reset to original versions')
+  .argument(
+    '[package-name]',
+    'The name of the package to unsubscribe from (omit to unsubscribe from all)'
+  )
+  .action(async (packageName?: string) => {
+    try {
+      await CommandService.unsubscribe(packageName);
+    } catch (error) {
+      DR.logger.error(`Failed to unsubscribe: ${String(error)}`);
+      process.exit(1);
+    }
+  });
+
+// Utility commands for debugging and management
+program
+  .command('list')
+  .description('List all packages in the local registry and their subscribers')
+  .action(async () => {
+    try {
+      const store = await LocalPackageStoreService.getStore();
+
+      if (Object.keys(store.packages).length === 0) {
+        DR.logger.info('No packages in local registry');
+        return;
+      }
+
+      DR.logger.info('Local Registry Packages:');
+      for (const [packageName, entry] of Object.entries(store.packages)) {
+        if (!entry) {
+          DR.logger.warn(`Package ${packageName} has no entry in the store`);
+          continue;
+        }
+        DR.logger.info(`\n${packageName}:`);
+        DR.logger.info(`  Original Version: ${entry.originalVersion}`);
+        DR.logger.info(`  Current Version: ${entry.currentVersion}`);
+        DR.logger.info(`  Subscribers (${entry.subscribers.length}):`);
+        if (entry.subscribers.length === 0) {
+          DR.logger.info('    (none)');
+        } else {
+          entry.subscribers.forEach((sub) => {
+            DR.logger.info(`    - ${sub}`);
+          });
+        }
+      }
+    } catch (error) {
+      DR.logger.error(`Failed to list packages: ${String(error)}`);
+      process.exit(1);
+    }
+  });
+
 program
   .command('get-store')
   .description('Gets the current local package store.')
   .action(async () => {
-    const store = await LocalPackageStoreService.getStore();
-    DR.logger.info(JSON.stringify(store, null, 2));
-  });
-
-program
-  .command('update-package')
-  .description('Updates a package in the local store.')
-  .argument('<packageName>', 'The name of the package to update.')
-  .argument('<version>', 'The new version of the package.')
-  .action(async (packageName: string, version: string) => {
-    await LocalPackageStoreService.updatePackageVersion(packageName, version);
-    DR.logger.info(
-      `Package ${packageName} updated to version ${version} in the local store.`
-    );
+    try {
+      const store = await LocalPackageStoreService.getStore();
+      DR.logger.info(JSON.stringify(store, null, 2));
+    } catch (error) {
+      DR.logger.error(`Failed to get store: ${String(error)}`);
+      process.exit(1);
+    }
   });
 
 // Configuration commands
@@ -40,15 +144,20 @@ program
   .command('config')
   .description('Shows the current configuration and config file location.')
   .action(async () => {
-    const config = await ConfigService.loadConfig();
-    const configPath = ConfigService.getConfigFilePath();
+    try {
+      const config = await ConfigService.loadConfig();
+      const configPath = ConfigService.getConfigFilePath();
 
-    DR.logger.info('Current Configuration:');
-    DR.logger.info(JSON.stringify(config, null, 2));
-    DR.logger.info('\nConfiguration file location:');
-    DR.logger.info(
-      configPath || 'No configuration file found (using defaults)'
-    );
+      DR.logger.info('Current Configuration:');
+      DR.logger.info(JSON.stringify(config, null, 2));
+      DR.logger.info('\nConfiguration file location:');
+      DR.logger.info(
+        configPath || 'No configuration file found (using defaults)'
+      );
+    } catch (error) {
+      DR.logger.error(`Failed to get config: ${String(error)}`);
+      process.exit(1);
+    }
   });
 
 program
@@ -69,11 +178,15 @@ program
   .command('registry-status')
   .description('Shows the status of the local Verdaccio registry.')
   .action(async () => {
-    const verdaccioService = VerdaccioService.getInstance();
-    const status = await verdaccioService.getStatus();
+    try {
+      const status = await VerdaccioService.getStatus();
 
-    DR.logger.info('Registry Status:');
-    DR.logger.info(JSON.stringify(status, null, 2));
+      DR.logger.info('Registry Status:');
+      DR.logger.info(JSON.stringify(status, null, 2));
+    } catch (error) {
+      DR.logger.error(`Failed to get registry status: ${String(error)}`);
+      process.exit(1);
+    }
   });
 
 program
@@ -81,8 +194,7 @@ program
   .description('Starts the local Verdaccio registry.')
   .action(async () => {
     try {
-      const verdaccioService = VerdaccioService.getInstance();
-      await verdaccioService.start();
+      await VerdaccioService.start();
     } catch (error) {
       DR.logger.error(`Failed to start registry: ${String(error)}`);
       process.exit(1);
@@ -92,160 +204,11 @@ program
 program
   .command('registry-stop')
   .description('Stops the local Verdaccio registry.')
-  .action(async () => {
+  .action(() => {
     try {
-      const verdaccioService = VerdaccioService.getInstance();
-      await verdaccioService.stop();
+      VerdaccioService.stop();
     } catch (error) {
       DR.logger.error(`Failed to stop registry: ${String(error)}`);
-      process.exit(1);
-    }
-  });
-
-// Package watching and building commands
-program
-  .command('watch')
-  .description(
-    'Starts watching packages for changes and automatically publishes them to the local registry.'
-  )
-  .option(
-    '-p, --packages <packages...>',
-    'Specific packages to watch (defaults to all packages)'
-  )
-  .action(async (options) => {
-    const watchService = new PackageWatchService();
-
-    try {
-      const packageNames = options.packages || [];
-      await watchService.startWatching(packageNames);
-
-      // Keep the process running
-      process.on('SIGINT', async () => {
-        DR.logger.info('Received SIGINT, stopping watchers...');
-        await watchService.stopWatching();
-        process.exit(0);
-      });
-
-      process.on('SIGTERM', async () => {
-        DR.logger.info('Received SIGTERM, stopping watchers...');
-        await watchService.stopWatching();
-        process.exit(0);
-      });
-
-      // Keep the process alive
-      await new Promise(() => {});
-    } catch (error) {
-      DR.logger.error(`Failed to start watching: ${String(error)}`);
-      process.exit(1);
-    }
-  });
-
-program
-  .command('build')
-  .description('Manually builds and publishes a package to the local registry.')
-  .argument('<packageName>', 'The name of the package to build and publish.')
-  .action(async (packageName: string) => {
-    const watchService = new PackageWatchService();
-
-    try {
-      const result = await watchService.buildAndPublishPackage(packageName);
-      if (result) {
-        DR.logger.info(
-          `Successfully built and published ${result.name}@${result.version}`
-        );
-      } else {
-        DR.logger.error('Build and publish failed');
-        process.exit(1);
-      }
-    } catch (error) {
-      DR.logger.error(`Failed to build and publish: ${String(error)}`);
-      process.exit(1);
-    }
-  });
-
-// Local package installation commands
-program
-  .command('local-install')
-  .description(
-    'Installs a package from the local registry and sets up automatic updates.'
-  )
-  .argument('<packageName>', 'The name of the package to install locally.')
-  .action(async (packageName: string) => {
-    const installService = new LocalPackageInstallService();
-
-    try {
-      await installService.installLocalPackage(packageName);
-    } catch (error) {
-      DR.logger.error(`Failed to install local package: ${String(error)}`);
-      process.exit(1);
-    }
-  });
-
-program
-  .command('local-uninstall')
-  .description(
-    'Removes a package from local watching and installs the production version.'
-  )
-  .argument('<packageName>', 'The name of the package to uninstall locally.')
-  .action(async (packageName: string) => {
-    const installService = new LocalPackageInstallService();
-
-    try {
-      await installService.uninstallLocalPackage(packageName);
-    } catch (error) {
-      DR.logger.error(`Failed to uninstall local package: ${String(error)}`);
-      process.exit(1);
-    }
-  });
-
-program
-  .command('local-list')
-  .description(
-    'Lists all locally installed packages that are being watched for updates.'
-  )
-  .action(async () => {
-    const installService = new LocalPackageInstallService();
-    const watchedPackages = installService.getWatchedPackages();
-
-    if (watchedPackages.length === 0) {
-      DR.logger.info(
-        'No packages are currently being watched for local updates.'
-      );
-    } else {
-      DR.logger.info('Locally watched packages:');
-      watchedPackages.forEach((pkg) => {
-        DR.logger.info(`  - ${pkg}`);
-      });
-    }
-  });
-
-program
-  .command('local-watch')
-  .description('Starts watching for updates to locally installed packages.')
-  .action(async () => {
-    const installService = new LocalPackageInstallService();
-
-    try {
-      // This would typically be handled automatically by local-install,
-      // but this command can be used to restart watching if needed
-      DR.logger.info('Watching for local package updates...');
-
-      process.on('SIGINT', async () => {
-        DR.logger.info('Received SIGINT, stopping watcher...');
-        await installService.stopWatching();
-        process.exit(0);
-      });
-
-      process.on('SIGTERM', async () => {
-        DR.logger.info('Received SIGTERM, stopping watcher...');
-        await installService.stopWatching();
-        process.exit(0);
-      });
-
-      // Keep the process alive
-      await new Promise(() => {});
-    } catch (error) {
-      DR.logger.error(`Failed to start watching: ${String(error)}`);
       process.exit(1);
     }
   });

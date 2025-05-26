@@ -25,16 +25,16 @@ export class LocalPackageInstallService {
     try {
       // Get the latest version from the local store
       const store = await LocalPackageStoreService.getStore();
-      const localVersion = store[packageName];
+      const packageEntry = store.packages[packageName];
 
-      if (!localVersion) {
+      if (!packageEntry) {
         throw new Error(
           `Package ${packageName} not found in local store. Make sure it's being watched and published.`
         );
       }
 
       DR.logger.info(
-        `Installing ${packageName}@${localVersion} from local registry...`
+        `Installing ${packageName}@${packageEntry.currentVersion} from local registry...`
       );
 
       // Install the specific version from the local registry
@@ -42,7 +42,7 @@ export class LocalPackageInstallService {
         'npm',
         [
           'install',
-          `${packageName}@${localVersion}`,
+          `${packageName}@${packageEntry.currentVersion}`,
           '--registry',
           registryUrl
         ],
@@ -59,7 +59,7 @@ export class LocalPackageInstallService {
         await this.startWatchingStore();
       }
 
-      DR.logger.info(`Successfully installed ${packageName}@${localVersion}`);
+      DR.logger.info(`Successfully installed ${packageName}@${packageEntry}`);
     } catch (error) {
       DR.logger.error(
         `Failed to install local package ${packageName}: ${String(error)}`
@@ -126,19 +126,19 @@ export class LocalPackageInstallService {
     let hasChanges = false;
 
     for (const packageName of packageNames) {
-      const localVersion = store[packageName];
+      const packageEntry = store.packages[packageName];
 
-      if (!localVersion) {
+      if (!packageEntry) {
         DR.logger.warn(`Local version not found for ${packageName}, skipping`);
         continue;
       }
 
       // Update in dependencies
       if (packageJson.dependencies && packageJson.dependencies[packageName]) {
-        packageJson.dependencies[packageName] = localVersion;
+        packageJson.dependencies[packageName] = packageEntry.currentVersion;
         hasChanges = true;
         DR.logger.info(
-          `Updated ${packageName} to ${localVersion} in dependencies`
+          `Updated ${packageName} to ${packageEntry.currentVersion} in dependencies`
         );
       }
 
@@ -147,10 +147,10 @@ export class LocalPackageInstallService {
         packageJson.devDependencies &&
         packageJson.devDependencies[packageName]
       ) {
-        packageJson.devDependencies[packageName] = localVersion;
+        packageJson.devDependencies[packageName] = packageEntry.currentVersion;
         hasChanges = true;
         DR.logger.info(
-          `Updated ${packageName} to ${localVersion} in devDependencies`
+          `Updated ${packageName} to ${packageEntry.currentVersion} in devDependencies`
         );
       }
 
@@ -159,10 +159,10 @@ export class LocalPackageInstallService {
         packageJson.peerDependencies &&
         packageJson.peerDependencies[packageName]
       ) {
-        packageJson.peerDependencies[packageName] = localVersion;
+        packageJson.peerDependencies[packageName] = packageEntry.currentVersion;
         hasChanges = true;
         DR.logger.info(
-          `Updated ${packageName} to ${localVersion} in peerDependencies`
+          `Updated ${packageName} to ${packageEntry.currentVersion} in peerDependencies`
         );
       }
     }
@@ -224,7 +224,7 @@ export class LocalPackageInstallService {
     const store = await LocalPackageStoreService.getStore();
 
     for (const packageName of this.watchedPackages) {
-      const newVersion = store[packageName];
+      const newVersion = store.packages[packageName]?.currentVersion;
 
       if (newVersion) {
         try {

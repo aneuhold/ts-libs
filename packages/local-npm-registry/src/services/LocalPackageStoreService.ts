@@ -4,10 +4,24 @@ import path from 'path';
 import { ConfigService } from './ConfigService.js';
 
 /**
+ * Defines the structure for a package entry in the local store.
+ */
+export type PackageEntry = {
+  /** The original version from package.json before timestamp modifications */
+  originalVersion: string;
+  /** The current version with timestamp suffix */
+  currentVersion: string;
+  /** List of absolute paths to projects that subscribe to this package */
+  subscribers: string[];
+};
+
+/**
  * Defines the structure for the local package store.
  */
 export type LocalPackageStore = {
-  [packageName: string]: string; // package name -> version
+  packages: {
+    [packageName: string]: PackageEntry | undefined;
+  };
 };
 
 const STORE_FILE_NAME = '.local-package-store.json';
@@ -33,28 +47,136 @@ export class LocalPackageStoreService {
       const storeFilePath = await this.getStoreFilePath();
       const fileExists = await fs.pathExists(storeFilePath);
       if (!fileExists) {
-        return {};
+        return { packages: {} };
       }
       const store = (await fs.readJson(storeFilePath)) as LocalPackageStore;
+      // Ensure the store has the correct structure for backwards compatibility
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+      if (typeof store.packages !== 'object' || store.packages === null) {
+        store.packages = {};
+      }
       return store;
     } catch (error) {
       DR.logger.error(`Error reading local package store: ${String(error)}`);
-      return {}; // Return empty store on error
+      return { packages: {} }; // Return empty store on error
     }
+  }
+
+  /**
+   * Updates a package entry in the store.
+   *
+   * @param packageName - Name of the package to update
+   * @param entry - Package entry data to store
+   */
+  static async updatePackageEntry(
+    packageName: string,
+    entry: PackageEntry
+  ): Promise<void> {
+    const store = await this.getStore();
+    store.packages[packageName] = entry;
+    await this.writeStore(store);
+  }
+
+  /**
+   * Gets a package entry from the store.
+   *
+   * @param packageName - Name of the package to retrieve
+   */
+  static async getPackageEntry(
+    packageName: string
+  ): Promise<PackageEntry | null> {
+    const store = await this.getStore();
+    return store.packages[packageName] ?? null;
+  }
+
+  /**
+   * Removes a package from the store.
+   *
+   * @param packageName - Name of the package to remove
+   */
+  static async removePackage(packageName: string): Promise<void> {
+    const store = await this.getStore();
+    // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+    delete store.packages[packageName];
+    await this.writeStore(store);
+  }
+
+  /**
+   * Adds a subscriber to a package.
+   *
+   * @param packageName - Name of the package to subscribe to
+   * @param projectPath - Absolute path to the project directory
+   */
+  static async addSubscriber(
+    packageName: string,
+    projectPath: string
+  ): Promise<void> {
+    const store = await this.getStore();
+    const entry = store.packages[packageName];
+    if (entry && !entry.subscribers.includes(projectPath)) {
+      entry.subscribers.push(projectPath);
+      await this.writeStore(store);
+    }
+  }
+
+  /**
+   * Removes a subscriber from a package.
+   *
+   * @param packageName - Name of the package to unsubscribe from
+   * @param projectPath - Absolute path to the project directory
+   */
+  static async removeSubscriber(
+    packageName: string,
+    projectPath: string
+  ): Promise<void> {
+    const store = await this.getStore();
+    const entry = store.packages[packageName];
+    if (entry) {
+      entry.subscribers = entry.subscribers.filter(
+        (sub) => sub !== projectPath
+      );
+      await this.writeStore(store);
+    }
+  }
+
+  /**
+   * Gets all packages that a project is subscribed to.
+   *
+   * @param projectPath - Absolute path to the project directory
+   */
+  static async getSubscribedPackages(projectPath: string): Promise<string[]> {
+    const store = await this.getStore();
+    return Object.keys(store.packages).filter((packageName) =>
+      store.packages[packageName]?.subscribers.includes(projectPath)
+    );
   }
 
   /**
    * Updates the version of a package in the store and writes it to the file system.
    *
-   * @param packageName - The name of the package to update.
-   * @param version - The new version of the package.
+   * @param packageName - Name of the package to update
+   * @param version - Version to set for the package
+   * @deprecated Use updatePackageEntry instead
    */
   static async updatePackageVersion(
     packageName: string,
     version: string
   ): Promise<void> {
     const store = await this.getStore();
-    store[packageName] = version;
+    // Legacy support - this method is deprecated
+    const existingEntry = store.packages[packageName];
+    if (existingEntry) {
+      store.packages[packageName] = {
+        ...existingEntry,
+        currentVersion: version
+      };
+    } else {
+      store.packages[packageName] = {
+        originalVersion: version,
+        currentVersion: version,
+        subscribers: []
+      };
+    }
     await this.writeStore(store);
   }
 
