@@ -31,9 +31,9 @@ inputs:
 runs:
   using: 'composite'
   steps:
-    - name: Run build for ${{ inputs.package-name }}
+    - name: Build dependencies and ${{ inputs.package-name }}
       shell: bash
-      run: pnpm --filter ${{ inputs.package-name }} build
+      run: pnpm --filter ${{ inputs.package-name }}... build
 
     - name: Run tests for ${{ inputs.package-name }}
       if: inputs.skip-tests != 'true'
