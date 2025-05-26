@@ -41,7 +41,7 @@
     "fs-extra": "^11.2.0"
   },
   "devDependencies": {
-    "@aneuhold/main-scripts": "^2.1.5",
+    "@aneuhold/main-scripts": "^2.1.6",
     "@types/fs-extra": "^11.0.4",
     "@types/jest": "^29.5.14",
     "@types/node": "^22.15.3",

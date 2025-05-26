@@ -55,7 +55,7 @@
     "mongodb": "^6.8.0"
   },
   "devDependencies": {
-    "@aneuhold/main-scripts": "^2.1.5",
+    "@aneuhold/main-scripts": "^2.1.6",
     "@types/node": "^22.15.3",
     "@types/node-fetch": "^2.6.12",
     "dotenv": "^16.5.0",
