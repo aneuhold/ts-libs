@@ -1,4 +1,5 @@
 {
+  "$schema": "https://jsr.io/schema/config-file.v1.json",
   "name": "@aneuhold/core-ts-api-lib",
   "version": "WILL-BE-REPLACED",
   "exports": "./src/index.ts",
