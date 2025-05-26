@@ -1,7 +1,10 @@
+/* eslint-disable @typescript-eslint/no-misused-promises */
 import { DR } from '@aneuhold/core-ts-lib';
-import { execa, type ResultPromise } from 'execa';
+import { fork, type ChildProcess } from 'child_process';
+import { execa } from 'execa';
 import fs from 'fs-extra';
 import http from 'http';
+import { createRequire } from 'module';
 import path from 'path';
 import type { LocalNpmConfig } from '../types/LocalNpmConfig.js';
 import type { RegistryStatus } from '../types/WatchConfig.js';
@@ -12,7 +15,7 @@ import { ConfigService } from './ConfigService.js';
  */
 export class VerdaccioService {
   private static instance: VerdaccioService | null = null;
-  private verdaccioProcess: ResultPromise | null = null;
+  private verdaccioProcess: ChildProcess | null = null;
   private isStarting = false;
 
   /**
@@ -76,7 +79,7 @@ export class VerdaccioService {
   }
 
   /**
-   * Starts the Verdaccio registry using a child process.
+   * Starts the Verdaccio registry using a child process fork.
    */
   async start(): Promise<void> {
     if (this.isStarting) {
@@ -100,30 +103,8 @@ export class VerdaccioService {
 
       DR.logger.info(`Starting Verdaccio on port ${port}...`);
 
-      // Start Verdaccio as a child process
-      this.verdaccioProcess = execa(
-        'npx',
-        ['verdaccio', '--config', configPath, '--listen', `localhost:${port}`],
-        {
-          detached: true,
-          stdio: ['ignore', 'pipe', 'pipe'],
-          cleanup: false
-        }
-      );
-
-      // Don't wait for the process to complete, let it run in background
-      this.verdaccioProcess.catch((error: unknown) => {
-        const errorMessage =
-          error instanceof Error ? error.message : String(error);
-        DR.logger.error(`Verdaccio process error: ${errorMessage}`);
-        this.verdaccioProcess = null;
-      });
-
-      // Handle stdout/stderr asynchronously (don't await)
-      void this.handleProcessOutput();
-
-      // Wait for Verdaccio to be ready
-      await this.waitForRegistry(port, 30000);
+      // Start Verdaccio using fork
+      await this.startVerdaccioFork(configPath, port);
 
       DR.logger.info(
         `Verdaccio started successfully on http://localhost:${port}`
@@ -138,27 +119,100 @@ export class VerdaccioService {
   }
 
   /**
-   * Handles stdout and stderr output from the Verdaccio process.
+   * Starts Verdaccio using the fork method from child_process.
+   *
+   * @param configPath - Path to the Verdaccio configuration file
+   * @param port - Port to listen on
    */
-  private async handleProcessOutput(): Promise<void> {
-    if (!this.verdaccioProcess) {
-      return;
-    }
+  private async startVerdaccioFork(
+    configPath: string,
+    port: number
+  ): Promise<void> {
+    return new Promise((resolve, reject) => {
+      try {
+        // Create require function for ES modules
+        const require = createRequire(import.meta.url);
 
-    try {
-      // Handle stdout
-      for await (const line of this.verdaccioProcess) {
-        const lineStr = typeof line === 'string' ? line : line.toString();
-        if (lineStr.includes('Verdaccio')) {
-          DR.logger.info(`Registry: ${lineStr}`);
-        }
+        DR.logger.info('Creating Verdaccio fork...');
+
+        // Fork Verdaccio process with debugging enabled
+        const childFork = fork(
+          require.resolve('verdaccio/bin/verdaccio'),
+          ['--config', configPath, '--listen', `localhost:${port}`],
+          {
+            silent: false, // Allow stdio to see what's happening
+            detached: false, // Keep attached to parent
+            env: {
+              ...process.env,
+              DEBUG: 'verdaccio*' // Enable debug messages
+            }
+          }
+        );
+
+        DR.logger.info('Verdaccio fork created, waiting for startup...');
+
+        // Listen for the verdaccio_started message (primary method)
+        childFork.on('message', (msg: { verdaccio_started?: boolean }) => {
+          DR.logger.info(
+            `Received message from Verdaccio: ${JSON.stringify(msg)}`
+          );
+          if (msg.verdaccio_started) {
+            this.verdaccioProcess = childFork;
+            resolve();
+          }
+        });
+
+        // Handle errors
+        childFork.on('error', (err: Error) => {
+          DR.logger.error(`Verdaccio fork error: ${err.message}`);
+          reject(err);
+        });
+
+        // Handle disconnect
+        childFork.on('disconnect', () => {
+          DR.logger.error('Verdaccio fork disconnected');
+          if (!this.verdaccioProcess) {
+            reject(new Error('Verdaccio process disconnected before starting'));
+          }
+        });
+
+        // Handle process exit
+        childFork.on('exit', (code: number | null, signal: string | null) => {
+          DR.logger.info(
+            `Verdaccio process exited with code ${code} and signal ${signal}`
+          );
+          this.verdaccioProcess = null;
+        });
+
+        // Use HTTP endpoint check as primary method since messaging might not work
+        setTimeout(async () => {
+          if (!this.verdaccioProcess) {
+            DR.logger.info('Checking HTTP endpoint for startup...');
+            try {
+              // Wait for HTTP endpoint to be ready
+              await this.waitForRegistry(port, 8000);
+              this.verdaccioProcess = childFork;
+              DR.logger.info('Verdaccio detected as running via HTTP check');
+              resolve();
+            } catch (error) {
+              DR.logger.error(`HTTP check failed: ${String(error)}`);
+              childFork.kill('SIGTERM');
+              reject(
+                new Error(
+                  `Verdaccio failed to start within timeout: ${String(error)}`
+                )
+              );
+            }
+          }
+        }, 2000); // Start HTTP check after 2 seconds
+      } catch (error) {
+        reject(
+          error instanceof Error
+            ? error
+            : new Error(`Failed to start Verdaccio fork: ${String(error)}`)
+        );
       }
-    } catch (error) {
-      // Process ended or error occurred, which is normal
-      const errorMessage =
-        error instanceof Error ? error.message : String(error);
-      DR.logger.info(`Verdaccio output stream ended: ${errorMessage}`);
-    }
+    });
   }
 
   /**
@@ -185,9 +239,15 @@ export class VerdaccioService {
         }, 5000);
       });
 
-      const processEnd = this.verdaccioProcess.catch(() => {
-        // Process ended (normal)
-        this.verdaccioProcess = null;
+      const processEnd = new Promise<void>((resolve) => {
+        if (this.verdaccioProcess) {
+          this.verdaccioProcess.on('exit', () => {
+            this.verdaccioProcess = null;
+            resolve();
+          });
+        } else {
+          resolve();
+        }
       });
 
       await Promise.race([processEnd, timeout]);
@@ -302,13 +362,13 @@ export class VerdaccioService {
       server: {
         keepAliveTimeout: 60
       },
-      middlewares: {},
       logs: {
         type: 'stdout',
         format: 'pretty',
         level: 'info'
       },
       self_path: tempDir,
+      _debug: true, // Enable debug mode for fork messaging
       ...config.watch?.verdaccioConfig
     };
 

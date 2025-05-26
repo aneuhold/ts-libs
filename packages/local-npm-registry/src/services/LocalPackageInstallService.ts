@@ -1,8 +1,7 @@
-import { DR } from '@aneuhold/core-ts-lib';
+import { DR, PackageJson } from '@aneuhold/core-ts-lib';
 import { FSWatcher, watch } from 'chokidar';
 import { execa } from 'execa';
 import fs from 'fs-extra';
-import { PackageJson } from 'packages/core-ts-lib/lib/types/PackageJson.js';
 import path from 'path';
 import { ConfigService } from './ConfigService.js';
 import { LocalPackageStoreService } from './LocalPackageStoreService.js';
