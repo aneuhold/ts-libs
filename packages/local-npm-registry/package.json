@@ -1,0 +1,55 @@
+{
+  "name": "@aneuhold/local-npm-registry",
+  "author": "Anton G. Neuhold Jr.",
+  "license": "MIT",
+  "version": "0.0.1",
+  "description": "Manages local npm package installations and updates across your machine.",
+  "type": "module",
+  "scripts": {
+    "build": "rimraf lib && tsc -p tsconfig.build.json && tsx scripts/copyTsFiles.ts",
+    "lint": "eslint",
+    "test": "exit 0",
+    "jsr:validate": "tb pkg validateJsr",
+    "checkAll": "pnpm build && pnpm lint && pnpm test && pnpm jsr:validate",
+    "jsr:publish": "tb pkg publishJsr"
+  },
+  "main": "lib/index.js",
+  "bin": {
+    "local-npm": "lib/index.js"
+  },
+  "files": [
+    "lib",
+    "src"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/aneuhold/core-ts-lib.git"
+  },
+  "bugs": {
+    "url": "https://github.com/aneuhold/core-ts-lib/issues"
+  },
+  "homepage": "https://github.com/aneuhold/core-ts-lib#readme",
+  "keywords": [
+    "Scripting",
+    "Node.js"
+  ],
+  "dependencies": {
+    "@aneuhold/core-ts-lib": "*",
+    "commander": "^12.1.0",
+    "fs-extra": "^11.2.0"
+  },
+  "devDependencies": {
+    "@aneuhold/main-scripts": "*",
+    "@types/jest": "^29.5.14",
+    "@types/node": "^22.15.3",
+    "eslint": "^9.26.0",
+    "jest": "^29.7.*",
+    "jsr": "*",
+    "prettier": "^3.5.3",
+    "rimraf": "^6.0.1",
+    "ts-jest": "^29.3.2",
+    "tsx": "^4.19.4",
+    "typescript": "~5.8.3",
+    "@types/fs-extra": "^11.0.4"
+  }
+}

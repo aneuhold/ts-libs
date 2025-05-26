@@ -2,19 +2,19 @@
   "name": "@aneuhold/core-ts-api-lib",
   "author": "Anton G. Neuhold Jr.",
   "license": "MIT",
-  "version": "2.1.7",
+  "version": "2.1.8",
   "description": "A library for interacting with the backend and defining the backend API for personal projects.",
-  "packageManager": "yarn@4.6.0",
   "type": "module",
   "scripts": {
     "build": "rimraf lib && tsc --project tsconfig.build.json && tsx ./scripts/copyTsFiles.ts",
+    "watch": "tsc -w -p tsconfig.build.json",
     "lint": "eslint",
     "test": "vitest run",
     "jsr:validate": "tb pkg validateJsr",
-    "checkAll": "yarn build && yarn lint && yarn test && yarn jsr:validate",
+    "checkAll": "pnpm build && pnpm lint && pnpm test && pnpm jsr:validate",
     "jsr:publish": "tb pkg publishJsr",
-    "upgrade:core": "yarn up '@aneuhold/*'",
-    "upgrade:all": "yarn up"
+    "upgrade:core": "pnpm up '@aneuhold/*'",
+    "upgrade:all": "pnpm up"
   },
   "main": "lib/index.js",
   "module": "lib/index.js",
@@ -43,12 +43,11 @@
     "TypeScript"
   ],
   "dependencies": {
-    "@aneuhold/core-ts-db-lib": "^2.0.66",
-    "@aneuhold/core-ts-lib": "^2.1.1",
+    "@aneuhold/core-ts-db-lib": "*",
+    "@aneuhold/core-ts-lib": "*",
     "bson": "^6.2.0"
   },
   "devDependencies": {
-    "@aneuhold/eslint-config": "^1.0.89",
     "@aneuhold/main-scripts": "^2.0.13",
     "@types/node": "^22.15.3",
     "eslint": "^9.26.0",

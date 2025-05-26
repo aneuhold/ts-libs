@@ -2,18 +2,20 @@
   "name": "@aneuhold/core-ts-lib",
   "author": "Anton G. Neuhold Jr.",
   "license": "MIT",
-  "version": "2.1.3",
+  "version": "2.1.4",
   "description": "A core library for all of my TypeScript projects",
-  "packageManager": "yarn@4.6.0",
   "type": "module",
   "scripts": {
     "build": "rimraf lib && tsc --project tsconfig.build.json && tsx ./scripts/copyTsFiles.ts",
+    "watch": "tsc -w -p tsconfig.build.json",
     "lint": "eslint",
     "test": "jest",
     "jsr:validate": "tsx ./scripts/validateJsrPublish.ts",
-    "checkAll": "yarn build && yarn lint && yarn test && yarn jsr:validate",
+    "checkAll": "pnpm build && pnpm lint && pnpm test && pnpm jsr:validate",
     "jsr:publish": "tsx ./scripts/publishJsr.ts",
-    "upgrade:all": "yarn up"
+    "upgrade:all": "pnpm up",
+    "publish:local": "pnpm publish --registry http://localhost:4873 --access public --no-git-checks --force",
+    "unpublish:local": "npm unpublish --registry http://localhost:4873 --force"
   },
   "main": "lib/index.js",
   "module": "lib/index.js",
@@ -40,7 +42,6 @@
     "Node.js"
   ],
   "devDependencies": {
-    "@aneuhold/eslint-config": "^1.0.88",
     "@types/jest": "^29.5.14",
     "@types/node": "^22.15.3",
     "eslint": "^9.26.0",

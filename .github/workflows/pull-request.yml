@@ -1,0 +1,69 @@
+name: 'Pull Request Actions'
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  detect-changes:
+    name: 'Detect Changed Packages'
+    runs-on: ubuntu-latest
+    outputs:
+      changed-packages: ${{ steps.changes.outputs.packages }}
+      has-changes: ${{ steps.changes.outputs.has-changes }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js and pnpm
+        uses: ./.github/actions/setup-node-pnpm
+
+      - name: Detect changed packages
+        id: changes
+        run: ./scripts/package-utils.sh detect-changes-ci
+
+  version-check:
+    name: 'Check Version Bumps'
+    runs-on: ubuntu-latest
+    needs: detect-changes
+    if: needs.detect-changes.outputs.has-changes == 'true'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js and pnpm
+        uses: ./.github/actions/setup-node-pnpm
+
+      - name: Check version bumps for changed packages
+        run: ./scripts/package-utils.sh check-versions-ci "${{ needs.detect-changes.outputs.changed-packages }}"
+
+  test:
+    name: 'Test Changed Packages'
+    runs-on: ubuntu-latest
+    needs: [detect-changes, version-check]
+    if: needs.detect-changes.outputs.has-changes == 'true'
+    strategy:
+      matrix:
+        package: ${{ fromJson(needs.detect-changes.outputs.changed-packages) }}
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js and pnpm
+        uses: ./.github/actions/setup-node-pnpm
+
+      - name: Test and validate ${{ matrix.package }}
+        uses: ./.github/actions/package-test-validate
+        with:
+          package-name: ${{ matrix.package }}
+          npm-token: ${{ secrets.NPM_TOKEN }}
+          github-token: ${{ secrets.CONFIG_GITHUB_TOKEN }}

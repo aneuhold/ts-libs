@@ -1,0 +1,41 @@
+name: 'Package Build and Publish'
+description: 'Build and publish a package to JSR and NPM'
+
+inputs:
+  package-name:
+    description: 'Name of the package to build and publish'
+    required: true
+  npm-token:
+    description: 'NPM token for authentication'
+    required: true
+  skip-jsr:
+    description: 'Skip JSR publishing'
+    required: false
+    default: 'false'
+  skip-npm:
+    description: 'Skip NPM publishing'
+    required: false
+    default: 'false'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Build dependencies and ${{ inputs.package-name }}
+      shell: bash
+      run: pnpm --filter ${{ inputs.package-name }}... build
+
+    - name: Publish ${{ inputs.package-name }} to JSR
+      if: inputs.skip-jsr != 'true'
+      shell: bash
+      run: pnpm --filter ${{ inputs.package-name }} jsr:publish
+
+    - name: Add Auth Token for npm
+      if: inputs.skip-npm != 'true'
+      shell: bash
+      run: echo "//registry.npmjs.org/:_authToken=${{ inputs.npm-token }}" > ~/.npmrc
+
+    - name: Publish ${{ inputs.package-name }} to NPM
+      if: inputs.skip-npm != 'true'
+      shell: bash
+      working-directory: packages/${{ inputs.package-name }}
+      run: npm publish --access public

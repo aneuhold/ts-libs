@@ -2,9 +2,10 @@ import { exec, spawn } from 'child_process';
 import { access, readFile, writeFile } from 'fs/promises';
 import path from 'path';
 import { promisify } from 'util';
+import { JsonWithVersionProperty } from '../types/JsonWithVersionProperty.js';
+import { PackageJson } from '../types/PackageJson.js';
 import ErrorUtils from '../utils/ErrorUtils.js';
 import { DR } from './DependencyRegistry.js';
-import { JsonWithVersionProperty, PackageJson } from './DependencyService.js';
 import FileSystemService from './FileSystemService/FileSystemService.js';
 
 const execAsync = promisify(exec);

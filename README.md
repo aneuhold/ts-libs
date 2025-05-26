@@ -1,2 +1,46 @@
 # ts-libs
+
 Monrepo for TypeScript libraries that I work on
+
+## Notes
+
+- Verdaccio is used to proxy packages so they can be published locally and used as if they were published, without actually publishing them yet.
+
+## How it Works
+
+### Build / Watch System Requirements
+
+1. Watch & Local Publishing System
+
+   - Implement a watch command that rebuilds packages on file changes.
+   - Automatically publish updated packages to a local Verdaccio registry.
+     - On startup, the system should check if `verdaccio-memory` is running and start it if not.
+     - Published packages should use a versioning scheme that incorporates a timestamp (e.g., `1.2.3-timestamp`) or manage versions by unpublishing and republishing the same version to ensure updates are picked up.
+   - Support running the watch command for individual packages or all packages.
+   - Only the modified package should be rebuilt and re-published locally.
+   - Implement a system (potentially a new package like `@aneuhold/local-npm-registry`) to manage local package installations and updates:
+     - Maintain a local JSON file to act as a "store" for locally published package names and their versions.
+     - Provide a command (e.g., `local-install package-name`) that:
+       - Updates the `package.json` of the consuming project to use the locally published version.
+       - Sets up a watch process (e.g., using `nodemon`) on the local JSON store.
+       - When the store indicates a new version of a watched package, the consuming project should update its `package.json` and reinstall the package.
+   - The intended flow:
+     1. A change is made to a watched package.
+     2. The package is rebuilt and published to the local Verdaccio registry with an updated version.
+     3. The local JSON store is updated with the new version for that package.
+     4. Watch processes in consuming projects detect the change in the store.
+     5. Consuming projects update their `package.json` and reinstall the new version of the watched package.
+   - Do not worry about:
+     - Circular dependencies.
+     - Incremental rebuilds, unless it is easy to do so / comes along with the tooling used. Full rebuilds are acceptable.
+     - Testing as part of rebuilding.
+
+2. JSR Publishing System
+
+   - To be able to run `jsr:validate` and `jsr:publish` for any individual package, or all packages at once. The code for this command is found in [`PackageService`](packages/core-ts-lib/src/services/PackageService.ts). The biggest challenge at the moment is this, because JSR wants the actual set of TypeScript files in each package, along with a valid package.json. So no `workspace:` versions can be specified. They have to be replaced with actual versions first.
+   - JSR publishing only needs to be ran as a check. JSR never needs to be published locally, it only needs to be validated in CI and published via CI. It will not be part of the watch process in any way.
+
+3. Overall
+
+   - Build home-grown solutions without relying on monorepo frameworks
+   - Leverage existing tooling you've already created. For example, the code in `core-ts-lib` or `main-scripts`.

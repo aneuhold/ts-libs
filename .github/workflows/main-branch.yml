@@ -1,0 +1,65 @@
+name: 'Main Branch Actions'
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  detect-version-bumps:
+    name: 'Detect Version Bumps'
+    runs-on: ubuntu-latest
+    outputs:
+      packages-to-publish: ${{ steps.versions.outputs.packages }}
+      has-packages: ${{ steps.versions.outputs.has-packages }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js and pnpm
+        uses: ./.github/actions/setup-node-pnpm
+
+      - name: Detect packages with version bumps
+        id: versions
+        run: ./scripts/package-utils.sh detect-version-bumps-ci
+
+  publish:
+    name: 'Publish Packages'
+    runs-on: ubuntu-latest
+    needs: detect-version-bumps
+    if: needs.detect-version-bumps.outputs.has-packages == 'true'
+    strategy:
+      matrix:
+        package: ${{ fromJson(needs.detect-version-bumps.outputs.packages-to-publish) }}
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js and pnpm
+        uses: ./.github/actions/setup-node-pnpm
+
+      - name: Build and publish ${{ matrix.package }}
+        uses: ./.github/actions/package-build-publish
+        with:
+          package-name: ${{ matrix.package }}
+          npm-token: ${{ secrets.NPM_TOKEN }}
+
+  summary:
+    name: 'Publish Summary'
+    runs-on: ubuntu-latest
+    needs: [detect-version-bumps, publish]
+    if: always()
+    steps:
+      - name: Print summary
+        run: |
+          if [ "${{ needs.detect-version-bumps.outputs.has-packages }}" == "true" ]; then
+            echo "✅ Published packages: ${{ needs.detect-version-bumps.outputs.packages-to-publish }}"
+          else
+            echo "ℹ️  No packages had version bumps, nothing to publish"
+          fi

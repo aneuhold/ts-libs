@@ -1,0 +1,10 @@
+packages:
+  # all packages in subdirs of packages/
+  - 'packages/*'
+
+# Links workspace packages together, so that they can be used as if they were
+# installed from the npm registry with the version set locally.
+linkWorkspacePackages: true
+# Makes it so that workspace packages are preferred instead of the ones from
+# the npm registry, even if the registry has a newer version.
+preferWorkspacePackages: true
