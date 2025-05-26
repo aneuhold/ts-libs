@@ -123,6 +123,8 @@ export default class PackageService {
       // Get all packages one directory up to resolve local wildcard dependencies
       const childPackages = await DependencyService.getChildPackageJsons('../');
 
+      console.log('Child packages found:', childPackages);
+
       // Helper function to resolve dependencies
       const resolveDependencies = (
         deps: Record<string, string> | undefined
@@ -211,6 +213,14 @@ export default class PackageService {
   /**
    * Replaces imports of monorepo dependencies with npm: specifiers in all TypeScript files.
    * This is needed for JSR compatibility when publishing packages that depend on other packages in the monorepo.
+   *
+   * This helps prevent the following error that comes up as of 5/26/2025:
+   *
+   * ```sh
+   * error: Failed to publish @aneuhold/be-ts-lib@2.0.67
+   * Caused by: Failed to publish @aneuhold/be-ts-lib at 2.0.67: failed to build module graph: Module not found "file:///src/services/@aneuhold/core-ts-lib".
+   *      at file:///src/services/GitHubService.ts:1:20
+   * ```
    */
   private static async replaceMonorepoImportsWithNpmSpecifiers(): Promise<void> {
     const rootDir = process.cwd();
