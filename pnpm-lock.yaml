@@ -9,8 +9,8 @@ importers:
   .:
     devDependencies:
       '@aneuhold/eslint-config':
-        specifier: ^1.0.99
-        version: 1.0.99(@types/eslint@9.6.1)(chokidar@3.6.0)(eslint@9.27.0(jiti@2.4.2))(prettier@3.5.3)(svelte@5.28.2)(typescript@5.8.3)
+        specifier: ^1.0.100
+        version: 1.0.100(@types/eslint@9.6.1)(chokidar@3.6.0)(eslint@9.27.0(jiti@2.4.2))(prettier@3.5.3)(svelte@5.28.2)(typescript@5.8.3)
       '@types/node':
         specifier: ^22.10.5
         version: 22.15.21
@@ -311,8 +311,8 @@ packages:
   '@aneuhold/core-ts-lib@2.1.9':
     resolution: {integrity: sha512-HK89+GgSTjjSLP+Nl/TbCwymzHhAgRaVK+tpWTfdbS5NCmg6mOLyJSpksgwy3a7+DNw49Sn/6/JnR1z21clySg==}
 
-  '@aneuhold/eslint-config@1.0.99':
-    resolution: {integrity: sha512-D4MWKZeOXMXoTj3VtUH4OCYYTPpFlX7HDc0CcTaW/VhKrG43sM22IGWUkxnpsij7Gdpo2JBsnpzq/g4o/MelvQ==}
+  '@aneuhold/eslint-config@1.0.100':
+    resolution: {integrity: sha512-M0Nzx99NTAQPRiJE18af2gDeLBog79vmYEvoDgH7nlEft3NxLp5blV/JjyKWaOmErYyifyK1VBw/gSyEEfOa5A==}
     peerDependencies:
       eslint: '>= 9.27.0'
 
@@ -4511,7 +4511,7 @@ snapshots:
 
   '@aneuhold/core-ts-lib@2.1.9': {}
 
-  '@aneuhold/eslint-config@1.0.99(@types/eslint@9.6.1)(chokidar@3.6.0)(eslint@9.27.0(jiti@2.4.2))(prettier@3.5.3)(svelte@5.28.2)(typescript@5.8.3)':
+  '@aneuhold/eslint-config@1.0.100(@types/eslint@9.6.1)(chokidar@3.6.0)(eslint@9.27.0(jiti@2.4.2))(prettier@3.5.3)(svelte@5.28.2)(typescript@5.8.3)':
     dependencies:
       '@eslint/js': 9.27.0
       '@stylistic/eslint-plugin-js': 3.1.0(eslint@9.27.0(jiti@2.4.2))

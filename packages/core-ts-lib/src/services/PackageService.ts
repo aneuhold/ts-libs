@@ -110,7 +110,8 @@ export default class PackageService {
 
   /**
    * Resolves wildcard dependencies in package.json by replacing them with actual
-   * version constraints (e.g., "*1.2.3") for JSR compatibility.
+   * version constraints (e.g., "*1.2.3") for JSR compatibility. This will
+   * write the modified package.json back to disk.
    *
    * @param packageJsonData The package.json data to modify
    * @param packageJsonPath The path to the package.json file
@@ -240,8 +241,10 @@ export default class PackageService {
       return;
     }
 
-    // Create a map of package names to their npm specifiers with version constraints
+    // Create maps for package specifiers and pre-compiled regex patterns
     const packageSpecifierMap = new Map<string, string>();
+    const packageRegexMap = new Map<string, RegExp>();
+
     for (const [packageName, packageInfo] of Object.entries(childPackages)) {
       const version = packageInfo.packageJsonContents.version;
       // The below HAS to be a carrot (^) to ensure that the version is compatible with JSR.
@@ -257,7 +260,15 @@ export default class PackageService {
       //      ~
       // at file:///Users/aneuhold/Development/GithubRepos/ts-libs/packages/be-ts-lib/src/services/ConfigService/ConfigService.ts:1:20
       // ```
-      packageSpecifierMap.set(packageName, `npm:${packageName}@^${version}`);
+      const npmSpecifier = `npm:${packageName}@^${version}`;
+      packageSpecifierMap.set(packageName, npmSpecifier);
+
+      // Pre-compile regex pattern for this package
+      const importRegex = new RegExp(
+        `(import\\s+[^;]+from\\s+['"])${packageName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(['"])`,
+        'g'
+      );
+      packageRegexMap.set(packageName, importRegex);
     }
 
     // Get all TypeScript files in the src directory
@@ -281,11 +292,13 @@ export default class PackageService {
         let fileReplacements = 0;
 
         for (const [packageName, npmSpecifier] of packageSpecifierMap) {
-          // Use a more precise regex to match import statements
-          const importRegex = new RegExp(
-            `(import\\s+[^;]+from\\s+['"])${packageName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(['"])`,
-            'g'
-          );
+          // Use the pre-compiled regex pattern
+          const importRegex = packageRegexMap.get(packageName);
+          if (!importRegex) continue;
+
+          // Reset the regex lastIndex to ensure it starts from the beginning
+          importRegex.lastIndex = 0;
+
           const matches = newContent.match(importRegex);
 
           if (matches) {
