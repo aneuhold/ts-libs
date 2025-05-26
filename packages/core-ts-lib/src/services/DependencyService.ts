@@ -142,10 +142,17 @@ export default class DependencyService {
   /**
    * Retrieves all package.json files from subdirectories, excluding specified folders
    * and the root package.json.
+   *
+   * @param searchDirectory The directory to start searching from. Can be relative
+   * (e.g., "../") or absolute. Defaults to current working directory.
    */
-  private static async getChildPackageJsons(): Promise<PackageJsonMap> {
+  static async getChildPackageJsons(
+    searchDirectory?: string
+  ): Promise<PackageJsonMap> {
     const childPackages: PackageJsonMap = {};
-    const baseDir = process.cwd();
+    const baseDir = searchDirectory
+      ? path.resolve(process.cwd(), searchDirectory)
+      : process.cwd();
     const filePaths = await FileSystemService.getAllFilePathsRelative(baseDir);
 
     // Filter for package.json files in subdirectories

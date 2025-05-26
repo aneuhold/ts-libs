@@ -36,10 +36,12 @@ describe('FileSystemService', () => {
       );
 
       // Assert
-      const expectedContents =
-        await FileSystemService.getAllFilePathsRelative(sourceFolderPath);
-      const actualContents =
-        await FileSystemService.getAllFilePathsRelative(targetFolderPath);
+      const expectedContents = (
+        await FileSystemService.getAllFilePathsRelative(sourceFolderPath)
+      ).sort();
+      const actualContents = (
+        await FileSystemService.getAllFilePathsRelative(targetFolderPath)
+      ).sort();
       expect(actualContents).toEqual(expectedContents);
     });
 
@@ -91,6 +93,12 @@ describe('FileSystemService', () => {
   });
 });
 
+/**
+ * Creates test files and folders based on the provided structure
+ *
+ * @param folderPath The path where the files and folders should be created
+ * @param fileStructure An object representing the file structure to create
+ */
 async function createTestFiles(folderPath: string, fileStructure: object) {
   await FileSystemService.checkOrCreateFolder(folderPath);
 
@@ -106,12 +114,20 @@ async function createTestFiles(folderPath: string, fileStructure: object) {
   );
 }
 
+/**
+ * Creates a test folder within the main test directory
+ *
+ * @param folderName The name of the folder to create
+ */
 async function createTestFolder(folderName: string): Promise<string> {
   const testFolderPath = path.join(TEST_FOLDER_NAME, folderName);
   await FileSystemService.checkOrCreateFolder(testFolderPath);
   return testFolderPath;
 }
 
+/**
+ * Deletes the main test folder and all its contents
+ */
 async function deleteTestFolder(): Promise<void> {
   await FileSystemService.deleteFolder(TEST_FOLDER_NAME);
 }

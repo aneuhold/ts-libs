@@ -13,7 +13,7 @@
     "jsr:validate": "tb pkg validateJsr",
     "checkAll": "pnpm build && pnpm lint && pnpm test && pnpm jsr:validate",
     "jsr:publish": "tb pkg publishJsr",
-    "upgrade:core": "pnpm up '@aneuhold/*'",
+    "upgrade:core": "pnpm update '@aneuhold/main-scripts' --latest",
     "upgrade:all": "pnpm up"
   },
   "main": "lib/index.js",
@@ -47,7 +47,7 @@
     "bson": "^6.2.0"
   },
   "devDependencies": {
-    "@aneuhold/main-scripts": "^2.0.13",
+    "@aneuhold/main-scripts": "^2.1.6",
     "@types/node": "^22.15.3",
     "eslint": "^9.26.0",
     "jsr": "^0.13.4",
