@@ -8,12 +8,12 @@
     "build": "pnpm -r --stream build",
     "watch": "tsx scripts/watchAll.ts",
     "test": "pnpm -r --stream test",
-    "upgrade:core": "pnpm update '@aneuhold/*' --latest",
+    "upgrade:core": "pnpm update '@aneuhold/*' --latest && pnpm -r --stream upgrade:core",
     "detectChanges": "./scripts/package-utils.sh detect-changes",
     "bumpVersions": "./scripts/package-utils.sh bump-versions"
   },
   "devDependencies": {
-    "@aneuhold/eslint-config": "^1.0.94",
+    "@aneuhold/eslint-config": "^1.0.99",
     "@types/node": "^22.10.5",
     "concurrently": "^9.1.2",
     "nodemon": "^3.1.10",
