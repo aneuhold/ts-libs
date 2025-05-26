@@ -47,7 +47,7 @@ export default class PackageService {
     await PackageService.replaceMonorepoImportsWithNpmSpecifiers();
     await PackageService.updateJsrFromPackageJson();
     const result = await PackageService.publishJsr();
-    await PackageService.revertGitChanges();
+    // await PackageService.revertGitChanges();
 
     if (!result) {
       process.exit(1);
@@ -135,7 +135,7 @@ export default class PackageService {
           if (depVersion === '*' && depName in childPackages) {
             // Replace wildcard with "*" + actual version from the monorepo
             deps[depName] =
-              `*${childPackages[depName].packageJsonContents.version}`;
+              `npm:*${childPackages[depName].packageJsonContents.version}`;
           }
         }
       };
