@@ -1,24 +1,11 @@
 #!/usr/bin/env node --no-warnings
 
-// Export types and services for use as a library
-export { CommandService } from './services/CommandService.js';
-export { ConfigService } from './services/ConfigService.js';
-export {
-  LocalPackageStoreService,
-  type LocalPackageStore,
-  type PackageEntry
-} from './services/LocalPackageStoreService.js';
-export { VerdaccioService } from './services/VerdaccioService.js';
-export type { LocalNpmConfig } from './types/LocalNpmConfig.js';
-export type { RegistryStatus, WatchConfig } from './types/WatchConfig.js';
-
-// CLI implementation only runs when executed directly
 import { DR } from '@aneuhold/core-ts-lib';
 import { program } from 'commander';
 import { CommandService } from './services/CommandService.js';
 import { ConfigService } from './services/ConfigService.js';
 import { LocalPackageStoreService } from './services/LocalPackageStoreService.js';
-import { VerdaccioService } from './services/VerdaccioService.js';
+
 program
   .name('local-npm')
   .description(
@@ -169,46 +156,6 @@ program
       DR.logger.info(`Configuration file created at: ${configPath}`);
     } catch (error) {
       DR.logger.error(`Failed to create configuration file: ${String(error)}`);
-      process.exit(1);
-    }
-  });
-
-// Verdaccio registry management commands
-program
-  .command('registry-status')
-  .description('Shows the status of the local Verdaccio registry.')
-  .action(async () => {
-    try {
-      const status = await VerdaccioService.getStatus();
-
-      DR.logger.info('Registry Status:');
-      DR.logger.info(JSON.stringify(status, null, 2));
-    } catch (error) {
-      DR.logger.error(`Failed to get registry status: ${String(error)}`);
-      process.exit(1);
-    }
-  });
-
-program
-  .command('registry-start')
-  .description('Starts the local Verdaccio registry.')
-  .action(async () => {
-    try {
-      await VerdaccioService.start();
-    } catch (error) {
-      DR.logger.error(`Failed to start registry: ${String(error)}`);
-      process.exit(1);
-    }
-  });
-
-program
-  .command('registry-stop')
-  .description('Stops the local Verdaccio registry.')
-  .action(() => {
-    try {
-      VerdaccioService.stop();
-    } catch (error) {
-      DR.logger.error(`Failed to stop registry: ${String(error)}`);
       process.exit(1);
     }
   });

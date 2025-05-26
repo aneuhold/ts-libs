@@ -59,7 +59,9 @@ export class LocalPackageInstallService {
         await this.startWatchingStore();
       }
 
-      DR.logger.info(`Successfully installed ${packageName}@${packageEntry}`);
+      DR.logger.info(
+        `Successfully installed ${packageName}@${packageEntry.currentVersion}`
+      );
     } catch (error) {
       DR.logger.error(
         `Failed to install local package ${packageName}: ${String(error)}`
@@ -201,15 +203,17 @@ export class LocalPackageInstallService {
       persistent: true
     });
 
-    this.storeWatcher.on('change', async () => {
-      try {
-        DR.logger.info(
-          'Local package store updated, checking for package updates...'
-        );
-        await this.handleStoreUpdate();
-      } catch (error) {
-        DR.logger.error(`Error handling store update: ${String(error)}`);
-      }
+    this.storeWatcher.on('change', () => {
+      void (async () => {
+        try {
+          DR.logger.info(
+            'Local package store updated, checking for package updates...'
+          );
+          await this.handleStoreUpdate();
+        } catch (error) {
+          DR.logger.error(`Error handling store update: ${String(error)}`);
+        }
+      })();
     });
 
     DR.logger.info('Started watching local package store for updates');

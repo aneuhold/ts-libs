@@ -5,7 +5,6 @@ import http from 'http';
 import path from 'path';
 import { runServer } from 'verdaccio';
 import type { LocalNpmConfig } from '../types/LocalNpmConfig.js';
-import type { RegistryStatus } from '../types/WatchConfig.js';
 import { ConfigService } from './ConfigService.js';
 
 /**
@@ -14,21 +13,6 @@ import { ConfigService } from './ConfigService.js';
 export class VerdaccioService {
   private static verdaccioServer: http.Server | null = null;
   private static isStarting = false;
-
-  /**
-   * Gets the status of the Verdaccio registry.
-   */
-  static async getStatus(): Promise<RegistryStatus> {
-    const config = await ConfigService.loadConfig();
-    const port = config.watch?.registryPort || 4873;
-    const url = config.watch?.registryUrl || `http://localhost:${port}`;
-
-    return {
-      port,
-      url,
-      isRunning: this.verdaccioServer !== null
-    };
-  }
 
   /**
    * Starts the Verdaccio registry server.
@@ -69,54 +53,6 @@ export class VerdaccioService {
   }
 
   /**
-   * Starts Verdaccio using the runServer function.
-   * Verdaccio will automatically stop when the process exits.
-   *
-   * @param config - The local npm configuration
-   */
-  private static async startVerdaccio(config: LocalNpmConfig): Promise<void> {
-    return new Promise((resolve, reject) => {
-      (async () => {
-        try {
-          DR.logger.info('Starting Verdaccio server...');
-
-          const verdaccioServer = (await runServer(
-            VerdaccioService.createVerdaccioConfig(config) as unknown as string
-          )) as http.Server;
-
-          VerdaccioService.verdaccioServer = verdaccioServer;
-
-          DR.logger.info('Verdaccio server created, waiting for startup...');
-
-          verdaccioServer.on('verdaccio_started', () => {
-            DR.logger.info(`Verdaccio server started`);
-            resolve();
-          });
-
-          verdaccioServer.on('error', (error) => {
-            reject(error);
-          });
-        } catch (error) {
-          reject(
-            error instanceof Error
-              ? error
-              : new Error(`Failed to start Verdaccio server: ${String(error)}`)
-          );
-        }
-      })();
-    });
-  }
-
-  /**
-   * Verdaccio will automatically stop when the process exits.
-   * No manual stop method is needed.
-   */
-  static stop(): void {
-    DR.logger.info('Verdaccio will stop automatically when the process exits');
-    VerdaccioService.verdaccioServer = null;
-  }
-
-  /**
    * Publishes a package to the local Verdaccio registry.
    * Note: Verdaccio must be started first using start() method.
    *
@@ -146,6 +82,45 @@ export class VerdaccioService {
       DR.logger.error(`Failed to publish package: ${String(error)}`);
       throw error;
     }
+  }
+
+  /**
+   * Starts Verdaccio using the runServer function.
+   * Verdaccio will automatically stop when the process exits.
+   *
+   * @param config - The local npm configuration
+   */
+  private static async startVerdaccio(config: LocalNpmConfig): Promise<void> {
+    return new Promise((resolve, reject) => {
+      void (async () => {
+        try {
+          DR.logger.info('Starting Verdaccio server...');
+
+          const verdaccioServer = (await runServer(
+            VerdaccioService.createVerdaccioConfig(config) as unknown as string
+          )) as http.Server;
+
+          VerdaccioService.verdaccioServer = verdaccioServer;
+
+          DR.logger.info('Verdaccio server created, waiting for startup...');
+
+          verdaccioServer.on('verdaccio_started', () => {
+            DR.logger.info(`Verdaccio server started`);
+            resolve();
+          });
+
+          verdaccioServer.on('error', (error) => {
+            reject(error);
+          });
+        } catch (error) {
+          reject(
+            error instanceof Error
+              ? error
+              : new Error(`Failed to start Verdaccio server: ${String(error)}`)
+          );
+        }
+      })();
+    });
   }
 
   /**
