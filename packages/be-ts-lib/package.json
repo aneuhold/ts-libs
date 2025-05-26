@@ -2,7 +2,7 @@
   "name": "@aneuhold/be-ts-lib",
   "author": "Anton G. Neuhold Jr.",
   "license": "MIT",
-  "version": "2.0.65",
+  "version": "2.0.66",
   "description": "A backend TypeScript library used for common functionality in personal backend projects.",
   "type": "module",
   "scripts": {
