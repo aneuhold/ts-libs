@@ -47,7 +47,7 @@ export default class PackageService {
     await PackageService.replaceMonorepoImportsWithNpmSpecifiers();
     await PackageService.updateJsrFromPackageJson();
     const result = await PackageService.publishJsr();
-    // await PackageService.revertGitChanges();
+    await PackageService.revertGitChanges();
 
     if (!result) {
       process.exit(1);
@@ -135,7 +135,7 @@ export default class PackageService {
           if (depVersion === '*' && depName in childPackages) {
             // Replace wildcard with "*" + actual version from the monorepo
             deps[depName] =
-              `npm:*${childPackages[depName].packageJsonContents.version}`;
+              `*${childPackages[depName].packageJsonContents.version}`;
           }
         }
       };
@@ -235,11 +235,18 @@ export default class PackageService {
 
     // Get all packages in the monorepo to know which ones to replace
     const childPackages = await DependencyService.getChildPackageJsons('../');
-    const monorepoPackageNames = Object.keys(childPackages);
+    const packageNames = Object.keys(childPackages);
 
-    if (monorepoPackageNames.length === 0) {
+    if (packageNames.length === 0) {
       DR.logger.info('No monorepo packages found to replace.');
       return;
+    }
+
+    // Create a map of package names to their npm specifiers with version constraints
+    const packageSpecifierMap = new Map<string, string>();
+    for (const [packageName, packageInfo] of Object.entries(childPackages)) {
+      const version = packageInfo.packageJsonContents.version;
+      packageSpecifierMap.set(packageName, `npm:${packageName}@*${version}`);
     }
 
     // Get all TypeScript files in the src directory
@@ -262,7 +269,7 @@ export default class PackageService {
         let newContent = content;
         let fileReplacements = 0;
 
-        for (const packageName of monorepoPackageNames) {
+        for (const [packageName, npmSpecifier] of packageSpecifierMap) {
           // Use a more precise regex to match import statements
           const importRegex = new RegExp(
             `(import\\s+[^;]+from\\s+['"])${packageName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(['"])`,
@@ -271,11 +278,11 @@ export default class PackageService {
           const matches = newContent.match(importRegex);
 
           if (matches) {
-            newContent = newContent.replace(
-              importRegex,
-              `$1npm:${packageName}$2`
-            );
+            newContent = newContent.replace(importRegex, `$1${npmSpecifier}$2`);
             fileReplacements += matches.length;
+            DR.logger.info(
+              `    Replaced ${packageName} with ${npmSpecifier} (${matches.length} occurrences)`
+            );
           }
         }
 
