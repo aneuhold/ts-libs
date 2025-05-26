@@ -1,3 +1,4 @@
+import { DR } from '@aneuhold/core-ts-lib';
 import fs from 'fs-extra';
 import path from 'path';
 import { ConfigService } from './ConfigService.js';
@@ -37,7 +38,7 @@ export class LocalPackageStoreService {
       const store = (await fs.readJson(storeFilePath)) as LocalPackageStore;
       return store;
     } catch (error) {
-      console.error('Error reading local package store:', error);
+      DR.logger.error(`Error reading local package store: ${String(error)}`);
       return {}; // Return empty store on error
     }
   }
@@ -67,7 +68,7 @@ export class LocalPackageStoreService {
       const storeFilePath = await this.getStoreFilePath();
       await fs.writeJson(storeFilePath, store, { spaces: 2 });
     } catch (error) {
-      console.error('Error writing local package store:', error);
+      DR.logger.error(`Error writing local package store: ${String(error)}`);
     }
   }
 }

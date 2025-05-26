@@ -94,7 +94,7 @@ export default class DOFunctionService {
         rawOutput.body = this.serializeOutput(output);
 
         if (!output.success) {
-          DR.logger.failure(
+          DR.logger.warn(
             `[DOFunctionService] Handler reported failure for "${functionName}". Setting status code 400.`
           ); // Log handler failure
           rawOutput.statusCode = 400;

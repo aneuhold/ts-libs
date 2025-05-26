@@ -1,4 +1,4 @@
-import { FileSystemService } from '@aneuhold/core-ts-lib';
+import { DR, FileSystemService } from '@aneuhold/core-ts-lib';
 import fs from 'fs-extra';
 import { DEFAULT_CONFIG, LocalNpmConfig } from '../types/LocalNpmConfig.js';
 
@@ -32,11 +32,10 @@ export class ConfigService {
       try {
         config = (await fs.readJson(configFilePath)) as LocalNpmConfig;
       } catch (error) {
-        console.warn(
-          `Warning: Failed to parse config file at ${configFilePath}:`,
-          error
+        DR.logger.warn(
+          `Warning: Failed to parse config file at ${configFilePath}: ${String(error)}`
         );
-        console.warn('Using default configuration.');
+        DR.logger.info('Using default configuration.');
       }
     }
 

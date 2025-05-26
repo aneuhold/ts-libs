@@ -16,7 +16,7 @@ program
   .description('Gets the current local package store.')
   .action(async () => {
     const store = await LocalPackageStoreService.getStore();
-    console.log(JSON.stringify(store, null, 2));
+    DR.logger.info(JSON.stringify(store, null, 2));
   });
 
 program
@@ -38,10 +38,12 @@ program
     const config = await ConfigService.loadConfig();
     const configPath = ConfigService.getConfigFilePath();
 
-    console.log('Current Configuration:');
-    console.log(JSON.stringify(config, null, 2));
-    console.log('\nConfiguration file location:');
-    console.log(configPath || 'No configuration file found (using defaults)');
+    DR.logger.info('Current Configuration:');
+    DR.logger.info(JSON.stringify(config, null, 2));
+    DR.logger.info('\nConfiguration file location:');
+    DR.logger.info(
+      configPath || 'No configuration file found (using defaults)'
+    );
   });
 
 program
