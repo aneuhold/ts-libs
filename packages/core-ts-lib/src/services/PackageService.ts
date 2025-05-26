@@ -123,8 +123,6 @@ export default class PackageService {
       // Get all packages one directory up to resolve local wildcard dependencies
       const childPackages = await DependencyService.getChildPackageJsons('../');
 
-      console.log('Child packages found:', childPackages);
-
       // Helper function to resolve dependencies
       const resolveDependencies = (
         deps: Record<string, string> | undefined
@@ -246,7 +244,20 @@ export default class PackageService {
     const packageSpecifierMap = new Map<string, string>();
     for (const [packageName, packageInfo] of Object.entries(childPackages)) {
       const version = packageInfo.packageJsonContents.version;
-      packageSpecifierMap.set(packageName, `npm:${packageName}@*${version}`);
+      // The below HAS to be a carrot (^) to ensure that the version is compatible with JSR.
+      // As of 5/26/2025, inline imports with versions don't seem to support the *
+      // wildcard, so we use a caret (^) to allow for minor version updates. This
+      // can cause problems, but it is accepted for now.
+      // Here is an example error that comes up if we don't use a caret:
+      // ```sh
+      // error: Invalid package specifier 'npm:@aneuhold/core-ts-lib@*2.1.7'
+      // 0: Invalid specifier version requirement
+      // 1: Unexpected character.
+      //      2.1.7
+      //      ~
+      // at file:///Users/aneuhold/Development/GithubRepos/ts-libs/packages/be-ts-lib/src/services/ConfigService/ConfigService.ts:1:20
+      // ```
+      packageSpecifierMap.set(packageName, `npm:${packageName}@^${version}`);
     }
 
     // Get all TypeScript files in the src directory
