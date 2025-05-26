@@ -2,7 +2,7 @@
   "name": "@aneuhold/be-ts-lib",
   "author": "Anton G. Neuhold Jr.",
   "license": "MIT",
-  "version": "2.0.68",
+  "version": "2.0.69",
   "description": "A backend TypeScript library used for common functionality in personal backend projects.",
   "type": "module",
   "scripts": {
@@ -11,10 +11,8 @@
     "lint": "eslint",
     "test": "vitest run",
     "jsr:validate": "tb pkg validateJsr",
-    "jsr:validate:test": "tsx ../core-ts-lib/scripts/validateJsrPublish.ts",
     "checkAll": "pnpm build && pnpm lint && pnpm test && pnpm jsr:validate",
     "jsr:publish": "tb pkg publishJsr",
-    "jsr:publish:test": "tsx ../core-ts-lib/scripts/publishJsr.ts",
     "upgrade:core": "pnpm update '@aneuhold/main-scripts' --latest",
     "upgrade:all": "pnpm up"
   },
