@@ -6,6 +6,7 @@ import { JsonWithVersionProperty } from '../types/JsonWithVersionProperty.js';
 import { PackageJson } from '../types/PackageJson.js';
 import ErrorUtils from '../utils/ErrorUtils.js';
 import { DR } from './DependencyRegistry.js';
+import DependencyService from './DependencyService.js';
 import FileSystemService from './FileSystemService/FileSystemService.js';
 
 const execAsync = promisify(exec);
@@ -51,6 +52,10 @@ export default class PackageService {
     }
   }
 
+  /**
+   * Updates the jsr.json file from the package.json file and resolves wildcard
+   * dependencies in package.json for JSR compatibility.
+   */
   static async updateJsrFromPackageJson(): Promise<void> {
     const rootDir = process.cwd();
     const packageJsonPath = path.join(rootDir, 'package.json');
@@ -77,7 +82,16 @@ export default class PackageService {
       const jsrJsonData = JSON.parse(
         await readFile(jsrJsonPath, 'utf-8')
       ) as JsonWithVersionProperty;
+
+      // Update JSR version
       jsrJsonData.version = packageJsonData.version;
+
+      // Resolve wildcard dependencies in package.json for JSR compatibility
+      await this.resolveWildcardDependenciesInPackageJson(
+        packageJsonData,
+        packageJsonPath
+      );
+
       await writeFile(jsrJsonPath, JSON.stringify(jsrJsonData, null, 2));
       DR.logger.info(
         'Updated jsr.json from package.json to version ' + jsrJsonData.version
@@ -87,6 +101,60 @@ export default class PackageService {
       DR.logger.error(
         `Failed to update jsr.json from package.json: ${errorString}`
       );
+    }
+  }
+
+  /**
+   * Resolves wildcard dependencies in package.json by replacing them with actual
+   * version constraints (e.g., "*1.2.3") for JSR compatibility.
+   *
+   * @param packageJsonData The package.json data to modify
+   * @param packageJsonPath The path to the package.json file
+   */
+  private static async resolveWildcardDependenciesInPackageJson(
+    packageJsonData: PackageJson,
+    packageJsonPath: string
+  ): Promise<void> {
+    try {
+      // Get all child packages to resolve wildcard dependencies
+      const childPackages = await DependencyService.getChildPackageJsons();
+
+      // Helper function to resolve dependencies
+      const resolveDependencies = (
+        deps: Record<string, string> | undefined
+      ): void => {
+        if (!deps) return;
+
+        for (const [depName, depVersion] of Object.entries(deps)) {
+          if (depVersion === '*' && depName in childPackages) {
+            // Replace wildcard with "^" + actual version from the monorepo
+            deps[depName] =
+              `^${childPackages[depName].packageJsonContents.version}`;
+          }
+        }
+      };
+
+      // Resolve each dependency type
+      resolveDependencies(packageJsonData.dependencies);
+      resolveDependencies(packageJsonData.devDependencies);
+      resolveDependencies(packageJsonData.peerDependencies);
+      resolveDependencies(packageJsonData.optionalDependencies);
+
+      // Write the updated package.json
+      await writeFile(
+        packageJsonPath,
+        JSON.stringify(packageJsonData, null, 2)
+      );
+
+      DR.logger.info(
+        'Resolved wildcard dependencies in package.json for JSR compatibility'
+      );
+    } catch (error) {
+      const errorString = ErrorUtils.getErrorString(error);
+      DR.logger.error(
+        `Failed to resolve wildcard dependencies: ${errorString}`
+      );
+      throw error;
     }
   }
 
@@ -137,12 +205,12 @@ export default class PackageService {
   }
 
   private static async revertGitChanges(): Promise<void> {
-    DR.logger.info('Reverting changes made to jsr.json');
+    DR.logger.info('Reverting changes made to jsr.json and package.json');
     try {
-      await execAsync('git checkout jsr.json');
+      await execAsync('git checkout jsr.json package.json');
     } catch (error) {
       DR.logger.error(
-        `Failed to revert changes made to jsr.json: ${ErrorUtils.getErrorString(error)}`
+        `Failed to revert changes made to jsr.json and package.json: ${ErrorUtils.getErrorString(error)}`
       );
     }
   }

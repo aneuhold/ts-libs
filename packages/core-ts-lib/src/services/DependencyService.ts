@@ -143,7 +143,7 @@ export default class DependencyService {
    * Retrieves all package.json files from subdirectories, excluding specified folders
    * and the root package.json.
    */
-  private static async getChildPackageJsons(): Promise<PackageJsonMap> {
+  static async getChildPackageJsons(): Promise<PackageJsonMap> {
     const childPackages: PackageJsonMap = {};
     const baseDir = process.cwd();
     const filePaths = await FileSystemService.getAllFilePathsRelative(baseDir);
