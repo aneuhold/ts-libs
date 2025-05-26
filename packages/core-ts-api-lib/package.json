@@ -2,7 +2,7 @@
   "name": "@aneuhold/core-ts-api-lib",
   "author": "Anton G. Neuhold Jr.",
   "license": "MIT",
-  "version": "2.1.8",
+  "version": "2.1.9",
   "description": "A library for interacting with the backend and defining the backend API for personal projects.",
   "type": "module",
   "scripts": {
@@ -30,12 +30,12 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/aneuhold/core-ts-api-lib.git"
+    "url": "git+https://github.com/aneuhold/ts-libs.git"
   },
   "bugs": {
-    "url": "https://github.com/aneuhold/core-ts-api-lib/issues"
+    "url": "https://github.com/aneuhold/ts-libs/issues"
   },
-  "homepage": "https://github.com/aneuhold/core-ts-api-lib#readme",
+  "homepage": "https://github.com/aneuhold/ts-libs/tree/main/packages/core-ts-api-lib#readme",
   "keywords": [
     "API",
     "Node.js",

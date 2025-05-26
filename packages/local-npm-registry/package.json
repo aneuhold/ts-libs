@@ -2,7 +2,7 @@
   "name": "@aneuhold/local-npm-registry",
   "author": "Anton G. Neuhold Jr.",
   "license": "MIT",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Manages local npm package installations and updates across your machine.",
   "type": "module",
   "scripts": {
@@ -23,12 +23,12 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/aneuhold/core-ts-lib.git"
+    "url": "git+https://github.com/aneuhold/ts-libs.git"
   },
   "bugs": {
-    "url": "https://github.com/aneuhold/core-ts-lib/issues"
+    "url": "https://github.com/aneuhold/ts-libs/issues"
   },
-  "homepage": "https://github.com/aneuhold/core-ts-lib#readme",
+  "homepage": "https://github.com/aneuhold/ts-libs/tree/main/packages/local-npm-registry#readme",
   "keywords": [
     "Scripting",
     "Node.js"

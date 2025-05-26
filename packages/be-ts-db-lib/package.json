@@ -2,7 +2,7 @@
   "name": "@aneuhold/be-ts-db-lib",
   "author": "Anton G. Neuhold Jr.",
   "license": "MIT",
-  "version": "2.0.62",
+  "version": "2.0.63",
   "description": "A backend database library meant to actually interact with various databases in personal projects",
   "packageManager": "pnpm@10.10.0",
   "type": "module",
@@ -35,12 +35,12 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/aneuhold/be-ts-db-lib.git"
+    "url": "git+https://github.com/aneuhold/ts-libs.git"
   },
   "bugs": {
-    "url": "https://github.com/aneuhold/be-ts-db-lib/issues"
+    "url": "https://github.com/aneuhold/ts-libs/issues"
   },
-  "homepage": "https://github.com/aneuhold/be-ts-db-lib#readme",
+  "homepage": "https://github.com/aneuhold/ts-libs/tree/main/packages/be-ts-db-lib#readme",
   "keywords": [
     "Database",
     "Node.js",

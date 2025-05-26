@@ -11,19 +11,17 @@ To add to a repo, follow the instructions below for your environment:
 
 ### For Node using NPM
 
-Run `yarn add @aneuhold/core-ts-db-lib`
+Run `pnpm add @aneuhold/core-ts-db-lib`
 
 ### For Node using JSR
 
-The below instructions still allow for things like Renovate to work, and normal commands with yarn such as `yarn up`.
+The below instructions still allow for things like Renovate to work, and normal commands with pnpm such as `pnpm up`.
 
-1. Add the required JSR configuration to a `.yarnrc.yml` file if not there already:
-   ```yml
-   npmScopes:
-     jsr:
-       npmRegistryServer: 'https://npm.jsr.io'
+1. Add the required JSR configuration to a `.npmrc` file if not there already:
    ```
-1. Add the package with `yarn add @jsr/aneuhold__core-ts-db-lib`
+   @jsr:registry=https://npm.jsr.io
+   ```
+1. Add the package with `pnpm add @jsr/aneuhold__core-ts-db-lib`
 
 ### For Deno
 
@@ -65,10 +63,10 @@ following steps
 1. Update the document
 1. Update the validator
 1. Push the changes to NPM
-1. Go to `be-ts-db-lib` and update the versions there with `yarn upgrade:core`
+1. Go to `be-ts-db-lib` and update the versions there with `pnpm upgrade:core`
 1. Update the migration service in that repo and double check it looks okay
-1. Run the migration with `yarn migrate:dry` then `yarn migrate`
-1. Run validation to ensure everything is alright with `yarn validate:dry` then `yarn validate` if needed
+1. Run the migration with `pnpm migrate:dry` then `pnpm migrate`
+1. Run validation to ensure everything is alright with `pnpm validate:dry` then `pnpm validate` if needed
 1. Run tests
 1. Update tests if needed then re-validate
 1. Push a new version of the `be-ts-db-lib` to NPM

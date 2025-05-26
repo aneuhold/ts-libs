@@ -11,19 +11,17 @@ To add to a repo, follow the instructions below for your environment:
 
 ### For Node using NPM
 
-Run `yarn add @aneuhold/be-ts-lib`
+Run `pnpm add @aneuhold/be-ts-lib`
 
 ### For Node using JSR
 
-The below instructions still allow for things like Renovate to work, and normal commands with yarn such as `yarn up`.
+The below instructions still allow for things like Renovate to work, and normal commands with pnpm such as `pnpm up`.
 
-1. Add the required JSR configuration to a `.yarnrc.yml` file if not there already:
-   ```yml
-   npmScopes:
-     jsr:
-       npmRegistryServer: 'https://npm.jsr.io'
+1. Add the required JSR configuration to a `.npmrc` file if not there already:
    ```
-1. Add the package with `yarn add @jsr/aneuhold__be-ts-lib`
+   @jsr:registry=https://npm.jsr.io
+   ```
+1. Add the package with `pnpm add @jsr/aneuhold__be-ts-lib`
 
 ### For Deno
 

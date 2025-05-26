@@ -2,7 +2,7 @@
   "name": "@aneuhold/core-ts-lib",
   "author": "Anton G. Neuhold Jr.",
   "license": "MIT",
-  "version": "2.1.4",
+  "version": "2.1.5",
   "description": "A core library for all of my TypeScript projects",
   "type": "module",
   "scripts": {
@@ -31,12 +31,12 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/aneuhold/core-ts-lib.git"
+    "url": "git+https://github.com/aneuhold/ts-libs.git"
   },
   "bugs": {
-    "url": "https://github.com/aneuhold/core-ts-lib/issues"
+    "url": "https://github.com/aneuhold/ts-libs/issues"
   },
-  "homepage": "https://github.com/aneuhold/core-ts-lib#readme",
+  "homepage": "https://github.com/aneuhold/ts-libs/tree/main/packages/core-ts-lib#readme",
   "keywords": [
     "Scripting",
     "Node.js"

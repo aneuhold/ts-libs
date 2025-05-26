@@ -2,7 +2,7 @@
   "name": "@aneuhold/core-ts-db-lib",
   "author": "Anton G. Neuhold Jr.",
   "license": "MIT",
-  "version": "2.0.67",
+  "version": "2.0.68",
   "description": "A core database library used for personal projects",
   "type": "module",
   "scripts": {
@@ -30,12 +30,12 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/aneuhold/core-ts-db-lib.git"
+    "url": "git+https://github.com/aneuhold/ts-libs.git"
   },
   "bugs": {
-    "url": "https://github.com/aneuhold/core-ts-db-lib/issues"
+    "url": "https://github.com/aneuhold/ts-libs/issues"
   },
-  "homepage": "https://github.com/aneuhold/core-ts-db-lib#readme",
+  "homepage": "https://github.com/aneuhold/ts-libs/tree/main/packages/core-ts-db-lib#readme",
   "keywords": [
     "Database",
     "MongoDB",
