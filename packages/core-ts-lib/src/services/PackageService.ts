@@ -116,8 +116,8 @@ export default class PackageService {
     packageJsonPath: string
   ): Promise<void> {
     try {
-      // Get all child packages to resolve wildcard dependencies
-      const childPackages = await DependencyService.getChildPackageJsons();
+      // Get all packages one directory up to resolve local wildcard dependencies
+      const childPackages = await DependencyService.getChildPackageJsons('../');
 
       // Helper function to resolve dependencies
       const resolveDependencies = (
@@ -127,9 +127,9 @@ export default class PackageService {
 
         for (const [depName, depVersion] of Object.entries(deps)) {
           if (depVersion === '*' && depName in childPackages) {
-            // Replace wildcard with "^" + actual version from the monorepo
+            // Replace wildcard with "*" + actual version from the monorepo
             deps[depName] =
-              `^${childPackages[depName].packageJsonContents.version}`;
+              `*${childPackages[depName].packageJsonContents.version}`;
           }
         }
       };
