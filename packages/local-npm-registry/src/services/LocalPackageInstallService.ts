@@ -2,6 +2,7 @@ import { DR } from '@aneuhold/core-ts-lib';
 import { FSWatcher, watch } from 'chokidar';
 import { execa } from 'execa';
 import fs from 'fs-extra';
+import { PackageJson } from 'packages/core-ts-lib/lib/types/PackageJson.js';
 import path from 'path';
 import { ConfigService } from './ConfigService.js';
 import { LocalPackageStoreService } from './LocalPackageStoreService.js';
@@ -122,7 +123,7 @@ export class LocalPackageInstallService {
     }
 
     const store = await LocalPackageStoreService.getStore();
-    const packageJson = await fs.readJson(packageJsonPath);
+    const packageJson = (await fs.readJson(packageJsonPath)) as PackageJson;
     let hasChanges = false;
 
     for (const packageName of packageNames) {

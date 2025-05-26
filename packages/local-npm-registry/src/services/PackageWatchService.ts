@@ -2,6 +2,7 @@ import { DR } from '@aneuhold/core-ts-lib';
 import { FSWatcher, watch } from 'chokidar';
 import { execa } from 'execa';
 import fs from 'fs-extra';
+import { PackageJson } from 'packages/core-ts-lib/lib/types/PackageJson.js';
 import path from 'path';
 import type { PublishedPackageInfo } from '../types/WatchConfig.js';
 import { ConfigService } from './ConfigService.js';
@@ -133,7 +134,9 @@ export class PackageWatchService {
         );
         if (await fs.pathExists(packageJsonPath)) {
           try {
-            const packageJson = await fs.readJson(packageJsonPath);
+            const packageJson = (await fs.readJson(
+              packageJsonPath
+            )) as PackageJson;
             if (packageJson.name) {
               packageNames.push(packageJson.name);
             }
@@ -169,11 +172,13 @@ export class PackageWatchService {
 
         if (await fs.pathExists(packageJsonPath)) {
           try {
-            const packageJson = await fs.readJson(packageJsonPath);
+            const packageJson = (await fs.readJson(
+              packageJsonPath
+            )) as PackageJson;
             if (packageJson.name === packageName) {
               return packagePath;
             }
-          } catch (error) {
+          } catch {
             // Continue searching
           }
         }
@@ -292,7 +297,7 @@ export class PackageWatchService {
 
       // Read package.json to get current version
       const packageJsonPath = path.join(packagePath, 'package.json');
-      const packageJson = await fs.readJson(packageJsonPath);
+      const packageJson = (await fs.readJson(packageJsonPath)) as PackageJson;
       const baseVersion = packageJson.version;
 
       // Create a timestamped version for local publishing

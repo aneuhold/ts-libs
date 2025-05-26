@@ -7,6 +7,7 @@
   "type": "module",
   "scripts": {
     "refresh": "pnpm build && npm uninstall -g @aneuhold/local-npm-registry && npm i -g",
+    "cli:test": "pnpm build && node lib/index.js",
     "build": "rimraf lib && tsc -p tsconfig.build.json && tsx scripts/copyTsFiles.ts",
     "lint": "eslint",
     "test": "exit 0",
