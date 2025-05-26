@@ -295,6 +295,9 @@ importers:
       '@types/semver':
         specifier: ^7.5.8
         version: 7.7.0
+      '@verdaccio/types':
+        specifier: ^10.8.0
+        version: 10.8.0
       eslint:
         specifier: ^9.26.0
         version: 9.27.0(jiti@2.4.2)
@@ -1461,6 +1464,9 @@ packages:
   '@verdaccio/tarball@13.0.0-next-8.15':
     resolution: {integrity: sha512-oSNmq7zD/iPIC5HpJbOJjW/lb0JV9k3jLwI6sG7kPgm+UIxVAOV4fKQOAD18HpHl/WjkF247NA6zGlAB94Habw==}
     engines: {node: '>=18'}
+
+  '@verdaccio/types@10.8.0':
+    resolution: {integrity: sha512-FuJyCRFPdy+gqCi0v29dE1xKn99Ztq6fuY9fb7ezeP1SRbUL/hgDaNkpjYvSIMCyb+dLFKOFBeZPyIUBLOSdlA==}
 
   '@verdaccio/ui-theme@8.0.0-next-8.15':
     resolution: {integrity: sha512-k9BAM7rvbUqB2JPReNgXKUVTzBkdmIrNw0f6/7uyO+9cp7eVuarrPBnVF0oMc7jzVNBZRCpUksrhMZ0KwDZTpw==}
@@ -5980,6 +5986,8 @@ snapshots:
       tar-stream: 3.1.7
     transitivePeerDependencies:
       - supports-color
+
+  '@verdaccio/types@10.8.0': {}
 
   '@verdaccio/ui-theme@8.0.0-next-8.15': {}
 

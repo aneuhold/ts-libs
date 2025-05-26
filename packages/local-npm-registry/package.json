@@ -39,12 +39,12 @@
   ],
   "dependencies": {
     "@aneuhold/core-ts-lib": "*",
-    "commander": "^12.1.0",
-    "fs-extra": "^11.2.0",
-    "verdaccio": "^6.1.2",
     "chokidar": "^4.0.1",
+    "commander": "^12.1.0",
     "execa": "^9.5.2",
-    "semver": "^7.6.3"
+    "fs-extra": "^11.2.0",
+    "semver": "^7.6.3",
+    "verdaccio": "^6.1.2"
   },
   "devDependencies": {
     "@aneuhold/main-scripts": "^2.1.6",
@@ -52,6 +52,7 @@
     "@types/jest": "^29.5.14",
     "@types/node": "^22.15.3",
     "@types/semver": "^7.5.8",
+    "@verdaccio/types": "^10.8.0",
     "eslint": "^9.26.0",
     "jest": "^29.7.*",
     "jsr": "*",
