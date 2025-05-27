@@ -20,7 +20,7 @@ export class LocalPackageInstallService {
    */
   async installLocalPackage(packageName: string): Promise<void> {
     const config = await ConfigService.loadConfig();
-    const registryUrl = config.watch?.registryUrl || 'http://localhost:4873';
+    const registryUrl = config.registryUrl || 'http://localhost:4873';
 
     try {
       // Get the latest version from the local store
@@ -224,7 +224,7 @@ export class LocalPackageInstallService {
    */
   private async handleStoreUpdate(): Promise<void> {
     const config = await ConfigService.loadConfig();
-    const registryUrl = config.watch?.registryUrl || 'http://localhost:4873';
+    const registryUrl = config.registryUrl || 'http://localhost:4873';
     const store = await LocalPackageStoreService.getStore();
 
     for (const packageName of this.watchedPackages) {

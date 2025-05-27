@@ -279,6 +279,9 @@ importers:
       verdaccio:
         specifier: ^6.1.2
         version: 6.1.2(typanion@3.14.0)
+      verdaccio-memory:
+        specifier: ^10.3.2
+        version: 10.3.2
     devDependencies:
       '@aneuhold/main-scripts':
         specifier: ^2.1.6
@@ -2164,6 +2167,10 @@ packages:
     engines: {node: '>=4'}
     hasBin: true
 
+  errno@0.1.8:
+    resolution: {integrity: sha512-dJ6oBr5SQ1VSd9qkk7ByRgb/1SH4JZjCHSW/mr63/QcXO9zLVxvJ6Oy13nio03rxpSnVDDjFor75SjVeZWPW/A==}
+    hasBin: true
+
   error-ex@1.3.2:
     resolution: {integrity: sha512-7dFHNmqeFSEt2ZBsCriorKnn3Z2pj+fd9kmI6QoWw4//DL+icEBfc0U7qJCisqrTsKTjw4fNFy2pW9OqStD84g==}
 
@@ -3264,6 +3271,10 @@ packages:
     resolution: {integrity: sha512-dq+qelQ9akHpcOl/gUVRTxVIOkAJ1wR3QAvb4RsVjS8oVoFjDGTc679wJYmUmknUF5HwMLOgb5O+a3KxfWapPQ==}
     engines: {node: '>= 0.6'}
 
+  memory-fs@0.5.0:
+    resolution: {integrity: sha512-jA0rdU5KoQMC0e6ppoNRtpp6vjFq6+NY7r8hywnC7V+1Xj/MtHwGIbB1QaK/dunyjWteJzmkpd7ooeWg10T7GA==}
+    engines: {node: '>=4.3.0 <5.0.0 || >=5.10'}
+
   memory-pager@1.5.0:
     resolution: {integrity: sha512-ZS4Bp4r/Zoeq6+NLJpP+0Zzm0pR8whtGPf1XExKLJBAczGMnSi3It14OiNCStjQjM6NU1okjQGSxgEZN8eBYKg==}
 
@@ -3735,6 +3746,9 @@ packages:
   proxy-addr@2.0.7:
     resolution: {integrity: sha512-llQsMLSUDUPT44jdrU/O37qlnifitDP+ZwrmmZcoSKyLKvtZxpyV0n2/bD/N4tBAAZ/gJEdZU7KMraoK1+XYAg==}
     engines: {node: '>= 0.10'}
+
+  prr@1.0.1:
+    resolution: {integrity: sha512-yPw4Sng1gWghHQWj0B3ZggWUm4qVbPwPFcRG8KyxiU7J2OHFSoEHKS+EZ3fv5l1t9CyCiop6l/ZYeWbrgoQejw==}
 
   pstree.remy@1.1.8:
     resolution: {integrity: sha512-77DZwxQmxKnu3aR542U+X8FypNzbfJ+C5XQDk3uWjWxn6151aIMGthWYRXTqT1E5oJvg+ljaa2OJi+VfvCOQ8w==}
@@ -4398,6 +4412,10 @@ packages:
   verdaccio-htpasswd@13.0.0-next-8.15:
     resolution: {integrity: sha512-rQg5oZ/rReDAM4g4W68hvtzReTbM6vduvVtobHsQxhbtbotEuUjP6O8uaROYtgZ60giGva5Tub2SOm2T9Ln9Dw==}
     engines: {node: '>=18'}
+
+  verdaccio-memory@10.3.2:
+    resolution: {integrity: sha512-NsUPy3W31uMjm8+6+RYznhtThZjj1PYFLOULqG4zrg8ePYj45z9Ievso/IQD+iqXA5P8vz2TKzT4oTyHlXPe/w==}
+    engines: {node: '>=8'}
 
   verdaccio@6.1.2:
     resolution: {integrity: sha512-HQCquycSQkA+tKRVqMjIVRzmhzTciLfScvKIhhiwZZ9Qd13e2KJQTOdB7QrSacfJuPpl94TA5EZ7XmVRQKk3ag==}
@@ -6720,6 +6738,10 @@ snapshots:
 
   envinfo@7.14.0: {}
 
+  errno@0.1.8:
+    dependencies:
+      prr: 1.0.1
+
   error-ex@1.3.2:
     dependencies:
       is-arrayish: 0.2.1
@@ -8148,6 +8170,11 @@ snapshots:
 
   media-typer@0.3.0: {}
 
+  memory-fs@0.5.0:
+    dependencies:
+      errno: 0.1.8
+      readable-stream: 2.3.8
+
   memory-pager@1.5.0: {}
 
   merge-descriptors@1.0.3: {}
@@ -8550,6 +8577,8 @@ snapshots:
     dependencies:
       forwarded: 0.2.0
       ipaddr.js: 1.9.1
+
+  prr@1.0.1: {}
 
   pstree.remy@1.1.8: {}
 
@@ -9292,6 +9321,12 @@ snapshots:
       unix-crypt-td-js: 1.1.4
     transitivePeerDependencies:
       - supports-color
+
+  verdaccio-memory@10.3.2:
+    dependencies:
+      '@verdaccio/commons-api': 10.2.0
+      '@verdaccio/streams': 10.2.1
+      memory-fs: 0.5.0
 
   verdaccio@6.1.2(typanion@3.14.0):
     dependencies:

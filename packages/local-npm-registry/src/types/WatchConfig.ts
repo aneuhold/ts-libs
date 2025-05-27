@@ -22,13 +22,6 @@ export type WatchConfig = {
   registryUrl?: string;
 
   /**
-   * Whether to automatically start Verdaccio if it's not running.
-   *
-   * @default true
-   */
-  autoStartRegistry?: boolean;
-
-  /**
    * Additional Verdaccio configuration overrides.
    */
   verdaccioConfig?: Record<string, unknown>;
@@ -42,14 +35,4 @@ export type PublishedPackageInfo = {
   version: string;
   publishedAt: Date;
   buildPath?: string;
-};
-
-/**
- * Status of the Verdaccio registry.
- */
-export type RegistryStatus = {
-  isRunning: boolean;
-  pid?: number;
-  port?: number;
-  url?: string;
 };

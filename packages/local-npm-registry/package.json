@@ -6,9 +6,9 @@
   "description": "Manages local npm package installations and updates across your machine.",
   "type": "module",
   "scripts": {
-    "refresh": "pnpm build && npm uninstall -g @aneuhold/local-npm-registry && npm i -g",
-    "cli:test": "pnpm build && node lib/index.js",
+    "cli:test": "node lib/index.js",
     "build": "rimraf lib && tsc -p tsconfig.build.json && tsx scripts/copyTsFiles.ts",
+    "watch": "nodemon --ignore lib/ -e ts --exec \"tsc --project tsconfig.build.json && tsx ./scripts/copyTsFiles.ts\"",
     "lint": "eslint",
     "test": "exit 0",
     "upgrade:core": "pnpm update '@aneuhold/main-scripts' --latest",
@@ -44,7 +44,8 @@
     "execa": "^9.5.2",
     "fs-extra": "^11.2.0",
     "semver": "^7.6.3",
-    "verdaccio": "^6.1.2"
+    "verdaccio": "^6.1.2",
+    "verdaccio-memory": "^10.3.2"
   },
   "devDependencies": {
     "@aneuhold/main-scripts": "^2.1.6",

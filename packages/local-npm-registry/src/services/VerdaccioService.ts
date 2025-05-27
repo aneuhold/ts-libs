@@ -33,7 +33,7 @@ export class VerdaccioService {
 
     try {
       const config = await ConfigService.loadConfig();
-      const port = config.watch?.registryPort || 4873;
+      const port = config.registryPort || 4873;
 
       DR.logger.info(`Starting Verdaccio on port ${port}...`);
 
@@ -60,7 +60,7 @@ export class VerdaccioService {
    */
   static async publishPackage(packagePath: string): Promise<void> {
     const config = await ConfigService.loadConfig();
-    const registryUrl = config.watch?.registryUrl || 'http://localhost:4873';
+    const registryUrl = config.registryUrl || 'http://localhost:4873';
 
     try {
       if (!VerdaccioService.verdaccioServer) {
@@ -137,6 +137,13 @@ export class VerdaccioService {
     // required properties that we don't need to set.
     const verdaccioConfig: Partial<VerdaccioConfig> = {
       storage: path.join(storageLocation, 'verdaccio-storage'),
+      // Store is required for in-memory storage. When this is used, the
+      // storage path is ignored.
+      store: {
+        memory: {
+          limit: 1000
+        }
+      },
       uplinks: {
         npmjs: {
           url: 'https://registry.npmjs.org/'
@@ -161,7 +168,7 @@ export class VerdaccioService {
       },
       _debug: true,
       self_path: path.join(storageLocation, 'verdaccio-self'),
-      ...config.watch?.verdaccioConfig
+      ...config.verdaccioConfig
     };
 
     return verdaccioConfig as VerdaccioConfig;

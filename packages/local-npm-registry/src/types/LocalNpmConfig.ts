@@ -1,5 +1,4 @@
 import os from 'os';
-import { WatchConfig } from './WatchConfig.js';
 
 /**
  * Configuration interface for the local-npm-registry CLI tool.
@@ -11,10 +10,19 @@ export type LocalNpmConfig = {
    */
   storeLocation?: string;
 
+  registryPort?: number;
+
   /**
-   * Configuration for the watch & local publishing system.
+   * The URL of the local Verdaccio registry.
+   * If not specified, defaults to 'http://localhost:4873'.
    */
-  watch?: WatchConfig;
+  registryUrl?: string;
+
+  /**
+   * Configuration for verdaccio. This will override the default Verdaccio configuration.
+   * If not specified, defaults to an empty object.
+   */
+  verdaccioConfig?: Record<string, unknown>;
 };
 
 /**
@@ -22,11 +30,7 @@ export type LocalNpmConfig = {
  */
 export const DEFAULT_CONFIG: Required<LocalNpmConfig> = {
   storeLocation: os.homedir(),
-  watch: {
-    watchedPackages: [],
-    registryPort: 4873,
-    registryUrl: 'http://localhost:4873',
-    autoStartRegistry: true,
-    verdaccioConfig: {}
-  }
+  registryPort: 4873,
+  registryUrl: 'http://localhost:4873',
+  verdaccioConfig: {}
 };

@@ -153,65 +153,58 @@ export class CommandService {
     // Start Verdaccio server
     await VerdaccioService.start();
 
-    try {
-      // Generate timestamp version
-      const timestampVersion = this.generateTimestampVersion(originalVersion);
+    // Generate timestamp version
+    const timestampVersion = this.generateTimestampVersion(originalVersion);
 
-      // Update package.json with timestamp version
-      await this.updatePackageJsonVersion(
-        process.cwd(),
-        packageName,
-        timestampVersion
-      );
+    // Update package.json with timestamp version
+    await this.updatePackageJsonVersion(
+      process.cwd(),
+      packageName,
+      timestampVersion
+    );
 
-      // Publish to Verdaccio registry
-      await this.publishToVerdaccio(process.cwd());
+    // Publish to Verdaccio registry
+    await this.publishToVerdaccio(process.cwd());
 
-      // Update local store
-      const entry: PackageEntry = {
-        originalVersion,
-        currentVersion: timestampVersion,
-        subscribers: []
-      };
+    // Update local store
+    const entry: PackageEntry = {
+      originalVersion,
+      currentVersion: timestampVersion,
+      subscribers: []
+    };
 
-      // Get existing entry to preserve subscribers
-      const existingEntry =
-        await LocalPackageStoreService.getPackageEntry(packageName);
-      if (existingEntry) {
-        entry.subscribers = existingEntry.subscribers;
-      }
+    // Get existing entry to preserve subscribers
+    const existingEntry =
+      await LocalPackageStoreService.getPackageEntry(packageName);
+    if (existingEntry) {
+      entry.subscribers = existingEntry.subscribers;
+    }
 
-      await LocalPackageStoreService.updatePackageEntry(packageName, entry);
+    await LocalPackageStoreService.updatePackageEntry(packageName, entry);
 
-      // Update all subscribers
-      if (entry.subscribers.length > 0) {
-        DR.logger.info(`Updating ${entry.subscribers.length} subscriber(s)`);
+    // Update all subscribers
+    if (entry.subscribers.length > 0) {
+      DR.logger.info(`Updating ${entry.subscribers.length} subscriber(s)`);
 
-        for (const subscriberPath of entry.subscribers) {
-          try {
-            await this.updatePackageJsonVersion(
-              subscriberPath,
-              packageName,
-              timestampVersion
-            );
-            await this.runInstallCommand(subscriberPath);
-          } catch (error) {
-            DR.logger.error(
-              `Failed to update subscriber ${subscriberPath}: ${String(error)}`
-            );
-          }
+      for (const subscriberPath of entry.subscribers) {
+        try {
+          await this.updatePackageJsonVersion(
+            subscriberPath,
+            packageName,
+            timestampVersion
+          );
+          await this.runInstallCommand(subscriberPath);
+        } catch (error) {
+          DR.logger.error(
+            `Failed to update subscriber ${subscriberPath}: ${String(error)}`
+          );
         }
       }
+    }
 
-      DR.logger.info(
-        `Successfully published ${packageName}@${timestampVersion}`
-      );
-      if (entry.subscribers.length === 0) {
-        DR.logger.info('No subscribers to update');
-      }
-    } finally {
-      // Always shut down Verdaccio server
-      VerdaccioService.stop();
+    DR.logger.info(`Successfully published ${packageName}@${timestampVersion}`);
+    if (entry.subscribers.length === 0) {
+      DR.logger.info('No subscribers to update');
     }
   }
 
@@ -239,51 +232,44 @@ export class CommandService {
     // Start Verdaccio server
     await VerdaccioService.start();
 
-    try {
-      // Re-publish package to Verdaccio with stored timestamp version
-      // First, we need to find the package source to republish it
-      // For now, we'll assume the package is already published
+    // Re-publish package to Verdaccio with stored timestamp version
+    // First, we need to find the package source to republish it
+    // For now, we'll assume the package is already published
 
-      // Add current project to subscribers list
-      await LocalPackageStoreService.addSubscriber(
-        packageName,
-        currentProjectPath
-      );
+    // Add current project to subscribers list
+    await LocalPackageStoreService.addSubscriber(
+      packageName,
+      currentProjectPath
+    );
 
-      // Get updated entry with all subscribers
-      const updatedEntry =
-        await LocalPackageStoreService.getPackageEntry(packageName);
-      if (!updatedEntry) {
-        throw new Error('Failed to retrieve updated package entry');
-      }
-
-      // Update all subscribers including the new one
-      DR.logger.info(
-        `Updating ${updatedEntry.subscribers.length} subscriber(s)`
-      );
-
-      for (const subscriberPath of updatedEntry.subscribers) {
-        try {
-          await this.updatePackageJsonVersion(
-            subscriberPath,
-            packageName,
-            updatedEntry.currentVersion
-          );
-          await this.runInstallCommand(subscriberPath);
-        } catch (error) {
-          DR.logger.error(
-            `Failed to update subscriber ${subscriberPath}: ${String(error)}`
-          );
-        }
-      }
-
-      DR.logger.info(
-        `Successfully subscribed to ${packageName}@${updatedEntry.currentVersion}`
-      );
-    } finally {
-      // Always shut down Verdaccio server
-      VerdaccioService.stop();
+    // Get updated entry with all subscribers
+    const updatedEntry =
+      await LocalPackageStoreService.getPackageEntry(packageName);
+    if (!updatedEntry) {
+      throw new Error('Failed to retrieve updated package entry');
     }
+
+    // Update all subscribers including the new one
+    DR.logger.info(`Updating ${updatedEntry.subscribers.length} subscriber(s)`);
+
+    for (const subscriberPath of updatedEntry.subscribers) {
+      try {
+        await this.updatePackageJsonVersion(
+          subscriberPath,
+          packageName,
+          updatedEntry.currentVersion
+        );
+        await this.runInstallCommand(subscriberPath);
+      } catch (error) {
+        DR.logger.error(
+          `Failed to update subscriber ${subscriberPath}: ${String(error)}`
+        );
+      }
+    }
+
+    DR.logger.info(
+      `Successfully subscribed to ${packageName}@${updatedEntry.currentVersion}`
+    );
   }
 
   /**

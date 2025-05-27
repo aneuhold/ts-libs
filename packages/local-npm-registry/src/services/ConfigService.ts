@@ -2,7 +2,7 @@ import { DR, FileSystemService } from '@aneuhold/core-ts-lib';
 import fs from 'fs-extra';
 import { DEFAULT_CONFIG, LocalNpmConfig } from '../types/LocalNpmConfig.js';
 
-const CONFIG_FILE_NAME = '.localnpmrc.json';
+const CONFIG_FILE_NAME = '.local-npm-registry.json';
 
 let cachedConfig: LocalNpmConfig | null = null;
 let configFilePath: string | null = null;
@@ -74,13 +74,9 @@ export class ConfigService {
     const configPath = `${directory}/${CONFIG_FILE_NAME}`;
     const defaultConfig: LocalNpmConfig = {
       storeLocation: directory,
-      watch: {
-        watchedPackages: [],
-        registryPort: 4873,
-        registryUrl: 'http://localhost:4873',
-        autoStartRegistry: true,
-        verdaccioConfig: {}
-      }
+      registryPort: 4873,
+      registryUrl: 'http://localhost:4873',
+      verdaccioConfig: {}
     };
 
     await fs.writeJson(configPath, defaultConfig, { spaces: 2 });
