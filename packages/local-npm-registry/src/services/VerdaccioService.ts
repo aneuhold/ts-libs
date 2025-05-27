@@ -92,14 +92,10 @@ export class VerdaccioService {
    */
   private static async startVerdaccio(config: LocalNpmConfig): Promise<void> {
     return new Promise((resolve, reject) => {
-      void (async () => {
-        try {
-          DR.logger.info('Starting Verdaccio server...');
-
-          const verdaccioServer = (await runServer(
-            VerdaccioService.createVerdaccioConfig(config) as unknown as string
-          )) as http.Server;
-
+      runServer(
+        VerdaccioService.createVerdaccioConfig(config) as unknown as string
+      )
+        .then((verdaccioServer: http.Server) => {
           VerdaccioService.verdaccioServer = verdaccioServer;
 
           DR.logger.info('Verdaccio server created, waiting for startup...');
@@ -112,14 +108,15 @@ export class VerdaccioService {
           verdaccioServer.on('error', (error) => {
             reject(error);
           });
-        } catch (error) {
+        })
+        .catch((error: unknown) => {
+          DR.logger.error(`Error starting Verdaccio server: ${String(error)}`);
           reject(
             error instanceof Error
               ? error
               : new Error(`Failed to start Verdaccio server: ${String(error)}`)
           );
-        }
-      })();
+        });
     });
   }
 

@@ -9,7 +9,7 @@ import { LocalPackageStoreService } from './services/LocalPackageStoreService.js
 program
   .name('local-npm')
   .description(
-    'CLI to manage local npm package installations and updates for the ts-libs monorepo.'
+    'CLI to manage local npm package installations as if they were published.'
   );
 
 // Main commands as described in README.md

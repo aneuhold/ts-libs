@@ -13,133 +13,6 @@ import { VerdaccioService } from './VerdaccioService.js';
  */
 export class CommandService {
   /**
-   * Generates a timestamp version by appending current timestamp to the original version.
-   *
-   * @param originalVersion - The original version string
-   */
-  private static generateTimestampVersion(originalVersion: string): string {
-    const timestamp = new Date()
-      .toISOString()
-      .replace(/[-:T.]/g, '')
-      .slice(0, 14);
-    return `${originalVersion}-${timestamp}`;
-  }
-
-  /**
-   * Reads the package.json file in the current directory.
-   *
-   * @param dir - Directory to search for package.json
-   */
-  private static async getPackageInfo(
-    dir: string = process.cwd()
-  ): Promise<{ name: string; version: string } | null> {
-    try {
-      const packageJsonPath = path.join(dir, 'package.json');
-      const packageJson = (await fs.readJson(packageJsonPath)) as PackageJson;
-
-      if (!packageJson.name || !packageJson.version) {
-        throw new Error('package.json must contain name and version fields');
-      }
-
-      return {
-        name: packageJson.name,
-        version: packageJson.version
-      };
-    } catch (error) {
-      DR.logger.error(`Error reading package.json: ${String(error)}`);
-      return null;
-    }
-  }
-
-  /**
-   * Updates a package.json file with a new version.
-   *
-   * @param projectPath - Path to the project directory containing package.json
-   * @param packageName - Name of the package to update
-   * @param version - New version to set
-   */
-  private static async updatePackageJsonVersion(
-    projectPath: string,
-    packageName: string,
-    version: string
-  ): Promise<void> {
-    try {
-      const packageJsonPath = path.join(projectPath, 'package.json');
-      const packageJson = (await fs.readJson(packageJsonPath)) as PackageJson;
-
-      // Update dependencies
-      if (packageJson.dependencies?.[packageName]) {
-        packageJson.dependencies[packageName] = version;
-      }
-
-      // Update devDependencies
-      if (packageJson.devDependencies?.[packageName]) {
-        packageJson.devDependencies[packageName] = version;
-      }
-
-      // Update peerDependencies
-      if (packageJson.peerDependencies?.[packageName]) {
-        packageJson.peerDependencies[packageName] = version;
-      }
-
-      await fs.writeJson(packageJsonPath, packageJson, { spaces: 2 });
-      DR.logger.info(`Updated ${packageName} to ${version} in ${projectPath}`);
-    } catch (error) {
-      DR.logger.error(
-        `Error updating package.json in ${projectPath}: ${String(error)}`
-      );
-      throw error;
-    }
-  }
-
-  /**
-   * Runs install command in a project directory.
-   *
-   * @param projectPath - Path to the project directory
-   */
-  private static async runInstallCommand(projectPath: string): Promise<void> {
-    try {
-      // Check if project uses pnpm or npm
-      const hasPnpmLock = await fs.pathExists(
-        path.join(projectPath, 'pnpm-lock.yaml')
-      );
-      const command = hasPnpmLock ? 'pnpm' : 'npm';
-
-      DR.logger.info(`Running ${command} install in ${projectPath}`);
-      await execa(command, ['install'], { cwd: projectPath });
-      DR.logger.info(`${command} install completed in ${projectPath}`);
-    } catch (error) {
-      DR.logger.error(
-        `Error running install in ${projectPath}: ${String(error)}`
-      );
-      throw error;
-    }
-  }
-
-  /**
-   * Publishes a package to the Verdaccio registry.
-   *
-   * @param packagePath - Path to the package directory to publish
-   */
-  private static async publishToVerdaccio(packagePath: string): Promise<void> {
-    try {
-      DR.logger.info(`Publishing package from ${packagePath} to Verdaccio`);
-
-      // Use npm publish with registry override
-      await execa('npm', ['publish', '--registry', 'http://localhost:4873'], {
-        cwd: packagePath
-      });
-
-      DR.logger.info(`Package published successfully from ${packagePath}`);
-    } catch (error) {
-      DR.logger.error(
-        `Error publishing package from ${packagePath}: ${String(error)}`
-      );
-      throw error;
-    }
-  }
-
-  /**
    * Implements the 'local-npm publish' command.
    */
   static async publish(): Promise<void> {
@@ -152,6 +25,8 @@ export class CommandService {
 
     // Start Verdaccio server
     await VerdaccioService.start();
+
+    console.log('Did it get here?');
 
     // Generate timestamp version
     const timestampVersion = this.generateTimestampVersion(originalVersion);
@@ -417,6 +292,133 @@ export class CommandService {
       await this.runInstallCommand(currentProjectPath);
 
       DR.logger.info(`Successfully unsubscribed from all packages`);
+    }
+  }
+
+  /**
+   * Generates a timestamp version by appending current timestamp to the original version.
+   *
+   * @param originalVersion - The original version string
+   */
+  private static generateTimestampVersion(originalVersion: string): string {
+    const timestamp = new Date()
+      .toISOString()
+      .replace(/[-:T.]/g, '')
+      .slice(0, 14);
+    return `${originalVersion}-${timestamp}`;
+  }
+
+  /**
+   * Reads the package.json file in the current directory.
+   *
+   * @param dir - Directory to search for package.json
+   */
+  private static async getPackageInfo(
+    dir: string = process.cwd()
+  ): Promise<{ name: string; version: string } | null> {
+    try {
+      const packageJsonPath = path.join(dir, 'package.json');
+      const packageJson = (await fs.readJson(packageJsonPath)) as PackageJson;
+
+      if (!packageJson.name || !packageJson.version) {
+        throw new Error('package.json must contain name and version fields');
+      }
+
+      return {
+        name: packageJson.name,
+        version: packageJson.version
+      };
+    } catch (error) {
+      DR.logger.error(`Error reading package.json: ${String(error)}`);
+      return null;
+    }
+  }
+
+  /**
+   * Updates a package.json file with a new version.
+   *
+   * @param projectPath - Path to the project directory containing package.json
+   * @param packageName - Name of the package to update
+   * @param version - New version to set
+   */
+  private static async updatePackageJsonVersion(
+    projectPath: string,
+    packageName: string,
+    version: string
+  ): Promise<void> {
+    try {
+      const packageJsonPath = path.join(projectPath, 'package.json');
+      const packageJson = (await fs.readJson(packageJsonPath)) as PackageJson;
+
+      // Update dependencies
+      if (packageJson.dependencies?.[packageName]) {
+        packageJson.dependencies[packageName] = version;
+      }
+
+      // Update devDependencies
+      if (packageJson.devDependencies?.[packageName]) {
+        packageJson.devDependencies[packageName] = version;
+      }
+
+      // Update peerDependencies
+      if (packageJson.peerDependencies?.[packageName]) {
+        packageJson.peerDependencies[packageName] = version;
+      }
+
+      await fs.writeJson(packageJsonPath, packageJson, { spaces: 2 });
+      DR.logger.info(`Updated ${packageName} to ${version} in ${projectPath}`);
+    } catch (error) {
+      DR.logger.error(
+        `Error updating package.json in ${projectPath}: ${String(error)}`
+      );
+      throw error;
+    }
+  }
+
+  /**
+   * Runs install command in a project directory.
+   *
+   * @param projectPath - Path to the project directory
+   */
+  private static async runInstallCommand(projectPath: string): Promise<void> {
+    try {
+      // Check if project uses pnpm or npm
+      const hasPnpmLock = await fs.pathExists(
+        path.join(projectPath, 'pnpm-lock.yaml')
+      );
+      const command = hasPnpmLock ? 'pnpm' : 'npm';
+
+      DR.logger.info(`Running ${command} install in ${projectPath}`);
+      await execa(command, ['install'], { cwd: projectPath });
+      DR.logger.info(`${command} install completed in ${projectPath}`);
+    } catch (error) {
+      DR.logger.error(
+        `Error running install in ${projectPath}: ${String(error)}`
+      );
+      throw error;
+    }
+  }
+
+  /**
+   * Publishes a package to the Verdaccio registry.
+   *
+   * @param packagePath - Path to the package directory to publish
+   */
+  private static async publishToVerdaccio(packagePath: string): Promise<void> {
+    try {
+      DR.logger.info(`Publishing package from ${packagePath} to Verdaccio`);
+
+      // Use npm publish with registry override
+      await execa('npm', ['publish', '--registry', 'http://localhost:4873'], {
+        cwd: packagePath
+      });
+
+      DR.logger.info(`Package published successfully from ${packagePath}`);
+    } catch (error) {
+      DR.logger.error(
+        `Error publishing package from ${packagePath}: ${String(error)}`
+      );
+      throw error;
     }
   }
 }
