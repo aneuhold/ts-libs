@@ -88,6 +88,8 @@ export class CommandService {
     }
 
     // Need to update subscribers if there are any here.
+
+    await VerdaccioService.stop();
   }
 
   /**

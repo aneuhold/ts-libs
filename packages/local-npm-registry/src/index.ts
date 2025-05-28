@@ -95,7 +95,7 @@ program
           DR.logger.warn(`Package ${packageName} has no entry in the store`);
           continue;
         }
-        DR.logger.info(`\n${packageName}:`);
+        DR.logger.info(`${packageName}:`);
         DR.logger.info(`  Original Version: ${entry.originalVersion}`);
         DR.logger.info(`  Current Version: ${entry.currentVersion}`);
         DR.logger.info(`  Subscribers (${entry.subscribers.length}):`);
@@ -137,7 +137,7 @@ program
 
       DR.logger.info('Current Configuration:');
       DR.logger.info(JSON.stringify(config, null, 2));
-      DR.logger.info('\nConfiguration file location:');
+      DR.logger.info('Configuration file location:');
       DR.logger.info(
         configPath || 'No configuration file found (using defaults)'
       );
