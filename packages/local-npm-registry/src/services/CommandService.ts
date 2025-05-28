@@ -43,7 +43,8 @@ export class CommandService {
     const entry: PackageEntry = {
       originalVersion,
       currentVersion: timestampVersion,
-      subscribers: []
+      subscribers: [],
+      packageRootPath: process.cwd()
     };
 
     // Get existing entry to preserve subscribers

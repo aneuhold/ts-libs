@@ -13,6 +13,8 @@ export type PackageEntry = {
   currentVersion: string;
   /** List of absolute paths to projects that subscribe to this package */
   subscribers: string[];
+  /** The absolute path to the root directory of the package */
+  packageRootPath: string;
 };
 
 /**
@@ -149,35 +151,6 @@ export class LocalPackageStoreService {
     return Object.keys(store.packages).filter((packageName) =>
       store.packages[packageName]?.subscribers.includes(projectPath)
     );
-  }
-
-  /**
-   * Updates the version of a package in the store and writes it to the file system.
-   *
-   * @param packageName - Name of the package to update
-   * @param version - Version to set for the package
-   * @deprecated Use updatePackageEntry instead
-   */
-  static async updatePackageVersion(
-    packageName: string,
-    version: string
-  ): Promise<void> {
-    const store = await this.getStore();
-    // Legacy support - this method is deprecated
-    const existingEntry = store.packages[packageName];
-    if (existingEntry) {
-      store.packages[packageName] = {
-        ...existingEntry,
-        currentVersion: version
-      };
-    } else {
-      store.packages[packageName] = {
-        originalVersion: version,
-        currentVersion: version,
-        subscribers: []
-      };
-    }
-    await this.writeStore(store);
   }
 
   /**
