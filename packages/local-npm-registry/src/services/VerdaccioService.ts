@@ -8,6 +8,17 @@ import type { LocalNpmConfig } from '../types/LocalNpmConfig.js';
 import { ConfigService } from './ConfigService.js';
 
 /**
+ * Type definition for the Verdaccio runServer function.
+ * This is used to ensure we can call it with the correct parameters, also
+ * because the Verdaccio types are incorrect unfortunately.
+ *
+ * See the source code {@link https://github.com/verdaccio/verdaccio/blob/master/packages/node-api/src/server.ts here}.
+ */
+const verdaccioRunServer = runServer as unknown as (
+  config: VerdaccioConfig
+) => Promise<http.Server>;
+
+/**
  * Service to manage the local Verdaccio registry.
  */
 export class VerdaccioService {
@@ -92,11 +103,7 @@ export class VerdaccioService {
    */
   private static async startVerdaccio(config: LocalNpmConfig): Promise<void> {
     return new Promise((resolve, reject) => {
-      (
-        runServer as unknown as (
-          config: VerdaccioConfig
-        ) => Promise<http.Server>
-      )(VerdaccioService.createVerdaccioConfig(config))
+      verdaccioRunServer(VerdaccioService.createVerdaccioConfig(config))
         .then((verdaccioServer: http.Server) => {
           VerdaccioService.verdaccioServer = verdaccioServer;
 
