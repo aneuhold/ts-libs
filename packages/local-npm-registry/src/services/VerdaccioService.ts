@@ -64,6 +64,36 @@ export class VerdaccioService {
   }
 
   /**
+   * Stops the Verdaccio registry server.
+   */
+  static async stop(): Promise<void> {
+    if (!this.verdaccioServer) {
+      DR.logger.info('Verdaccio server is not running');
+      return;
+    }
+
+    return new Promise((resolve, reject) => {
+      const server = this.verdaccioServer;
+      if (server) {
+        server.close((error) => {
+          if (error) {
+            DR.logger.error(
+              `Failed to stop Verdaccio server: ${String(error)}`
+            );
+            reject(error);
+          } else {
+            DR.logger.info('Verdaccio server stopped successfully');
+            this.verdaccioServer = null;
+            resolve();
+          }
+        });
+      } else {
+        resolve();
+      }
+    });
+  }
+
+  /**
    * Publishes a package to the local Verdaccio registry.
    * Note: Verdaccio must be started first using start() method.
    *

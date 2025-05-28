@@ -86,6 +86,8 @@ export class CommandService {
     if (entry.subscribers.length === 0) {
       DR.logger.info('No subscribers to update');
     }
+
+    // Need to update subscribers if there are any here.
   }
 
   /**
