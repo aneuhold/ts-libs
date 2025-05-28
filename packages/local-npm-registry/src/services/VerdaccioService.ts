@@ -92,29 +92,43 @@ export class VerdaccioService {
    */
   private static async startVerdaccio(config: LocalNpmConfig): Promise<void> {
     return new Promise((resolve, reject) => {
-      runServer(
-        VerdaccioService.createVerdaccioConfig(config) as unknown as string
-      )
+      (
+        runServer as unknown as (
+          config: VerdaccioConfig
+        ) => Promise<http.Server>
+      )(VerdaccioService.createVerdaccioConfig(config))
         .then((verdaccioServer: http.Server) => {
           VerdaccioService.verdaccioServer = verdaccioServer;
 
-          DR.logger.info('Verdaccio server created, waiting for startup...');
+          DR.logger.info('Verdaccio server created, starting to listen...');
 
-          verdaccioServer.on('verdaccio_started', () => {
-            DR.logger.info(`Verdaccio server started`);
-            resolve();
+          // Get the port from config or use default
+          const port = config.registryPort || 4873;
+
+          // Start listening on the specified port
+          verdaccioServer.listen(port, (error?: Error) => {
+            if (error) {
+              DR.logger.error(`Failed to start Verdaccio: ${String(error)}`);
+              reject(error);
+            } else {
+              DR.logger.info(
+                `Verdaccio server started successfully on port ${port}`
+              );
+              resolve();
+            }
           });
 
           verdaccioServer.on('error', (error) => {
+            DR.logger.error(`Verdaccio server error: ${String(error)}`);
             reject(error);
           });
         })
         .catch((error: unknown) => {
-          DR.logger.error(`Error starting Verdaccio server: ${String(error)}`);
+          DR.logger.error(`Error creating Verdaccio server: ${String(error)}`);
           reject(
             error instanceof Error
               ? error
-              : new Error(`Failed to start Verdaccio server: ${String(error)}`)
+              : new Error(`Failed to create Verdaccio server: ${String(error)}`)
           );
         });
     });
