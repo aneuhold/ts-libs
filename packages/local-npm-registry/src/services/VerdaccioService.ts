@@ -82,11 +82,16 @@ export class VerdaccioService {
         `Publishing package from ${packagePath} to ${registryUrl}...`
       );
 
-      // Use npm publish with the local registry
-      await execa('npm', ['publish', '--registry', registryUrl], {
-        cwd: packagePath,
-        stdio: 'inherit'
-      });
+      // Use npm publish with the local registry. Also set the tag to 'local'.
+      // A tag is required for NPM to publish pre-release versions.
+      await execa(
+        'npm',
+        ['publish', '--registry', registryUrl, '--tag', 'local'],
+        {
+          cwd: packagePath,
+          stdio: 'inherit'
+        }
+      );
 
       DR.logger.info('Package published successfully');
     } catch (error) {
@@ -154,9 +159,7 @@ export class VerdaccioService {
     // Just a partial, because VerdaccioConfig seems to contain unnecessary
     // required properties that we don't need to set.
     const verdaccioConfig: Partial<VerdaccioConfig> = {
-      storage: path.join(storageLocation, 'verdaccio-storage'),
-      // Store is required for in-memory storage. When this is used, the
-      // storage path is ignored.
+      // Use in-memory storage to avoid conflicts between runs
       store: {
         memory: {
           limit: 1000

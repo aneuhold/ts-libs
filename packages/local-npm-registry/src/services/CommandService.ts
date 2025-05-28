@@ -26,8 +26,6 @@ export class CommandService {
     // Start Verdaccio server
     await VerdaccioService.start();
 
-    console.log('Did it get here?');
-
     // Generate timestamp version
     const timestampVersion = this.generateTimestampVersion(originalVersion);
 
@@ -39,7 +37,7 @@ export class CommandService {
     );
 
     // Publish to Verdaccio registry
-    await this.publishToVerdaccio(process.cwd());
+    await VerdaccioService.publishPackage(process.cwd());
 
     // Update local store
     const entry: PackageEntry = {
@@ -76,6 +74,13 @@ export class CommandService {
         }
       }
     }
+
+    // Reset publisher's package.json back to original version
+    await this.updatePackageJsonVersion(
+      process.cwd(),
+      packageName,
+      originalVersion
+    );
 
     DR.logger.info(`Successfully published ${packageName}@${timestampVersion}`);
     if (entry.subscribers.length === 0) {
@@ -350,6 +355,11 @@ export class CommandService {
       const packageJsonPath = path.join(projectPath, 'package.json');
       const packageJson = (await fs.readJson(packageJsonPath)) as PackageJson;
 
+      // Update the package's own version if this is the package being published
+      if (packageJson.name === packageName) {
+        packageJson.version = version;
+      }
+
       // Update dependencies
       if (packageJson.dependencies?.[packageName]) {
         packageJson.dependencies[packageName] = version;
@@ -394,29 +404,6 @@ export class CommandService {
     } catch (error) {
       DR.logger.error(
         `Error running install in ${projectPath}: ${String(error)}`
-      );
-      throw error;
-    }
-  }
-
-  /**
-   * Publishes a package to the Verdaccio registry.
-   *
-   * @param packagePath - Path to the package directory to publish
-   */
-  private static async publishToVerdaccio(packagePath: string): Promise<void> {
-    try {
-      DR.logger.info(`Publishing package from ${packagePath} to Verdaccio`);
-
-      // Use npm publish with registry override
-      await execa('npm', ['publish', '--registry', 'http://localhost:4873'], {
-        cwd: packagePath
-      });
-
-      DR.logger.info(`Package published successfully from ${packagePath}`);
-    } catch (error) {
-      DR.logger.error(
-        `Error publishing package from ${packagePath}: ${String(error)}`
       );
       throw error;
     }
