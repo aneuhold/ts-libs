@@ -7,15 +7,13 @@
   "type": "module",
   "scripts": {
     "build": "rimraf lib && tsc --project tsconfig.build.json && tsx ./scripts/copyTsFiles.ts",
-    "watch": "nodemon --ignore lib/ -e ts --exec \"tsc --project tsconfig.build.json && tsx ./scripts/copyTsFiles.ts && local-npm publish\"",
+    "watch": "nodemon --ignore lib/ -e ts --exec \"tsc --project tsconfig.build.json && tsx ./scripts/copyTsFiles.ts\"",
     "lint": "eslint",
     "test": "jest",
     "jsr:validate": "tsx ./scripts/validateJsrPublish.ts",
     "checkAll": "pnpm build && pnpm lint && pnpm test && pnpm jsr:validate",
     "jsr:publish": "tsx ./scripts/publishJsr.ts",
-    "upgrade:all": "pnpm up",
-    "publish:local": "pnpm publish --registry http://localhost:4873 --access public --no-git-checks --force",
-    "unpublish:local": "npm unpublish --registry http://localhost:4873 --force"
+    "upgrade:all": "pnpm up"
   },
   "main": "lib/index.js",
   "module": "lib/index.js",
@@ -42,7 +40,6 @@
     "Node.js"
   ],
   "devDependencies": {
-    "@aneuhold/local-npm-registry": "0.0.4",
     "@types/jest": "^29.5.14",
     "@types/node": "^22.15.3",
     "eslint": "^9.26.0",
