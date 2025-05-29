@@ -1,5 +1,4 @@
 import { DR, PackageJson } from '@aneuhold/core-ts-lib';
-import { FSWatcher, watch } from 'chokidar';
 import { execa } from 'execa';
 import fs from 'fs-extra';
 import path from 'path';
@@ -7,14 +6,11 @@ import { ConfigService } from './ConfigService.js';
 import { LocalPackageStoreService } from './LocalPackageStoreService.js';
 
 /**
- * Service to manage local package installations and updates in consuming projects.
+ * Service to manage local package installations in consuming projects.
  */
 export class LocalPackageInstallService {
-  private storeWatcher: FSWatcher | null = null;
-  private watchedPackages: Set<string> = new Set();
-
   /**
-   * Installs a local package in the current project and sets up watching for updates.
+   * Installs a local package in the current project.
    *
    * @param packageName - Name of the package to install locally
    */
@@ -29,7 +25,7 @@ export class LocalPackageInstallService {
 
       if (!packageEntry) {
         throw new Error(
-          `Package ${packageName} not found in local store. Make sure it's being watched and published.`
+          `Package ${packageName} not found in local store. Make sure it's being published.`
         );
       }
 
@@ -51,14 +47,6 @@ export class LocalPackageInstallService {
         }
       );
 
-      // Add to watched packages
-      this.watchedPackages.add(packageName);
-
-      // Start watching the store if not already watching
-      if (!this.storeWatcher) {
-        await this.startWatchingStore();
-      }
-
       DR.logger.info(
         `Successfully installed ${packageName}@${packageEntry.currentVersion}`
       );
@@ -71,7 +59,7 @@ export class LocalPackageInstallService {
   }
 
   /**
-   * Removes a package from local watching and installs the production version.
+   * Removes a local package and installs the production version.
    *
    * @param packageName - Name of the package to uninstall locally
    */
@@ -81,19 +69,10 @@ export class LocalPackageInstallService {
         `Removing local package ${packageName} and installing production version...`
       );
 
-      // Remove from watched packages
-      this.watchedPackages.delete(packageName);
-
       // Install the production version (without specifying registry to use default npm)
       await execa('npm', ['install', packageName], {
         stdio: 'inherit'
       });
-
-      // Stop watching store if no packages are being watched
-      if (this.watchedPackages.size === 0 && this.storeWatcher) {
-        await this.storeWatcher.close();
-        this.storeWatcher = null;
-      }
 
       DR.logger.info(`Successfully uninstalled local package ${packageName}`);
     } catch (error) {
@@ -105,10 +84,53 @@ export class LocalPackageInstallService {
   }
 
   /**
-   * Lists all locally installed packages that are being watched.
+   * Updates a specific package to its latest local version.
+   *
+   * @param packageName - Name of the package to update
    */
-  getWatchedPackages(): string[] {
-    return Array.from(this.watchedPackages);
+  async updateLocalPackage(packageName: string): Promise<void> {
+    const config = await ConfigService.loadConfig();
+    const registryUrl = config.registryUrl || 'http://localhost:4873';
+
+    try {
+      // Get the latest version from the local store
+      const store = await LocalPackageStoreService.getStore();
+      const packageEntry = store.packages[packageName];
+
+      if (!packageEntry) {
+        throw new Error(
+          `Package ${packageName} not found in local store. Make sure it's being published.`
+        );
+      }
+
+      DR.logger.info(
+        `Updating ${packageName} to ${packageEntry.currentVersion}...`
+      );
+
+      // Update package.json first
+      await this.updatePackageJsonForLocal([packageName]);
+
+      // Install the new version
+      await execa(
+        'npm',
+        [
+          'install',
+          `${packageName}@${packageEntry.currentVersion}`,
+          '--registry',
+          registryUrl
+        ],
+        {
+          stdio: 'inherit'
+        }
+      );
+
+      DR.logger.info(
+        `Successfully updated ${packageName} to ${packageEntry.currentVersion}`
+      );
+    } catch (error) {
+      DR.logger.error(`Failed to update ${packageName}: ${String(error)}`);
+      throw error;
+    }
   }
 
   /**
@@ -174,90 +196,6 @@ export class LocalPackageInstallService {
       DR.logger.info('Updated package.json with local versions');
     } else {
       DR.logger.info('No changes needed in package.json');
-    }
-  }
-
-  /**
-   * Stops watching the local package store.
-   */
-  async stopWatching(): Promise<void> {
-    if (this.storeWatcher) {
-      await this.storeWatcher.close();
-      this.storeWatcher = null;
-      DR.logger.info('Stopped watching local package store');
-    }
-  }
-
-  /**
-   * Starts watching the local package store for changes.
-   */
-  private async startWatchingStore(): Promise<void> {
-    const config = await ConfigService.loadConfig();
-    const storeFilePath = path.join(
-      config.storeLocation || process.cwd(),
-      '.local-package-store.json'
-    );
-
-    this.storeWatcher = watch(storeFilePath, {
-      ignoreInitial: true,
-      persistent: true
-    });
-
-    this.storeWatcher.on('change', () => {
-      void (async () => {
-        try {
-          DR.logger.info(
-            'Local package store updated, checking for package updates...'
-          );
-          await this.handleStoreUpdate();
-        } catch (error) {
-          DR.logger.error(`Error handling store update: ${String(error)}`);
-        }
-      })();
-    });
-
-    DR.logger.info('Started watching local package store for updates');
-  }
-
-  /**
-   * Handles updates to the local package store.
-   */
-  private async handleStoreUpdate(): Promise<void> {
-    const config = await ConfigService.loadConfig();
-    const registryUrl = config.registryUrl || 'http://localhost:4873';
-    const store = await LocalPackageStoreService.getStore();
-
-    for (const packageName of this.watchedPackages) {
-      const newVersion = store.packages[packageName]?.currentVersion;
-
-      if (newVersion) {
-        try {
-          DR.logger.info(`Updating ${packageName} to ${newVersion}...`);
-
-          // Update package.json first
-          await this.updatePackageJsonForLocal([packageName]);
-
-          // Install the new version
-          await execa(
-            'npm',
-            [
-              'install',
-              `${packageName}@${newVersion}`,
-              '--registry',
-              registryUrl
-            ],
-            {
-              stdio: 'pipe' // Use pipe to avoid cluttering output
-            }
-          );
-
-          DR.logger.info(
-            `Successfully updated ${packageName} to ${newVersion}`
-          );
-        } catch (error) {
-          DR.logger.error(`Failed to update ${packageName}: ${String(error)}`);
-        }
-      }
     }
   }
 }
