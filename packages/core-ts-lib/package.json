@@ -2,12 +2,12 @@
   "name": "@aneuhold/core-ts-lib",
   "author": "Anton G. Neuhold Jr.",
   "license": "MIT",
-  "version": "2.1.11",
+  "version": "2.1.12",
   "description": "A core library for all of my TypeScript projects",
   "type": "module",
   "scripts": {
     "build": "rimraf lib && tsc --project tsconfig.build.json && tsx ./scripts/copyTsFiles.ts",
-    "watch": "nodemon --ignore lib/ -e ts --exec \"tsc --project tsconfig.build.json && tsx ./scripts/copyTsFiles.ts\"",
+    "watch": "nodemon --ignore lib/ -e ts --exec \"tsc --project tsconfig.build.json && tsx ./scripts/copyTsFiles.ts && local-npm publish\"",
     "lint": "eslint",
     "test": "jest",
     "jsr:validate": "tsx ./scripts/validateJsrPublish.ts",
@@ -42,6 +42,7 @@
     "Node.js"
   ],
   "devDependencies": {
+    "@aneuhold/local-npm-registry": "0.0.4",
     "@types/jest": "^29.5.14",
     "@types/node": "^22.15.3",
     "eslint": "^9.26.0",
