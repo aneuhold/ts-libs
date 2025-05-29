@@ -222,9 +222,6 @@ importers:
 
   packages/core-ts-lib:
     devDependencies:
-      '@aneuhold/local-npm-registry':
-        specifier: 0.0.4
-        version: link:../local-npm-registry
       '@types/jest':
         specifier: ^29.5.14
         version: 29.5.14
