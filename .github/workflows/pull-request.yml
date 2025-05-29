@@ -40,7 +40,8 @@ jobs:
         uses: ./.github/actions/setup-node-pnpm
 
       - name: Check version bumps for changed packages
-        run: ./scripts/package-utils.sh check-versions-ci "${{ needs.detect-changes.outputs.changed-packages }}"
+        run: |
+          ./scripts/package-utils.sh check-versions-ci '${{ needs.detect-changes.outputs.changed-packages }}'
 
   test:
     name: 'Test Changed Packages'
