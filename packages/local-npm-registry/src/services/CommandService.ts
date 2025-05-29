@@ -118,8 +118,7 @@ export class CommandService {
     await VerdaccioService.start();
 
     // Re-publish package to Verdaccio with stored timestamp version
-    // First, we need to find the package source to republish it
-    // For now, we'll assume the package is already published
+    await this.republishPackageToVerdaccio(packageName, entry);
 
     // Add current project to subscribers list
     await LocalPackageStoreService.addSubscriber(
@@ -151,6 +150,8 @@ export class CommandService {
         );
       }
     }
+
+    await VerdaccioService.stop();
 
     DR.logger.info(
       `Successfully subscribed to ${packageName}@${updatedEntry.currentVersion}`
@@ -386,6 +387,60 @@ export class CommandService {
       DR.logger.error(
         `Error updating package.json in ${projectPath}: ${String(error)}`
       );
+      throw error;
+    }
+  }
+
+  /**
+   * Republishes a package to Verdaccio with proper version handling.
+   *
+   * @param packageName - Name of the package to republish
+   * @param entry - Package entry containing version and path information
+   */
+  private static async republishPackageToVerdaccio(
+    packageName: string,
+    entry: PackageEntry
+  ): Promise<void> {
+    try {
+      DR.logger.info(
+        `Republishing ${packageName}@${entry.currentVersion} to Verdaccio`
+      );
+
+      // Temporarily update the source package.json to the timestamp version
+      await this.updatePackageJsonVersion(
+        entry.packageRootPath,
+        packageName,
+        entry.currentVersion
+      );
+
+      // Publish to Verdaccio registry
+      await VerdaccioService.publishPackage(entry.packageRootPath);
+
+      // Restore the original version in the source package.json
+      await this.updatePackageJsonVersion(
+        entry.packageRootPath,
+        packageName,
+        entry.originalVersion
+      );
+
+      DR.logger.info(
+        `Successfully republished ${packageName}@${entry.currentVersion}`
+      );
+    } catch (error) {
+      // Ensure we restore the original version even if publishing fails
+      try {
+        await this.updatePackageJsonVersion(
+          entry.packageRootPath,
+          packageName,
+          entry.originalVersion
+        );
+      } catch (restoreError) {
+        DR.logger.error(
+          `Failed to restore original version after publish error: ${String(restoreError)}`
+        );
+      }
+
+      DR.logger.error(`Failed to republish package: ${String(error)}`);
       throw error;
     }
   }
