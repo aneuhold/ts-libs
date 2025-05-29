@@ -307,6 +307,76 @@ export class CommandService {
   }
 
   /**
+   * Implements the 'local-npm clear-store' command.
+   * Unpublishes all packages and unsubscribes all subscribers.
+   */
+  static async clearStore(): Promise<void> {
+    const store = await LocalPackageStoreService.getStore();
+    const packageNames = Object.keys(store.packages);
+
+    if (packageNames.length === 0) {
+      DR.logger.info('No packages in local registry to clear');
+      return;
+    }
+
+    DR.logger.info(
+      `Clearing ${packageNames.length} package(s) from local registry`
+    );
+
+    let successCount = 0;
+    let errorCount = 0;
+
+    // Reset all subscribers for all packages
+    for (const packageName of packageNames) {
+      const entry = store.packages[packageName];
+      if (!entry) {
+        continue;
+      }
+
+      DR.logger.info(`Processing package: ${packageName}`);
+
+      // Reset all subscribers to original version
+      if (entry.subscribers.length > 0) {
+        DR.logger.info(
+          `  Resetting ${entry.subscribers.length} subscriber(s) to original version`
+        );
+
+        for (const subscriberPath of entry.subscribers) {
+          try {
+            await this.updatePackageJsonVersion(
+              subscriberPath,
+              packageName,
+              entry.originalVersion
+            );
+            await this.runInstallCommand(subscriberPath);
+            DR.logger.info(`    ✓ Reset subscriber: ${subscriberPath}`);
+          } catch (error) {
+            DR.logger.error(
+              `    ✗ Failed to reset subscriber ${subscriberPath}: ${String(error)}`
+            );
+            errorCount++;
+          }
+        }
+      }
+
+      successCount++;
+    }
+
+    // Clear the entire store
+    await LocalPackageStoreService.clearStore();
+
+    if (errorCount > 0) {
+      DR.logger.warn(
+        `Cleared ${successCount} package(s) with ${errorCount} subscriber reset error(s)`
+      );
+    } else {
+      DR.logger.info(
+        `Successfully cleared all ${successCount} package(s) and reset all subscribers`
+      );
+    }
+  }
+
+  /**
    * Generates a timestamp version by appending current timestamp to the original version.
    *
    * @param originalVersion - The original version string

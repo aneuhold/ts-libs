@@ -166,4 +166,12 @@ export class LocalPackageStoreService {
       DR.logger.error(`Error writing local package store: ${String(error)}`);
     }
   }
+
+  /**
+   * Clears all packages from the store.
+   */
+  static async clearStore(): Promise<void> {
+    const emptyStore: LocalPackageStore = { packages: {} };
+    await this.writeStore(emptyStore);
+  }
 }

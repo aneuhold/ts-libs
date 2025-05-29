@@ -76,6 +76,20 @@ program
     }
   });
 
+program
+  .command('clear-store')
+  .description(
+    'Clear all packages from the local registry and reset all subscribers'
+  )
+  .action(async () => {
+    try {
+      await CommandService.clearStore();
+    } catch (error) {
+      DR.logger.error(`Failed to clear store: ${String(error)}`);
+      process.exit(1);
+    }
+  });
+
 // Utility commands for debugging and management
 program
   .command('list')
