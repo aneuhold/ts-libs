@@ -276,11 +276,29 @@ check_version_bumps_ci() {
         return 0
     fi
     
-    # Convert JSON array to bash array
-    readarray -t PACKAGES < <(echo "$packages_json" | node -e "JSON.parse(require('fs').readFileSync('/dev/stdin', 'utf8')).forEach(p => console.log(p))")
+    echo "Checking version bumps for packages: $packages_json"
+    
+    # Convert JSON array to newline-separated list and store in temp file
+    TEMP_FILE=$(mktemp)
+    printf '%s\n' "$packages_json" | node -e "
+        let input = '';
+        process.stdin.on('data', chunk => input += chunk);
+        process.stdin.on('end', () => {
+            try {
+                const packages = JSON.parse(input.trim());
+                packages.forEach(p => console.log(p));
+            } catch (e) {
+                console.error('Error parsing JSON:', e.message);
+                process.exit(1);
+            }
+        });
+    " > "$TEMP_FILE"
+    
     FAILED_PACKAGES=""
     
-    for package in "${PACKAGES[@]}"; do
+    # Process each package
+    while IFS= read -r package; do
+        [ -z "$package" ] && continue
         if [ -d "packages/$package" ]; then
             echo "Checking version bump for $package..."
             
@@ -312,7 +330,10 @@ check_version_bumps_ci() {
                 echo "✅ Version bumped for package $package"
             fi
         fi
-    done
+    done < "$TEMP_FILE"
+    
+    # Clean up temp file
+    rm -f "$TEMP_FILE"
     
     if [ ! -z "$FAILED_PACKAGES" ]; then
         echo "❌ The following packages have changes but no version bump: $FAILED_PACKAGES"

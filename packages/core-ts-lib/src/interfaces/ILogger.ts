@@ -18,11 +18,11 @@ export interface ILogger {
   success(msg: string): void;
 
   /**
-   * Logs failure messages (non-critical).
+   * Logs warning messages (non-critical).
    *
    * @param msg - The message to log.
    */
-  failure(msg: string): void;
+  warn(msg: string): void;
 
   /**
    * Logs error messages (potentially critical).
@@ -46,7 +46,7 @@ export interface ILogger {
 export class NoopLogger implements ILogger {
   info(): void {}
   success(): void {}
-  failure(): void {}
+  warn(): void {}
   error(): void {}
   get verbose(): ILogger {
     // Return itself, as it does nothing anyway

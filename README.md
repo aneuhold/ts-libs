@@ -47,12 +47,7 @@ Monorepo for TypeScript libraries that I work on.
      - Incremental rebuilds, unless it is easy to do so / comes along with the tooling used. Full rebuilds are acceptable.
      - Testing as part of rebuilding.
 
-2. JSR Publishing System
-
-   - To be able to run `jsr:validate` and `jsr:publish` for any individual package, or all packages at once. The code for this command is found in [`PackageService`](packages/core-ts-lib/src/services/PackageService.ts). The biggest challenge at the moment is this, because JSR wants the actual set of TypeScript files in each package, along with a valid package.json. So no `workspace:` versions can be specified. They have to be replaced with actual versions first.
-   - JSR publishing only needs to be ran as a check. JSR never needs to be published locally, it only needs to be validated in CI and published via CI. It will not be part of the watch process in any way.
-
-3. Overall
+2. Overall
 
    - Build home-grown solutions without relying on monorepo frameworks
    - Leverage existing tooling you've already created. For example, the code in `core-ts-lib` or `main-scripts`.

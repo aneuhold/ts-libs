@@ -104,30 +104,30 @@ export default class ConsoleLogger implements ILogger {
   }
 
   /**
-   * Logs a failure message to the console. Prepends `🔴` to each message.
-   * Uses `console.log`. See {@link error} for critical errors.
+   * Logs a warning message to the console. Prepends `🟡` to each message.
+   * Uses `console.warn`. See {@link error} for critical errors.
    * Respects the instance's `logOnlyIfVerbose` setting and the global `verboseLoggingEnabled` flag.
    *
    * @param msg - The message to log.
    */
-  failure(msg: string): void {
+  warn(msg: string): void {
     if (this.shouldLog()) {
-      console.log(`🔴 ${msg}`);
+      console.warn(`🟡 ${msg}`);
     }
   }
 
   /**
-   * Static version of {@link ConsoleLogger.prototype.failure}. Logs using a default instance.
+   * Static version of {@link ConsoleLogger.prototype.warn}. Logs using a default instance.
    *
    * @param msg - The message to log.
    */
-  static failure(msg: string): void {
-    new ConsoleLogger().failure(msg);
+  static warn(msg: string): void {
+    new ConsoleLogger().warn(msg);
   }
 
   /**
    * Logs an error message to the console using `console.error`. Prepends `💀`.
-   * Use for potentially execution-stopping errors. See {@link failure} for non-critical issues.
+   * Use for potentially execution-stopping errors. See {@link warn} for non-critical issues.
    * Respects the instance's `logOnlyIfVerbose` setting and the global `verboseLoggingEnabled` flag.
    *
    * @param msg - The message to log.
