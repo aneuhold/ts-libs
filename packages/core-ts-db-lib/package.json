@@ -4,6 +4,7 @@
   "license": "MIT",
   "version": "2.0.71",
   "description": "A core database library used for personal projects",
+  "packageManager": "pnpm@10.11.0",
   "type": "module",
   "scripts": {
     "build": "rimraf lib && tsc --project tsconfig.build.json && tsx ./scripts/copyTsFiles.ts",

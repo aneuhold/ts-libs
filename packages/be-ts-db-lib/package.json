@@ -2,7 +2,7 @@
   "name": "@aneuhold/be-ts-db-lib",
   "author": "Anton G. Neuhold Jr.",
   "license": "MIT",
-  "version": "2.0.66",
+  "version": "2.0.65",
   "description": "A backend database library meant to actually interact with various databases in personal projects",
   "packageManager": "pnpm@10.10.0",
   "type": "module",

@@ -4,13 +4,14 @@
   "license": "MIT",
   "version": "0.0.6",
   "description": "Manages local npm package installations and updates across your machine.",
+  "packageManager": "pnpm@10.11.0",
   "type": "module",
   "scripts": {
     "cli:test": "node lib/index.js",
     "build": "rimraf lib && tsc -p tsconfig.build.json && tsx scripts/copyTsFiles.ts",
     "watch": "nodemon --ignore lib/ -e ts --exec \"tsc --project tsconfig.build.json && tsx ./scripts/copyTsFiles.ts\"",
     "lint": "eslint",
-    "test": "exit 0",
+    "test": "vitest run",
     "upgrade:core": "pnpm update '@aneuhold/main-scripts' --latest",
     "jsr:validate": "tb pkg validateJsr",
     "checkAll": "pnpm build && pnpm lint && pnpm test && pnpm jsr:validate",
@@ -50,17 +51,15 @@
   "devDependencies": {
     "@aneuhold/main-scripts": "^2.1.6",
     "@types/fs-extra": "^11.0.4",
-    "@types/jest": "^29.5.14",
     "@types/node": "^22.15.3",
     "@types/semver": "^7.5.8",
     "@verdaccio/types": "^10.8.0",
     "eslint": "^9.26.0",
-    "jest": "^29.7.*",
     "jsr": "*",
     "prettier": "^3.5.3",
     "rimraf": "^6.0.1",
-    "ts-jest": "^29.3.2",
     "tsx": "^4.19.4",
-    "typescript": "~5.8.3"
+    "typescript": "~5.8.3",
+    "vitest": "^3.1.4"
   }
 }
