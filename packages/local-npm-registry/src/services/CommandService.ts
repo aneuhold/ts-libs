@@ -6,6 +6,7 @@ import {
   LocalPackageStoreService,
   type PackageEntry
 } from './LocalPackageStoreService.js';
+import { PackageManagerService } from './PackageManagerDetectionService.js';
 import { VerdaccioService } from './VerdaccioService.js';
 
 /**
@@ -522,15 +523,13 @@ export class CommandService {
    */
   private static async runInstallCommand(projectPath: string): Promise<void> {
     try {
-      // Check if project uses pnpm or npm
-      const hasPnpmLock = await fs.pathExists(
-        path.join(projectPath, 'pnpm-lock.yaml')
-      );
-      const command = hasPnpmLock ? 'pnpm' : 'npm';
+      // Detect the package manager based on lock files in the target project
+      const packageManager =
+        await PackageManagerService.detectPackageManager(projectPath);
 
-      DR.logger.info(`Running ${command} install in ${projectPath}`);
-      await execa(command, ['install'], { cwd: projectPath });
-      DR.logger.info(`${command} install completed in ${projectPath}`);
+      DR.logger.info(`Running ${packageManager} install in ${projectPath}`);
+      await execa(packageManager, ['install'], { cwd: projectPath });
+      DR.logger.info(`${packageManager} install completed in ${projectPath}`);
     } catch (error) {
       DR.logger.error(
         `Error running install in ${projectPath}: ${String(error)}`

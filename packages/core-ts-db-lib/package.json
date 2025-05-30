@@ -2,12 +2,12 @@
   "name": "@aneuhold/core-ts-db-lib",
   "author": "Anton G. Neuhold Jr.",
   "license": "MIT",
-  "version": "2.0.70",
+  "version": "2.0.71",
   "description": "A core database library used for personal projects",
   "type": "module",
   "scripts": {
     "build": "rimraf lib && tsc --project tsconfig.build.json && tsx ./scripts/copyTsFiles.ts",
-    "watch": "tsc -w -p tsconfig.build.json",
+    "watch": "nodemon --ignore lib/ -e ts --exec \"tsc --project tsconfig.build.json && tsx ./scripts/copyTsFiles.ts && local-npm publish\"",
     "lint": "eslint",
     "test": "vitest run",
     "jsr:validate": "tb pkg validateJsr",
@@ -48,6 +48,7 @@
   },
   "devDependencies": {
     "@aneuhold/main-scripts": "^2.1.6",
+    "@aneuhold/local-npm-registry": "*",
     "@types/node": "^22.15.3",
     "eslint": "^9.26.0",
     "jsr": "^0.13.4",
