@@ -5,6 +5,8 @@ Unless otherwise specified, always make suggested edits in the files directly in
 ## Project Features
 
 - Uses TypeScript for the source code
+- Uses Vitest for testing
+- Uses pnpm for package management
 
 ## Formatting
 
@@ -19,6 +21,11 @@ Unless otherwise specified, always make suggested edits in the files directly in
 - Always order methods in a class by visibility (public, protected, private). If multiple methods have the same visibility, the order doesn't matter.
 - Use `async` and `await` for asynchronous code instead of `.then()`.
 - Use `const` and `let` instead of `var`.
+
+## Testing
+
+- When creating tests, make the file name the same as the associated file being tested, but instead of `.ts`, use `.spec.ts`.
+- Never test private methods directly in a test.
 
 ## Structure
 
