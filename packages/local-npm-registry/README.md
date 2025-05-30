@@ -39,7 +39,8 @@ In your frontend/consuming project, first install the tool as a dev dependency, 
 ```json
 {
   "scripts": {
-    "sub:my-library": "local-npm subscribe @my-org/my-library"
+    "sub:my-library": "local-npm subscribe @my-org/my-library",
+    "unsub:my-library": "local-npm unsubscribe @my-org/my-library"
   }
 }
 ```

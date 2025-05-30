@@ -7,7 +7,7 @@
   "type": "module",
   "scripts": {
     "build": "rimraf lib && tsc --project tsconfig.build.json && tsx ./scripts/copyTsFiles.ts",
-    "watch": "tsc -w -p tsconfig.build.json",
+    "watch": "nodemon --ignore lib/ -e ts --exec \"tsc --project tsconfig.build.json && tsx ./scripts/copyTsFiles.ts && local-npm publish\"",
     "lint": "eslint",
     "test": "vitest run",
     "jsr:validate": "tb pkg validateJsr",
@@ -51,6 +51,7 @@
   },
   "devDependencies": {
     "@aneuhold/main-scripts": "^2.1.6",
+    "@aneuhold/local-npm-registry": "*",
     "@types/node": "^22.15.3",
     "@types/node-fetch": "^2.6.12",
     "eslint": "^9.26.0",
