@@ -4,6 +4,7 @@ import fs from 'fs-extra';
 import path from 'path';
 import { ConfigService } from './ConfigService.js';
 import { LocalPackageStoreService } from './LocalPackageStoreService.js';
+import { PackageManagerService } from './PackageManagerDetectionService.js';
 
 /**
  * Service to manage local package installations in consuming projects.
@@ -17,7 +18,9 @@ export class LocalPackageInstallService {
   async installLocalPackage(packageName: string): Promise<void> {
     const config = await ConfigService.loadConfig();
     const registryUrl = config.registryUrl || 'http://localhost:4873';
-    const packageManager = await this.getPackageManager();
+    const packageManager = await PackageManagerService.detectPackageManager(
+      process.cwd()
+    );
 
     try {
       // Get the latest version from the local store
@@ -65,7 +68,9 @@ export class LocalPackageInstallService {
    * @param packageName - Name of the package to uninstall locally
    */
   async uninstallLocalPackage(packageName: string): Promise<void> {
-    const packageManager = await this.getPackageManager();
+    const packageManager = await PackageManagerService.detectPackageManager(
+      process.cwd()
+    );
 
     try {
       DR.logger.info(
@@ -94,7 +99,9 @@ export class LocalPackageInstallService {
   async updateLocalPackage(packageName: string): Promise<void> {
     const config = await ConfigService.loadConfig();
     const registryUrl = config.registryUrl || 'http://localhost:4873';
-    const packageManager = await this.getPackageManager();
+    const packageManager = await PackageManagerService.detectPackageManager(
+      process.cwd()
+    );
 
     try {
       // Get the latest version from the local store
@@ -201,31 +208,5 @@ export class LocalPackageInstallService {
     } else {
       DR.logger.info('No changes needed in package.json');
     }
-  }
-
-  /**
-   * Determines the package manager to use based on lock files in the current directory.
-   *
-   * This is purposefully returned as a string to allow for easy
-   * integration with exec commands.
-   */
-  private async getPackageManager(): Promise<string> {
-    const cwd = process.cwd();
-
-    // Check for lock files in order of preference
-    if (await fs.pathExists(path.join(cwd, 'pnpm-lock.yaml'))) {
-      return 'pnpm';
-    }
-
-    if (await fs.pathExists(path.join(cwd, 'yarn.lock'))) {
-      return 'yarn';
-    }
-
-    if (await fs.pathExists(path.join(cwd, 'package-lock.json'))) {
-      return 'npm';
-    }
-
-    // Default to npm if no lock file is found
-    return 'npm';
   }
 }
