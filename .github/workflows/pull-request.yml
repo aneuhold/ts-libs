@@ -49,6 +49,7 @@ jobs:
     needs: [detect-changes, version-check]
     if: needs.detect-changes.outputs.has-changes == 'true'
     strategy:
+      fail-fast: false
       matrix:
         package: ${{ fromJson(needs.detect-changes.outputs.changed-packages) }}
     permissions:
