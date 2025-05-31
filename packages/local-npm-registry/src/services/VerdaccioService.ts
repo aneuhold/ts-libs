@@ -1,7 +1,9 @@
 import { DR } from '@aneuhold/core-ts-lib';
 import type { Config as VerdaccioConfig } from '@verdaccio/types';
 import { execa } from 'execa';
+import fs from 'fs';
 import http from 'http';
+import os from 'os';
 import path from 'path';
 import { runServer } from 'verdaccio';
 import type { LocalNpmConfig } from '../types/LocalNpmConfig.js';
@@ -53,6 +55,9 @@ export class VerdaccioService {
 
       const config = await ConfigService.loadConfig();
       const port = config.registryPort || 4873;
+
+      // Ensure npmrc has the auth token for Verdaccio
+      this.ensureNpmrcAuthToken(port);
 
       DR.logger.info(`Starting Verdaccio on port ${port}...`);
 
@@ -272,5 +277,46 @@ export class VerdaccioService {
     };
 
     return verdaccioConfig as VerdaccioConfig;
+  }
+
+  /**
+   * Ensures that the ~/.npmrc file contains the necessary auth token for Verdaccio.
+   * This prevents npm from prompting for authentication when publishing packages.
+   *
+   * @param port - The port number where Verdaccio is running
+   */
+  private static ensureNpmrcAuthToken(port: number): void {
+    const npmrcPath = path.join(os.homedir(), '.npmrc');
+    const authTokenLine = `//localhost:${port}/:_authToken=fake`;
+    const comment = `# Verdaccio
+# (added by @aneuhold/local-npm-registry. This is needed so that logging in is not
+# required for every command. Feel free to delete this comment if wanted. Delete
+# the below line if @aneuhold/local-npm-registry is not used or Verdaccio is
+# not used.)`;
+
+    try {
+      let npmrcContent = '';
+
+      // Read existing .npmrc if it exists
+      if (fs.existsSync(npmrcPath)) {
+        npmrcContent = fs.readFileSync(npmrcPath, 'utf8');
+      }
+
+      // Check if the auth token line already exists
+      if (npmrcContent.includes(authTokenLine)) {
+        return;
+      }
+
+      // Add the comment and auth token line
+      const newContent = npmrcContent
+        ? `${npmrcContent.trimEnd()}\n\n${comment}\n${authTokenLine}\n`
+        : `${comment}\n${authTokenLine}\n`;
+
+      fs.writeFileSync(npmrcPath, newContent, 'utf8');
+      DR.logger.info(`Added Verdaccio auth token to ~/.npmrc for port ${port}`);
+    } catch (error) {
+      DR.logger.error(`Failed to update ~/.npmrc: ${String(error)}`);
+      // Don't throw here as this is not critical for basic functionality
+    }
   }
 }
