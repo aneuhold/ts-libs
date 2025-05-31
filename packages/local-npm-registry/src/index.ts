@@ -5,10 +5,6 @@ import { program } from 'commander';
 import { CommandService } from './services/CommandService.js';
 import { ConfigService } from './services/ConfigService.js';
 import { LocalPackageStoreService } from './services/LocalPackageStoreService.js';
-import { MutexService } from './services/MutexService.js';
-
-// Set up graceful shutdown handlers to release mutex lock on process exit
-MutexService.setupGracefulShutdown();
 
 program
   .name('local-npm')

@@ -156,39 +156,4 @@ export class MutexService {
   private static sleep(ms: number): Promise<void> {
     return new Promise((resolve) => setTimeout(resolve, ms));
   }
-
-  /**
-   * Sets up graceful shutdown handlers to release lock on process exit.
-   */
-  static setupGracefulShutdown(): void {
-    const cleanup = () => {
-      void MutexService.releaseLock().finally(() => {
-        process.exit(0);
-      });
-    };
-
-    // Handle different exit scenarios
-    process.on('SIGINT', cleanup); // Ctrl+C
-    process.on('SIGTERM', cleanup); // Termination signal
-    process.on('beforeExit', () => {
-      void MutexService.releaseLock().catch((error: unknown) => {
-        DR.logger.error(`Error releasing lock on beforeExit: ${String(error)}`);
-      });
-    });
-
-    // Handle uncaught exceptions and unhandled rejections
-    process.on('uncaughtException', (error) => {
-      DR.logger.error(`Uncaught exception: ${String(error)}`);
-      void MutexService.releaseLock().finally(() => {
-        process.exit(1);
-      });
-    });
-
-    process.on('unhandledRejection', (reason) => {
-      DR.logger.error(`Unhandled rejection: ${String(reason)}`);
-      void MutexService.releaseLock().finally(() => {
-        process.exit(1);
-      });
-    });
-  }
 }
