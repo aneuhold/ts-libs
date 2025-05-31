@@ -6,6 +6,7 @@ import path from 'path';
 import { runServer } from 'verdaccio';
 import type { LocalNpmConfig } from '../types/LocalNpmConfig.js';
 import { ConfigService } from './ConfigService.js';
+import { MutexService } from './MutexService.js';
 
 /**
  * Type definition for the Verdaccio runServer function.
@@ -43,6 +44,9 @@ export class VerdaccioService {
     this.isStarting = true;
 
     try {
+      // Acquire mutex lock before starting Verdaccio
+      await MutexService.acquireLock();
+
       const config = await ConfigService.loadConfig();
       const port = config.registryPort || 4873;
 
@@ -57,6 +61,16 @@ export class VerdaccioService {
     } catch (error) {
       DR.logger.error(`Failed to start Verdaccio: ${String(error)}`);
       this.verdaccioServer = null;
+
+      // Release mutex lock if we acquired it but failed to start
+      try {
+        await MutexService.releaseLock();
+      } catch (releaseError) {
+        DR.logger.error(
+          `Failed to release mutex lock after startup failure: ${String(releaseError)}`
+        );
+      }
+
       throw error;
     } finally {
       this.isStarting = false;
@@ -75,7 +89,7 @@ export class VerdaccioService {
     return new Promise((resolve, reject) => {
       const server = this.verdaccioServer;
       if (server) {
-        server.close((error) => {
+        server.close(async (error) => {
           if (error) {
             DR.logger.error(
               `Failed to stop Verdaccio server: ${String(error)}`
@@ -84,6 +98,17 @@ export class VerdaccioService {
           } else {
             DR.logger.info('Verdaccio server stopped successfully');
             this.verdaccioServer = null;
+
+            // Release mutex lock after stopping Verdaccio
+            try {
+              await MutexService.releaseLock();
+            } catch (releaseError) {
+              DR.logger.error(
+                `Failed to release mutex lock after stopping: ${String(releaseError)}`
+              );
+              // Don't reject here, as the server was stopped successfully
+            }
+
             resolve();
           }
         });

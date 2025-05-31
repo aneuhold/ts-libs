@@ -10,8 +10,6 @@ Unless otherwise specified, always make suggested edits in the files directly in
 
 ## Formatting
 
-### TypeScript
-
 - Always add types when it is not clear what the type of something is. If a type is an object any larger than a single property, it should be a separately declared `type` and not defined inline.
 - When creating types in their own file, always use PascalCase for the type name.
   - The file name should match primary type name that is being exported from the file.
@@ -22,12 +20,20 @@ Unless otherwise specified, always make suggested edits in the files directly in
 - Use `async` and `await` for asynchronous code instead of `.then()`.
 - Use `const` and `let` instead of `var`.
 
+## Logical Structure
+
+### Imports
+
+- Always use relative imports for files in the same package. Use package references (`import { something } from 'my-package'`) for files in other packages.
+- Never use `import * as something from '...'` syntax. Always use named imports.
+- Always import at the top of a file. Never inline imports within a function or method unless absolutely necessary.
+
+### Files
+
+- For TypeScript libraries (with exception of libraries that are CLI tools), always include an `index.ts` file at the root of the package that exports all public types and functions. Never include an `index.ts` file anywhere else in the package.
+  - Libraries that are CLI tools should still have an `index.ts` file, but it will contain the CLI entry point instead of exports.
+
 ## Testing
 
 - When creating tests, make the file name the same as the associated file being tested, but instead of `.ts`, use `.spec.ts`.
 - Never test private methods directly in a test.
-
-## Structure
-
-- For TypeScript libraries (with exception of libraries that are CLI tools), always include an `index.ts` file at the root of the package that exports all public types and functions. Never include an `index.ts` file anywhere else in the package.
-  - Libraries that are CLI tools should still have an `index.ts` file, but it will contain the CLI entry point instead of exports.
