@@ -27,7 +27,9 @@ vi.mock('@aneuhold/core-ts-lib', async () => {
         info: vi.fn(),
         error: vi.fn(),
         warn: vi.fn(),
-        success: vi.fn()
+        success: vi.fn(),
+        setVerboseLogging: vi.fn(),
+        isVerboseLoggingEnabled: vi.fn(() => false)
       }
     }
   };

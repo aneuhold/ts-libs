@@ -148,6 +148,22 @@ export default class ConsoleLogger implements ILogger {
   }
 
   /**
+   * Sets the global verbose logging state.
+   *
+   * @param enabled - Whether to enable verbose logging globally
+   */
+  setVerboseLogging(enabled: boolean): void {
+    ConsoleLogger.verboseLoggingEnabled = enabled;
+  }
+
+  /**
+   * Gets the current global verbose logging state.
+   */
+  isVerboseLoggingEnabled(): boolean {
+    return ConsoleLogger.verboseLoggingEnabled;
+  }
+
+  /**
    * Determines if the message should be logged based on the instance's verbose setting
    * and the global verbose logging flag.
    *
