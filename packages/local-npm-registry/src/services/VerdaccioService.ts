@@ -231,6 +231,8 @@ export class VerdaccioService {
     // Just a partial, because VerdaccioConfig seems to contain unnecessary
     // required properties that we don't need to set.
     const verdaccioConfig: Partial<VerdaccioConfig> = {
+      // Set the storage location, even though it shouldn't be used
+      storage: path.join(storageLocation, 'verdaccio-storage'),
       // Use in-memory storage to avoid conflicts between runs
       store: {
         memory: {

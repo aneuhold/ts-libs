@@ -3,6 +3,7 @@ import { randomUUID } from 'crypto';
 import { execa } from 'execa';
 import fs from 'fs-extra';
 import path from 'path';
+import { ConfigService } from '../src/services/ConfigService.js';
 import {
   LocalPackageStoreService,
   type PackageEntry
@@ -11,12 +12,32 @@ import {
 export type PackageManager = 'npm' | 'yarn' | 'pnpm';
 
 /**
- * Test utilities for creating temporary test projects
+ * Test utilities for creating temporary test projects with isolated configurations.
+ *
+ * This class manages a hierarchical test directory structure that ensures complete
+ * isolation between test runs and prevents pollution of global configuration files.
+ *
+ * ### Test Directory Structure
+ *
+ * When tests run, the following directory hierarchy is created:
+ *
+ * ```txt
+ * local-npm-registry/
+ * └── tmp/                                    (Global temp directory)
+ *     ├── .local-npm-registry.json           (Test-specific config file)
+ *     ├── .local-package-store.json          (Isolated package store)
+ *     ├── verdaccio-storage/                  (Verdaccio package storage)
+ *     │   └── [packages published during tests]
+ *     ├── verdaccio-self/                     (Verdaccio internal files)
+ *     └── {test-instance-uuid}/              (Unique directory per test)
+ *         └── [test packages created by individual tests]
+ * ```
  */
 export class TestProjectUtils {
   private static globalTempDir: string;
   private static originalCwd: string;
   private static testInstanceDir: string;
+  private static testConfigFilePath: string | null = null;
 
   /**
    * Sets up the global tmp directory (called once before all tests)
@@ -33,17 +54,66 @@ export class TestProjectUtils {
     // Clean and recreate the tmp directory
     await fs.remove(TestProjectUtils.globalTempDir);
     await fs.ensureDir(TestProjectUtils.globalTempDir);
+
+    // Create test configuration file in the tmp directory
+    await TestProjectUtils.setupTestConfig();
+  }
+
+  /**
+   * Sets up a test-specific configuration file that points to the tmp directory
+   * for the store location to prevent pollution of the global store file.
+   */
+  static async setupTestConfig(): Promise<void> {
+    if (!TestProjectUtils.globalTempDir) {
+      throw new Error('Global temp directory must be set up first');
+    }
+
+    // Clear any cached configuration to ensure we use the test config
+    ConfigService.clearCache();
+
+    // Create test configuration file in the tmp directory
+    TestProjectUtils.testConfigFilePath =
+      await ConfigService.createDefaultConfig(TestProjectUtils.globalTempDir);
+
+    // Change working directory to the tmp directory so the config is found
+    process.chdir(TestProjectUtils.globalTempDir);
   }
 
   /**
    * Cleans up the global tmp directory (called once after all tests)
    */
   static async cleanupGlobalTempDir(): Promise<void> {
+    // Clean up test configuration first
+    await TestProjectUtils.cleanupTestConfig();
+
     if (TestProjectUtils.globalTempDir) {
       await fs.remove(TestProjectUtils.globalTempDir);
     }
     if (TestProjectUtils.originalCwd) {
       process.chdir(TestProjectUtils.originalCwd);
+    }
+  }
+
+  /**
+   * Clears the test configuration and restores the original working directory
+   */
+  static async cleanupTestConfig(): Promise<void> {
+    // Clear the configuration cache to prevent test pollution
+    ConfigService.clearCache();
+
+    // Restore original working directory
+    if (TestProjectUtils.originalCwd) {
+      process.chdir(TestProjectUtils.originalCwd);
+    }
+
+    // Clean up the test config file
+    if (TestProjectUtils.testConfigFilePath) {
+      try {
+        await fs.remove(TestProjectUtils.testConfigFilePath);
+      } catch {
+        // Ignore errors during cleanup
+      }
+      TestProjectUtils.testConfigFilePath = null;
     }
   }
 
@@ -56,6 +126,9 @@ export class TestProjectUtils {
         'Global temp directory not initialized. Call setupGlobalTempDir() first.'
       );
     }
+
+    // Clear configuration cache to ensure test isolation
+    ConfigService.clearCache();
 
     // Create a unique directory for this test instance using a GUID
     const testId = randomUUID();
@@ -72,6 +145,9 @@ export class TestProjectUtils {
    * Cleans up the test instance directory
    */
   static async cleanupTestInstance(): Promise<void> {
+    // Clear configuration cache to ensure test isolation
+    ConfigService.clearCache();
+
     // Restore original working directory
     if (TestProjectUtils.originalCwd) {
       process.chdir(TestProjectUtils.originalCwd);
