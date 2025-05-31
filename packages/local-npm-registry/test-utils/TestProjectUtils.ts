@@ -1,8 +1,12 @@
 import { PackageJson } from '@aneuhold/core-ts-lib';
+import { randomUUID } from 'crypto';
 import { execa } from 'execa';
 import fs from 'fs-extra';
-import os from 'os';
 import path from 'path';
+import {
+  LocalPackageStoreService,
+  type PackageEntry
+} from '../src/services/LocalPackageStoreService.js';
 
 export type PackageManager = 'npm' | 'yarn' | 'pnpm';
 
@@ -10,29 +14,72 @@ export type PackageManager = 'npm' | 'yarn' | 'pnpm';
  * Test utilities for creating temporary test projects
  */
 export class TestProjectUtils {
-  private static tempDir: string;
+  private static globalTempDir: string;
   private static originalCwd: string;
+  private static testInstanceDir: string;
 
   /**
-   * Creates a temporary directory for test projects
+   * Sets up the global tmp directory (called once before all tests)
    */
-  static async setupTempDir(): Promise<string> {
-    TestProjectUtils.originalCwd = process.cwd();
-    TestProjectUtils.tempDir = await fs.mkdtemp(
-      path.join(os.tmpdir(), 'local-npm-registry-test-')
-    );
-    return TestProjectUtils.tempDir;
+  static async setupGlobalTempDir(): Promise<void> {
+    if (!TestProjectUtils.originalCwd) {
+      TestProjectUtils.originalCwd = process.cwd();
+    }
+
+    // Create tmp directory in the local-npm-registry package folder
+    const packageRoot = path.dirname(__dirname);
+    TestProjectUtils.globalTempDir = path.join(packageRoot, 'tmp');
+
+    // Clean and recreate the tmp directory
+    await fs.remove(TestProjectUtils.globalTempDir);
+    await fs.ensureDir(TestProjectUtils.globalTempDir);
   }
 
   /**
-   * Cleans up the temporary directory
+   * Cleans up the global tmp directory (called once after all tests)
    */
-  static async cleanupTempDir(): Promise<void> {
-    if (TestProjectUtils.tempDir) {
-      await fs.remove(TestProjectUtils.tempDir);
+  static async cleanupGlobalTempDir(): Promise<void> {
+    if (TestProjectUtils.globalTempDir) {
+      await fs.remove(TestProjectUtils.globalTempDir);
     }
     if (TestProjectUtils.originalCwd) {
       process.chdir(TestProjectUtils.originalCwd);
+    }
+  }
+
+  /**
+   * Creates a unique test instance directory for each test
+   */
+  static async setupTestInstance(): Promise<string> {
+    if (!TestProjectUtils.globalTempDir) {
+      throw new Error(
+        'Global temp directory not initialized. Call setupGlobalTempDir() first.'
+      );
+    }
+
+    // Create a unique directory for this test instance using a GUID
+    const testId = randomUUID();
+    TestProjectUtils.testInstanceDir = path.join(
+      TestProjectUtils.globalTempDir,
+      testId
+    );
+    await fs.ensureDir(TestProjectUtils.testInstanceDir);
+
+    return TestProjectUtils.testInstanceDir;
+  }
+
+  /**
+   * Cleans up the test instance directory
+   */
+  static async cleanupTestInstance(): Promise<void> {
+    // Restore original working directory
+    if (TestProjectUtils.originalCwd) {
+      process.chdir(TestProjectUtils.originalCwd);
+    }
+
+    // Remove the test instance directory
+    if (TestProjectUtils.testInstanceDir) {
+      await fs.remove(TestProjectUtils.testInstanceDir);
     }
   }
 
@@ -50,8 +97,14 @@ export class TestProjectUtils {
     packageManager: PackageManager = 'npm',
     dependencies: Record<string, string> = {}
   ): Promise<string> {
+    if (!TestProjectUtils.testInstanceDir) {
+      throw new Error(
+        'Test instance directory not initialized. Call setupTestInstance() first.'
+      );
+    }
+
     const packageDir = path.join(
-      TestProjectUtils.tempDir,
+      TestProjectUtils.testInstanceDir,
       name.replace('@', '').replace('/', '-')
     );
     await fs.ensureDir(packageDir);
@@ -147,5 +200,28 @@ export class TestProjectUtils {
     return (await fs.readJson(
       path.join(projectPath, 'package.json')
     )) as PackageJson;
+  }
+
+  /**
+   * Gets a package entry from the local package store
+   *
+   * @param packageName - Name of the package to retrieve
+   */
+  static async getPackageEntry(
+    packageName: string
+  ): Promise<PackageEntry | null> {
+    return LocalPackageStoreService.getPackageEntry(packageName);
+  }
+
+  /**
+   * Gets the current test instance directory
+   */
+  static getTestInstanceDir(): string {
+    if (!TestProjectUtils.testInstanceDir) {
+      throw new Error(
+        'Test instance directory not initialized. Call setupTestInstance() first.'
+      );
+    }
+    return TestProjectUtils.testInstanceDir;
   }
 }

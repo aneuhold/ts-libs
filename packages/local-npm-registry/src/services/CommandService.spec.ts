@@ -3,22 +3,39 @@ import fs from 'fs-extra';
 import { TestProjectUtils } from 'packages/local-npm-registry/test-utils/TestProjectUtils.js';
 import { TestUtils } from 'packages/local-npm-registry/test-utils/TestUtils.js';
 import path from 'path';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+  afterAll,
+  afterEach,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  vi
+} from 'vitest';
 import { CommandService } from './CommandService.js';
 import { LocalPackageStoreService } from './LocalPackageStoreService.js';
 
 TestUtils.mockLogger();
 
 describe('CommandService - End-to-End Tests', () => {
-  let tempDir: string;
+  // Global setup/teardown for the tmp directory
+  beforeAll(async () => {
+    await TestProjectUtils.setupGlobalTempDir();
+  });
 
+  afterAll(async () => {
+    await TestProjectUtils.cleanupGlobalTempDir();
+  });
+
+  // Per-test setup/teardown for unique test instances
   beforeEach(async () => {
     vi.clearAllMocks();
-    tempDir = await TestProjectUtils.setupTempDir();
+    await TestProjectUtils.setupTestInstance();
   });
 
   afterEach(async () => {
-    await TestProjectUtils.cleanupTempDir();
+    await TestProjectUtils.cleanupTestInstance();
   });
 
   describe('publish', () => {
@@ -103,10 +120,10 @@ describe('CommandService - End-to-End Tests', () => {
       const subscriber2PackageJson =
         await TestProjectUtils.readPackageJson(subscriber2Path);
 
-      expect(subscriber1PackageJson.dependencies['@test/publisher']).toMatch(
+      expect(subscriber1PackageJson.dependencies?.['@test/publisher']).toMatch(
         /^2\.0\.0-\d{14}$/
       );
-      expect(subscriber2PackageJson.dependencies['@test/publisher']).toMatch(
+      expect(subscriber2PackageJson.dependencies?.['@test/publisher']).toMatch(
         /^2\.0\.0-\d{14}$/
       );
 
@@ -152,7 +169,10 @@ describe('CommandService - End-to-End Tests', () => {
 
     it('should handle missing package.json gracefully', async () => {
       // Change to an empty directory
-      const emptyDir = path.join(tempDir, 'empty');
+      const emptyDir = path.join(
+        TestProjectUtils.getTestInstanceDir(),
+        'empty'
+      );
       await fs.ensureDir(emptyDir);
       TestProjectUtils.changeToProject(emptyDir);
 
@@ -164,7 +184,10 @@ describe('CommandService - End-to-End Tests', () => {
 
     it('should handle package.json with missing required fields', async () => {
       // Create directory with invalid package.json
-      const invalidDir = path.join(tempDir, 'invalid');
+      const invalidDir = path.join(
+        TestProjectUtils.getTestInstanceDir(),
+        'invalid'
+      );
       await fs.ensureDir(invalidDir);
       await fs.writeJson(path.join(invalidDir, 'package.json'), {
         description: 'Missing name and version'
@@ -221,7 +244,10 @@ describe('CommandService - End-to-End Tests', () => {
       );
 
       // Create a "subscriber" directory that will cause errors
-      const badSubscriberPath = path.join(tempDir, 'bad-subscriber');
+      const badSubscriberPath = path.join(
+        TestProjectUtils.getTestInstanceDir(),
+        'bad-subscriber'
+      );
       await fs.ensureDir(badSubscriberPath);
       // Don't create a package.json - this will cause read errors
 
