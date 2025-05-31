@@ -1,4 +1,4 @@
-import { DR } from '@aneuhold/core-ts-lib';
+import { DR, type PackageJson } from '@aneuhold/core-ts-lib';
 import { execa } from 'execa';
 import fs from 'fs-extra';
 import path from 'path';
@@ -19,13 +19,65 @@ export type PackageManagerConfigBackup = {
  */
 export class PackageManagerService {
   /**
-   * Determines the package manager to use based on lock files in the specified directory.
+   * Reads the package.json file in the specified directory.
+   *
+   * @param dir - Directory to search for package.json
+   */
+  static async getPackageInfo(
+    dir: string = process.cwd()
+  ): Promise<PackageJson | null> {
+    try {
+      const packageJsonPath = path.join(dir, 'package.json');
+      const packageJson = (await fs.readJson(packageJsonPath)) as PackageJson;
+
+      if (!packageJson.name || !packageJson.version) {
+        throw new Error('package.json must contain name and version fields');
+      }
+
+      return packageJson;
+    } catch (error) {
+      DR.logger.error(`Error reading package.json: ${String(error)}`);
+      return null;
+    }
+  }
+
+  /**
+   * Determines the package manager to use based on lock files and packageManager field in package.json.
    *
    * @param projectPath - Path to the project directory to check
    */
   static async detectPackageManager(
     projectPath: string
   ): Promise<PackageManager> {
+    // First, try to determine from package.json packageManager field
+    const packageInfo = await this.getPackageInfo(projectPath);
+    if (packageInfo && packageInfo.packageManager) {
+      const packageManagerField = packageInfo.packageManager.toLowerCase();
+
+      // Check for Yarn 4.x vs Yarn Classic
+      if (packageManagerField.includes('yarn')) {
+        if (
+          packageManagerField.includes('yarn@4') ||
+          packageManagerField.includes('yarn@5') ||
+          packageManagerField.includes('yarn@6')
+        ) {
+          return PackageManager.Yarn4;
+        }
+        return PackageManager.Yarn;
+      }
+
+      // Check for pnpm
+      if (packageManagerField.includes('pnpm')) {
+        return PackageManager.Pnpm;
+      }
+
+      // Check for npm
+      if (packageManagerField.includes('npm')) {
+        return PackageManager.Npm;
+      }
+    }
+
+    // Fallback to lock file detection
     // Check for lock files in order of preference
     if (
       await fs.pathExists(
@@ -46,6 +98,7 @@ export class PackageManagerService {
         )
       )
     ) {
+      // If we have a yarn.lock but no packageManager field, default to Yarn Classic
       return PackageManager.Yarn;
     }
 

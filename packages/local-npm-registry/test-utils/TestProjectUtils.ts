@@ -199,6 +199,9 @@ export class TestProjectUtils {
       },
       ...(packageManager === PackageManager.Yarn4 && {
         packageManager: 'yarn@4.6.0'
+      }),
+      ...(packageManager === PackageManager.Yarn && {
+        packageManager: 'yarn@1.22.22'
       })
     };
 

@@ -47,8 +47,8 @@ export const PACKAGE_MANAGER_INFO: Record<PackageManager, PackageManagerInfo> =
     [PackageManager.Yarn]: {
       command: 'yarn',
       lockFile: 'yarn.lock',
-      configFile: '.yarnrc',
-      configFormat: (registryUrl: string) => `registry "${registryUrl}"\n`,
+      configFile: '.npmrc',
+      configFormat: (registryUrl: string) => `registry=${registryUrl}\n`,
       displayName: 'Yarn Classic'
     },
     [PackageManager.Yarn4]: {
@@ -56,7 +56,7 @@ export const PACKAGE_MANAGER_INFO: Record<PackageManager, PackageManagerInfo> =
       lockFile: 'yarn.lock',
       configFile: '.yarnrc.yml',
       configFormat: (registryUrl: string) =>
-        `npmRegistryServer: "${registryUrl}"\n`,
+        `npmRegistryServer: ${registryUrl}\nunsafeHttpWhitelist: ['localhost']\n`,
       displayName: 'Yarn Berry'
     }
   };

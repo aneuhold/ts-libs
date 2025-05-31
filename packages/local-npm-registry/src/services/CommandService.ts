@@ -322,7 +322,7 @@ export class CommandService {
    */
   private static async getPackageInfo(
     dir: string = process.cwd()
-  ): Promise<{ name: string; version: string } | null> {
+  ): Promise<PackageJson | null> {
     try {
       const packageJsonPath = path.join(dir, 'package.json');
       const packageJson = (await fs.readJson(packageJsonPath)) as PackageJson;
