@@ -288,11 +288,14 @@ export class VerdaccioService {
   private static ensureNpmrcAuthToken(port: number): void {
     const npmrcPath = path.join(os.homedir(), '.npmrc');
     const authTokenLine = `//localhost:${port}/:_authToken=fake`;
-    const comment = `# Verdaccio
-# (added by @aneuhold/local-npm-registry. This is needed so that logging in is not
-# required for every command. Feel free to delete this comment if wanted. Delete
-# the below line if @aneuhold/local-npm-registry is not used or Verdaccio is
-# not used.)`;
+    const comment = `# 🔧 Local Development Auth Token
+# This was automatically added by @aneuhold/local-npm-registry to help with local development.
+# It prevents npm from asking for authentication when working with your local Verdaccio registry.
+# 
+# 📝 What this does: Tells npm to use a fake auth token for localhost:${port}
+# 🗑️  Safe to remove: You can delete this section anytime you're not using local-npm-registry
+# 
+# Thanks for understanding! This makes local package development much smoother. ✨`;
 
     try {
       let npmrcContent = '';
