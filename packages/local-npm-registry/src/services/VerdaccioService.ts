@@ -89,7 +89,7 @@ export class VerdaccioService {
     return new Promise((resolve, reject) => {
       const server = this.verdaccioServer;
       if (server) {
-        server.close(async (error) => {
+        server.close((error) => {
           if (error) {
             DR.logger.error(
               `Failed to stop Verdaccio server: ${String(error)}`
@@ -100,16 +100,18 @@ export class VerdaccioService {
             this.verdaccioServer = null;
 
             // Release mutex lock after stopping Verdaccio
-            try {
-              await MutexService.releaseLock();
-            } catch (releaseError) {
-              DR.logger.error(
-                `Failed to release mutex lock after stopping: ${String(releaseError)}`
-              );
-              // Don't reject here, as the server was stopped successfully
-            }
-
-            resolve();
+            MutexService.releaseLock()
+              .then(() => {
+                DR.logger.info('Verdaccio mutex lock released successfully');
+                resolve();
+              })
+              .catch((releaseError: unknown) => {
+                DR.logger.error(
+                  `Failed to release mutex lock after stopping: ${String(releaseError)}`
+                );
+                // Don't reject here, as the server was stopped successfully
+                resolve();
+              });
           }
         });
       } else {
