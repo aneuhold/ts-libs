@@ -25,6 +25,7 @@ export class MutexService {
    * Default timeout for acquiring the lock in milliseconds.
    */
   private static readonly LOCK_TIMEOUT = 20000;
+  private static readonly LOCK_CHECK_TIMEOUT = 500;
 
   private static lockRelease: (() => Promise<void>) | null = null;
 
@@ -57,10 +58,10 @@ export class MutexService {
           stale: timeoutMs,
           // Use built-in retry mechanism with custom options
           retries: {
-            retries: Math.floor(timeoutMs / 1000), // Retry for the duration of timeout
+            retries: Math.floor(timeoutMs / MutexService.LOCK_CHECK_TIMEOUT), // Retry for the duration of timeout
             factor: 1, // No exponential backoff
-            minTimeout: 1000, // Wait 1 second between retries
-            maxTimeout: 1000, // Keep constant 1 second interval
+            minTimeout: MutexService.LOCK_CHECK_TIMEOUT, // Wait between retries
+            maxTimeout: MutexService.LOCK_CHECK_TIMEOUT, // Keep constant interval
             randomize: false // No jitter
           }
         }

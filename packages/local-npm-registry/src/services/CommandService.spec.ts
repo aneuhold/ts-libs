@@ -35,6 +35,8 @@ vi.mock('@aneuhold/core-ts-lib', async () => {
   };
 });
 
+type PackageManager = 'npm' | 'yarn' | 'pnpm';
+
 describe('Integration Tests', () => {
   let testId: string;
 
@@ -125,103 +127,15 @@ describe('Integration Tests', () => {
     });
 
     it('should successfully publish with npm and update subscribers', async () => {
-      // Create publisher package
-      const publisherPath = await TestProjectUtils.createTestPackage(
-        `@test-${testId}/publisher`,
-        '2.0.0',
-        'npm'
-      );
-
-      // Create subscriber packages
-      const subscriber1Path = await TestProjectUtils.createSubscriberProject(
-        `@test-${testId}/subscriber1`,
-        `@test-${testId}/publisher`,
-        '2.0.0',
-        'npm'
-      );
-
-      const subscriber2Path = await TestProjectUtils.createSubscriberProject(
-        `@test-${testId}/subscriber2`,
-        `@test-${testId}/publisher`,
-        '2.0.0',
-        'npm'
-      );
-
-      // First, publish the publisher package to make it available
-      TestProjectUtils.changeToProject(publisherPath);
-      await CommandService.publish();
-
-      // Now add subscribers to the publisher
-      TestProjectUtils.changeToProject(subscriber1Path);
-      await CommandService.subscribe(`@test-${testId}/publisher`);
-
-      TestProjectUtils.changeToProject(subscriber2Path);
-      await CommandService.subscribe(`@test-${testId}/publisher`);
-
-      // Now publish again from the publisher directory to update subscribers
-      TestProjectUtils.changeToProject(publisherPath);
-      await CommandService.publish();
-
-      // Verify package entry has subscribers
-      const packageEntry = await TestProjectUtils.getPackageEntry(
-        `@test-${testId}/publisher`
-      );
-      expect(packageEntry?.subscribers).toContain(subscriber1Path);
-      expect(packageEntry?.subscribers).toContain(subscriber2Path);
-
-      // Verify subscribers were updated with timestamp version
-      const subscriber1PackageJson =
-        await TestProjectUtils.readPackageJson(subscriber1Path);
-      const subscriber2PackageJson =
-        await TestProjectUtils.readPackageJson(subscriber2Path);
-
-      expect(
-        subscriber1PackageJson.dependencies?.[`@test-${testId}/publisher`]
-      ).toMatch(/^2\.0\.0-\d{17}$/);
-      expect(
-        subscriber2PackageJson.dependencies?.[`@test-${testId}/publisher`]
-      ).toMatch(/^2\.0\.0-\d{17}$/);
-
-      // Verify update message was logged
-      expect(DR.logger.info).toHaveBeenCalledWith('Updating 2 subscriber(s)');
+      await testPublishWithSubscribers('npm', '2.0.0');
     });
 
-    it('should work with yarn package manager', async () => {
-      // Create a test package with yarn
-      const packagePath = await TestProjectUtils.createTestPackage(
-        `@test-${testId}/yarn-package`,
-        '1.2.3',
-        'yarn'
-      );
-
-      TestProjectUtils.changeToProject(packagePath);
-      await CommandService.publish();
-
-      // Verify package was published successfully
-      const packageEntry = await TestProjectUtils.getPackageEntry(
-        `@test-${testId}/yarn-package`
-      );
-      expect(packageEntry?.originalVersion).toBe('1.2.3');
-      expect(packageEntry?.currentVersion).toMatch(/^1\.2\.3-\d{17}$/);
+    it('should successfully publish with yarn and update subscribers', async () => {
+      await testPublishWithSubscribers('yarn', '1.2.3');
     });
 
-    it('should work with pnpm package manager', async () => {
-      // Create a test package with pnpm
-      const packagePath = await TestProjectUtils.createTestPackage(
-        `@test-${testId}/pnpm-package`,
-        '0.5.0',
-        'pnpm'
-      );
-
-      TestProjectUtils.changeToProject(packagePath);
-      await CommandService.publish();
-
-      // Verify package was published successfully
-      const packageEntry = await TestProjectUtils.getPackageEntry(
-        `@test-${testId}/pnpm-package`
-      );
-      expect(packageEntry?.originalVersion).toBe('0.5.0');
-      expect(packageEntry?.currentVersion).toMatch(/^0\.5\.0-\d{17}$/);
+    it('should successfully publish with pnpm and update subscribers', async () => {
+      await testPublishWithSubscribers('pnpm', '0.5.0');
     });
 
     it('should handle missing package.json gracefully', async () => {
@@ -342,6 +256,92 @@ describe('Integration Tests', () => {
         )
       );
     });
+
+    /**
+     * Helper function to test publish with subscribers functionality for different package managers
+     *
+     * @param packageManager The package manager to test with
+     * @param version The version to use for the test packages
+     */
+    const testPublishWithSubscribers = async (
+      packageManager: PackageManager,
+      version: string
+    ) => {
+      // Create publisher package
+      const publisherPath = await TestProjectUtils.createTestPackage(
+        `@test-${testId}/${packageManager}-publisher`,
+        version,
+        packageManager
+      );
+
+      // Create subscriber packages
+      const subscriber1Path = await TestProjectUtils.createSubscriberProject(
+        `@test-${testId}/${packageManager}-subscriber1`,
+        `@test-${testId}/${packageManager}-publisher`,
+        version,
+        packageManager
+      );
+
+      const subscriber2Path = await TestProjectUtils.createSubscriberProject(
+        `@test-${testId}/${packageManager}-subscriber2`,
+        `@test-${testId}/${packageManager}-publisher`,
+        version,
+        packageManager
+      );
+
+      // First, publish the publisher package to make it available
+      TestProjectUtils.changeToProject(publisherPath);
+      await CommandService.publish();
+
+      // Now add subscribers to the publisher
+      TestProjectUtils.changeToProject(subscriber1Path);
+      await CommandService.subscribe(
+        `@test-${testId}/${packageManager}-publisher`
+      );
+
+      TestProjectUtils.changeToProject(subscriber2Path);
+      await CommandService.subscribe(
+        `@test-${testId}/${packageManager}-publisher`
+      );
+
+      // Now publish again from the publisher directory to update subscribers
+      TestProjectUtils.changeToProject(publisherPath);
+      await CommandService.publish();
+
+      // Verify package entry has subscribers
+      const packageEntry = await TestProjectUtils.getPackageEntry(
+        `@test-${testId}/${packageManager}-publisher`
+      );
+      expect(packageEntry?.subscribers).toContain(subscriber1Path);
+      expect(packageEntry?.subscribers).toContain(subscriber2Path);
+      expect(packageEntry?.originalVersion).toBe(version);
+      expect(packageEntry?.currentVersion).toMatch(
+        new RegExp(`^${version.replace(/\./g, '\\.')}-\\d{17}$`)
+      );
+
+      // Verify subscribers were updated with timestamp version
+      const subscriber1PackageJson =
+        await TestProjectUtils.readPackageJson(subscriber1Path);
+      const subscriber2PackageJson =
+        await TestProjectUtils.readPackageJson(subscriber2Path);
+
+      const versionPattern = new RegExp(
+        `^${version.replace(/\./g, '\\.')}-\\d{17}$`
+      );
+      expect(
+        subscriber1PackageJson.dependencies?.[
+          `@test-${testId}/${packageManager}-publisher`
+        ]
+      ).toMatch(versionPattern);
+      expect(
+        subscriber2PackageJson.dependencies?.[
+          `@test-${testId}/${packageManager}-publisher`
+        ]
+      ).toMatch(versionPattern);
+
+      // Verify update message was logged
+      expect(DR.logger.info).toHaveBeenCalledWith('Updating 2 subscriber(s)');
+    };
   });
 
   describe('subscribe', () => {

@@ -244,8 +244,8 @@ export class TestProjectUtils {
     projectPath: string,
     packageManager: PackageManager
   ): Promise<void> {
-    const installCommand = packageManager === 'yarn' ? 'yarn' : packageManager;
-    const args = packageManager === 'yarn' ? ['install'] : ['install'];
+    const installCommand = packageManager;
+    const args = ['install'];
 
     try {
       await execa(installCommand, args, {
