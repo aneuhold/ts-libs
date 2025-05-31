@@ -3,6 +3,7 @@ import { randomUUID } from 'crypto';
 import { execa } from 'execa';
 import fs from 'fs-extra';
 import path from 'path';
+import { PACKAGE_MANAGER_INFO } from '../lib/types/PackageManager.js';
 import { ConfigService } from '../src/services/ConfigService.js';
 import {
   LocalPackageStoreService,
@@ -245,8 +246,7 @@ export class TestProjectUtils {
     packageManager: PackageManager
   ): Promise<void> {
     // For yarn4, we use the 'yarn' command since the version is specified in package.json
-    const installCommand =
-      packageManager === PackageManager.Yarn4 ? 'yarn' : packageManager;
+    const installCommand = PACKAGE_MANAGER_INFO[packageManager].command;
     const args = ['install'];
 
     await execa(installCommand, args, {
