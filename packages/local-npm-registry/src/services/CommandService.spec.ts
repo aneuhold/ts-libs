@@ -12,10 +12,8 @@ import {
   it,
   vi
 } from 'vitest';
-import {
-  PackageManager,
-  TestProjectUtils
-} from '../../test-utils/TestProjectUtils.js';
+import { TestProjectUtils } from '../../test-utils/TestProjectUtils.js';
+import { PackageManager } from '../types/PackageManager.js';
 import { CommandService } from './CommandService.js';
 import { LocalPackageStoreService } from './LocalPackageStoreService.js';
 import { MutexService } from './MutexService.js';
@@ -128,19 +126,19 @@ describe('Integration Tests', () => {
     });
 
     it('should successfully publish with npm and update subscribers', async () => {
-      await testPublishWithSubscribers('npm', '2.0.0');
+      await testPublishWithSubscribers(PackageManager.Npm, '2.0.0');
     });
 
     it('should successfully publish with yarn and update subscribers', async () => {
-      await testPublishWithSubscribers('yarn', '1.2.3');
+      await testPublishWithSubscribers(PackageManager.Yarn, '1.2.3');
     });
 
     it('should successfully publish with pnpm and update subscribers', async () => {
-      await testPublishWithSubscribers('pnpm', '0.5.0');
+      await testPublishWithSubscribers(PackageManager.Pnpm, '0.5.0');
     });
 
     it('should successfully publish with yarn4 and update subscribers', async () => {
-      await testPublishWithSubscribers('yarn4', '1.1.0');
+      await testPublishWithSubscribers(PackageManager.Yarn4, '1.1.0');
     });
 
     it('should handle missing package.json gracefully', async () => {

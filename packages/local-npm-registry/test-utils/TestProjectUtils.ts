@@ -8,8 +8,7 @@ import {
   LocalPackageStoreService,
   type PackageEntry
 } from '../src/services/LocalPackageStoreService.js';
-
-export type PackageManager = 'npm' | 'yarn' | 'yarn4' | 'pnpm';
+import { PackageManager } from '../src/types/PackageManager.js';
 
 /**
  * Test utilities for creating temporary test projects with isolated configurations.
@@ -170,7 +169,7 @@ export class TestProjectUtils {
   static async createTestPackage(
     name: string,
     version = '1.0.0',
-    packageManager: PackageManager = 'npm',
+    packageManager: PackageManager = PackageManager.Npm,
     dependencies: Record<string, string> = {}
   ): Promise<string> {
     if (!TestProjectUtils.testInstanceDir) {
@@ -195,7 +194,9 @@ export class TestProjectUtils {
       scripts: {
         test: 'echo "Test script"'
       },
-      ...(packageManager === 'yarn4' && { packageManager: 'yarn@4.6.0' })
+      ...(packageManager === PackageManager.Yarn4 && {
+        packageManager: 'yarn@4.6.0'
+      })
     };
 
     await fs.writeJson(path.join(packageDir, 'package.json'), packageJson, {
@@ -226,7 +227,7 @@ export class TestProjectUtils {
     name: string,
     dependencyName: string,
     dependencyVersion = '1.0.0',
-    packageManager: PackageManager = 'npm'
+    packageManager: PackageManager = PackageManager.Npm
   ): Promise<string> {
     return TestProjectUtils.createTestPackage(name, '1.0.0', packageManager, {
       [dependencyName]: dependencyVersion
@@ -244,7 +245,8 @@ export class TestProjectUtils {
     packageManager: PackageManager
   ): Promise<void> {
     // For yarn4, we use the 'yarn' command since the version is specified in package.json
-    const installCommand = packageManager === 'yarn4' ? 'yarn' : packageManager;
+    const installCommand =
+      packageManager === PackageManager.Yarn4 ? 'yarn' : packageManager;
     const args = ['install'];
 
     await execa(installCommand, args, {

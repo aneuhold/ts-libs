@@ -2,6 +2,10 @@ import { DR } from '@aneuhold/core-ts-lib';
 import { execa } from 'execa';
 import fs from 'fs-extra';
 import path from 'path';
+import {
+  PACKAGE_MANAGER_INFO,
+  PackageManager
+} from '../types/PackageManager.js';
 import { ConfigService } from './ConfigService.js';
 
 export type PackageManagerConfigBackup = {
@@ -19,22 +23,45 @@ export class PackageManagerService {
    *
    * @param projectPath - Path to the project directory to check
    */
-  static async detectPackageManager(projectPath: string): Promise<string> {
+  static async detectPackageManager(
+    projectPath: string
+  ): Promise<PackageManager> {
     // Check for lock files in order of preference
-    if (await fs.pathExists(path.join(projectPath, 'pnpm-lock.yaml'))) {
-      return 'pnpm';
+    if (
+      await fs.pathExists(
+        path.join(
+          projectPath,
+          PACKAGE_MANAGER_INFO[PackageManager.Pnpm].lockFile
+        )
+      )
+    ) {
+      return PackageManager.Pnpm;
     }
 
-    if (await fs.pathExists(path.join(projectPath, 'yarn.lock'))) {
-      return 'yarn';
+    if (
+      await fs.pathExists(
+        path.join(
+          projectPath,
+          PACKAGE_MANAGER_INFO[PackageManager.Yarn].lockFile
+        )
+      )
+    ) {
+      return PackageManager.Yarn;
     }
 
-    if (await fs.pathExists(path.join(projectPath, 'package-lock.json'))) {
-      return 'npm';
+    if (
+      await fs.pathExists(
+        path.join(
+          projectPath,
+          PACKAGE_MANAGER_INFO[PackageManager.Npm].lockFile
+        )
+      )
+    ) {
+      return PackageManager.Npm;
     }
 
     // Default to npm if no lock file is found
-    return 'npm';
+    return PackageManager.Npm;
   }
 
   /**
@@ -63,9 +90,16 @@ export class PackageManagerService {
     );
 
     try {
-      DR.logger.info(`Running ${packageManager} install in ${projectPath}`);
-      await execa(packageManager, ['install'], { cwd: projectPath });
-      DR.logger.info(`${packageManager} install completed in ${projectPath}`);
+      const packageManagerInfo = PACKAGE_MANAGER_INFO[packageManager];
+      DR.logger.info(
+        `Running ${packageManagerInfo.displayName} install in ${projectPath}`
+      );
+      await execa(packageManagerInfo.command, ['install'], {
+        cwd: projectPath
+      });
+      DR.logger.info(
+        `${packageManagerInfo.displayName} install completed in ${projectPath}`
+      );
     } catch (error) {
       DR.logger.error(
         `Error running install in ${projectPath}: ${String(error)}`
@@ -85,54 +119,30 @@ export class PackageManagerService {
    * @param projectPath The path to the project directory
    */
   static async createRegistryConfig(
-    packageManager: string,
+    packageManager: PackageManager,
     registryUrl: string,
     projectPath: string
   ): Promise<PackageManagerConfigBackup> {
     const backup: PackageManagerConfigBackup = {};
+    const packageManagerInfo = PACKAGE_MANAGER_INFO[packageManager];
 
-    switch (packageManager) {
-      case 'npm':
-      case 'pnpm': {
-        const npmrcPath = path.join(projectPath, '.npmrc');
-        const existingContent = (await fs.pathExists(npmrcPath))
-          ? await fs.readFile(npmrcPath, 'utf8')
-          : null;
+    const configPath = path.join(projectPath, packageManagerInfo.configFile);
+    const existingContent = (await fs.pathExists(configPath))
+      ? await fs.readFile(configPath, 'utf8')
+      : null;
 
-        backup.npmrc = { path: npmrcPath, content: existingContent };
-
-        // Create or append to .npmrc
-        const registryConfig = `registry=${registryUrl}\n`;
-        await fs.writeFile(npmrcPath, registryConfig);
-        break;
-      }
-      case 'yarn': {
-        const yarnrcPath = path.join(projectPath, '.yarnrc');
-        const existingContent = (await fs.pathExists(yarnrcPath))
-          ? await fs.readFile(yarnrcPath, 'utf8')
-          : null;
-
-        backup.yarnrc = { path: yarnrcPath, content: existingContent };
-
-        // Create or append to .yarnrc
-        const registryConfig = `registry "${registryUrl}"\n`;
-        await fs.writeFile(yarnrcPath, registryConfig);
-        break;
-      }
-      case 'yarn4': {
-        const yarnrcYmlPath = path.join(projectPath, '.yarnrc.yml');
-        const existingContent = (await fs.pathExists(yarnrcYmlPath))
-          ? await fs.readFile(yarnrcYmlPath, 'utf8')
-          : null;
-
-        backup.yarnrcYml = { path: yarnrcYmlPath, content: existingContent };
-
-        // Create or append to .yarnrc.yml
-        const registryConfig = `npmRegistryServer: "${registryUrl}"\n`;
-        await fs.writeFile(yarnrcYmlPath, registryConfig);
-        break;
-      }
+    // Store backup based on config file type
+    if (packageManagerInfo.configFile === '.npmrc') {
+      backup.npmrc = { path: configPath, content: existingContent };
+    } else if (packageManagerInfo.configFile === '.yarnrc') {
+      backup.yarnrc = { path: configPath, content: existingContent };
+    } else if (packageManagerInfo.configFile === '.yarnrc.yml') {
+      backup.yarnrcYml = { path: configPath, content: existingContent };
     }
+
+    // Create registry configuration using the package manager's format
+    const registryConfig = packageManagerInfo.configFormat(registryUrl);
+    await fs.writeFile(configPath, registryConfig);
 
     return backup;
   }

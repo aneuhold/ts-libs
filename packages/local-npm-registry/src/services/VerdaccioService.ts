@@ -5,6 +5,10 @@ import http from 'http';
 import path from 'path';
 import { runServer } from 'verdaccio';
 import type { LocalNpmConfig } from '../types/LocalNpmConfig.js';
+import {
+  PACKAGE_MANAGER_INFO,
+  PackageManager
+} from '../types/PackageManager.js';
 import { ConfigService } from './ConfigService.js';
 import { MutexService } from './MutexService.js';
 
@@ -141,8 +145,9 @@ export class VerdaccioService {
 
       // Use npm publish with the local registry. Also set the tag to 'local'.
       // A tag is required for NPM to publish pre-release versions.
+      const npmInfo = PACKAGE_MANAGER_INFO[PackageManager.Npm];
       const result = await execa(
-        'npm',
+        npmInfo.command,
         ['publish', '--registry', registryUrl, '--tag', 'local'],
         {
           cwd: packagePath,
