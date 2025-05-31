@@ -12,6 +12,7 @@
     "lint": "eslint",
     "test": "vitest run",
     "jsr:validate": "tb pkg validateJsr",
+    "npm:validate": "tb pkg validateNpm",
     "checkAll": "pnpm build && pnpm lint && pnpm test && pnpm jsr:validate",
     "jsr:publish": "tb pkg publishJsr",
     "upgrade:core": "pnpm update '@aneuhold/main-scripts' --latest",
@@ -51,8 +52,8 @@
     "octokit": "^3.1.2"
   },
   "devDependencies": {
-    "@aneuhold/main-scripts": "^2.1.6",
     "@aneuhold/local-npm-registry": "*",
+    "@aneuhold/main-scripts": "^2.3.0",
     "@types/node": "^22.15.3",
     "@types/node-fetch": "^2.6.12",
     "eslint": "^9.26.0",

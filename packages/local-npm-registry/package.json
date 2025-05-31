@@ -14,6 +14,7 @@
     "test": "vitest run",
     "upgrade:core": "pnpm update '@aneuhold/main-scripts' --latest",
     "jsr:validate": "tb pkg validateJsr",
+    "npm:validate": "tb pkg validateNpm",
     "checkAll": "pnpm build && pnpm lint && pnpm test && pnpm jsr:validate",
     "jsr:publish": "tb pkg publishJsr"
   },
@@ -50,7 +51,7 @@
     "verdaccio-memory": "^10.3.2"
   },
   "devDependencies": {
-    "@aneuhold/main-scripts": "^2.1.6",
+    "@aneuhold/main-scripts": "^2.3.0",
     "@types/fs-extra": "^11.0.4",
     "@types/node": "^22.15.3",
     "@types/proper-lockfile": "^4.1.4",
