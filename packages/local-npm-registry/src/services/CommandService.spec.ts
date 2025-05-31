@@ -1,7 +1,5 @@
 import { DR } from '@aneuhold/core-ts-lib';
 import fs from 'fs-extra';
-import { TestProjectUtils } from 'packages/local-npm-registry/test-utils/TestProjectUtils.js';
-import { TestUtils } from 'packages/local-npm-registry/test-utils/TestUtils.js';
 import path from 'path';
 import {
   afterAll,
@@ -13,10 +11,24 @@ import {
   it,
   vi
 } from 'vitest';
+import { TestProjectUtils } from '../../test-utils/TestProjectUtils.js';
 import { CommandService } from './CommandService.js';
 import { LocalPackageStoreService } from './LocalPackageStoreService.js';
 
-TestUtils.mockLogger();
+vi.mock('@aneuhold/core-ts-lib', async () => {
+  const actual = await vi.importActual('@aneuhold/core-ts-lib');
+  return {
+    ...actual,
+    DR: {
+      logger: {
+        info: vi.fn(),
+        error: vi.fn(),
+        warn: vi.fn(),
+        success: vi.fn()
+      }
+    }
+  };
+});
 
 describe('CommandService - End-to-End Tests', () => {
   // Global setup/teardown for the tmp directory
@@ -97,14 +109,18 @@ describe('CommandService - End-to-End Tests', () => {
         'npm'
       );
 
-      // First, add subscribers to the publisher
+      // First, publish the publisher package to make it available
+      TestProjectUtils.changeToProject(publisherPath);
+      await CommandService.publish();
+
+      // Now add subscribers to the publisher
       TestProjectUtils.changeToProject(subscriber1Path);
       await CommandService.subscribe('@test/publisher');
 
       TestProjectUtils.changeToProject(subscriber2Path);
       await CommandService.subscribe('@test/publisher');
 
-      // Now publish from the publisher directory
+      // Now publish again from the publisher directory to update subscribers
       TestProjectUtils.changeToProject(publisherPath);
       await CommandService.publish();
 
@@ -211,6 +227,10 @@ describe('CommandService - End-to-End Tests', () => {
         '@test/republish-test',
         '1.0.0'
       );
+
+      // Publish the package first
+      TestProjectUtils.changeToProject(publisherPath);
+      await CommandService.publish();
 
       // Subscribe and publish once
       TestProjectUtils.changeToProject(subscriberPath);
