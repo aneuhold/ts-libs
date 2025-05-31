@@ -241,6 +241,8 @@ export class TestProjectUtils {
    * Creates an empty lock file for the specified package manager.
    * This simulates the initial state without running actual install commands.
    *
+   * For pnpm projects, this also creates an empty pnpm-workspace.yaml file.
+   *
    * Actual install commands cannot be run because the test packages are not
    * actually published to NPM.
    *
@@ -258,9 +260,13 @@ export class TestProjectUtils {
       case PackageManager.Npm:
         await fs.writeFile(lockFilePath, '{}');
         break;
-      case PackageManager.Pnpm:
+      case PackageManager.Pnpm: {
         await fs.writeFile(lockFilePath, '');
+        // Create empty pnpm-workspace.yaml file for pnpm projects
+        const workspaceFilePath = path.join(projectPath, 'pnpm-workspace.yaml');
+        await fs.writeFile(workspaceFilePath, '');
         break;
+      }
       case PackageManager.Yarn:
       case PackageManager.Yarn4:
         await fs.writeFile(lockFilePath, '');
