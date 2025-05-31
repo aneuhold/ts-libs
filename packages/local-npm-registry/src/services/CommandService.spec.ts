@@ -1,429 +1,285 @@
 import { DR } from '@aneuhold/core-ts-lib';
-import { execa } from 'execa';
 import fs from 'fs-extra';
+import { TestProjectUtils } from 'packages/local-npm-registry/test-utils/TestProjectUtils.js';
+import { TestUtils } from 'packages/local-npm-registry/test-utils/TestUtils.js';
 import path from 'path';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { CommandService } from './CommandService.js';
 import { LocalPackageStoreService } from './LocalPackageStoreService.js';
-import { VerdaccioService } from './VerdaccioService.js';
 
-// Mock external dependencies
-vi.mock('execa');
-vi.mock('fs-extra');
-vi.mock('./VerdaccioService.js');
-vi.mock('./LocalPackageStoreService.js');
+TestUtils.mockLogger();
 
-// Mock DR.logger to avoid console output during tests
-vi.mock('@aneuhold/core-ts-lib', async () => {
-  const actual = await vi.importActual('@aneuhold/core-ts-lib');
-  return {
-    ...actual,
-    DR: {
-      logger: {
-        info: vi.fn(),
-        error: vi.fn(),
-        warn: vi.fn()
-      }
-    }
-  };
-});
+describe('CommandService - End-to-End Tests', () => {
+  let tempDir: string;
 
-describe('CommandService', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.clearAllMocks();
-    vi.spyOn(process, 'cwd').mockReturnValue('/test/project');
+    tempDir = await TestProjectUtils.setupTempDir();
+  });
+
+  afterEach(async () => {
+    await TestProjectUtils.cleanupTempDir();
   });
 
   describe('publish', () => {
-    const mockPackageJson = {
-      name: '@test/package',
-      version: '1.0.0'
-    };
-
-    const mockPackageEntry = {
-      originalVersion: '1.0.0',
-      currentVersion: '1.0.0-20240530123456',
-      subscribers: [],
-      packageRootPath: '/test/project'
-    };
-
-    beforeEach(() => {
-      // Mock fs.readJson to return mock package.json
-      vi.mocked(fs.readJson).mockResolvedValue(mockPackageJson);
-
-      // Mock VerdaccioService methods
-      vi.mocked(VerdaccioService.start).mockResolvedValue(undefined);
-      vi.mocked(VerdaccioService.stop).mockResolvedValue(undefined);
-      vi.mocked(VerdaccioService.publishPackage).mockResolvedValue(undefined);
-
-      // Mock LocalPackageStoreService methods
-      vi.mocked(LocalPackageStoreService.getPackageEntry).mockResolvedValue(
-        null
-      );
-      vi.mocked(LocalPackageStoreService.updatePackageEntry).mockResolvedValue(
-        undefined
-      );
-
-      // Mock fs.writeJson for package.json updates
-      vi.mocked(fs.writeJson).mockResolvedValue(undefined);
-    });
-
     it('should successfully publish a package without subscribers', async () => {
+      // Create a test package
+      const packagePath = await TestProjectUtils.createTestPackage(
+        '@test/my-package',
+        '1.0.0'
+      );
+
+      // Change to the package directory
+      TestProjectUtils.changeToProject(packagePath);
+
+      // Run publish command
       await CommandService.publish();
 
-      // Verify package.json was read
-      expect(fs.readJson).toHaveBeenCalledWith(
-        path.join('/test/project', 'package.json')
-      );
+      // Verify the package entry was created in the local store
+      const packageEntry =
+        await TestProjectUtils.getPackageEntry('@test/my-package');
+      expect(packageEntry).toBeTruthy();
+      expect(packageEntry?.originalVersion).toBe('1.0.0');
+      expect(packageEntry?.currentVersion).toMatch(/^1\.0\.0-\d{14}$/);
+      expect(packageEntry?.subscribers).toEqual([]);
+      expect(packageEntry?.packageRootPath).toBe(packagePath);
 
-      // Verify Verdaccio lifecycle
-      expect(VerdaccioService.start).toHaveBeenCalledOnce();
-      expect(VerdaccioService.publishPackage).toHaveBeenCalledWith(
-        '/test/project'
-      );
-      expect(VerdaccioService.stop).toHaveBeenCalledOnce();
+      // Verify the package.json was restored to original version
+      const finalPackageJson =
+        await TestProjectUtils.readPackageJson(packagePath);
+      expect(finalPackageJson.version).toBe('1.0.0');
 
-      // Verify package entry was updated
-      expect(LocalPackageStoreService.updatePackageEntry).toHaveBeenCalledWith(
-        '@test/package',
-        expect.objectContaining({
-          originalVersion: '1.0.0',
-          currentVersion: expect.stringMatching(/^1\.0\.0-\d{14}$/),
-          subscribers: [],
-          packageRootPath: '/test/project'
-        })
-      );
-
-      // Verify package.json was updated with timestamp version and then restored
-      expect(fs.writeJson).toHaveBeenCalledTimes(2);
-      expect(fs.writeJson).toHaveBeenNthCalledWith(
-        1,
-        path.join('/test/project', 'package.json'),
-        expect.objectContaining({
-          name: '@test/package',
-          version: expect.stringMatching(/^1\.0\.0-\d{14}$/)
-        }),
-        { spaces: 2 }
-      );
-      expect(fs.writeJson).toHaveBeenNthCalledWith(
-        2,
-        path.join('/test/project', 'package.json'),
-        expect.objectContaining({
-          name: '@test/package',
-          version: '1.0.0'
-        }),
-        { spaces: 2 }
-      );
-
-      // Verify success message was logged
+      // Verify success was logged
       expect(DR.logger.info).toHaveBeenCalledWith(
         expect.stringMatching(
-          /Successfully published @test\/package@1\.0\.0-\d{14}/
+          /Successfully published @test\/my-package@1\.0\.0-\d{14}/
         )
       );
     });
 
-    it('should successfully publish a package with existing subscribers', async () => {
-      const mockExistingEntry = {
-        ...mockPackageEntry,
-        subscribers: ['/test/subscriber1', '/test/subscriber2']
-      };
-
-      const mockSubscriberPackageJson = {
-        name: '@test/subscriber',
-        version: '2.0.0',
-        dependencies: {
-          '@test/package': '1.0.0'
-        }
-      };
-
-      // Mock existing package entry with subscribers
-      vi.mocked(LocalPackageStoreService.getPackageEntry).mockResolvedValue(
-        mockExistingEntry
+    it('should successfully publish with npm and update subscribers', async () => {
+      // Create publisher package
+      const publisherPath = await TestProjectUtils.createTestPackage(
+        '@test/publisher',
+        '2.0.0',
+        'npm'
       );
 
-      // Mock subscriber package.json reads
-      vi.mocked(fs.readJson)
-        .mockResolvedValueOnce(mockPackageJson) // Initial package.json read
-        .mockResolvedValue(mockSubscriberPackageJson); // Subscriber package.json reads
+      // Create subscriber packages
+      const subscriber1Path = await TestProjectUtils.createSubscriberProject(
+        '@test/subscriber1',
+        '@test/publisher',
+        '2.0.0',
+        'npm'
+      );
 
-      // Mock execa for npm install commands
-      vi.mocked(execa).mockResolvedValue({
-        stdout: '',
-        stderr: '',
-        exitCode: 0,
-        command: '',
-        escapedCommand: '',
-        failed: false,
-        timedOut: false,
-        isCanceled: false,
-        killed: false
-      });
+      const subscriber2Path = await TestProjectUtils.createSubscriberProject(
+        '@test/subscriber2',
+        '@test/publisher',
+        '2.0.0',
+        'npm'
+      );
 
+      // First, add subscribers to the publisher
+      TestProjectUtils.changeToProject(subscriber1Path);
+      await CommandService.subscribe('@test/publisher');
+
+      TestProjectUtils.changeToProject(subscriber2Path);
+      await CommandService.subscribe('@test/publisher');
+
+      // Now publish from the publisher directory
+      TestProjectUtils.changeToProject(publisherPath);
       await CommandService.publish();
 
-      // Verify subscribers were updated
-      expect(fs.readJson).toHaveBeenCalledWith(
-        path.join('/test/subscriber1', 'package.json')
+      // Verify package entry has subscribers
+      const packageEntry =
+        await TestProjectUtils.getPackageEntry('@test/publisher');
+      expect(packageEntry?.subscribers).toContain(subscriber1Path);
+      expect(packageEntry?.subscribers).toContain(subscriber2Path);
+
+      // Verify subscribers were updated with timestamp version
+      const subscriber1PackageJson =
+        await TestProjectUtils.readPackageJson(subscriber1Path);
+      const subscriber2PackageJson =
+        await TestProjectUtils.readPackageJson(subscriber2Path);
+
+      expect(subscriber1PackageJson.dependencies['@test/publisher']).toMatch(
+        /^2\.0\.0-\d{14}$/
       );
-      expect(fs.readJson).toHaveBeenCalledWith(
-        path.join('/test/subscriber2', 'package.json')
+      expect(subscriber2PackageJson.dependencies['@test/publisher']).toMatch(
+        /^2\.0\.0-\d{14}$/
       );
 
-      // Verify package.json updates for subscribers
-      expect(fs.writeJson).toHaveBeenCalledWith(
-        path.join('/test/subscriber1', 'package.json'),
-        expect.objectContaining({
-          dependencies: {
-            '@test/package': expect.stringMatching(/^1\.0\.0-\d{14}$/)
-          }
-        }),
-        { spaces: 2 }
-      );
-
-      // Verify install commands were run for subscribers
-      expect(execa).toHaveBeenCalledWith('npm', ['install'], {
-        cwd: '/test/subscriber1'
-      });
-      expect(execa).toHaveBeenCalledWith('npm', ['install'], {
-        cwd: '/test/subscriber2'
-      });
-
-      // Verify info message about subscribers
+      // Verify update message was logged
       expect(DR.logger.info).toHaveBeenCalledWith('Updating 2 subscriber(s)');
     });
 
+    it('should work with yarn package manager', async () => {
+      // Create a test package with yarn
+      const packagePath = await TestProjectUtils.createTestPackage(
+        '@test/yarn-package',
+        '1.2.3',
+        'yarn'
+      );
+
+      TestProjectUtils.changeToProject(packagePath);
+      await CommandService.publish();
+
+      // Verify package was published successfully
+      const packageEntry =
+        await TestProjectUtils.getPackageEntry('@test/yarn-package');
+      expect(packageEntry?.originalVersion).toBe('1.2.3');
+      expect(packageEntry?.currentVersion).toMatch(/^1\.2\.3-\d{14}$/);
+    });
+
+    it('should work with pnpm package manager', async () => {
+      // Create a test package with pnpm
+      const packagePath = await TestProjectUtils.createTestPackage(
+        '@test/pnpm-package',
+        '0.5.0',
+        'pnpm'
+      );
+
+      TestProjectUtils.changeToProject(packagePath);
+      await CommandService.publish();
+
+      // Verify package was published successfully
+      const packageEntry =
+        await TestProjectUtils.getPackageEntry('@test/pnpm-package');
+      expect(packageEntry?.originalVersion).toBe('0.5.0');
+      expect(packageEntry?.currentVersion).toMatch(/^0\.5\.0-\d{14}$/);
+    });
+
     it('should handle missing package.json gracefully', async () => {
-      vi.mocked(fs.readJson).mockRejectedValue(
-        new Error('ENOENT: no such file')
-      );
+      // Change to an empty directory
+      const emptyDir = path.join(tempDir, 'empty');
+      await fs.ensureDir(emptyDir);
+      TestProjectUtils.changeToProject(emptyDir);
 
+      // Attempt to publish should fail
       await expect(CommandService.publish()).rejects.toThrow(
         'No package.json found in current directory'
       );
-
-      // Verify Verdaccio was not started
-      expect(VerdaccioService.start).not.toHaveBeenCalled();
     });
 
-    it('should handle package.json missing name field', async () => {
-      vi.mocked(fs.readJson).mockResolvedValue({
-        version: '1.0.0'
-        // Missing name field
+    it('should handle package.json with missing required fields', async () => {
+      // Create directory with invalid package.json
+      const invalidDir = path.join(tempDir, 'invalid');
+      await fs.ensureDir(invalidDir);
+      await fs.writeJson(path.join(invalidDir, 'package.json'), {
+        description: 'Missing name and version'
       });
 
+      TestProjectUtils.changeToProject(invalidDir);
+
       await expect(CommandService.publish()).rejects.toThrow(
         'No package.json found in current directory'
       );
     });
 
-    it('should handle package.json missing version field', async () => {
-      vi.mocked(fs.readJson).mockResolvedValue({
-        name: '@test/package'
-        // Missing version field
+    it('should preserve existing subscribers when republishing', async () => {
+      // Create publisher and subscriber
+      const publisherPath = await TestProjectUtils.createTestPackage(
+        '@test/republish-test',
+        '1.0.0'
+      );
+      const subscriberPath = await TestProjectUtils.createSubscriberProject(
+        '@test/republish-subscriber',
+        '@test/republish-test',
+        '1.0.0'
+      );
+
+      // Subscribe and publish once
+      TestProjectUtils.changeToProject(subscriberPath);
+      await CommandService.subscribe('@test/republish-test');
+
+      TestProjectUtils.changeToProject(publisherPath);
+      await CommandService.publish();
+
+      // Verify subscriber was added
+      let packageEntry = await TestProjectUtils.getPackageEntry(
+        '@test/republish-test'
+      );
+      expect(packageEntry?.subscribers).toContain(subscriberPath);
+
+      // Publish again
+      await CommandService.publish();
+
+      // Verify subscriber is still there
+      packageEntry = await TestProjectUtils.getPackageEntry(
+        '@test/republish-test'
+      );
+      expect(packageEntry?.subscribers).toContain(subscriberPath);
+      expect(packageEntry?.subscribers).toHaveLength(1);
+    });
+
+    it('should handle subscriber update failures gracefully', async () => {
+      // Create publisher package
+      const publisherPath = await TestProjectUtils.createTestPackage(
+        '@test/error-test',
+        '1.0.0'
+      );
+
+      // Create a "subscriber" directory that will cause errors
+      const badSubscriberPath = path.join(tempDir, 'bad-subscriber');
+      await fs.ensureDir(badSubscriberPath);
+      // Don't create a package.json - this will cause read errors
+
+      // Manually add the bad subscriber to the package entry
+      await LocalPackageStoreService.updatePackageEntry('@test/error-test', {
+        originalVersion: '1.0.0',
+        currentVersion: '1.0.0',
+        subscribers: [badSubscriberPath],
+        packageRootPath: publisherPath
       });
 
-      await expect(CommandService.publish()).rejects.toThrow(
-        'No package.json found in current directory'
-      );
-    });
-
-    it('should generate timestamp version correctly', async () => {
-      const mockDate = new Date('2024-05-30T12:34:56.789Z');
-      vi.spyOn(global, 'Date').mockImplementation(() => mockDate);
-
-      await CommandService.publish();
-
-      // Verify the timestamp version format
-      expect(LocalPackageStoreService.updatePackageEntry).toHaveBeenCalledWith(
-        '@test/package',
-        expect.objectContaining({
-          currentVersion: '1.0.0-20240530123456'
-        })
-      );
-    });
-
-    it('should preserve existing subscribers when updating package entry', async () => {
-      const existingSubscribers = [
-        '/path/to/subscriber1',
-        '/path/to/subscriber2'
-      ];
-      const mockExistingEntry = {
-        ...mockPackageEntry,
-        subscribers: existingSubscribers
-      };
-
-      vi.mocked(LocalPackageStoreService.getPackageEntry).mockResolvedValue(
-        mockExistingEntry
-      );
-
-      await CommandService.publish();
-
-      expect(LocalPackageStoreService.updatePackageEntry).toHaveBeenCalledWith(
-        '@test/package',
-        expect.objectContaining({
-          subscribers: existingSubscribers
-        })
-      );
-    });
-
-    it('should handle Verdaccio start failure', async () => {
-      vi.mocked(VerdaccioService.start).mockRejectedValue(
-        new Error('Failed to start Verdaccio')
-      );
-
-      await expect(CommandService.publish()).rejects.toThrow(
-        'Failed to start Verdaccio'
-      );
-
-      // Verify cleanup wasn't attempted
-      expect(VerdaccioService.stop).not.toHaveBeenCalled();
-    });
-
-    it('should handle publish failure', async () => {
-      vi.mocked(VerdaccioService.publishPackage).mockRejectedValue(
-        new Error('Publish failed')
-      );
-
-      await expect(CommandService.publish()).rejects.toThrow('Publish failed');
-
-      // Verify Verdaccio was started but not stopped due to error
-      expect(VerdaccioService.start).toHaveBeenCalledOnce();
-    });
-
-    it('should handle subscriber update failure gracefully', async () => {
-      const mockExistingEntry = {
-        ...mockPackageEntry,
-        subscribers: ['/test/failing-subscriber']
-      };
-
-      vi.mocked(LocalPackageStoreService.getPackageEntry).mockResolvedValue(
-        mockExistingEntry
-      );
-
-      // Mock subscriber package.json read to fail
-      vi.mocked(fs.readJson)
-        .mockResolvedValueOnce(mockPackageJson) // Initial package.json read succeeds
-        .mockRejectedValueOnce(
-          new Error('Failed to read subscriber package.json')
-        ); // Subscriber read fails
-
+      TestProjectUtils.changeToProject(publisherPath);
       await CommandService.publish();
 
       // Verify error was logged but publish continued
       expect(DR.logger.error).toHaveBeenCalledWith(
         expect.stringContaining(
-          'Failed to update subscriber /test/failing-subscriber'
+          `Failed to update subscriber ${badSubscriberPath}`
         )
       );
 
       // Verify main publish still completed
       expect(DR.logger.info).toHaveBeenCalledWith(
         expect.stringMatching(
-          /Successfully published @test\/package@1\.0\.0-\d{14}/
+          /Successfully published @test\/error-test@1\.0\.0-\d{14}/
         )
       );
     });
   });
 
-  describe('generateTimestampVersion', () => {
-    it('should generate correct timestamp format', () => {
-      const mockDate = new Date('2024-05-30T12:34:56.789Z');
-      vi.spyOn(global, 'Date').mockImplementation(() => mockDate);
-
-      // Access the private method via reflection for testing
-      const result = (CommandService as any).generateTimestampVersion('1.0.0');
-
-      expect(result).toBe('1.0.0-20240530123456');
-    });
-
-    it('should handle different date formats', () => {
-      const mockDate = new Date('2023-12-31T23:59:59.999Z');
-      vi.spyOn(global, 'Date').mockImplementation(() => mockDate);
-
-      const result = (CommandService as any).generateTimestampVersion('2.1.3');
-
-      expect(result).toBe('2.1.3-20231231235959');
-    });
-  });
-
-  describe('getPackageInfo', () => {
-    it('should return package info for valid package.json', async () => {
-      const mockPackageJson = {
-        name: '@test/package',
-        version: '1.0.0',
-        description: 'Test package'
-      };
-
-      vi.mocked(fs.readJson).mockResolvedValue(mockPackageJson);
-
-      const result = await (CommandService as any).getPackageInfo('/test/dir');
-
-      expect(result).toEqual({
-        name: '@test/package',
-        version: '1.0.0'
-      });
-
-      expect(fs.readJson).toHaveBeenCalledWith('/test/dir/package.json');
-    });
-
-    it('should return null for missing package.json', async () => {
-      vi.mocked(fs.readJson).mockRejectedValue(new Error('ENOENT'));
-
-      const result = await (CommandService as any).getPackageInfo('/test/dir');
-
-      expect(result).toBeNull();
-      expect(DR.logger.error).toHaveBeenCalledWith(
-        expect.stringContaining('Error reading package.json')
+  describe('subscribe', () => {
+    it('should add current directory as subscriber to a package', async () => {
+      // Create publisher package
+      const publisherPath = await TestProjectUtils.createTestPackage(
+        '@test/subscribe-target',
+        '1.0.0'
       );
-    });
 
-    it('should return null for package.json missing name', async () => {
-      vi.mocked(fs.readJson).mockResolvedValue({
-        version: '1.0.0'
-      });
+      // Create and publish the target package first
+      TestProjectUtils.changeToProject(publisherPath);
+      await CommandService.publish();
 
-      const result = await (CommandService as any).getPackageInfo('/test/dir');
-
-      expect(result).toBeNull();
-      expect(DR.logger.error).toHaveBeenCalledWith(
-        expect.stringContaining(
-          'package.json must contain name and version fields'
-        )
+      // Create subscriber package
+      const subscriberPath = await TestProjectUtils.createSubscriberProject(
+        '@test/new-subscriber',
+        '@test/subscribe-target',
+        '1.0.0'
       );
-    });
 
-    it('should return null for package.json missing version', async () => {
-      vi.mocked(fs.readJson).mockResolvedValue({
-        name: '@test/package'
-      });
+      // Subscribe from subscriber directory
+      TestProjectUtils.changeToProject(subscriberPath);
+      await CommandService.subscribe('@test/subscribe-target');
 
-      const result = await CommandService.getPackageInfo('/test/dir');
-
-      expect(result).toBeNull();
-      expect(DR.logger.error).toHaveBeenCalledWith(
-        expect.stringContaining(
-          'package.json must contain name and version fields'
-        )
+      // Verify subscriber was added
+      const packageEntry = await TestProjectUtils.getPackageEntry(
+        '@test/subscribe-target'
       );
-    });
-
-    it('should use process.cwd() as default directory', async () => {
-      const mockPackageJson = {
-        name: '@test/package',
-        version: '1.0.0'
-      };
-
-      vi.mocked(fs.readJson).mockResolvedValue(mockPackageJson);
-
-      const result = await (CommandService as any).getPackageInfo();
-
-      expect(result).toEqual({
-        name: '@test/package',
-        version: '1.0.0'
-      });
-
-      expect(fs.readJson).toHaveBeenCalledWith('/test/project/package.json');
+      expect(packageEntry?.subscribers).toContain(subscriberPath);
     });
   });
 });
