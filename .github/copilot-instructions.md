@@ -33,6 +33,11 @@ Unless otherwise specified, always make suggested edits in the files directly in
 - For TypeScript libraries (with exception of libraries that are CLI tools), always include an `index.ts` file at the root of the package that exports all public types and functions. Never include an `index.ts` file anywhere else in the package.
   - Libraries that are CLI tools should still have an `index.ts` file, but it will contain the CLI entry point instead of exports.
 
+### Enums
+
+- Always use PascalCase for enum names, and PascalCase for enum values.
+- Always use TypeScript `enum` instead of `const enum` or `type` for enums.
+
 ## Testing
 
 - When creating tests, make the file name the same as the associated file being tested, but instead of `.ts`, use `.spec.ts`.

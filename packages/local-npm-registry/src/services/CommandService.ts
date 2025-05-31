@@ -1,12 +1,11 @@
 import { DR, type PackageJson } from '@aneuhold/core-ts-lib';
-import { execa } from 'execa';
 import fs from 'fs-extra';
 import path from 'path';
 import {
   LocalPackageStoreService,
   type PackageEntry
 } from './LocalPackageStoreService.js';
-import { PackageManagerService } from './PackageManagerDetectionService.js';
+import { PackageManagerService } from './PackageManagerService.js';
 import { VerdaccioService } from './VerdaccioService.js';
 
 /**
@@ -126,7 +125,7 @@ export class CommandService {
             targetPackageName,
             entry.originalVersion
           );
-          await this.runInstallCommand(subscriberPath);
+          await PackageManagerService.runInstallWithRegistry(subscriberPath);
         } catch (error) {
           DR.logger.error(
             `Failed to reset subscriber ${subscriberPath}: ${String(error)}`
@@ -183,7 +182,7 @@ export class CommandService {
         packageName,
         entry.originalVersion
       );
-      await this.runInstallCommand(currentProjectPath);
+      await PackageManagerService.runInstallWithRegistry(currentProjectPath);
 
       DR.logger.info(`Successfully unsubscribed from ${packageName}`);
     } else {
@@ -227,7 +226,7 @@ export class CommandService {
       }
 
       // Run install once after all updates
-      await this.runInstallCommand(currentProjectPath);
+      await PackageManagerService.runInstallWithRegistry(currentProjectPath);
 
       DR.logger.info(`Successfully unsubscribed from all packages`);
     }
@@ -275,7 +274,7 @@ export class CommandService {
               packageName,
               entry.originalVersion
             );
-            await this.runInstallCommand(subscriberPath);
+            await PackageManagerService.runInstallWithRegistry(subscriberPath);
             DR.logger.info(`    ✓ Reset subscriber: ${subscriberPath}`);
           } catch (error) {
             DR.logger.error(
@@ -389,28 +388,6 @@ export class CommandService {
   }
 
   /**
-   * Runs install command in a project directory.
-   *
-   * @param projectPath - Path to the project directory
-   */
-  private static async runInstallCommand(projectPath: string): Promise<void> {
-    try {
-      // Detect the package manager based on lock files in the target project
-      const packageManager =
-        await PackageManagerService.detectPackageManager(projectPath);
-
-      DR.logger.info(`Running ${packageManager} install in ${projectPath}`);
-      await execa(packageManager, ['install'], { cwd: projectPath });
-      DR.logger.info(`${packageManager} install completed in ${projectPath}`);
-    } catch (error) {
-      DR.logger.error(
-        `Error running install in ${projectPath}: ${String(error)}`
-      );
-      throw error;
-    }
-  }
-
-  /**
    * Publishes a package with a fresh timestamp version and updates all subscribers.
    * This unified method is used by both publish and subscribe commands.
    *
@@ -474,7 +451,7 @@ export class CommandService {
               packageName,
               timestampVersion
             );
-            await this.runInstallCommand(subscriberPath);
+            await PackageManagerService.runInstallWithRegistry(subscriberPath);
           } catch (error) {
             DR.logger.error(
               `Failed to update subscriber ${subscriberPath}: ${String(error)}`
