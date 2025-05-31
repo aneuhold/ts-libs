@@ -344,6 +344,12 @@ describe('Integration Tests', () => {
 
       // Verify update message was logged
       expect(DR.logger.info).toHaveBeenCalledWith('Updating 2 subscriber(s)');
+
+      // Verify subscribers have non-empty lock files
+      await TestProjectUtils.validateSubscriberLockFiles(
+        [subscriber1Path, subscriber2Path],
+        packageManager
+      );
     };
   });
 

@@ -1,15 +1,17 @@
 import { PackageJson } from '@aneuhold/core-ts-lib';
 import { randomUUID } from 'crypto';
-import { execa } from 'execa';
 import fs from 'fs-extra';
 import path from 'path';
-import { PACKAGE_MANAGER_INFO } from '../lib/types/PackageManager.js';
+import { expect } from 'vitest';
 import { ConfigService } from '../src/services/ConfigService.js';
 import {
   LocalPackageStoreService,
   type PackageEntry
 } from '../src/services/LocalPackageStoreService.js';
-import { PackageManager } from '../src/types/PackageManager.js';
+import {
+  PACKAGE_MANAGER_INFO,
+  PackageManager
+} from '../src/types/PackageManager.js';
 
 /**
  * Test utilities for creating temporary test projects with isolated configurations.
@@ -210,8 +212,8 @@ export class TestProjectUtils {
       `// Test package ${name}\nmodule.exports = { name: '${name}', version: '${version}' };\n`
     );
 
-    // Run install command to generate lock files naturally
-    await TestProjectUtils.runInstallCommand(packageDir, packageManager);
+    // Create empty lock file for the package manager instead of running install
+    await TestProjectUtils.createEmptyLockFile(packageDir, packageManager);
 
     return packageDir;
   }
@@ -236,22 +238,34 @@ export class TestProjectUtils {
   }
 
   /**
-   * Runs the appropriate install command for the given package manager
+   * Creates an empty lock file for the specified package manager.
+   * This simulates the initial state without running actual install commands.
+   *
+   * Actual install commands cannot be run because the test packages are not
+   * actually published to NPM.
    *
    * @param projectPath - Path to the project directory
    * @param packageManager - Package manager to use
    */
-  static async runInstallCommand(
+  static async createEmptyLockFile(
     projectPath: string,
     packageManager: PackageManager
   ): Promise<void> {
-    // For yarn4, we use the 'yarn' command since the version is specified in package.json
-    const installCommand = PACKAGE_MANAGER_INFO[packageManager].command;
-    const args = ['install'];
+    const lockFileName = PACKAGE_MANAGER_INFO[packageManager].lockFile;
+    const lockFilePath = path.join(projectPath, lockFileName);
 
-    await execa(installCommand, args, {
-      cwd: projectPath
-    });
+    switch (packageManager) {
+      case PackageManager.Npm:
+        await fs.writeFile(lockFilePath, '{}');
+        break;
+      case PackageManager.Pnpm:
+        await fs.writeFile(lockFilePath, '');
+        break;
+      case PackageManager.Yarn:
+      case PackageManager.Yarn4:
+        await fs.writeFile(lockFilePath, '');
+        break;
+    }
   }
 
   /**
@@ -295,5 +309,80 @@ export class TestProjectUtils {
       );
     }
     return TestProjectUtils.testInstanceDir;
+  }
+
+  /**
+   * Gets the lock file path for a package manager in a project directory
+   *
+   * @param projectPath - Path to the project directory
+   * @param packageManager - Package manager to get lock file for
+   */
+  static getLockFilePath(
+    projectPath: string,
+    packageManager: PackageManager
+  ): string {
+    const lockFileName = PACKAGE_MANAGER_INFO[packageManager].lockFile;
+    return path.join(projectPath, lockFileName);
+  }
+
+  /**
+   * Checks if a project has a non-empty lock file for the specified package manager
+   *
+   * @param projectPath - Path to the project directory
+   * @param packageManager - Package manager to check lock file for
+   */
+  static async hasNonEmptyLockFile(
+    projectPath: string,
+    packageManager: PackageManager
+  ): Promise<boolean> {
+    const lockFilePath = TestProjectUtils.getLockFilePath(
+      projectPath,
+      packageManager
+    );
+
+    try {
+      const stats = await fs.stat(lockFilePath);
+      if (!stats.isFile()) {
+        return false;
+      }
+
+      // Check if file has content beyond empty/minimal placeholder
+      const content = await fs.readFile(lockFilePath, 'utf8');
+
+      switch (packageManager) {
+        case PackageManager.Npm:
+          // npm lock files should have more than just "{}"
+          return content.trim() !== '{}' && content.trim().length > 2;
+        case PackageManager.Pnpm:
+        case PackageManager.Yarn:
+        case PackageManager.Yarn4:
+          // yarn and pnpm lock files should not be empty
+          return content.trim().length > 0;
+        default:
+          return false;
+      }
+    } catch {
+      // File doesn't exist or can't be read
+      return false;
+    }
+  }
+
+  /**
+   * Validates that subscriber projects have non-empty lock files
+   *
+   * @param subscriberPaths - Array of paths to subscriber projects
+   * @param packageManager - Package manager to check lock files for
+   */
+  static async validateSubscriberLockFiles(
+    subscriberPaths: string[],
+    packageManager: PackageManager
+  ): Promise<void> {
+    for (const subscriberPath of subscriberPaths) {
+      const hasLockFile = await TestProjectUtils.hasNonEmptyLockFile(
+        subscriberPath,
+        packageManager
+      );
+      expect(hasLockFile).toBe(true);
+    }
   }
 }
