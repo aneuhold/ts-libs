@@ -1,4 +1,5 @@
 import { DR } from '@aneuhold/core-ts-lib';
+import { randomUUID } from 'crypto';
 import fs from 'fs-extra';
 import path from 'path';
 import {
@@ -14,6 +15,8 @@ import {
 import { TestProjectUtils } from '../../test-utils/TestProjectUtils.js';
 import { CommandService } from './CommandService.js';
 import { LocalPackageStoreService } from './LocalPackageStoreService.js';
+import { MutexService } from './MutexService.js';
+import { VerdaccioService } from './VerdaccioService.js';
 
 vi.mock('@aneuhold/core-ts-lib', async () => {
   const actual = await vi.importActual('@aneuhold/core-ts-lib');
@@ -31,30 +34,60 @@ vi.mock('@aneuhold/core-ts-lib', async () => {
 });
 
 describe('CommandService - End-to-End Tests', () => {
+  let testId: string;
+
   // Global setup/teardown for the tmp directory
   beforeAll(async () => {
     await TestProjectUtils.setupGlobalTempDir();
+    // Ensure no mutex lock exists before starting tests
+    try {
+      await MutexService.forceReleaseLock();
+    } catch {
+      // Ignore errors if no lock exists
+    }
   });
 
   afterAll(async () => {
     await TestProjectUtils.cleanupGlobalTempDir();
+    // Clean up any remaining mutex lock
+    try {
+      await VerdaccioService.stop();
+      await MutexService.forceReleaseLock();
+    } catch {
+      // Ignore errors during cleanup
+    }
   });
 
   // Per-test setup/teardown for unique test instances
   beforeEach(async () => {
     vi.clearAllMocks();
     await TestProjectUtils.setupTestInstance();
+    testId = randomUUID().slice(0, 8);
+    // Ensure clean mutex state for each test
+    try {
+      await VerdaccioService.stop();
+      await MutexService.forceReleaseLock();
+    } catch {
+      // Ignore errors if no lock exists or server wasn't running
+    }
   });
 
   afterEach(async () => {
     await TestProjectUtils.cleanupTestInstance();
+    // Clean up mutex lock after each test
+    try {
+      await VerdaccioService.stop();
+      await MutexService.forceReleaseLock();
+    } catch {
+      // Ignore errors during cleanup
+    }
   });
 
   describe('publish', () => {
     it('should successfully publish a package without subscribers', async () => {
       // Create a test package
       const packagePath = await TestProjectUtils.createTestPackage(
-        '@test/my-package',
+        `@test-${testId}/my-package`,
         '1.0.0'
       );
 
@@ -65,11 +98,12 @@ describe('CommandService - End-to-End Tests', () => {
       await CommandService.publish();
 
       // Verify the package entry was created in the local store
-      const packageEntry =
-        await TestProjectUtils.getPackageEntry('@test/my-package');
+      const packageEntry = await TestProjectUtils.getPackageEntry(
+        `@test-${testId}/my-package`
+      );
       expect(packageEntry).toBeTruthy();
       expect(packageEntry?.originalVersion).toBe('1.0.0');
-      expect(packageEntry?.currentVersion).toMatch(/^1\.0\.0-\d{14}$/);
+      expect(packageEntry?.currentVersion).toMatch(/^1\.0\.0-\d{17}$/);
       expect(packageEntry?.subscribers).toEqual([]);
       expect(packageEntry?.packageRootPath).toBe(packagePath);
 
@@ -81,7 +115,9 @@ describe('CommandService - End-to-End Tests', () => {
       // Verify success was logged
       expect(DR.logger.info).toHaveBeenCalledWith(
         expect.stringMatching(
-          /Successfully published @test\/my-package@1\.0\.0-\d{14}/
+          new RegExp(
+            `Successfully published @test-${testId}/my-package@1\\.0\\.0-\\d{17}`
+          )
         )
       );
     });
@@ -89,22 +125,22 @@ describe('CommandService - End-to-End Tests', () => {
     it('should successfully publish with npm and update subscribers', async () => {
       // Create publisher package
       const publisherPath = await TestProjectUtils.createTestPackage(
-        '@test/publisher',
+        `@test-${testId}/publisher`,
         '2.0.0',
         'npm'
       );
 
       // Create subscriber packages
       const subscriber1Path = await TestProjectUtils.createSubscriberProject(
-        '@test/subscriber1',
-        '@test/publisher',
+        `@test-${testId}/subscriber1`,
+        `@test-${testId}/publisher`,
         '2.0.0',
         'npm'
       );
 
       const subscriber2Path = await TestProjectUtils.createSubscriberProject(
-        '@test/subscriber2',
-        '@test/publisher',
+        `@test-${testId}/subscriber2`,
+        `@test-${testId}/publisher`,
         '2.0.0',
         'npm'
       );
@@ -115,18 +151,19 @@ describe('CommandService - End-to-End Tests', () => {
 
       // Now add subscribers to the publisher
       TestProjectUtils.changeToProject(subscriber1Path);
-      await CommandService.subscribe('@test/publisher');
+      await CommandService.subscribe(`@test-${testId}/publisher`);
 
       TestProjectUtils.changeToProject(subscriber2Path);
-      await CommandService.subscribe('@test/publisher');
+      await CommandService.subscribe(`@test-${testId}/publisher`);
 
       // Now publish again from the publisher directory to update subscribers
       TestProjectUtils.changeToProject(publisherPath);
       await CommandService.publish();
 
       // Verify package entry has subscribers
-      const packageEntry =
-        await TestProjectUtils.getPackageEntry('@test/publisher');
+      const packageEntry = await TestProjectUtils.getPackageEntry(
+        `@test-${testId}/publisher`
+      );
       expect(packageEntry?.subscribers).toContain(subscriber1Path);
       expect(packageEntry?.subscribers).toContain(subscriber2Path);
 
@@ -136,12 +173,12 @@ describe('CommandService - End-to-End Tests', () => {
       const subscriber2PackageJson =
         await TestProjectUtils.readPackageJson(subscriber2Path);
 
-      expect(subscriber1PackageJson.dependencies?.['@test/publisher']).toMatch(
-        /^2\.0\.0-\d{14}$/
-      );
-      expect(subscriber2PackageJson.dependencies?.['@test/publisher']).toMatch(
-        /^2\.0\.0-\d{14}$/
-      );
+      expect(
+        subscriber1PackageJson.dependencies?.[`@test-${testId}/publisher`]
+      ).toMatch(/^2\.0\.0-\d{17}$/);
+      expect(
+        subscriber2PackageJson.dependencies?.[`@test-${testId}/publisher`]
+      ).toMatch(/^2\.0\.0-\d{17}$/);
 
       // Verify update message was logged
       expect(DR.logger.info).toHaveBeenCalledWith('Updating 2 subscriber(s)');
@@ -150,7 +187,7 @@ describe('CommandService - End-to-End Tests', () => {
     it('should work with yarn package manager', async () => {
       // Create a test package with yarn
       const packagePath = await TestProjectUtils.createTestPackage(
-        '@test/yarn-package',
+        `@test-${testId}/yarn-package`,
         '1.2.3',
         'yarn'
       );
@@ -159,16 +196,17 @@ describe('CommandService - End-to-End Tests', () => {
       await CommandService.publish();
 
       // Verify package was published successfully
-      const packageEntry =
-        await TestProjectUtils.getPackageEntry('@test/yarn-package');
+      const packageEntry = await TestProjectUtils.getPackageEntry(
+        `@test-${testId}/yarn-package`
+      );
       expect(packageEntry?.originalVersion).toBe('1.2.3');
-      expect(packageEntry?.currentVersion).toMatch(/^1\.2\.3-\d{14}$/);
+      expect(packageEntry?.currentVersion).toMatch(/^1\.2\.3-\d{17}$/);
     });
 
     it('should work with pnpm package manager', async () => {
       // Create a test package with pnpm
       const packagePath = await TestProjectUtils.createTestPackage(
-        '@test/pnpm-package',
+        `@test-${testId}/pnpm-package`,
         '0.5.0',
         'pnpm'
       );
@@ -177,10 +215,11 @@ describe('CommandService - End-to-End Tests', () => {
       await CommandService.publish();
 
       // Verify package was published successfully
-      const packageEntry =
-        await TestProjectUtils.getPackageEntry('@test/pnpm-package');
+      const packageEntry = await TestProjectUtils.getPackageEntry(
+        `@test-${testId}/pnpm-package`
+      );
       expect(packageEntry?.originalVersion).toBe('0.5.0');
-      expect(packageEntry?.currentVersion).toMatch(/^0\.5\.0-\d{14}$/);
+      expect(packageEntry?.currentVersion).toMatch(/^0\.5\.0-\d{17}$/);
     });
 
     it('should handle missing package.json gracefully', async () => {
@@ -219,12 +258,12 @@ describe('CommandService - End-to-End Tests', () => {
     it('should preserve existing subscribers when republishing', async () => {
       // Create publisher and subscriber
       const publisherPath = await TestProjectUtils.createTestPackage(
-        '@test/republish-test',
+        `@test-${testId}/republish-test`,
         '1.0.0'
       );
       const subscriberPath = await TestProjectUtils.createSubscriberProject(
-        '@test/republish-subscriber',
-        '@test/republish-test',
+        `@test-${testId}/republish-subscriber`,
+        `@test-${testId}/republish-test`,
         '1.0.0'
       );
 
@@ -234,14 +273,14 @@ describe('CommandService - End-to-End Tests', () => {
 
       // Subscribe and publish once
       TestProjectUtils.changeToProject(subscriberPath);
-      await CommandService.subscribe('@test/republish-test');
+      await CommandService.subscribe(`@test-${testId}/republish-test`);
 
       TestProjectUtils.changeToProject(publisherPath);
       await CommandService.publish();
 
       // Verify subscriber was added
       let packageEntry = await TestProjectUtils.getPackageEntry(
-        '@test/republish-test'
+        `@test-${testId}/republish-test`
       );
       expect(packageEntry?.subscribers).toContain(subscriberPath);
 
@@ -250,7 +289,7 @@ describe('CommandService - End-to-End Tests', () => {
 
       // Verify subscriber is still there
       packageEntry = await TestProjectUtils.getPackageEntry(
-        '@test/republish-test'
+        `@test-${testId}/republish-test`
       );
       expect(packageEntry?.subscribers).toContain(subscriberPath);
       expect(packageEntry?.subscribers).toHaveLength(1);
@@ -259,7 +298,7 @@ describe('CommandService - End-to-End Tests', () => {
     it('should handle subscriber update failures gracefully', async () => {
       // Create publisher package
       const publisherPath = await TestProjectUtils.createTestPackage(
-        '@test/error-test',
+        `@test-${testId}/error-test`,
         '1.0.0'
       );
 
@@ -272,12 +311,15 @@ describe('CommandService - End-to-End Tests', () => {
       // Don't create a package.json - this will cause read errors
 
       // Manually add the bad subscriber to the package entry
-      await LocalPackageStoreService.updatePackageEntry('@test/error-test', {
-        originalVersion: '1.0.0',
-        currentVersion: '1.0.0',
-        subscribers: [badSubscriberPath],
-        packageRootPath: publisherPath
-      });
+      await LocalPackageStoreService.updatePackageEntry(
+        `@test-${testId}/error-test`,
+        {
+          originalVersion: '1.0.0',
+          currentVersion: '1.0.0',
+          subscribers: [badSubscriberPath],
+          packageRootPath: publisherPath
+        }
+      );
 
       TestProjectUtils.changeToProject(publisherPath);
       await CommandService.publish();
@@ -292,7 +334,9 @@ describe('CommandService - End-to-End Tests', () => {
       // Verify main publish still completed
       expect(DR.logger.info).toHaveBeenCalledWith(
         expect.stringMatching(
-          /Successfully published @test\/error-test@1\.0\.0-\d{14}/
+          new RegExp(
+            `Successfully published @test-${testId}/error-test@1\\.0\\.0-\\d{17}`
+          )
         )
       );
     });
@@ -302,7 +346,7 @@ describe('CommandService - End-to-End Tests', () => {
     it('should add current directory as subscriber to a package', async () => {
       // Create publisher package
       const publisherPath = await TestProjectUtils.createTestPackage(
-        '@test/subscribe-target',
+        `@test-${testId}/subscribe-target`,
         '1.0.0'
       );
 
@@ -312,18 +356,18 @@ describe('CommandService - End-to-End Tests', () => {
 
       // Create subscriber package
       const subscriberPath = await TestProjectUtils.createSubscriberProject(
-        '@test/new-subscriber',
-        '@test/subscribe-target',
+        `@test-${testId}/new-subscriber`,
+        `@test-${testId}/subscribe-target`,
         '1.0.0'
       );
 
       // Subscribe from subscriber directory
       TestProjectUtils.changeToProject(subscriberPath);
-      await CommandService.subscribe('@test/subscribe-target');
+      await CommandService.subscribe(`@test-${testId}/subscribe-target`);
 
       // Verify subscriber was added
       const packageEntry = await TestProjectUtils.getPackageEntry(
-        '@test/subscribe-target'
+        `@test-${testId}/subscribe-target`
       );
       expect(packageEntry?.subscribers).toContain(subscriberPath);
     });

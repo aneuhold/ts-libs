@@ -139,18 +139,33 @@ export class VerdaccioService {
 
       // Use npm publish with the local registry. Also set the tag to 'local'.
       // A tag is required for NPM to publish pre-release versions.
-      await execa(
+      const result = await execa(
         'npm',
         ['publish', '--registry', registryUrl, '--tag', 'local'],
         {
           cwd: packagePath,
-          stdio: 'inherit'
+          stdio: 'pipe'
         }
       );
 
       DR.logger.info('Package published successfully');
+      if (result.stdout) {
+        DR.logger.info(result.stdout);
+      }
     } catch (error) {
-      DR.logger.error(`Failed to publish package: ${String(error)}`);
+      let errorMessage = String(error);
+
+      // Try to extract more meaningful error information from execa error
+      if (error && typeof error === 'object') {
+        const execaError = error as { stderr?: string; stdout?: string };
+        if (execaError.stderr) {
+          errorMessage = `npm publish failed: ${execaError.stderr}`;
+        } else if (execaError.stdout) {
+          errorMessage = `npm publish failed: ${execaError.stdout}`;
+        }
+      }
+
+      DR.logger.error(`Failed to publish package: ${errorMessage}`);
       throw error;
     }
   }

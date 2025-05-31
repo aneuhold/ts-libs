@@ -386,7 +386,7 @@ export class CommandService {
     const timestamp = new Date()
       .toISOString()
       .replace(/[-:T.]/g, '')
-      .slice(0, 14);
+      .slice(0, 17); // Include milliseconds (YYYYMMDDHHMMssSSS)
     return `${originalVersion}-${timestamp}`;
   }
 
