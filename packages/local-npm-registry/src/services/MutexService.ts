@@ -120,46 +120,6 @@ export class MutexService {
   }
 
   /**
-   * Gets information about who is holding the lock (if anyone).
-   * Note: proper-lockfile doesn't expose PID information in its lock format,
-   * so we can only provide PID when we hold the lock ourselves.
-   */
-  static async getLockInfo(): Promise<{
-    isLocked: boolean;
-    pid?: number;
-    hostname?: string;
-  }> {
-    try {
-      // Ensure lock file exists before checking
-      await MutexService.ensureLockFileExists();
-
-      const isLocked = await MutexService.isLocked();
-      if (!isLocked) {
-        return { isLocked: false };
-      }
-
-      // If we currently hold the lock, return our own PID
-      if (MutexService.lockRelease) {
-        return {
-          isLocked: true,
-          pid: process.pid,
-          hostname: os.hostname()
-        };
-      }
-
-      // For external locks, we can't determine the PID from proper-lockfile
-      // The library manages its own internal format and doesn't expose this info
-      return {
-        isLocked: true,
-        hostname: os.hostname()
-      };
-    } catch (error) {
-      DR.logger.info(`Error getting lock info: ${String(error)}`);
-      return { isLocked: false };
-    }
-  }
-
-  /**
    * Forces removal of the lock file. Use with caution!
    * This should only be used when you're certain no other process is using the lock.
    */

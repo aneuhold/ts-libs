@@ -33,12 +33,6 @@ describe('VerdaccioService', () => {
     // Verify lock is now held
     const lockAfterStart = await MutexService.isLocked();
     expect(lockAfterStart).toBe(true);
-
-    // Get lock info to verify it's held by this process
-    const lockInfo = await MutexService.getLockInfo();
-    expect(lockInfo.isLocked).toBe(true);
-    // Only check PID if we're the ones holding the lock (which we should be)
-    expect(lockInfo.pid).toBe(process.pid);
   });
 
   it('should release mutex lock when stopping Verdaccio', async () => {
