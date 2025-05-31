@@ -9,7 +9,7 @@ import {
   type PackageEntry
 } from '../src/services/LocalPackageStoreService.js';
 
-export type PackageManager = 'npm' | 'yarn' | 'pnpm';
+export type PackageManager = 'npm' | 'yarn' | 'yarn4' | 'pnpm';
 
 /**
  * Test utilities for creating temporary test projects with isolated configurations.
@@ -194,7 +194,8 @@ export class TestProjectUtils {
       dependencies,
       scripts: {
         test: 'echo "Test script"'
-      }
+      },
+      ...(packageManager === 'yarn4' && { packageManager: 'yarn@4.6.0' })
     };
 
     await fs.writeJson(path.join(packageDir, 'package.json'), packageJson, {
@@ -208,9 +209,7 @@ export class TestProjectUtils {
     );
 
     // Run install command to generate lock files naturally
-    if (Object.keys(dependencies).length > 0) {
-      await TestProjectUtils.runInstallCommand(packageDir, packageManager);
-    }
+    await TestProjectUtils.runInstallCommand(packageDir, packageManager);
 
     return packageDir;
   }
@@ -244,18 +243,13 @@ export class TestProjectUtils {
     projectPath: string,
     packageManager: PackageManager
   ): Promise<void> {
-    const installCommand = packageManager;
+    // For yarn4, we use the 'yarn' command since the version is specified in package.json
+    const installCommand = packageManager === 'yarn4' ? 'yarn' : packageManager;
     const args = ['install'];
 
-    try {
-      await execa(installCommand, args, {
-        cwd: projectPath,
-        stdio: 'pipe' // Suppress output during tests
-      });
-    } catch {
-      // Ignore install errors in tests - some dependencies might not be available
-      // but we still want to test the core functionality
-    }
+    await execa(installCommand, args, {
+      cwd: projectPath
+    });
   }
 
   /**

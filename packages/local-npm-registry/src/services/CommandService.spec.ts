@@ -35,7 +35,7 @@ vi.mock('@aneuhold/core-ts-lib', async () => {
   };
 });
 
-type PackageManager = 'npm' | 'yarn' | 'pnpm';
+type PackageManager = 'npm' | 'yarn' | 'yarn4' | 'pnpm';
 
 describe('Integration Tests', () => {
   let testId: string;
@@ -136,6 +136,10 @@ describe('Integration Tests', () => {
 
     it('should successfully publish with pnpm and update subscribers', async () => {
       await testPublishWithSubscribers('pnpm', '0.5.0');
+    });
+
+    it('should successfully publish with yarn4 and update subscribers', async () => {
+      await testPublishWithSubscribers('yarn4', '1.1.0');
     });
 
     it('should handle missing package.json gracefully', async () => {
