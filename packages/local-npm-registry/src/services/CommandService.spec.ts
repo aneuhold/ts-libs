@@ -33,7 +33,7 @@ vi.mock('@aneuhold/core-ts-lib', async () => {
   };
 });
 
-describe('CommandService - End-to-End Tests', () => {
+describe('Integration Tests', () => {
   let testId: string;
 
   // Global setup/teardown for the tmp directory

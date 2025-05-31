@@ -1,8 +1,12 @@
+import fs from 'fs-extra';
+import os from 'os';
+import path from 'path';
+import lockfile from 'proper-lockfile';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { MutexService } from './MutexService.js';
 import { VerdaccioService } from './VerdaccioService.js';
 
-describe('VerdaccioService', () => {
+describe('Integration Tests', () => {
   beforeEach(async () => {
     // Ensure no lock exists before each test
     try {
@@ -70,16 +74,13 @@ describe('VerdaccioService', () => {
   it('should prevent multiple processes from starting Verdaccio simultaneously', async () => {
     // Use lockfile directly to create a lock from "another process"
     // We'll import lockfile and create a lock manually
-    const lockfile = await import('proper-lockfile');
-    const path = await import('path');
-    const os = await import('os');
 
     const LOCK_DIR = path.join(os.tmpdir(), 'local-npm-registry');
     const LOCK_FILE_PATH = path.join(LOCK_DIR, 'verdaccio-registry');
 
     // Ensure the lock file exists
-    await (await import('fs-extra')).ensureDir(LOCK_DIR);
-    await (await import('fs-extra')).ensureFile(LOCK_FILE_PATH);
+    await fs.ensureDir(LOCK_DIR);
+    await fs.ensureFile(LOCK_FILE_PATH);
 
     // Acquire lock directly with lockfile (simulating another process)
     const release = await lockfile.lock(LOCK_FILE_PATH, {

@@ -7,6 +7,9 @@ import lockfile from 'proper-lockfile';
 /**
  * Service to manage system-wide mutex locks for Verdaccio registry instances.
  * This ensures only one process can run Verdaccio at a time across the entire system.
+ *
+ * Note that cleanup is setup automatically via the proper-lockfile library if
+ * the process exits unexpectedly.
  */
 export class MutexService {
   private static readonly LOCK_FILE_NAME = 'verdaccio-registry';
@@ -18,6 +21,10 @@ export class MutexService {
     MutexService.LOCK_DIR,
     MutexService.LOCK_FILE_NAME
   );
+  /**
+   * Default timeout for acquiring the lock in milliseconds.
+   */
+  private static readonly LOCK_TIMEOUT = 20000;
 
   private static lockRelease: (() => Promise<void>) | null = null;
 
@@ -27,7 +34,9 @@ export class MutexService {
    *
    * @param timeoutMs - Maximum time to wait for lock in milliseconds (default: 30 seconds)
    */
-  static async acquireLock(timeoutMs: number = 30000): Promise<void> {
+  static async acquireLock(
+    timeoutMs: number = MutexService.LOCK_TIMEOUT
+  ): Promise<void> {
     if (MutexService.lockRelease) {
       DR.logger.info('Lock already acquired by this process');
       return;
@@ -39,43 +48,25 @@ export class MutexService {
       // Ensure lock directory exists
       await MutexService.ensureLockFileExists();
 
-      const startTime = Date.now();
-      const retryInterval = 1000; // Check every second
-
-      while (Date.now() - startTime < timeoutMs) {
-        try {
-          // Attempt to acquire the lock
-          MutexService.lockRelease = await lockfile.lock(
-            MutexService.LOCK_FILE_PATH,
-            {
-              // Stale lock timeout - if a process crashes, the lock will be considered stale after 60 seconds
-              stale: 60000,
-              // Don't throw if already locked, we'll handle the retry logic
-              retries: 0
-            }
-          );
-
-          DR.logger.info('Successfully acquired Verdaccio mutex lock');
-          return;
-        } catch (error) {
-          if (error instanceof Error && error.message.includes('ELOCKED')) {
-            // Lock is held by another process, wait and retry
-            DR.logger.info(
-              `Lock is held by another process, retrying in ${retryInterval}ms...`
-            );
-            await MutexService.sleep(retryInterval);
-            continue;
+      // Use proper-lockfile's built-in retry mechanism
+      MutexService.lockRelease = await lockfile.lock(
+        MutexService.LOCK_FILE_PATH,
+        {
+          // Stale lock timeout - if a process crashes, the lock will be considered stale
+          // after this time.
+          stale: timeoutMs,
+          // Use built-in retry mechanism with custom options
+          retries: {
+            retries: Math.floor(timeoutMs / 1000), // Retry for the duration of timeout
+            factor: 1, // No exponential backoff
+            minTimeout: 1000, // Wait 1 second between retries
+            maxTimeout: 1000, // Keep constant 1 second interval
+            randomize: false // No jitter
           }
-          // Other error, rethrow
-          throw error;
         }
-      }
-
-      // Timeout reached
-      throw new Error(
-        `Failed to acquire Verdaccio mutex lock within ${timeoutMs}ms. ` +
-          'Another process may be running Verdaccio.'
       );
+
+      DR.logger.info('Successfully acquired Verdaccio mutex lock');
     } catch (error) {
       const errorMessage = `Failed to acquire mutex lock: ${String(error)}`;
       DR.logger.error(errorMessage);
@@ -146,14 +137,5 @@ export class MutexService {
     // Ensure the lock file exists (proper-lockfile requires the file to exist)
     // This creates an empty file if it doesn't exist, or does nothing if it already exists
     await fs.ensureFile(MutexService.LOCK_FILE_PATH);
-  }
-
-  /**
-   * Sleep utility function.
-   *
-   * @param ms - The number of milliseconds to sleep
-   */
-  private static sleep(ms: number): Promise<void> {
-    return new Promise((resolve) => setTimeout(resolve, ms));
   }
 }

@@ -37,3 +37,4 @@ Unless otherwise specified, always make suggested edits in the files directly in
 
 - When creating tests, make the file name the same as the associated file being tested, but instead of `.ts`, use `.spec.ts`.
 - Never test private methods directly in a test.
+- At the root of test files, name the first describe block as "Unit Tests" or "Integration Tests" depending on the type of tests being written. The first set of nested describe blocks should be named after the method that is being tested.
