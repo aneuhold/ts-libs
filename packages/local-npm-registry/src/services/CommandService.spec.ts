@@ -12,7 +12,10 @@ import {
   it,
   vi
 } from 'vitest';
-import { TestProjectUtils } from '../../test-utils/TestProjectUtils.js';
+import {
+  PackageManager,
+  TestProjectUtils
+} from '../../test-utils/TestProjectUtils.js';
 import { CommandService } from './CommandService.js';
 import { LocalPackageStoreService } from './LocalPackageStoreService.js';
 import { MutexService } from './MutexService.js';
@@ -34,8 +37,6 @@ vi.mock('@aneuhold/core-ts-lib', async () => {
     }
   };
 });
-
-type PackageManager = 'npm' | 'yarn' | 'yarn4' | 'pnpm';
 
 describe('Integration Tests', () => {
   let testId: string;
