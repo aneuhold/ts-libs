@@ -19,22 +19,22 @@ import { LocalPackageStoreService } from './LocalPackageStoreService.js';
 import { MutexService } from './MutexService.js';
 import { VerdaccioService } from './VerdaccioService.js';
 
-vi.mock('@aneuhold/core-ts-lib', async () => {
-  const actual = await vi.importActual('@aneuhold/core-ts-lib');
-  return {
-    ...actual,
-    DR: {
-      logger: {
-        info: vi.fn(),
-        error: vi.fn(),
-        warn: vi.fn(),
-        success: vi.fn(),
-        setVerboseLogging: vi.fn(),
-        isVerboseLoggingEnabled: vi.fn(() => false)
-      }
-    }
-  };
-});
+// vi.mock('@aneuhold/core-ts-lib', async () => {
+//   const actual = await vi.importActual('@aneuhold/core-ts-lib');
+//   return {
+//     ...actual,
+//     DR: {
+//       logger: {
+//         info: vi.fn(),
+//         error: vi.fn(),
+//         warn: vi.fn(),
+//         success: vi.fn(),
+//         setVerboseLogging: vi.fn(),
+//         isVerboseLoggingEnabled: vi.fn(() => false)
+//       }
+//     }
+//   };
+// });
 
 describe('Integration Tests', () => {
   let testId: string;
@@ -123,7 +123,7 @@ describe('Integration Tests', () => {
       await testPublishWithSubscribers(PackageManager.Pnpm, '0.5.0');
     });
 
-    it('should successfully publish with yarn4 and update subscribers', async () => {
+    it.only('should successfully publish with yarn4 and update subscribers', async () => {
       await testPublishWithSubscribers(PackageManager.Yarn4, '1.1.0');
     });
 

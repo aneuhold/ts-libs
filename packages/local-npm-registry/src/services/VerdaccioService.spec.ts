@@ -2,9 +2,26 @@ import fs from 'fs-extra';
 import os from 'os';
 import path from 'path';
 import lockfile from 'proper-lockfile';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { MutexService } from './MutexService.js';
 import { VerdaccioService } from './VerdaccioService.js';
+
+vi.mock('@aneuhold/core-ts-lib', async () => {
+  const actual = await vi.importActual('@aneuhold/core-ts-lib');
+  return {
+    ...actual,
+    DR: {
+      logger: {
+        info: vi.fn(),
+        error: vi.fn(),
+        warn: vi.fn(),
+        success: vi.fn(),
+        setVerboseLogging: vi.fn(),
+        isVerboseLoggingEnabled: vi.fn(() => false)
+      }
+    }
+  };
+});
 
 describe('Integration Tests', () => {
   // Per-test setup/teardown for unique test instances
