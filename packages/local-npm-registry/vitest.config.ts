@@ -8,10 +8,14 @@ export default defineConfig({
     // Disable parallelism for test files because it causes issues with
     // the file locking mechanism.
     fileParallelism: false,
-    onConsoleLog: () => {
-      console.log('Working directory:', process.cwd());
-      console.log('__dirname equivalent:', import.meta.url);
-      return true;
+    env: {
+      // Clear npm configuration environment variables that interfere with local registry tests
+      npm_config_registry: undefined,
+      npm_config_prefer_workspace_packages: undefined,
+      npm_config_frozen_lockfile: undefined,
+      npm_config_link_workspace_packages: undefined,
+      npm_config__jsr_registry: undefined,
+      npm_config__predictiveindex_registry: undefined
     }
   }
 });
