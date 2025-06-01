@@ -1,9 +1,7 @@
 import { DR } from '@aneuhold/core-ts-lib';
 import type { Config as VerdaccioConfig } from '@verdaccio/types';
 import { execa } from 'execa';
-import fs from 'fs';
 import http from 'http';
-import os from 'os';
 import path from 'path';
 import { runServer } from 'verdaccio';
 import type { LocalNpmConfig } from '../types/LocalNpmConfig.js';
@@ -13,6 +11,7 @@ import {
 } from '../types/PackageManager.js';
 import { ConfigService } from './ConfigService.js';
 import { MutexService } from './MutexService.js';
+import { PackageManagerService } from './PackageManagerService.js';
 
 /**
  * Type definition for the Verdaccio runServer function.
@@ -55,9 +54,6 @@ export class VerdaccioService {
 
       const config = await ConfigService.loadConfig();
       const port = config.registryPort || 4873;
-
-      // Ensure npmrc has the auth token for Verdaccio
-      this.ensureNpmrcAuthToken(port);
 
       DR.logger.info(`Starting Verdaccio on port ${port}...`);
 
@@ -139,6 +135,13 @@ export class VerdaccioService {
     const config = await ConfigService.loadConfig();
     const registryUrl = config.registryUrl || 'http://localhost:4873';
 
+    // Create registry configuration (including .npmrc with auth token) for publishing
+    const configBackup = await PackageManagerService.createRegistryConfig(
+      PackageManager.Npm,
+      registryUrl,
+      packagePath
+    );
+
     try {
       if (!VerdaccioService.verdaccioServer) {
         throw new Error('Verdaccio server is not running. Call start() first.');
@@ -179,6 +182,9 @@ export class VerdaccioService {
 
       DR.logger.error(`Failed to publish package: ${errorMessage}`);
       throw error;
+    } finally {
+      // Always restore original configuration
+      await PackageManagerService.restoreRegistryConfig(configBackup);
     }
   }
 
@@ -277,49 +283,5 @@ export class VerdaccioService {
     };
 
     return verdaccioConfig as VerdaccioConfig;
-  }
-
-  /**
-   * Ensures that the ~/.npmrc file contains the necessary auth token for Verdaccio.
-   * This prevents npm from prompting for authentication when publishing packages.
-   *
-   * @param port - The port number where Verdaccio is running
-   */
-  private static ensureNpmrcAuthToken(port: number): void {
-    const npmrcPath = path.join(os.homedir(), '.npmrc');
-    const authTokenLine = `//localhost:${port}/:_authToken=fake`;
-    const comment = `# 🔧 Local Development Auth Token
-# This was automatically added by @aneuhold/local-npm-registry to help with local development.
-# It prevents npm from asking for authentication when working with your local Verdaccio registry.
-# 
-# 📝 What this does: Tells npm to use a fake auth token for localhost:${port}
-# 🗑️  Safe to remove: You can delete this section anytime you're not using local-npm-registry
-# 
-# Thanks for understanding! This makes local package development much smoother. ✨`;
-
-    try {
-      let npmrcContent = '';
-
-      // Read existing .npmrc if it exists
-      if (fs.existsSync(npmrcPath)) {
-        npmrcContent = fs.readFileSync(npmrcPath, 'utf8');
-      }
-
-      // Check if the auth token line already exists
-      if (npmrcContent.includes(authTokenLine)) {
-        return;
-      }
-
-      // Add the comment and auth token line
-      const newContent = npmrcContent
-        ? `${npmrcContent.trimEnd()}\n\n${comment}\n${authTokenLine}\n`
-        : `${comment}\n${authTokenLine}\n`;
-
-      fs.writeFileSync(npmrcPath, newContent, 'utf8');
-      DR.logger.info(`Added Verdaccio auth token to ~/.npmrc for port ${port}`);
-    } catch (error) {
-      DR.logger.error(`Failed to update ~/.npmrc: ${String(error)}`);
-      // Don't throw here as this is not critical for basic functionality
-    }
   }
 }
