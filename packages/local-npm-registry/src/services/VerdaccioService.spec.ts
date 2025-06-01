@@ -11,6 +11,7 @@ describe('Integration Tests', () => {
   beforeEach(async () => {
     // Ensure clean mutex state for each test
     try {
+      await VerdaccioService.stop();
       await MutexService.forceReleaseLock();
     } catch {
       // Ignore errors if no lock exists or server wasn't running
@@ -18,8 +19,9 @@ describe('Integration Tests', () => {
   });
 
   afterEach(async () => {
-    // Clean up mutex lock after each test
+    // Clean up mutex lock and server after each test
     try {
+      await VerdaccioService.stop();
       await MutexService.forceReleaseLock();
     } catch {
       // Ignore errors during cleanup
