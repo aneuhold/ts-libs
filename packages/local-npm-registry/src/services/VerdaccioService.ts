@@ -5,7 +5,13 @@ import http from 'http';
 import path from 'path';
 import { runServer } from 'verdaccio';
 import type { LocalNpmConfig } from '../types/LocalNpmConfig.js';
+import {
+  PACKAGE_MANAGER_INFO,
+  PackageManager
+} from '../types/PackageManager.js';
 import { ConfigService } from './ConfigService.js';
+import { MutexService } from './MutexService.js';
+import { PackageManagerService } from './PackageManagerService.js';
 
 /**
  * Type definition for the Verdaccio runServer function.
@@ -43,6 +49,9 @@ export class VerdaccioService {
     this.isStarting = true;
 
     try {
+      // Acquire mutex lock before starting Verdaccio
+      await MutexService.acquireLock();
+
       const config = await ConfigService.loadConfig();
       const port = config.registryPort || 4873;
 
@@ -57,6 +66,16 @@ export class VerdaccioService {
     } catch (error) {
       DR.logger.error(`Failed to start Verdaccio: ${String(error)}`);
       this.verdaccioServer = null;
+
+      // Release mutex lock if we acquired it but failed to start
+      try {
+        await MutexService.releaseLock();
+      } catch (releaseError) {
+        DR.logger.error(
+          `Failed to release mutex lock after startup failure: ${String(releaseError)}`
+        );
+      }
+
       throw error;
     } finally {
       this.isStarting = false;
@@ -84,7 +103,20 @@ export class VerdaccioService {
           } else {
             DR.logger.info('Verdaccio server stopped successfully');
             this.verdaccioServer = null;
-            resolve();
+
+            // Release mutex lock after stopping Verdaccio
+            MutexService.releaseLock()
+              .then(() => {
+                DR.logger.info('Verdaccio mutex lock released successfully');
+                resolve();
+              })
+              .catch((releaseError: unknown) => {
+                DR.logger.error(
+                  `Failed to release mutex lock after stopping: ${String(releaseError)}`
+                );
+                // Don't reject here, as the server was stopped successfully
+                resolve();
+              });
           }
         });
       } else {
@@ -103,6 +135,13 @@ export class VerdaccioService {
     const config = await ConfigService.loadConfig();
     const registryUrl = config.registryUrl || 'http://localhost:4873';
 
+    // Create registry configuration (including .npmrc with auth token) for publishing
+    const configBackup = await PackageManagerService.createRegistryConfig(
+      PackageManager.Npm,
+      registryUrl,
+      packagePath
+    );
+
     try {
       if (!VerdaccioService.verdaccioServer) {
         throw new Error('Verdaccio server is not running. Call start() first.');
@@ -114,19 +153,38 @@ export class VerdaccioService {
 
       // Use npm publish with the local registry. Also set the tag to 'local'.
       // A tag is required for NPM to publish pre-release versions.
-      await execa(
-        'npm',
+      const npmInfo = PACKAGE_MANAGER_INFO[PackageManager.Npm];
+      const result = await execa(
+        npmInfo.command,
         ['publish', '--registry', registryUrl, '--tag', 'local'],
         {
           cwd: packagePath,
-          stdio: 'inherit'
+          stdio: 'pipe'
         }
       );
 
       DR.logger.info('Package published successfully');
+      if (result.stdout) {
+        DR.logger.info(result.stdout);
+      }
     } catch (error) {
-      DR.logger.error(`Failed to publish package: ${String(error)}`);
+      let errorMessage = String(error);
+
+      // Try to extract more meaningful error information from execa error
+      if (error && typeof error === 'object') {
+        const execaError = error as { stderr?: string; stdout?: string };
+        if (execaError.stderr) {
+          errorMessage = `npm publish failed: ${execaError.stderr}`;
+        } else if (execaError.stdout) {
+          errorMessage = `npm publish failed: ${execaError.stdout}`;
+        }
+      }
+
+      DR.logger.error(`Failed to publish package: ${errorMessage}`);
       throw error;
+    } finally {
+      // Always restore original configuration
+      await PackageManagerService.restoreRegistryConfig(configBackup);
     }
   }
 
@@ -185,6 +243,7 @@ export class VerdaccioService {
     config: LocalNpmConfig
   ): VerdaccioConfig {
     const storageLocation = config.storeLocation || '~';
+    const isVerbose = DR.logger.isVerboseLoggingEnabled();
 
     // Just a partial, because VerdaccioConfig seems to contain unnecessary
     // required properties that we don't need to set.
@@ -215,9 +274,10 @@ export class VerdaccioService {
       logs: {
         type: 'stdout',
         format: 'pretty',
-        level: 'info'
+        level: isVerbose ? 'info' : 'fatal'
       },
-      _debug: true,
+      debug: isVerbose,
+      // Not quite sure what this impacts, but Verdaccio requires it
       self_path: path.join(storageLocation, 'verdaccio-self'),
       ...config.verdaccioConfig
     };

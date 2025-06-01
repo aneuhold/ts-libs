@@ -10,7 +10,8 @@ program
   .name('local-npm')
   .description(
     'CLI to manage local npm package installations as if they were published.'
-  );
+  )
+  .option('-v, --verbose', 'Enable verbose logging and debug mode');
 
 // Main commands as described in README.md
 program
@@ -20,6 +21,7 @@ program
   )
   .action(async () => {
     try {
+      DR.logger.setVerboseLogging(program.getOptionValue('verbose') as boolean);
       await CommandService.publish();
     } catch (error) {
       DR.logger.error(`Failed to publish: ${String(error)}`);
@@ -35,6 +37,7 @@ program
   .argument('<package-name>', 'The name of the package to subscribe to')
   .action(async (packageName: string) => {
     try {
+      DR.logger.setVerboseLogging(program.getOptionValue('verbose') as boolean);
       await CommandService.subscribe(packageName);
     } catch (error) {
       DR.logger.error(`Failed to subscribe: ${String(error)}`);

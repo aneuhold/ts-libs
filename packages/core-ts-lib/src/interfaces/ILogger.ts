@@ -37,6 +37,18 @@ export interface ILogger {
    * when verbose mode is enabled globally.
    */
   get verbose(): ILogger;
+
+  /**
+   * Sets the global verbose logging state.
+   *
+   * @param enabled - Whether to enable verbose logging globally
+   */
+  setVerboseLogging(enabled: boolean): void;
+
+  /**
+   * Gets the current global verbose logging state.
+   */
+  isVerboseLoggingEnabled(): boolean;
 }
 
 /**
@@ -51,5 +63,9 @@ export class NoopLogger implements ILogger {
   get verbose(): ILogger {
     // Return itself, as it does nothing anyway
     return this;
+  }
+  setVerboseLogging(): void {}
+  isVerboseLoggingEnabled(): boolean {
+    return false;
   }
 }

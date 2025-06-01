@@ -19,6 +19,14 @@ runs:
         node-version: ${{ inputs.node-version }}
         cache: 'pnpm'
 
+    - name: Setup yarn classic and yarn berry
+      shell: bash
+      run: |
+        corepack enable
+        cd ~
+        yarn set version classic
+        cd $GITHUB_WORKSPACE
+
     - name: Install dependencies
       shell: bash
       run: pnpm install

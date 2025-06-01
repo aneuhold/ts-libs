@@ -61,4 +61,4 @@ runs:
       if: inputs.skip-npm-dry-run != 'true'
       shell: bash
       working-directory: packages/${{ inputs.package-name }}
-      run: npm publish --access public --dry-run
+      run: pnpm --filter ${{ inputs.package-name }} npm:validate

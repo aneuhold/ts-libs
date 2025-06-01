@@ -2,7 +2,7 @@
   "name": "@aneuhold/core-ts-lib",
   "author": "Anton G. Neuhold Jr.",
   "license": "MIT",
-  "version": "2.1.12",
+  "version": "2.2.1",
   "description": "A core library for all of my TypeScript projects",
   "type": "module",
   "scripts": {
@@ -11,6 +11,7 @@
     "lint": "eslint",
     "test": "jest",
     "jsr:validate": "tsx ./scripts/validateJsrPublish.ts",
+    "npm:validate": "tsx ./scripts/validateNpmPublish.ts",
     "checkAll": "pnpm build && pnpm lint && pnpm test && pnpm jsr:validate",
     "jsr:publish": "tsx ./scripts/publishJsr.ts",
     "upgrade:all": "pnpm up"

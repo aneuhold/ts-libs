@@ -314,13 +314,13 @@ describe('DashboardTaskService', () => {
         sortBy: DashboardTaskSortBy.tags,
         sortDirection: DashboardTaskSortDirection.descending
       });
-      tagSettings.tag1 = {
+      tagSettings['tag1'] = {
         priority: 1
       };
-      tagSettings.tag2 = {
+      tagSettings['tag2'] = {
         priority: 2
       };
-      tagSettings.tag3 = {
+      tagSettings['tag3'] = {
         priority: 3
       };
       tasksList[4].tags = {

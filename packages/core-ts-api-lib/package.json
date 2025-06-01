@@ -2,8 +2,9 @@
   "name": "@aneuhold/core-ts-api-lib",
   "author": "Anton G. Neuhold Jr.",
   "license": "MIT",
-  "version": "2.1.13",
+  "version": "2.1.14",
   "description": "A library for interacting with the backend and defining the backend API for personal projects.",
+  "packageManager": "pnpm@10.11.0",
   "type": "module",
   "scripts": {
     "build": "rimraf lib && tsc --project tsconfig.build.json && tsx ./scripts/copyTsFiles.ts",
@@ -11,6 +12,7 @@
     "lint": "eslint",
     "test": "vitest run",
     "jsr:validate": "tb pkg validateJsr",
+    "npm:validate": "tb pkg validateNpm",
     "checkAll": "pnpm build && pnpm lint && pnpm test && pnpm jsr:validate",
     "jsr:publish": "tb pkg publishJsr",
     "upgrade:core": "pnpm update '@aneuhold/main-scripts' --latest",
@@ -48,8 +50,8 @@
     "bson": "^6.2.0"
   },
   "devDependencies": {
-    "@aneuhold/main-scripts": "^2.1.6",
     "@aneuhold/local-npm-registry": "*",
+    "@aneuhold/main-scripts": "^2.3.0",
     "@types/node": "^22.15.3",
     "eslint": "^9.26.0",
     "jsr": "^0.13.4",

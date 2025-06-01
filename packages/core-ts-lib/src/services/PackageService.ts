@@ -8,6 +8,7 @@ import ErrorUtils from '../utils/ErrorUtils.js';
 import { DR } from './DependencyRegistry.js';
 import DependencyService from './DependencyService.js';
 import FileSystemService from './FileSystemService/FileSystemService.js';
+import StringService from './StringService.js';
 
 const execAsync = promisify(exec);
 
@@ -28,8 +29,12 @@ export default class PackageService {
       process.exit(1);
     }
     await PackageService.replaceMonorepoImportsWithNpmSpecifiers();
-    await PackageService.updateJsrFromPackageJson();
-    const successfulDryRun = await PackageService.publishJsrDryRun();
+    const { packageName, version: currentVersion } =
+      await PackageService.updateJsrFromPackageJson();
+    const successfulDryRun = await PackageService.publishJsrDryRun(
+      packageName,
+      currentVersion
+    );
     await PackageService.revertGitChanges();
 
     if (!successfulDryRun) {
@@ -57,29 +62,45 @@ export default class PackageService {
   }
 
   /**
+   * Validates the current project for publishing to npm. This will run
+   * `npm publish --access public --dry-run` and check for version conflicts
+   * on the npm registry.
+   */
+  static async validateNpmPublish(): Promise<void> {
+    const { packageName, version: currentVersion } =
+      await PackageService.getPackageInfo();
+
+    const successfulDryRun = await PackageService.publishNpmDryRun();
+    if (!successfulDryRun) {
+      process.exit(1);
+    }
+
+    await PackageService.checkNpmVersionConflicts(packageName, currentVersion);
+    DR.logger.success('Successfully validated npm publishing.');
+  }
+
+  /**
    * Updates the jsr.json file from the package.json file and resolves wildcard
    * dependencies in package.json for JSR compatibility.
+   *
+   * @returns An object containing the package name and version from jsr.json and package.json
    */
-  private static async updateJsrFromPackageJson(): Promise<void> {
+  private static async updateJsrFromPackageJson(): Promise<{
+    packageName: string;
+    version: string;
+  }> {
     const rootDir = process.cwd();
     const packageJsonPath = path.join(rootDir, 'package.json');
     const jsrJsonPath = path.join(rootDir, 'jsr.json');
 
     try {
-      await access(packageJsonPath);
-    } catch {
-      DR.logger.error('No package.json file found in the current directory.');
-      return;
-    }
-
-    try {
       await access(jsrJsonPath);
     } catch {
-      DR.logger.error('No jsr.json file found in the current directory.');
-      return;
+      throw new Error('No jsr.json file found in the current directory.');
     }
 
     try {
+      const { packageName, version } = await PackageService.getPackageInfo();
       const packageJsonData = JSON.parse(
         await readFile(packageJsonPath, 'utf-8')
       ) as PackageJson;
@@ -88,7 +109,7 @@ export default class PackageService {
       ) as JsonWithVersionProperty;
 
       // Update JSR version
-      jsrJsonData.version = packageJsonData.version;
+      jsrJsonData.version = version;
 
       // Resolve wildcard dependencies in package.json for JSR compatibility
       await this.resolveWildcardDependenciesInPackageJson(
@@ -98,13 +119,19 @@ export default class PackageService {
 
       await writeFile(jsrJsonPath, JSON.stringify(jsrJsonData, null, 2));
       DR.logger.info(
-        'Updated jsr.json from package.json to version ' + jsrJsonData.version
+        'Updated jsr.json from package.json to version ' + version
       );
+
+      return {
+        packageName,
+        version
+      };
     } catch (error) {
       const errorString = ErrorUtils.getErrorString(error);
       DR.logger.error(
         `Failed to update jsr.json from package.json: ${errorString}`
       );
+      throw error;
     }
   }
 
@@ -165,9 +192,20 @@ export default class PackageService {
 
   /**
    * Executes a dry run of JSR publishing. Returns true if the dry run was
-   * successful, false otherwise.
+   * successful, false otherwise. Also checks for existing versions on JSR
+   * and throws an error if the current version already exists or if a higher
+   * version is already published.
+   *
+   * @param packageName The package name from jsr.json
+   * @param currentVersion The current version from package.json
    */
-  private static async publishJsrDryRun(): Promise<boolean> {
+  private static async publishJsrDryRun(
+    packageName: string,
+    currentVersion: string
+  ): Promise<boolean> {
+    // Check for existing versions on JSR first
+    await this.checkJsrVersionConflicts(packageName, currentVersion);
+
     DR.logger.info('Running `jsr publish --dry-run`');
     try {
       const { stdout, stderr } = await execAsync(
@@ -207,6 +245,109 @@ export default class PackageService {
         }
       });
     });
+  }
+
+  /**
+   * Gets the package name and version from package.json.
+   *
+   * @returns An object containing the package name and version
+   */
+  private static async getPackageInfo(): Promise<{
+    packageName: string;
+    version: string;
+  }> {
+    const rootDir = process.cwd();
+    const packageJsonPath = path.join(rootDir, 'package.json');
+
+    try {
+      await access(packageJsonPath);
+    } catch {
+      throw new Error('No package.json file found in the current directory.');
+    }
+
+    try {
+      const packageJsonData = JSON.parse(
+        await readFile(packageJsonPath, 'utf-8')
+      ) as PackageJson;
+
+      return {
+        packageName: packageJsonData.name,
+        version: packageJsonData.version
+      };
+    } catch (error) {
+      const errorString = ErrorUtils.getErrorString(error);
+      DR.logger.error(`Failed to read package.json: ${errorString}`);
+      throw error;
+    }
+  }
+
+  /**
+   * Executes a dry run of npm publishing.
+   *
+   * @returns true if the dry run was successful, false otherwise.
+   */
+  private static async publishNpmDryRun(): Promise<boolean> {
+    DR.logger.info('Running `npm publish --access public --dry-run`');
+    try {
+      await execAsync('npm publish --access public --dry-run');
+      DR.logger.info('npm dry run completed successfully.');
+    } catch (error) {
+      const errorString = ErrorUtils.getErrorString(error);
+      DR.logger.error(`npm dry run failed: ${errorString}`);
+      return false;
+    }
+    return true;
+  }
+
+  /**
+   * Checks npm registry for package information and performs version conflict checks.
+   *
+   * @param packageName The package name from package.json
+   * @param currentVersion The current version from package.json
+   */
+  private static async checkNpmVersionConflicts(
+    packageName: string,
+    currentVersion: string
+  ): Promise<void> {
+    DR.logger.info(
+      `Checking npm registry for existing versions of ${packageName}...`
+    );
+
+    try {
+      const { stdout } = await execAsync(`npm view ${packageName}`);
+
+      // Parse the npm view output to extract the latest version
+      const latestVersionMatch = stdout.match(/latest:\s*([^\s|]+)/);
+      if (latestVersionMatch) {
+        const latestVersion = latestVersionMatch[1];
+        PackageService.checkVersionConflict(
+          currentVersion,
+          latestVersion,
+          'npm'
+        );
+      }
+    } catch (error) {
+      const errorString = ErrorUtils.getErrorString(error);
+
+      // If the package doesn't exist on npm, that's fine for first publish
+      if (errorString.includes('404') || errorString.includes('not found')) {
+        DR.logger.info(
+          'Package not found on npm - this appears to be a first publish.'
+        );
+        return;
+      }
+
+      // Re-throw version conflict errors
+      if (
+        errorString.includes('already exists') ||
+        errorString.includes('is lower than')
+      ) {
+        throw error;
+      }
+
+      // For other npm command errors, log but don't block
+      DR.logger.warn(`Could not check npm registry: ${errorString}`);
+    }
   }
 
   /**
@@ -340,5 +481,95 @@ export default class PackageService {
         `Failed to revert changes: ${ErrorUtils.getErrorString(error)}`
       );
     }
+  }
+
+  /**
+   * Checks for version conflicts on JSR by looking up the current package
+   * and comparing versions. Throws an error if the current version already
+   * exists or if a higher version is already published.
+   *
+   * @param packageName The package name from jsr.json
+   * @param currentVersion The current version from package.json
+   */
+  private static async checkJsrVersionConflicts(
+    packageName: string,
+    currentVersion: string
+  ): Promise<void> {
+    DR.logger.info(`Checking JSR for existing versions of ${packageName}...`);
+
+    try {
+      const { stdout } = await execAsync(`jsr view ${packageName}`);
+
+      // Parse the JSR view output to extract the latest version
+      const latestVersionMatch = stdout.match(/latest:\s*([^\s|]+)/);
+      if (latestVersionMatch) {
+        const latestVersion = latestVersionMatch[1];
+
+        PackageService.checkVersionConflict(
+          currentVersion,
+          latestVersion,
+          'JSR'
+        );
+      }
+    } catch (error) {
+      const errorString = ErrorUtils.getErrorString(error);
+
+      // If the package doesn't exist on JSR, that's fine for first publish
+      if (
+        errorString.includes('Package not found') ||
+        errorString.includes('404')
+      ) {
+        DR.logger.info(
+          'Package not found on JSR - this appears to be a first publish.'
+        );
+        return;
+      }
+
+      // Re-throw version conflict errors
+      if (
+        errorString.includes('already exists') ||
+        errorString.includes('is lower than')
+      ) {
+        throw error;
+      }
+
+      // For other JSR command errors, log but don't block
+      DR.logger.warn(`Could not check JSR versions: ${errorString}`);
+    }
+  }
+
+  /**
+   * Common logic for checking version conflicts between current and latest versions.
+   *
+   * @param currentVersion The current version from package.json
+   * @param latestVersion The latest published version
+   * @param registryName The name of the registry (for error messages)
+   */
+  private static checkVersionConflict(
+    currentVersion: string,
+    latestVersion: string,
+    registryName: string
+  ): void {
+    DR.logger.info(
+      `Current version: ${currentVersion}, Latest on ${registryName}: ${latestVersion}`
+    );
+
+    // Compare versions using semver-like comparison
+    const comparison = StringService.compareSemanticVersions(
+      currentVersion,
+      latestVersion
+    );
+
+    if (comparison === 0) {
+      throw new Error(
+        `Version ${currentVersion} already exists on ${registryName}. Please bump the version before publishing.`
+      );
+    } else if (comparison < 0) {
+      throw new Error(
+        `Current version ${currentVersion} is lower than the latest published version ${latestVersion} on ${registryName}. Please bump the version.`
+      );
+    }
+
+    DR.logger.info('Version check passed - ready to publish.');
   }
 }

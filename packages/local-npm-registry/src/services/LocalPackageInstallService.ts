@@ -4,7 +4,10 @@ import fs from 'fs-extra';
 import path from 'path';
 import { ConfigService } from './ConfigService.js';
 import { LocalPackageStoreService } from './LocalPackageStoreService.js';
-import { PackageManagerService } from './PackageManagerDetectionService.js';
+import {
+  PackageManagerService,
+  type PackageManagerConfigBackup
+} from './PackageManagerService.js';
 
 /**
  * Service to manage local package installations in consuming projects.
@@ -18,9 +21,11 @@ export class LocalPackageInstallService {
   async installLocalPackage(packageName: string): Promise<void> {
     const config = await ConfigService.loadConfig();
     const registryUrl = config.registryUrl || 'http://localhost:4873';
-    const packageManager = await PackageManagerService.detectPackageManager(
-      process.cwd()
-    );
+    const projectPath = process.cwd();
+    const packageManager =
+      await PackageManagerService.detectPackageManager(projectPath);
+
+    let configBackup: PackageManagerConfigBackup = {};
 
     try {
       // Get the latest version from the local store
@@ -37,17 +42,20 @@ export class LocalPackageInstallService {
         `Installing ${packageName}@${packageEntry.currentVersion} from local registry using ${packageManager}...`
       );
 
+      // Create registry configuration
+      configBackup = await PackageManagerService.createRegistryConfig(
+        packageManager,
+        registryUrl,
+        projectPath
+      );
+
       // Install the specific version from the local registry
       await execa(
         packageManager,
-        [
-          'install',
-          `${packageName}@${packageEntry.currentVersion}`,
-          '--registry',
-          registryUrl
-        ],
+        ['install', `${packageName}@${packageEntry.currentVersion}`],
         {
-          stdio: 'inherit'
+          stdio: 'inherit',
+          cwd: projectPath
         }
       );
 
@@ -59,6 +67,9 @@ export class LocalPackageInstallService {
         `Failed to install local package ${packageName}: ${String(error)}`
       );
       throw error;
+    } finally {
+      // Always restore original configuration
+      await PackageManagerService.restoreRegistryConfig(configBackup);
     }
   }
 
@@ -99,9 +110,11 @@ export class LocalPackageInstallService {
   async updateLocalPackage(packageName: string): Promise<void> {
     const config = await ConfigService.loadConfig();
     const registryUrl = config.registryUrl || 'http://localhost:4873';
-    const packageManager = await PackageManagerService.detectPackageManager(
-      process.cwd()
-    );
+    const projectPath = process.cwd();
+    const packageManager =
+      await PackageManagerService.detectPackageManager(projectPath);
+
+    let configBackup: PackageManagerConfigBackup = {};
 
     try {
       // Get the latest version from the local store
@@ -121,17 +134,20 @@ export class LocalPackageInstallService {
       // Update package.json first
       await this.updatePackageJsonForLocal([packageName]);
 
+      // Create registry configuration
+      configBackup = await PackageManagerService.createRegistryConfig(
+        packageManager,
+        registryUrl,
+        projectPath
+      );
+
       // Install the new version
       await execa(
         packageManager,
-        [
-          'install',
-          `${packageName}@${packageEntry.currentVersion}`,
-          '--registry',
-          registryUrl
-        ],
+        ['install', `${packageName}@${packageEntry.currentVersion}`],
         {
-          stdio: 'inherit'
+          stdio: 'inherit',
+          cwd: projectPath
         }
       );
 
@@ -141,6 +157,9 @@ export class LocalPackageInstallService {
     } catch (error) {
       DR.logger.error(`Failed to update ${packageName}: ${String(error)}`);
       throw error;
+    } finally {
+      // Always restore original configuration
+      await PackageManagerService.restoreRegistryConfig(configBackup);
     }
   }
 
