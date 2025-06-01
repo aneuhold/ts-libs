@@ -123,7 +123,7 @@ describe('Integration Tests', () => {
       await testPublishWithSubscribers(PackageManager.Pnpm, '0.5.0');
     });
 
-    it.only('should successfully publish with yarn4 and update subscribers', async () => {
+    it('should successfully publish with yarn4 and update subscribers', async () => {
       await testPublishWithSubscribers(PackageManager.Yarn4, '1.1.0');
     });
 
