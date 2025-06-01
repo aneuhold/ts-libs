@@ -15,7 +15,11 @@ export default defineConfig({
       npm_config_frozen_lockfile: undefined,
       npm_config_link_workspace_packages: undefined,
       npm_config__jsr_registry: undefined,
-      npm_config__predictiveindex_registry: undefined
+      npm_config__predictiveindex_registry: undefined,
+      // Resolve yarn issues when running in CI
+      YARN_ENABLE_HARDENED_MODE: '0',
+      // Disable Yarn Berry lockfile immutability for tests
+      YARN_ENABLE_IMMUTABLE_INSTALLS: 'false'
     }
   }
 });

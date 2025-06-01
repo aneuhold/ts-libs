@@ -46,8 +46,6 @@ jobs:
   test:
     name: 'Test Changed Packages'
     runs-on: ubuntu-latest
-    env:
-      YARN_ENABLE_HARDENED_MODE: 0
     needs: [detect-changes, version-check]
     if: needs.detect-changes.outputs.has-changes == 'true'
     strategy:
