@@ -7,19 +7,19 @@ import { MutexService } from './MutexService.js';
 import { VerdaccioService } from './VerdaccioService.js';
 
 describe('Integration Tests', () => {
+  // Per-test setup/teardown for unique test instances
   beforeEach(async () => {
-    // Ensure no lock exists before each test
+    // Ensure clean mutex state for each test
     try {
       await MutexService.forceReleaseLock();
     } catch {
-      // Ignore errors if no lock exists
+      // Ignore errors if no lock exists or server wasn't running
     }
   });
 
   afterEach(async () => {
-    // Clean up after each test
+    // Clean up mutex lock after each test
     try {
-      await VerdaccioService.stop();
       await MutexService.forceReleaseLock();
     } catch {
       // Ignore errors during cleanup

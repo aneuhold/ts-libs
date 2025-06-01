@@ -24,7 +24,7 @@ export class MutexService {
   /**
    * Default timeout for acquiring the lock in milliseconds.
    */
-  private static readonly LOCK_TIMEOUT = 20000;
+  private static readonly LOCK_TIMEOUT = 10000;
   private static readonly LOCK_CHECK_TIMEOUT = 500;
 
   private static lockRelease: (() => Promise<void>) | null = null;
@@ -116,15 +116,32 @@ export class MutexService {
    * This should only be used when you're certain no other process is using the lock.
    */
   static async forceReleaseLock(): Promise<void> {
+    // First check if the lock is already available
+    const isCurrentlyLocked = await MutexService.isLocked();
+    if (!isCurrentlyLocked) {
+      DR.logger.info('Lock is already available, no need to force release');
+      return;
+    }
+
     try {
       DR.logger.warn('Force releasing Verdaccio mutex lock...');
       await lockfile.unlock(MutexService.LOCK_FILE_PATH);
       MutexService.lockRelease = null;
       DR.logger.info('Successfully force released Verdaccio mutex lock');
     } catch (error) {
-      const errorMessage = `Failed to force release mutex lock: ${String(error)}`;
-      DR.logger.error(errorMessage);
-      throw new Error(errorMessage);
+      // If lockfile.unlock fails, try to manually remove the lock file
+      try {
+        const lockFilePath = `${MutexService.LOCK_FILE_PATH}.lock`;
+        await fs.remove(lockFilePath);
+        MutexService.lockRelease = null;
+        DR.logger.info(
+          'Successfully manually removed Verdaccio mutex lock file'
+        );
+      } catch (manualRemovalError) {
+        const errorMessage = `Failed to force release mutex lock via both unlock and manual removal: ${String(error)}, manual removal error: ${String(manualRemovalError)}`;
+        DR.logger.error(errorMessage);
+        throw new Error(errorMessage);
+      }
     }
   }
 

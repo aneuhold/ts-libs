@@ -42,23 +42,10 @@ describe('Integration Tests', () => {
   // Global setup/teardown for the tmp directory
   beforeAll(async () => {
     await TestProjectUtils.setupGlobalTempDir();
-    // Ensure no mutex lock exists before starting tests
-    try {
-      await MutexService.forceReleaseLock();
-    } catch {
-      // Ignore errors if no lock exists
-    }
   });
 
   afterAll(async () => {
     await TestProjectUtils.cleanupGlobalTempDir();
-    // Clean up any remaining mutex lock
-    try {
-      await VerdaccioService.stop();
-      await MutexService.forceReleaseLock();
-    } catch {
-      // Ignore errors during cleanup
-    }
   });
 
   // Per-test setup/teardown for unique test instances
@@ -68,7 +55,6 @@ describe('Integration Tests', () => {
     testId = randomUUID().slice(0, 8);
     // Ensure clean mutex state for each test
     try {
-      await VerdaccioService.stop();
       await MutexService.forceReleaseLock();
     } catch {
       // Ignore errors if no lock exists or server wasn't running
@@ -79,8 +65,8 @@ describe('Integration Tests', () => {
     await TestProjectUtils.cleanupTestInstance();
     // Clean up mutex lock after each test
     try {
-      await VerdaccioService.stop();
       await MutexService.forceReleaseLock();
+      await VerdaccioService.stop();
     } catch {
       // Ignore errors during cleanup
     }

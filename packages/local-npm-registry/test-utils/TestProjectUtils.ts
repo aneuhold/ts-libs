@@ -42,16 +42,17 @@ export class TestProjectUtils {
   private static testConfigFilePath: string | null = null;
 
   /**
-   * Sets up the global tmp directory (called once before all tests)
+   * Sets up the global tmp directory (called once before all test files)
    */
   static async setupGlobalTempDir(): Promise<void> {
     if (!TestProjectUtils.originalCwd) {
       TestProjectUtils.originalCwd = process.cwd();
     }
 
-    // Create tmp directory in the local-npm-registry package folder
+    // Create tmp directory with random GUID in the local-npm-registry package folder
     const packageRoot = path.dirname(__dirname);
-    TestProjectUtils.globalTempDir = path.join(packageRoot, 'tmp');
+    const tmpDirName = `tmp-${randomUUID()}`;
+    TestProjectUtils.globalTempDir = path.join(packageRoot, tmpDirName);
 
     // Clean and recreate the tmp directory
     await fs.remove(TestProjectUtils.globalTempDir);
@@ -82,7 +83,7 @@ export class TestProjectUtils {
   }
 
   /**
-   * Cleans up the global tmp directory (called once after all tests)
+   * Cleans up the global tmp directory (called once after all tests in a test file)
    */
   static async cleanupGlobalTempDir(): Promise<void> {
     // Clean up test configuration first
