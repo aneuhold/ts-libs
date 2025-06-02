@@ -4,7 +4,7 @@
   "license": "MIT",
   "version": "2.0.67",
   "description": "A backend database library meant to actually interact with various databases in personal projects",
-  "packageManager": "pnpm@10.10.0",
+  "packageManager": "pnpm@10.10.1",
   "type": "module",
   "scripts": {
     "build": "rimraf lib && tsc --project tsconfig.build.json && tsx ./scripts/copyTsFiles.ts",
