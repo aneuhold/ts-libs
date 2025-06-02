@@ -193,9 +193,23 @@ export class PackageManagerService {
       backup.yarnrcYml = { path: configPath, content: existingContent };
     }
 
-    // Create registry configuration using the package manager's format
+    // Create or merge registry configuration using the package manager's format
     const registryConfig = packageManagerInfo.configFormat(registryUrl);
-    await fs.writeFile(configPath, registryConfig);
+    let finalConfigContent: string;
+
+    if (existingContent) {
+      // Merge with existing content
+      finalConfigContent = this.mergeConfigContent(
+        existingContent,
+        registryConfig,
+        packageManagerInfo.configFile
+      );
+    } else {
+      // No existing content, use new config directly
+      finalConfigContent = registryConfig;
+    }
+
+    await fs.writeFile(configPath, finalConfigContent);
 
     // Handle .npmrc file for authentication token
     await this.createOrUpdateNpmrcAuth(
@@ -223,8 +237,16 @@ export class PackageManagerService {
           await fs.remove(config.path);
         }
       } else {
-        // Restore original content
-        await fs.writeFile(config.path, config.content);
+        const cleanedContent = this.removeLocalNpmRegistryLines(config.content);
+        if (cleanedContent.length !== config.content.length) {
+          config.content = cleanedContent.trim();
+        }
+        if (config.content === '') {
+          await fs.remove(config.path);
+        } else {
+          // Restore original content
+          await fs.writeFile(config.path, config.content);
+        }
       }
     }
   }
@@ -256,16 +278,110 @@ export class PackageManagerService {
 
     // Create the auth token line for .npmrc
     const url = registryUrl.replace('http://', '');
-    const authTokenLine = `//${url}/:_authToken=fake`;
+    const authTokenLine = `//${url}/:_authToken=fake #local-npm-registry`;
 
-    // Create or update .npmrc content
+    // Create or update .npmrc content using merge logic
     let npmrcContent = existingNpmrcContent || '';
 
-    // Add the auth token line if needed
-    if (!npmrcContent.includes(authTokenLine)) {
-      npmrcContent += '\n' + authTokenLine;
+    // Use the same merge logic as the main config files
+    if (npmrcContent.trim() === '') {
+      npmrcContent = authTokenLine;
+    } else {
+      npmrcContent = this.mergeConfigContent(
+        npmrcContent,
+        authTokenLine,
+        '.npmrc'
+      );
     }
 
     await fs.writeFile(npmrcPath, npmrcContent);
+  }
+
+  /**
+   * Removes lines from configuration content that were previously added by local-npm-registry.
+   *
+   * @param content The configuration file content to clean
+   */
+  private static removeLocalNpmRegistryLines(content: string): string {
+    const lines = content.split('\n');
+    console.log(lines);
+    const cleanedLines = lines.filter((line) => {
+      const trimmedLine = line.trim();
+      // Remove lines that have the local-npm-registry comment
+      return !trimmedLine.includes('#local-npm-registry');
+    });
+    console.log(cleanedLines);
+    return cleanedLines.join('\n');
+  }
+
+  /**
+   * Merges new configuration content with existing configuration content.
+   *
+   * @param existingContent The existing configuration file content
+   * @param newConfig The new configuration content to merge
+   * @param configFile The configuration file name to determine merge strategy
+   */
+  private static mergeConfigContent(
+    existingContent: string,
+    newConfig: string,
+    configFile: string
+  ): string {
+    if (configFile === '.yarnrc.yml') {
+      // For YAML files, merge by checking if content already exists
+      const lines = existingContent.split('\n');
+      const newLines = newConfig
+        .split('\n')
+        .filter((line) => line.trim() !== '');
+
+      for (const newLine of newLines) {
+        const [key] = newLine.split(':');
+        const keyTrimmed = key.trim();
+
+        if (keyTrimmed) {
+          // Check if this key already exists
+          const existingLineIndex = lines.findIndex((line) =>
+            line.trim().startsWith(keyTrimmed + ':')
+          );
+
+          if (existingLineIndex >= 0) {
+            // Replace existing line
+            lines[existingLineIndex] = newLine;
+          } else {
+            // Add new line
+            lines.push(newLine);
+          }
+        }
+      }
+
+      return lines.join('\n');
+    } else {
+      // For .npmrc and .yarnrc files, merge by checking if lines already exist
+      const existingLines = existingContent.split('\n');
+      const newLines = newConfig
+        .split('\n')
+        .filter((line) => line.trim() !== '');
+
+      for (const newLine of newLines) {
+        const [key] = newLine.split('=');
+        const keyTrimmed = key.trim();
+
+        if (keyTrimmed) {
+          // Check if this key already exists
+          const existingLineIndex = existingLines.findIndex((line) =>
+            line.trim().startsWith(keyTrimmed + '=')
+          );
+
+          if (existingLineIndex >= 0) {
+            // Replace existing line
+            existingLines[existingLineIndex] = newLine;
+          } else {
+            // Add new line
+            existingLines.push(newLine);
+          }
+        }
+      }
+
+      return existingLines.join('\n');
+    }
   }
 }

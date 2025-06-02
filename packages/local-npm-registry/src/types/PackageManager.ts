@@ -34,21 +34,24 @@ export const PACKAGE_MANAGER_INFO: Record<PackageManager, PackageManagerInfo> =
       command: 'npm',
       lockFile: 'package-lock.json',
       configFile: '.npmrc',
-      configFormat: (registryUrl: string) => `registry=${registryUrl}\n`,
+      configFormat: (registryUrl: string) =>
+        `registry=${registryUrl} #local-npm-registry\n`,
       displayName: 'npm'
     },
     [PackageManager.Pnpm]: {
       command: 'pnpm',
       lockFile: 'pnpm-lock.yaml',
       configFile: '.npmrc',
-      configFormat: (registryUrl: string) => `registry=${registryUrl}\n`,
+      configFormat: (registryUrl: string) =>
+        `registry=${registryUrl} #local-npm-registry\n`,
       displayName: 'pnpm'
     },
     [PackageManager.Yarn]: {
       command: 'yarn',
       lockFile: 'yarn.lock',
       configFile: '.npmrc',
-      configFormat: (registryUrl: string) => `registry=${registryUrl}\n`,
+      configFormat: (registryUrl: string) =>
+        `registry=${registryUrl} #local-npm-registry\n`,
       displayName: 'Yarn Classic'
     },
     [PackageManager.Yarn4]: {
@@ -56,7 +59,7 @@ export const PACKAGE_MANAGER_INFO: Record<PackageManager, PackageManagerInfo> =
       lockFile: 'yarn.lock',
       configFile: '.yarnrc.yml',
       configFormat: (registryUrl: string) =>
-        `npmRegistryServer: ${registryUrl}\nunsafeHttpWhitelist: ['localhost']\n`,
+        `npmRegistryServer: ${registryUrl} #local-npm-registry\nunsafeHttpWhitelist: ['localhost'] #local-npm-registry\n`,
       displayName: 'Yarn Berry'
     }
   };

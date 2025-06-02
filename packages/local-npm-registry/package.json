@@ -4,7 +4,7 @@
   "license": "MIT",
   "version": "0.1.0",
   "description": "Manages local npm package installations and updates across your machine.",
-  "packageManager": "pnpm@10.11.0",
+  "packageManager": "pnpm@10.11.1",
   "type": "module",
   "scripts": {
     "cli:test": "node lib/index.js",
