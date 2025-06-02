@@ -237,8 +237,16 @@ export class PackageManagerService {
           await fs.remove(config.path);
         }
       } else {
-        // Restore original content
-        await fs.writeFile(config.path, config.content);
+        const cleanedContent = this.removeLocalNpmRegistryLines(config.content);
+        if (cleanedContent.length !== config.content.length) {
+          config.content = cleanedContent.trim();
+        }
+        if (config.content === '') {
+          await fs.remove(config.path);
+        } else {
+          // Restore original content
+          await fs.writeFile(config.path, config.content);
+        }
       }
     }
   }
@@ -270,7 +278,7 @@ export class PackageManagerService {
 
     // Create the auth token line for .npmrc
     const url = registryUrl.replace('http://', '');
-    const authTokenLine = `//${url}/:_authToken=fake`;
+    const authTokenLine = `//${url}/:_authToken=fake #local-npm-registry`;
 
     // Create or update .npmrc content using merge logic
     let npmrcContent = existingNpmrcContent || '';
@@ -287,6 +295,23 @@ export class PackageManagerService {
     }
 
     await fs.writeFile(npmrcPath, npmrcContent);
+  }
+
+  /**
+   * Removes lines from configuration content that were previously added by local-npm-registry.
+   *
+   * @param content The configuration file content to clean
+   */
+  private static removeLocalNpmRegistryLines(content: string): string {
+    const lines = content.split('\n');
+    console.log(lines);
+    const cleanedLines = lines.filter((line) => {
+      const trimmedLine = line.trim();
+      // Remove lines that have the local-npm-registry comment
+      return !trimmedLine.includes('#local-npm-registry');
+    });
+    console.log(cleanedLines);
+    return cleanedLines.join('\n');
   }
 
   /**
