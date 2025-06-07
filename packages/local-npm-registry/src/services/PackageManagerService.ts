@@ -19,6 +19,18 @@ export type PackageManagerConfigBackup = {
  */
 export class PackageManagerService {
   /**
+   * Cache to store detected package managers for projects.
+   */
+  private static configCache = new Map<
+    string,
+    {
+      packageManager: PackageManager;
+      timestamp: number;
+    }
+  >();
+  private static readonly CACHE_TTL = 60000; // 1 minute
+
+  /**
    * Reads the package.json file in the specified directory.
    *
    * @param dir - Directory to search for package.json
@@ -43,78 +55,44 @@ export class PackageManagerService {
 
   /**
    * Determines the package manager to use based on lock files and packageManager field in package.json.
+   * Uses caching to reduce file I/O operations.
    *
    * @param projectPath - Path to the project directory to check
    */
   static async detectPackageManager(
     projectPath: string
   ): Promise<PackageManager> {
-    // First, try to determine from package.json packageManager field
-    const packageInfo = await this.getPackageInfo(projectPath);
-    if (packageInfo && packageInfo.packageManager) {
-      const packageManagerField = packageInfo.packageManager.toLowerCase();
+    const cacheKey = projectPath;
+    const cached = this.configCache.get(cacheKey);
 
-      // Check for Yarn 4.x vs Yarn Classic
-      if (packageManagerField.includes('yarn')) {
-        if (
-          packageManagerField.includes('yarn@4') ||
-          packageManagerField.includes('yarn@5') ||
-          packageManagerField.includes('yarn@6')
-        ) {
-          return PackageManager.Yarn4;
-        }
-        return PackageManager.Yarn;
-      }
-
-      // Check for pnpm
-      if (packageManagerField.includes('pnpm')) {
-        return PackageManager.Pnpm;
-      }
-
-      // Check for npm
-      if (packageManagerField.includes('npm')) {
-        return PackageManager.Npm;
-      }
+    // Check if cache is still valid
+    if (cached && Date.now() - cached.timestamp < this.CACHE_TTL) {
+      return cached.packageManager;
     }
 
-    // Fallback to lock file detection
-    // Check for lock files in order of preference
-    if (
-      await fs.pathExists(
-        path.join(
-          projectPath,
-          PACKAGE_MANAGER_INFO[PackageManager.Pnpm].lockFile
-        )
-      )
-    ) {
-      return PackageManager.Pnpm;
-    }
+    // Cache miss or expired, detect package manager
+    const packageManager = await this.detectPackageManagerUncached(projectPath);
 
-    if (
-      await fs.pathExists(
-        path.join(
-          projectPath,
-          PACKAGE_MANAGER_INFO[PackageManager.Yarn].lockFile
-        )
-      )
-    ) {
-      // If we have a yarn.lock but no packageManager field, default to Yarn Classic
-      return PackageManager.Yarn;
-    }
+    // Cache the result
+    this.configCache.set(projectPath, {
+      packageManager,
+      timestamp: Date.now()
+    });
 
-    if (
-      await fs.pathExists(
-        path.join(
-          projectPath,
-          PACKAGE_MANAGER_INFO[PackageManager.Npm].lockFile
-        )
-      )
-    ) {
-      return PackageManager.Npm;
-    }
+    return packageManager;
+  }
 
-    // Default to npm if no lock file is found
-    return PackageManager.Npm;
+  /**
+   * Clears the package manager cache for a specific project or all projects.
+   *
+   * @param projectPath - Optional path to clear cache for specific project
+   */
+  static clearCache(projectPath?: string): void {
+    if (projectPath) {
+      this.configCache.delete(projectPath);
+    } else {
+      this.configCache.clear();
+    }
   }
 
   /**
@@ -249,6 +227,82 @@ export class PackageManagerService {
         }
       }
     }
+  }
+
+  /**
+   * Detects the package manager without caching.
+   *
+   * @param projectPath - Path to the project directory to check
+   */
+  private static async detectPackageManagerUncached(
+    projectPath: string
+  ): Promise<PackageManager> {
+    // First, try to determine from package.json packageManager field
+    const packageInfo = await this.getPackageInfo(projectPath);
+    if (packageInfo && packageInfo.packageManager) {
+      const packageManagerField = packageInfo.packageManager.toLowerCase();
+
+      // Check for Yarn 4.x vs Yarn Classic
+      if (packageManagerField.includes('yarn')) {
+        if (
+          packageManagerField.includes('yarn@4') ||
+          packageManagerField.includes('yarn@5') ||
+          packageManagerField.includes('yarn@6')
+        ) {
+          return PackageManager.Yarn4;
+        }
+        return PackageManager.Yarn;
+      }
+
+      // Check for pnpm
+      if (packageManagerField.includes('pnpm')) {
+        return PackageManager.Pnpm;
+      }
+
+      // Check for npm
+      if (packageManagerField.includes('npm')) {
+        return PackageManager.Npm;
+      }
+    }
+
+    // Fallback to lock file detection
+    // Check for lock files in order of preference
+    if (
+      await fs.pathExists(
+        path.join(
+          projectPath,
+          PACKAGE_MANAGER_INFO[PackageManager.Pnpm].lockFile
+        )
+      )
+    ) {
+      return PackageManager.Pnpm;
+    }
+
+    if (
+      await fs.pathExists(
+        path.join(
+          projectPath,
+          PACKAGE_MANAGER_INFO[PackageManager.Yarn].lockFile
+        )
+      )
+    ) {
+      // If we have a yarn.lock but no packageManager field, default to Yarn Classic
+      return PackageManager.Yarn;
+    }
+
+    if (
+      await fs.pathExists(
+        path.join(
+          projectPath,
+          PACKAGE_MANAGER_INFO[PackageManager.Npm].lockFile
+        )
+      )
+    ) {
+      return PackageManager.Npm;
+    }
+
+    // Default to npm if no lock file is found
+    return PackageManager.Npm;
   }
 
   /**

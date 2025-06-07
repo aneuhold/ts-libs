@@ -201,7 +201,8 @@ export class CommandService {
         `Unsubscribing from ${subscribedPackages.length} package(s)`
       );
 
-      for (const pkgName of subscribedPackages) {
+      // Perform unsubscribe operations in parallel
+      const unsubscribePromises = subscribedPackages.map(async (pkgName) => {
         try {
           const entry = await LocalPackageStoreService.getPackageEntry(pkgName);
           if (entry) {
@@ -217,13 +218,31 @@ export class CommandService {
               pkgName,
               entry.originalVersion
             );
+
+            return { packageName: pkgName, success: true };
           }
+          return {
+            packageName: pkgName,
+            success: false,
+            error: 'Entry not found'
+          };
         } catch (error) {
           DR.logger.error(
             `Failed to unsubscribe from ${pkgName}: ${String(error)}`
           );
+          return { packageName: pkgName, success: false, error };
         }
-      }
+      });
+
+      // Wait for all unsubscribe operations to complete
+      const results = await Promise.allSettled(unsubscribePromises);
+      const successCount = results.filter(
+        (result) => result.status === 'fulfilled' && result.value.success
+      ).length;
+
+      DR.logger.info(
+        `Parallel unsubscribe completed: ${successCount}/${subscribedPackages.length} successful`
+      );
 
       // Run install once after all updates
       await PackageManagerService.runInstallWithRegistry(currentProjectPath);
@@ -249,10 +268,14 @@ export class CommandService {
       `Clearing ${packageNames.length} package(s) from local registry`
     );
 
-    let successCount = 0;
-    let errorCount = 0;
+    // Collect all subscriber reset operations across all packages
+    const resetOperations: Array<{
+      subscriberPath: string;
+      packageName: string;
+      originalVersion: string;
+    }> = [];
 
-    // Reset all subscribers for all packages
+    // Collect all reset operations first
     for (const packageName of packageNames) {
       const entry = store.packages[packageName];
       if (!entry) {
@@ -261,43 +284,77 @@ export class CommandService {
 
       DR.logger.info(`Processing package: ${packageName}`);
 
-      // Reset all subscribers to original version
+      // Collect subscriber reset operations
       if (entry.subscribers.length > 0) {
         DR.logger.info(
-          `  Resetting ${entry.subscribers.length} subscriber(s) to original version`
+          `  Adding ${entry.subscribers.length} subscriber reset operation(s)`
         );
 
         for (const subscriberPath of entry.subscribers) {
-          try {
-            await this.updatePackageJsonVersion(
-              subscriberPath,
-              packageName,
-              entry.originalVersion
-            );
-            await PackageManagerService.runInstallWithRegistry(subscriberPath);
-            DR.logger.info(`    ✓ Reset subscriber: ${subscriberPath}`);
-          } catch (error) {
-            DR.logger.error(
-              `    ✗ Failed to reset subscriber ${subscriberPath}: ${String(error)}`
-            );
-            errorCount++;
-          }
+          resetOperations.push({
+            subscriberPath,
+            packageName,
+            originalVersion: entry.originalVersion
+          });
         }
       }
-
-      successCount++;
     }
 
-    // Clear the entire store
-    await LocalPackageStoreService.clearStore();
-
-    if (errorCount > 0) {
-      DR.logger.warn(
-        `Cleared ${successCount} package(s) with ${errorCount} subscriber reset error(s)`
-      );
-    } else {
+    // Execute all reset operations in parallel
+    if (resetOperations.length > 0) {
       DR.logger.info(
-        `Successfully cleared all ${successCount} package(s) and reset all subscribers`
+        `Executing ${resetOperations.length} subscriber reset operations in parallel`
+      );
+
+      const resetPromises = resetOperations.map(async (operation) => {
+        try {
+          await this.updatePackageJsonVersion(
+            operation.subscriberPath,
+            operation.packageName,
+            operation.originalVersion
+          );
+          await PackageManagerService.runInstallWithRegistry(
+            operation.subscriberPath
+          );
+          DR.logger.info(
+            `✓ Reset ${operation.packageName} in ${operation.subscriberPath}`
+          );
+          return { success: true, operation };
+        } catch (error) {
+          DR.logger.error(
+            `✗ Failed to reset ${operation.packageName} in ${operation.subscriberPath}: ${String(error)}`
+          );
+          return { success: false, operation, error };
+        }
+      });
+
+      const results = await Promise.allSettled(resetPromises);
+      const successCount = results.filter(
+        (result) => result.status === 'fulfilled' && result.value.success
+      ).length;
+      const errorCount = resetOperations.length - successCount;
+
+      DR.logger.info(
+        `Parallel reset completed: ${successCount}/${resetOperations.length} successful`
+      );
+
+      // Clear the entire store
+      await LocalPackageStoreService.clearStore();
+
+      if (errorCount > 0) {
+        DR.logger.warn(
+          `Cleared ${packageNames.length} package(s) with ${errorCount} subscriber reset error(s)`
+        );
+      } else {
+        DR.logger.info(
+          `Successfully cleared all ${packageNames.length} package(s) and reset all subscribers`
+        );
+      }
+    } else {
+      // No subscribers to reset, just clear the store
+      await LocalPackageStoreService.clearStore();
+      DR.logger.info(
+        `Successfully cleared all ${packageNames.length} package(s)`
       );
     }
   }
@@ -440,11 +497,11 @@ export class CommandService {
 
       await LocalPackageStoreService.updatePackageEntry(packageName, entry);
 
-      // Update all subscribers
+      // Update all subscribers in parallel
       if (entry.subscribers.length > 0) {
         DR.logger.info(`Updating ${entry.subscribers.length} subscriber(s)`);
 
-        for (const subscriberPath of entry.subscribers) {
+        const updatePromises = entry.subscribers.map(async (subscriberPath) => {
           try {
             await this.updatePackageJsonVersion(
               subscriberPath,
@@ -452,12 +509,27 @@ export class CommandService {
               timestampVersion
             );
             await PackageManagerService.runInstallWithRegistry(subscriberPath);
+            DR.logger.info(
+              `Successfully updated subscriber: ${subscriberPath}`
+            );
+            return { subscriberPath, success: true };
           } catch (error) {
             DR.logger.error(
               `Failed to update subscriber ${subscriberPath}: ${String(error)}`
             );
+            return { subscriberPath, success: false, error };
           }
-        }
+        });
+
+        // Execute all updates in parallel
+        const results = await Promise.allSettled(updatePromises);
+        const successCount = results.filter(
+          (result) => result.status === 'fulfilled' && result.value.success
+        ).length;
+
+        DR.logger.info(
+          `Completed parallel subscriber updates: ${successCount}/${entry.subscribers.length} successful`
+        );
       }
 
       // Restore original version in the source package.json
