@@ -1,45 +1,49 @@
-## Overall
+## Project Setup
 
-Unless otherwise specified, always make suggested edits in the files directly instead of printing them out if you have access to the files.
+- TypeScript source code with Vitest testing and pnpm package management
+- Make edits directly in files unless asked to create new ones
 
-## Project Features
+## Code Style
 
-- Uses TypeScript for the source code
-- Uses Vitest for testing
-- Uses pnpm for package management
+### Types & Functions
 
-## Formatting
+- Add explicit types when unclear; extract complex object types to separate `type` declarations
+- Use PascalCase for type names; file names should match the primary exported type
+- Use arrow functions and `const`/`let` (never `var`)
+- Use `async`/`await` instead of `.then()`
 
-- Always add types when it is not clear what the type of something is. If a type is an object any larger than a single property, it should be a separately declared `type` and not defined inline.
-- When creating types in their own file, always use PascalCase for the type name.
-  - The file name should match primary type name that is being exported from the file.
-- Use arrow-functions where possible to reduce lines of code and simplify things
-- Always add JS Doc comments for methods, functions, and classes. Only add JSDoc comments for class properties if they are public, or they could be considered complex in their usage. Always add @param, but do not add @returns.
-- Never prefix a function or method with underscores.
-- Always order methods in a class by visibility (public, protected, private). If multiple methods have the same visibility, the order doesn't matter.
-- Use `async` and `await` for asynchronous code instead of `.then()`.
-- Use `const` and `let` instead of `var`.
+### Documentation & Naming
 
-## Logical Structure
+- Add JSDoc for all methods, functions, and classes (include `@param`, omit `@returns`)
+- Add JSDoc for public class properties only if complex
+- Never prefix functions/methods with underscores
+
+### Class Structure
+
+- Order methods by visibility: public, protected, private
+- Within same visibility, order doesn't matter
+
+## File Organization
 
 ### Imports
 
-- Always use relative imports for files in the same package. Use package references (`import { something } from 'my-package'`) for files in other packages.
-- Never use `import * as something from '...'` syntax. Always use named imports.
-- Always import at the top of a file. Never inline imports within a function or method unless absolutely necessary.
+- Use relative imports within package, package references for external packages
+- Use named imports only (never `import * as`)
+- Import at file top (inline only when absolutely necessary)
 
-### Files
+### Package Structure
 
-- For TypeScript libraries (with exception of libraries that are CLI tools), always include an `index.ts` file at the root of the package that exports all public types and functions. Never include an `index.ts` file anywhere else in the package.
-  - Libraries that are CLI tools should still have an `index.ts` file, but it will contain the CLI entry point instead of exports.
+- Include `index.ts` at package root exporting all public APIs
+- Exception: CLI tools use `index.ts` for entry point instead of exports
+- Never include `index.ts` elsewhere in package
 
 ### Enums
 
-- Always use PascalCase for enum names, and PascalCase for enum values.
-- Always use TypeScript `enum` instead of `const enum` or `type` for enums.
+- Use PascalCase for enum names and values
+- Use TypeScript `enum` (not `const enum` or `type`)
 
 ## Testing
 
-- When creating tests, make the file name the same as the associated file being tested, but instead of `.ts`, use `.spec.ts`.
-- Never test private methods directly in a test.
-- At the root of test files, name the first describe block as "Unit Tests" or "Integration Tests" depending on the type of tests being written. The first set of nested describe blocks should be named after the method that is being tested.
+- Test files: `filename.spec.ts` (matching source file name)
+- Never test private methods directly
+- Structure: Root describe as "Unit Tests"/"Integration Tests", nested describes named after tested methods
