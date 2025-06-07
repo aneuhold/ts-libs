@@ -304,13 +304,11 @@ export class PackageManagerService {
    */
   private static removeLocalNpmRegistryLines(content: string): string {
     const lines = content.split('\n');
-    console.log(lines);
     const cleanedLines = lines.filter((line) => {
       const trimmedLine = line.trim();
       // Remove lines that have the local-npm-registry comment
       return !trimmedLine.includes('#local-npm-registry');
     });
-    console.log(cleanedLines);
     return cleanedLines.join('\n');
   }
 
