@@ -34,58 +34,122 @@ print_usage() {
     echo "  $0 test-changed"
 }
 
-detect_changed_packages() {
-    echo -e "${BLUE}Detecting changed packages...${NC}"
+# Common utility functions
+
+# Detects which packages have changes between two git references
+# Usage: get_changed_packages_between <from_ref> <to_ref> [verbose]
+get_changed_packages_between() {
+    local from_ref="$1"
+    local to_ref="$2"
+    local verbose="${3:-false}"
     
     # Check if we're in a git repository
     if ! git rev-parse --git-dir > /dev/null 2>&1; then
-        echo -e "${RED}Error: Not in a git repository${NC}"
+        echo -e "${RED}Error: Not in a git repository${NC}" >&2
         exit 1
     fi
     
-    # Get the list of changed files compared to main
-    if ! git show-ref --verify --quiet refs/remotes/origin/main; then
-        echo -e "${YELLOW}Warning: origin/main not found, comparing to HEAD~1${NC}"
-        CHANGED_FILES=$(git diff --name-only HEAD~1)
+    # Get the list of changed files
+    local changed_files
+    if [[ "$from_ref" == *"origin/main"* ]] && ! git show-ref --verify --quiet refs/remotes/origin/main; then
+        [ "$verbose" = "true" ] && echo -e "${YELLOW}Warning: origin/main not found, comparing to HEAD~1${NC}" >&2
+        changed_files=$(git diff --name-only HEAD~1 "$to_ref")
+    elif [[ "$from_ref" == *"..."* ]]; then
+        # Handle range syntax like "origin/main...HEAD"
+        changed_files=$(git diff --name-only "$from_ref")
     else
-        CHANGED_FILES=$(git diff --name-only origin/main...HEAD)
+        changed_files=$(git diff --name-only "$from_ref" "$to_ref")
     fi
     
-    if [ -z "$CHANGED_FILES" ]; then
-        echo -e "${YELLOW}No changes detected${NC}"
+    if [ -z "$changed_files" ]; then
+        [ "$verbose" = "true" ] && echo -e "${YELLOW}No changes detected${NC}" >&2
+        echo ""
         return 0
     fi
     
-    echo -e "${BLUE}Changed files:${NC}"
-    echo "$CHANGED_FILES" | sed 's/^/  /'
+    if [ "$verbose" = "true" ]; then
+        echo -e "${BLUE}Changed files:${NC}" >&2
+        echo "$changed_files" | sed 's/^/  /' >&2
+    fi
     
     # Find changed packages
-    CHANGED_PACKAGES=""
-    
-    for file in $CHANGED_FILES; do
+    local changed_packages=""
+    for file in $changed_files; do
         if [[ $file == packages/* ]]; then
-            PACKAGE_NAME=$(echo $file | cut -d'/' -f2)
-            if [[ ! " $CHANGED_PACKAGES " =~ " $PACKAGE_NAME " ]]; then
-                if [ -z "$CHANGED_PACKAGES" ]; then
-                    CHANGED_PACKAGES="$PACKAGE_NAME"
+            local package_name=$(echo "$file" | cut -d'/' -f2)
+            if [ -d "packages/$package_name" ] && [[ ! " $changed_packages " =~ " $package_name " ]]; then
+                if [ -z "$changed_packages" ]; then
+                    changed_packages="$package_name"
                 else
-                    CHANGED_PACKAGES="$CHANGED_PACKAGES $PACKAGE_NAME"
+                    changed_packages="$changed_packages $package_name"
                 fi
             fi
         fi
     done
     
-    if [ -z "$CHANGED_PACKAGES" ]; then
-        echo -e "${YELLOW}No package changes detected${NC}"
-    else
-        echo -e "${GREEN}Changed packages:${NC}"
-        for package in $CHANGED_PACKAGES; do
-            echo -e "  ${GREEN}✓${NC} $package"
-        done
+    if [ "$verbose" = "true" ]; then
+        if [ -z "$changed_packages" ]; then
+            echo -e "${YELLOW}No package changes detected${NC}" >&2
+        else
+            echo -e "${GREEN}Changed packages:${NC}" >&2
+            for package in $changed_packages; do
+                echo -e "  ${GREEN}✓${NC} $package" >&2
+            done
+        fi
     fi
     
+    echo "$changed_packages"
+}
+
+# Converts space-separated package list to JSON array format
+packages_to_json_array() {
+    local packages="$1"
+    if [ -z "$packages" ]; then
+        echo "[]"
+    else
+        echo "$packages" | awk '{
+            printf "["
+            for(i=1; i<=NF; i++) {
+                if(i > 1) printf ","
+                printf "\"%s\"", $i
+            }
+            printf "]"
+        }'
+    fi
+}
+
+# Gets the version of a package at a specific git reference
+get_package_version_at_ref() {
+    local package_name="$1"
+    local git_ref="$2"
+    local package_json="packages/$package_name/package.json"
+    
+    if git show "$git_ref:$package_json" >/dev/null 2>&1; then
+        git show "$git_ref:$package_json" | node -p "JSON.parse(require('fs').readFileSync('/dev/stdin', 'utf8')).version"
+    else
+        echo ""  # New package
+    fi
+}
+
+# Gets the current version of a package
+get_current_package_version() {
+    local package_name="$1"
+    local package_json="packages/$package_name/package.json"
+    
+    if [ -f "$package_json" ]; then
+        node -p "require('./$package_json').version"
+    else
+        echo ""
+    fi
+}
+
+detect_changed_packages() {
+    echo -e "${BLUE}Detecting changed packages...${NC}"
+    
+    local changed_packages=$(get_changed_packages_between "origin/main...HEAD" "HEAD" true)
+    
     # Export for use by other functions
-    export DETECTED_PACKAGES="$CHANGED_PACKAGES"
+    export DETECTED_PACKAGES="$changed_packages"
 }
 
 check_version_bumps() {
@@ -122,20 +186,18 @@ get_packages_needing_version_bumps() {
         if [ -d "packages/$package" ]; then
             echo -e "${BLUE}Checking $package...${NC}"
             
-            # Get current version
-            CURRENT_VERSION=$(node -p "require('./packages/$package/package.json').version" 2>/dev/null || echo "unknown")
+            # Get current and main versions using utility functions
+            local current_version=$(get_current_package_version "$package")
+            local main_version=$(get_package_version_at_ref "$package" "origin/main")
             
-            # Get version from main branch
-            if git show-ref --verify --quiet refs/remotes/origin/main; then
-                MAIN_VERSION=$(git show origin/main:packages/$package/package.json 2>/dev/null | node -p "JSON.parse(require('fs').readFileSync('/dev/stdin', 'utf8')).version" 2>/dev/null || echo "new")
-            else
-                MAIN_VERSION="unknown"
+            if [ -z "$main_version" ]; then
+                main_version="new"
             fi
             
-            echo "  Current version: $CURRENT_VERSION"
-            echo "  Main version: $MAIN_VERSION"
+            echo "  Current version: $current_version"
+            echo "  Main version: $main_version"
             
-            if [ "$CURRENT_VERSION" = "$MAIN_VERSION" ] && [ "$MAIN_VERSION" != "new" ]; then
+            if [ "$current_version" = "$main_version" ] && [ "$main_version" != "new" ]; then
                 echo -e "  ${RED}❌ Version not bumped${NC}"
                 if [ -z "$PACKAGES_NEEDING_BUMPS" ]; then
                     PACKAGES_NEEDING_BUMPS="$package"
@@ -252,17 +314,9 @@ detect_changed_packages_ci() {
         echo "packages=[]" >> $GITHUB_OUTPUT
         echo "has-changes=false" >> $GITHUB_OUTPUT
     else
-        # Convert space-separated to JSON array format for GitHub Actions
-        # Use printf to properly format the JSON array
-        JSON_ARRAY=$(echo "$DETECTED_PACKAGES" | awk '{
-            printf "["
-            for(i=1; i<=NF; i++) {
-                if(i > 1) printf ","
-                printf "\"%s\"", $i
-            }
-            printf "]"
-        }')
-        echo "packages=$JSON_ARRAY" >> $GITHUB_OUTPUT
+        # Convert to JSON array format
+        local json_array=$(packages_to_json_array "$DETECTED_PACKAGES")
+        echo "packages=$json_array" >> $GITHUB_OUTPUT
         echo "has-changes=true" >> $GITHUB_OUTPUT
     fi
 }
@@ -279,7 +333,7 @@ check_version_bumps_ci() {
     echo "Checking version bumps for packages: $packages_json"
     
     # Convert JSON array to newline-separated list and store in temp file
-    TEMP_FILE=$(mktemp)
+    local temp_file=$(mktemp)
     printf '%s\n' "$packages_json" | node -e "
         let input = '';
         process.stdin.on('data', chunk => input += chunk);
@@ -292,9 +346,9 @@ check_version_bumps_ci() {
                 process.exit(1);
             }
         });
-    " > "$TEMP_FILE"
+    " > "$temp_file"
     
-    FAILED_PACKAGES=""
+    local failed_packages=""
     
     # Process each package
     while IFS= read -r package; do
@@ -302,41 +356,34 @@ check_version_bumps_ci() {
         if [ -d "packages/$package" ]; then
             echo "Checking version bump for $package..."
             
-            # Get current version
-            CURRENT_VERSION=$(node -p "require('./packages/$package/package.json').version")
-            
-            # Get version from main branch
-            git checkout origin/main -- "packages/$package/package.json" 2>/dev/null || {
-                echo "Package $package is new, version check passed"
-                continue
-            }
-            MAIN_VERSION=$(node -p "require('./packages/$package/package.json').version")
-            
-            # Restore current package.json
-            git checkout HEAD -- "packages/$package/package.json"
+            # Get current and main versions using utility functions
+            local current_version=$(get_current_package_version "$package")
+            local main_version=$(get_package_version_at_ref "$package" "origin/main")
             
             echo "Package: $package"
-            echo "Main branch version: $MAIN_VERSION"
-            echo "Current version: $CURRENT_VERSION"
+            echo "Main branch version: $main_version"
+            echo "Current version: $current_version"
             
-            if [ "$CURRENT_VERSION" = "$MAIN_VERSION" ]; then
+            if [ -z "$main_version" ]; then
+                echo "Package $package is new, version check passed"
+            elif [ "$current_version" = "$main_version" ]; then
                 echo "❌ Version not bumped for package $package"
-                if [ -z "$FAILED_PACKAGES" ]; then
-                    FAILED_PACKAGES="$package"
+                if [ -z "$failed_packages" ]; then
+                    failed_packages="$package"
                 else
-                    FAILED_PACKAGES="$FAILED_PACKAGES, $package"
+                    failed_packages="$failed_packages, $package"
                 fi
             else
                 echo "✅ Version bumped for package $package"
             fi
         fi
-    done < "$TEMP_FILE"
+    done < "$temp_file"
     
     # Clean up temp file
-    rm -f "$TEMP_FILE"
+    rm -f "$temp_file"
     
-    if [ ! -z "$FAILED_PACKAGES" ]; then
-        echo "❌ The following packages have changes but no version bump: $FAILED_PACKAGES"
+    if [ ! -z "$failed_packages" ]; then
+        echo "❌ The following packages have changes but no version bump: $failed_packages"
         echo "Please bump the version in package.json for these packages before merging."
         exit 1
     else
@@ -346,67 +393,58 @@ check_version_bumps_ci() {
 
 detect_version_bumps_ci() {
     # Get the previous commit (parent of current merge commit or previous commit)
-    PREV_COMMIT=$(git rev-parse HEAD~1)
-    echo "Comparing against commit: $PREV_COMMIT"
+    local prev_commit=$(git rev-parse HEAD~1)
+    echo "Comparing against commit: $prev_commit"
     
-    PACKAGES_TO_PUBLISH=""
-    HAS_PACKAGES="false"
+    # First, detect which packages have actual changes (not just version bumps)
+    echo "Detecting packages with changes..."
+    local changed_packages=$(get_changed_packages_between "$prev_commit" "HEAD" true)
     
-    # Check each package for version changes
-    for package_dir in packages/*/; do
-        if [ -d "$package_dir" ]; then
-            PACKAGE_NAME=$(basename "$package_dir")
-            PACKAGE_JSON="$package_dir/package.json"
+    if [ -z "$changed_packages" ]; then
+        echo "No package changes detected"
+        echo "packages=[]" >> $GITHUB_OUTPUT
+        echo "has-packages=false" >> $GITHUB_OUTPUT
+        return 0
+    fi
+    
+    echo "Changed packages: $changed_packages"
+    
+    local packages_to_publish=""
+    local has_packages="false"
+    
+    # Check only changed packages for version changes
+    for package_name in $changed_packages; do
+        local package_json="packages/$package_name/package.json"
+        
+        if [ -f "$package_json" ]; then
+            # Get current and previous versions using utility functions
+            local current_version=$(get_current_package_version "$package_name")
+            local prev_version=$(get_package_version_at_ref "$package_name" "$prev_commit")
             
-            if [ -f "$PACKAGE_JSON" ]; then
-                # Get current version
-                CURRENT_VERSION=$(node -p "require('./$PACKAGE_JSON').version")
-                
-                # Get previous version (if file existed)
-                if git show "$PREV_COMMIT:$PACKAGE_JSON" >/dev/null 2>&1; then
-                    PREV_VERSION=$(git show "$PREV_COMMIT:$PACKAGE_JSON" | node -p "JSON.parse(require('fs').readFileSync('/dev/stdin', 'utf8')).version")
+            echo "Package: $package_name"
+            echo "Previous version: $prev_version"
+            echo "Current version: $current_version"
+            
+            if [ "$current_version" != "$prev_version" ]; then
+                echo "✅ Version changed for $package_name: $prev_version -> $current_version"
+                if [ -z "$packages_to_publish" ]; then
+                    packages_to_publish="$package_name"
                 else
-                    # New package
-                    PREV_VERSION=""
+                    packages_to_publish="$packages_to_publish $package_name"
                 fi
-                
-                echo "Package: $PACKAGE_NAME"
-                echo "Previous version: $PREV_VERSION"
-                echo "Current version: $CURRENT_VERSION"
-                
-                if [ "$CURRENT_VERSION" != "$PREV_VERSION" ]; then
-                    echo "✅ Version changed for $PACKAGE_NAME: $PREV_VERSION -> $CURRENT_VERSION"
-                    if [ -z "$PACKAGES_TO_PUBLISH" ]; then
-                        PACKAGES_TO_PUBLISH="$PACKAGE_NAME"
-                    else
-                        PACKAGES_TO_PUBLISH="$PACKAGES_TO_PUBLISH $PACKAGE_NAME"
-                    fi
-                    HAS_PACKAGES="true"
-                else
-                    echo "➡️  No version change for $PACKAGE_NAME"
-                fi
+                has_packages="true"
+            else
+                echo "⚠️  Package $package_name has changes but no version bump - skipping publish"
             fi
         fi
     done
     
-    echo "Packages to publish: $PACKAGES_TO_PUBLISH"
+    echo "Packages to publish: $packages_to_publish"
     
-    # Convert to JSON array format
-    if [ -z "$PACKAGES_TO_PUBLISH" ]; then
-        echo "packages=[]" >> $GITHUB_OUTPUT
-    else
-        # Use awk to properly format the JSON array
-        JSON_ARRAY=$(echo "$PACKAGES_TO_PUBLISH" | awk '{
-            printf "["
-            for(i=1; i<=NF; i++) {
-                if(i > 1) printf ","
-                printf "\"%s\"", $i
-            }
-            printf "]"
-        }')
-        echo "packages=$JSON_ARRAY" >> $GITHUB_OUTPUT
-    fi
-    echo "has-packages=$HAS_PACKAGES" >> $GITHUB_OUTPUT
+    # Convert to JSON array format and output to GitHub Actions
+    local json_array=$(packages_to_json_array "$packages_to_publish")
+    echo "packages=$json_array" >> $GITHUB_OUTPUT
+    echo "has-packages=$has_packages" >> $GITHUB_OUTPUT
 }
 
 # Main script logic
