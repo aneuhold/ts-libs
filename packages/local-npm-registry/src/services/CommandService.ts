@@ -145,9 +145,7 @@ export class CommandService {
             targetPackageName,
             subscriber.originalSpecifier
           );
-          await PackageManagerService.runInstallWithRegistry(
-            subscriber.subscriberPath
-          );
+          await PackageManagerService.runInstall(subscriber.subscriberPath);
         } catch (error) {
           DR.logger.error(
             `Failed to reset subscriber ${subscriber.subscriberPath}: ${String(error)}`
@@ -207,7 +205,7 @@ export class CommandService {
         packageName,
         subscriber.originalSpecifier
       );
-      await PackageManagerService.runInstallWithRegistry(currentProjectPath);
+      await PackageManagerService.runInstall(currentProjectPath);
 
       DR.logger.info(`Successfully unsubscribed from ${packageName}`);
     } else {
@@ -282,7 +280,7 @@ export class CommandService {
       );
 
       // Run install once after all updates
-      await PackageManagerService.runInstallWithRegistry(currentProjectPath);
+      await PackageManagerService.runInstall(currentProjectPath);
 
       DR.logger.info(`Successfully unsubscribed from all packages`);
     }
@@ -350,9 +348,7 @@ export class CommandService {
             operation.packageName,
             operation.originalVersion
           );
-          await PackageManagerService.runInstallWithRegistry(
-            operation.subscriberPath
-          );
+          await PackageManagerService.runInstall(operation.subscriberPath);
           DR.logger.info(
             `✓ Reset ${operation.packageName} in ${operation.subscriberPath}`
           );
