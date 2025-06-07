@@ -4,6 +4,16 @@ import path from 'path';
 import { ConfigService } from './ConfigService.js';
 
 /**
+ * Defines the structure for a subscriber to a package.
+ */
+export type PackageSubscriber = {
+  /** The absolute path to the project directory that subscribes to this package */
+  subscriberPath: string;
+  /** The original version specifier that existed for the package in the subscriber's dependencies */
+  originalSpecifier: string;
+};
+
+/**
  * Defines the structure for a package entry in the local store.
  */
 export type PackageEntry = {
@@ -11,8 +21,8 @@ export type PackageEntry = {
   originalVersion: string;
   /** The current version with timestamp suffix */
   currentVersion: string;
-  /** List of absolute paths to projects that subscribe to this package */
-  subscribers: string[];
+  /** List of subscribers to this package */
+  subscribers: PackageSubscriber[];
   /** The absolute path to the root directory of the package */
   packageRootPath: string;
 };
@@ -102,15 +112,23 @@ export class LocalPackageStoreService {
    *
    * @param packageName - Name of the package to subscribe to
    * @param projectPath - Absolute path to the project directory
+   * @param originalSpecifier - The original version specifier for this package
    */
   static async addSubscriber(
     packageName: string,
-    projectPath: string
+    projectPath: string,
+    originalSpecifier: string
   ): Promise<void> {
     const store = await this.getStore();
     const entry = store.packages[packageName];
-    if (entry && !entry.subscribers.includes(projectPath)) {
-      entry.subscribers.push(projectPath);
+    if (
+      entry &&
+      !entry.subscribers.some((sub) => sub.subscriberPath === projectPath)
+    ) {
+      entry.subscribers.push({
+        subscriberPath: projectPath,
+        originalSpecifier
+      });
       await this.writeStore(store);
     }
   }
@@ -129,7 +147,7 @@ export class LocalPackageStoreService {
     const entry = store.packages[packageName];
     if (entry) {
       entry.subscribers = entry.subscribers.filter(
-        (sub) => sub !== projectPath
+        (sub) => sub.subscriberPath !== projectPath
       );
       await this.writeStore(store);
     }
@@ -143,7 +161,9 @@ export class LocalPackageStoreService {
   static async getSubscribedPackages(projectPath: string): Promise<string[]> {
     const store = await this.getStore();
     return Object.keys(store.packages).filter((packageName) =>
-      store.packages[packageName]?.subscribers.includes(projectPath)
+      store.packages[packageName]?.subscribers.some(
+        (sub) => sub.subscriberPath === projectPath
+      )
     );
   }
 

@@ -232,6 +232,40 @@ export class PackageManagerService {
   }
 
   /**
+   * Gets the current version specifier for a package from a project's package.json.
+   *
+   * @param projectPath - Path to the project directory containing package.json
+   * @param packageName - Name of the package to find the specifier for
+   * @returns The current version specifier or null if not found
+   */
+  static async getCurrentSpecifier(
+    projectPath: string,
+    packageName: string
+  ): Promise<string | null> {
+    const packageInfo = await this.getPackageInfo(projectPath);
+    if (!packageInfo) {
+      return null;
+    }
+
+    // Check dependencies
+    if (packageInfo.dependencies?.[packageName]) {
+      return packageInfo.dependencies[packageName];
+    }
+
+    // Check devDependencies
+    if (packageInfo.devDependencies?.[packageName]) {
+      return packageInfo.devDependencies[packageName];
+    }
+
+    // Check peerDependencies
+    if (packageInfo.peerDependencies?.[packageName]) {
+      return packageInfo.peerDependencies[packageName];
+    }
+
+    return null;
+  }
+
+  /**
    * Detects the package manager without caching.
    *
    * @param projectPath - Path to the project directory to check

@@ -120,7 +120,7 @@ program
           DR.logger.info('    (none)');
         } else {
           entry.subscribers.forEach((sub) => {
-            DR.logger.info(`    - ${sub}`);
+            DR.logger.info(`    - ${sub.subscriberPath}`);
           });
         }
       }

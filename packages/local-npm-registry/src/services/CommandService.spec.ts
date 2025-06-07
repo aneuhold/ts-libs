@@ -189,7 +189,11 @@ describe('Integration Tests', () => {
       let packageEntry = await TestProjectUtils.getPackageEntry(
         `@test-${testId}/republish-test`
       );
-      expect(packageEntry?.subscribers).toContain(subscriberPath);
+      expect(
+        packageEntry?.subscribers.some(
+          (s) => s.subscriberPath === subscriberPath
+        )
+      ).toBe(true);
 
       // Publish again
       await CommandService.publish();
@@ -198,7 +202,11 @@ describe('Integration Tests', () => {
       packageEntry = await TestProjectUtils.getPackageEntry(
         `@test-${testId}/republish-test`
       );
-      expect(packageEntry?.subscribers).toContain(subscriberPath);
+      expect(
+        packageEntry?.subscribers.some(
+          (s) => s.subscriberPath === subscriberPath
+        )
+      ).toBe(true);
       expect(packageEntry?.subscribers).toHaveLength(1);
     });
 
@@ -223,7 +231,9 @@ describe('Integration Tests', () => {
         {
           originalVersion: '1.0.0',
           currentVersion: '1.0.0',
-          subscribers: [badSubscriberPath],
+          subscribers: [
+            { subscriberPath: badSubscriberPath, originalSpecifier: '1.0.0' }
+          ],
           packageRootPath: publisherPath
         }
       );
@@ -303,8 +313,16 @@ describe('Integration Tests', () => {
       const packageEntry = await TestProjectUtils.getPackageEntry(
         `@test-${testId}/${packageManager}-publisher`
       );
-      expect(packageEntry?.subscribers).toContain(subscriber1Path);
-      expect(packageEntry?.subscribers).toContain(subscriber2Path);
+      expect(
+        packageEntry?.subscribers.some(
+          (s) => s.subscriberPath === subscriber1Path
+        )
+      ).toBe(true);
+      expect(
+        packageEntry?.subscribers.some(
+          (s) => s.subscriberPath === subscriber2Path
+        )
+      ).toBe(true);
       expect(packageEntry?.originalVersion).toBe(version);
       expect(packageEntry?.currentVersion).toMatch(
         new RegExp(`^${version.replace(/\./g, '\\.')}-\\d{17}$`)
@@ -357,7 +375,7 @@ describe('Integration Tests', () => {
       const subscriberPath = await TestProjectUtils.createSubscriberProject(
         `@test-${testId}/new-subscriber`,
         `@test-${testId}/subscribe-target`,
-        '1.0.0'
+        '^1.0.0'
       );
 
       // Subscribe from subscriber directory
@@ -368,7 +386,13 @@ describe('Integration Tests', () => {
       const packageEntry = await TestProjectUtils.getPackageEntry(
         `@test-${testId}/subscribe-target`
       );
-      expect(packageEntry?.subscribers).toContain(subscriberPath);
+      expect(
+        packageEntry?.subscribers.some(
+          (s) =>
+            s.subscriberPath === subscriberPath &&
+            s.originalSpecifier === '^1.0.0'
+        )
+      ).toBe(true);
     });
   });
 });
