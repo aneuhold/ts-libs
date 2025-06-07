@@ -69,14 +69,7 @@ export class LocalPackageStoreService {
     entry: PackageEntry
   ): Promise<void> {
     const store = await this.getStore();
-
-    // Ensure originalVersion doesn't contain timestamp
-    const cleanedEntry: PackageEntry = {
-      ...entry,
-      originalVersion: this.extractOriginalVersion(entry.originalVersion)
-    };
-
-    store.packages[packageName] = cleanedEntry;
+    store.packages[packageName] = entry;
     await this.writeStore(store);
   }
 
@@ -213,22 +206,5 @@ export class LocalPackageStoreService {
     } catch (error) {
       DR.logger.error(`Error writing local package store: ${String(error)}`);
     }
-  }
-
-  /**
-   * Extracts the original version by removing any timestamp suffix.
-   * If the version contains a timestamp (format: -YYYYMMDDHHMMssSSS), it removes it.
-   *
-   * @param version - The version string that may contain a timestamp suffix
-   */
-  private static extractOriginalVersion(version: string): string {
-    // Check if the version has a timestamp suffix (format: -YYYYMMDDHHMMssSSS)
-    if (timestampPattern.test(version)) {
-      // Remove the timestamp suffix to get the original version
-      return version.replace(timestampPattern, '');
-    }
-
-    // No timestamp found, return as-is
-    return version;
   }
 }

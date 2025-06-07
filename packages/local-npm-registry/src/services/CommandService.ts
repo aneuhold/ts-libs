@@ -22,14 +22,21 @@ export class CommandService {
       throw new Error('No package.json found in current directory');
     }
 
-    const { name: packageName, version: originalVersion } = packageInfo;
+    const { name: packageName, version: currentPackageJsonVersion } =
+      packageInfo;
+
+    const existingEntry =
+      await LocalPackageStoreService.getPackageEntry(packageName);
+
+    // Prefer to use existing entry's original version if it exists. This helps
+    // prevent a bug where the current package.json version has a timestamp.
+    const originalVersion = existingEntry
+      ? existingEntry.originalVersion
+      : currentPackageJsonVersion;
 
     // Start Verdaccio server
     await VerdaccioService.start();
 
-    // Get existing entry to preserve subscribers
-    const existingEntry =
-      await LocalPackageStoreService.getPackageEntry(packageName);
     const existingSubscribers = existingEntry?.subscribers || [];
 
     // Publish package and update subscribers
@@ -515,7 +522,7 @@ export class CommandService {
         );
       }
 
-      // Restore original version in the source package.json
+      // Restore original version in package.json after publishing
       await this.updatePackageJsonVersion(
         packageRootPath,
         packageName,
