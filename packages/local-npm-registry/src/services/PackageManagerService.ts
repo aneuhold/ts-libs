@@ -98,6 +98,36 @@ export class PackageManagerService {
   }
 
   /**
+   * Runs install command in a project directory using the default registry (npm, yarn, etc.).
+   *
+   * @param projectPath - Path to the project directory
+   */
+  static async runInstall(projectPath: string): Promise<void> {
+    // Detect the package manager based on lock files in the target project
+    const packageManager =
+      await PackageManagerService.detectPackageManager(projectPath);
+
+    const packageManagerInfo = PACKAGE_MANAGER_INFO[packageManager];
+
+    try {
+      DR.logger.info(
+        `Running ${packageManagerInfo.displayName} install in ${projectPath}`
+      );
+      await execa(packageManagerInfo.command, ['install'], {
+        cwd: projectPath
+      });
+      DR.logger.info(
+        `${packageManagerInfo.displayName} install completed in ${projectPath}`
+      );
+    } catch (error) {
+      DR.logger.error(
+        `Error running install in ${projectPath}: ${String(error)}`
+      );
+      throw error;
+    }
+  }
+
+  /**
    * Runs install command in a project directory using the specified registry.
    *
    * @param projectPath - Path to the project directory
@@ -123,19 +153,11 @@ export class PackageManagerService {
     );
 
     try {
-      const packageManagerInfo = PACKAGE_MANAGER_INFO[packageManager];
-      DR.logger.info(
-        `Running ${packageManagerInfo.displayName} install in ${projectPath}`
-      );
-      await execa(packageManagerInfo.command, ['install'], {
-        cwd: projectPath
-      });
-      DR.logger.info(
-        `${packageManagerInfo.displayName} install completed in ${projectPath}`
-      );
+      // Use the base runInstall method to perform the actual installation
+      await this.runInstall(projectPath);
     } catch (error) {
       DR.logger.error(
-        `Error running install in ${projectPath}: ${String(error)}`
+        `Error running install with registry in ${projectPath}: ${String(error)}`
       );
       throw error;
     } finally {

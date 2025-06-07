@@ -145,9 +145,7 @@ export class CommandService {
             targetPackageName,
             subscriber.originalSpecifier
           );
-          await PackageManagerService.runInstallWithRegistry(
-            subscriber.subscriberPath
-          );
+          await PackageManagerService.runInstall(subscriber.subscriberPath);
         } catch (error) {
           DR.logger.error(
             `Failed to reset subscriber ${subscriber.subscriberPath}: ${String(error)}`
@@ -207,7 +205,14 @@ export class CommandService {
         packageName,
         subscriber.originalSpecifier
       );
-      await PackageManagerService.runInstallWithRegistry(currentProjectPath);
+
+      try {
+        await PackageManagerService.runInstall(currentProjectPath);
+      } catch (error) {
+        DR.logger.warn(
+          `Install failed after unsubscribing from ${packageName}: ${String(error)}. The package.json has been reset successfully.`
+        );
+      }
 
       DR.logger.info(`Successfully unsubscribed from ${packageName}`);
     } else {
@@ -282,7 +287,13 @@ export class CommandService {
       );
 
       // Run install once after all updates
-      await PackageManagerService.runInstallWithRegistry(currentProjectPath);
+      try {
+        await PackageManagerService.runInstall(currentProjectPath);
+      } catch (error) {
+        DR.logger.warn(
+          `Install failed after unsubscribing from all packages: ${String(error)}. The package.json files have been reset successfully.`
+        );
+      }
 
       DR.logger.info(`Successfully unsubscribed from all packages`);
     }
@@ -350,9 +361,7 @@ export class CommandService {
             operation.packageName,
             operation.originalVersion
           );
-          await PackageManagerService.runInstallWithRegistry(
-            operation.subscriberPath
-          );
+          await PackageManagerService.runInstall(operation.subscriberPath);
           DR.logger.info(
             `✓ Reset ${operation.packageName} in ${operation.subscriberPath}`
           );

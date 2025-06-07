@@ -395,4 +395,311 @@ describe('Integration Tests', () => {
       ).toBe(true);
     });
   });
+
+  describe('unsubscribe', () => {
+    it('should unsubscribe from specific package with npm', async () => {
+      await testUnsubscribeFromSpecificPackage(PackageManager.Npm, '1.0.0');
+    });
+
+    it('should unsubscribe from specific package with yarn', async () => {
+      await testUnsubscribeFromSpecificPackage(PackageManager.Yarn, '1.1.0');
+    });
+
+    it('should unsubscribe from specific package with pnpm', async () => {
+      await testUnsubscribeFromSpecificPackage(PackageManager.Pnpm, '1.2.0');
+    });
+
+    it('should unsubscribe from specific package with yarn4', async () => {
+      await testUnsubscribeFromSpecificPackage(PackageManager.Yarn4, '1.3.0');
+    });
+
+    it('should handle unsubscribing from non-existent package', async () => {
+      const subscriberPath = await TestProjectUtils.createSubscriberProject(
+        `@test-${testId}/unsubscribe-test`,
+        `@test-${testId}/non-existent`,
+        '1.0.0'
+      );
+
+      TestProjectUtils.changeToProject(subscriberPath);
+
+      await expect(
+        CommandService.unsubscribe(`@test-${testId}/non-existent`)
+      ).rejects.toThrow(
+        `Package '@test-${testId}/non-existent' not found in local registry`
+      );
+    });
+
+    it('should handle unsubscribing when not subscribed', async () => {
+      // Create and publish a package
+      const publisherPath = await TestProjectUtils.createTestPackage(
+        `@test-${testId}/unsubscribe-not-subscribed`,
+        '1.0.0'
+      );
+      TestProjectUtils.changeToProject(publisherPath);
+      await CommandService.publish();
+
+      // Create a subscriber but don't actually subscribe
+      const subscriberPath = await TestProjectUtils.createSubscriberProject(
+        `@test-${testId}/unsubscribe-subscriber`,
+        `@test-${testId}/unsubscribe-not-subscribed`,
+        '1.0.0'
+      );
+
+      TestProjectUtils.changeToProject(subscriberPath);
+
+      await expect(
+        CommandService.unsubscribe(`@test-${testId}/unsubscribe-not-subscribed`)
+      ).rejects.toThrow();
+    });
+
+    /**
+     * Helper function to test unsubscribing from a specific package
+     *
+     * @param packageManager The package manager to test with
+     * @param version The version to use for the test package
+     */
+    const testUnsubscribeFromSpecificPackage = async (
+      packageManager: PackageManager,
+      version: string
+    ) => {
+      // Create and setup publisher and subscriber
+      const { subscriberPath, packageName } = await setupPublisherAndSubscriber(
+        packageManager,
+        version,
+        'unsubscribe-specific'
+      );
+
+      // Verify subscription is active (package has timestamp version)
+      let subscriberPackageJson =
+        await TestProjectUtils.readPackageJson(subscriberPath);
+      const timestampPattern = new RegExp(
+        `^${version.replace(/\./g, '\\.')}-\\d{17}$`
+      );
+      expect(subscriberPackageJson.dependencies?.[packageName]).toMatch(
+        timestampPattern
+      );
+
+      // Unsubscribe from the package
+      TestProjectUtils.changeToProject(subscriberPath);
+      await CommandService.unsubscribe(packageName);
+
+      // Verify package entry no longer has this subscriber
+      const packageEntry = await TestProjectUtils.getPackageEntry(packageName);
+      expect(
+        packageEntry?.subscribers.some(
+          (s) => s.subscriberPath === subscriberPath
+        )
+      ).toBe(false);
+
+      // Verify subscriber's package.json was reset to original version
+      subscriberPackageJson =
+        await TestProjectUtils.readPackageJson(subscriberPath);
+      expect(subscriberPackageJson.dependencies?.[packageName]).toBe(version);
+
+      // Verify success message was logged
+      expect(DR.logger.info).toHaveBeenCalledWith(
+        `Successfully unsubscribed from ${packageName}`
+      );
+    };
+  });
+
+  describe('unpublish', () => {
+    it('should unpublish package and reset subscribers with npm', async () => {
+      await testUnpublishWithSubscribers(PackageManager.Npm, '3.0.0');
+    });
+
+    it('should unpublish package and reset subscribers with yarn', async () => {
+      await testUnpublishWithSubscribers(PackageManager.Yarn, '3.1.0');
+    });
+
+    it('should unpublish package and reset subscribers with pnpm', async () => {
+      await testUnpublishWithSubscribers(PackageManager.Pnpm, '3.2.0');
+    });
+
+    it('should unpublish package and reset subscribers with yarn4', async () => {
+      await testUnpublishWithSubscribers(PackageManager.Yarn4, '3.3.0');
+    });
+
+    it('should unpublish specific package by name with npm', async () => {
+      await testUnpublishByName(PackageManager.Npm, '4.0.0');
+    });
+
+    it('should unpublish specific package by name with yarn', async () => {
+      await testUnpublishByName(PackageManager.Yarn, '4.1.0');
+    });
+
+    it('should unpublish specific package by name with pnpm', async () => {
+      await testUnpublishByName(PackageManager.Pnpm, '4.2.0');
+    });
+
+    it('should unpublish specific package by name with yarn4', async () => {
+      await testUnpublishByName(PackageManager.Yarn4, '4.3.0');
+    });
+
+    it('should handle unpublishing non-existent package', async () => {
+      await expect(
+        CommandService.unpublish(`@test-${testId}/non-existent`)
+      ).rejects.toThrow(
+        `Package '@test-${testId}/non-existent' not found in local registry`
+      );
+    });
+
+    it('should handle unpublishing from directory without package.json', async () => {
+      const emptyDir = path.join(
+        TestProjectUtils.getTestInstanceDir(),
+        'empty-unpublish'
+      );
+      await fs.ensureDir(emptyDir);
+      TestProjectUtils.changeToProject(emptyDir);
+
+      await expect(CommandService.unpublish()).rejects.toThrow(
+        'No package.json found in current directory'
+      );
+    });
+
+    /**
+     * Helper function to test unpublishing from current directory with subscribers
+     *
+     * @param packageManager The package manager to test with
+     * @param version The version to use for the test package
+     */
+    const testUnpublishWithSubscribers = async (
+      packageManager: PackageManager,
+      version: string
+    ) => {
+      // Create and setup publisher and subscriber
+      const { publisherPath, subscriberPath, packageName } =
+        await setupPublisherAndSubscriber(
+          packageManager,
+          version,
+          'unpublish-current'
+        );
+
+      // Verify subscription is active before unpublishing
+      let subscriberPackageJson =
+        await TestProjectUtils.readPackageJson(subscriberPath);
+      const timestampPattern = new RegExp(
+        `^${version.replace(/\./g, '\\.')}-\\d{17}$`
+      );
+      expect(subscriberPackageJson.dependencies?.[packageName]).toMatch(
+        timestampPattern
+      );
+
+      // Unpublish from publisher directory (current directory)
+      TestProjectUtils.changeToProject(publisherPath);
+      await CommandService.unpublish();
+
+      // Verify package was removed from local store
+      const packageEntry = await TestProjectUtils.getPackageEntry(packageName);
+      expect(packageEntry).toBeNull();
+
+      // Verify subscriber was reset to original version
+      subscriberPackageJson =
+        await TestProjectUtils.readPackageJson(subscriberPath);
+      expect(subscriberPackageJson.dependencies?.[packageName]).toBe(version);
+
+      // Verify publisher's package.json was reset to original version
+      const publisherPackageJson =
+        await TestProjectUtils.readPackageJson(publisherPath);
+      expect(publisherPackageJson.version).toBe(version);
+
+      // Verify success message was logged
+      expect(DR.logger.info).toHaveBeenCalledWith(
+        `Successfully unpublished ${packageName} and reset all subscribers`
+      );
+    };
+
+    /**
+     * Helper function to test unpublishing by package name
+     *
+     * @param packageManager The package manager to test with
+     * @param version The version to use for the test package
+     */
+    const testUnpublishByName = async (
+      packageManager: PackageManager,
+      version: string
+    ) => {
+      // Create and setup publisher and subscriber
+      const { publisherPath, subscriberPath, packageName } =
+        await setupPublisherAndSubscriber(
+          packageManager,
+          version,
+          'unpublish-by-name'
+        );
+
+      // Change to a different directory (not the publisher directory)
+      const otherDir = path.join(
+        TestProjectUtils.getTestInstanceDir(),
+        'other-dir'
+      );
+      await fs.ensureDir(otherDir);
+      TestProjectUtils.changeToProject(otherDir);
+
+      // Unpublish by package name
+      await CommandService.unpublish(packageName);
+
+      // Verify package was removed from local store
+      const packageEntry = await TestProjectUtils.getPackageEntry(packageName);
+      expect(packageEntry).toBeNull();
+
+      // Verify subscriber was reset to original version
+      const subscriberPackageJson =
+        await TestProjectUtils.readPackageJson(subscriberPath);
+      expect(subscriberPackageJson.dependencies?.[packageName]).toBe(version);
+
+      // Verify publisher's package.json was NOT modified (since we weren't in that directory)
+      const publisherPackageJson =
+        await TestProjectUtils.readPackageJson(publisherPath);
+      expect(publisherPackageJson.version).toMatch(version);
+
+      // Verify success message was logged
+      expect(DR.logger.info).toHaveBeenCalledWith(
+        `Successfully unpublished ${packageName} and reset all subscribers`
+      );
+    };
+  });
+
+  /**
+   * Helper function to setup a publisher and subscriber for testing
+   *
+   * @param packageManager The package manager to use
+   * @param version The version for the packages
+   * @param testSuffix Suffix to make package names unique
+   */
+  const setupPublisherAndSubscriber = async (
+    packageManager: PackageManager,
+    version: string,
+    testSuffix: string
+  ) => {
+    const packageName = `@test-${testId}/${packageManager}-${testSuffix}`;
+
+    // Create publisher package
+    const publisherPath = await TestProjectUtils.createTestPackage(
+      packageName,
+      version,
+      packageManager
+    );
+
+    // Create subscriber package
+    const subscriberPath = await TestProjectUtils.createSubscriberProject(
+      `@test-${testId}/${packageManager}-${testSuffix}-subscriber`,
+      packageName,
+      version,
+      packageManager
+    );
+
+    // Publish the package
+    TestProjectUtils.changeToProject(publisherPath);
+    await CommandService.publish();
+
+    // Subscribe to the package
+    TestProjectUtils.changeToProject(subscriberPath);
+    await CommandService.subscribe(packageName);
+
+    return {
+      publisherPath,
+      subscriberPath,
+      packageName
+    };
+  };
 });
