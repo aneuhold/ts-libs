@@ -13,6 +13,7 @@ import {
   vi
 } from 'vitest';
 import { TestProjectUtils } from '../../test-utils/TestProjectUtils.js';
+import { DEFAULT_CONFIG } from '../types/LocalNpmConfig.js';
 import {
   PACKAGE_MANAGER_INFO,
   PackageManager
@@ -282,7 +283,7 @@ describe('Unit Tests', () => {
 
       const backup = await PackageManagerService.createRegistryConfig(
         PackageManager.Npm,
-        'http://localhost:4873',
+        DEFAULT_CONFIG.registryUrl,
         packagePath
       );
 
@@ -311,7 +312,7 @@ describe('Unit Tests', () => {
         '1.0.0',
         packageManager
       );
-      const registryUrl = 'http://localhost:4873';
+      const registryUrl = DEFAULT_CONFIG.registryUrl;
 
       const backup = await PackageManagerService.createRegistryConfig(
         packageManager,

@@ -1,3 +1,4 @@
+import { LocalPackageStoreService } from '../src/services/LocalPackageStoreService.js';
 import { MutexService } from '../src/services/MutexService.js';
 import { VerdaccioService } from '../src/services/VerdaccioService.js';
 
@@ -22,6 +23,9 @@ export async function teardown(): Promise<void> {
   try {
     await VerdaccioService.stop();
     await MutexService.forceReleaseLock();
+
+    const testPackagePattern = /^@test-[a-fA-F0-9]{8}\//;
+    await LocalPackageStoreService.removePackagesByPattern(testPackagePattern);
   } catch {
     // Ignore errors during cleanup
   }

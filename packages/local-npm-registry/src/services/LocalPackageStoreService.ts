@@ -26,20 +26,14 @@ export type LocalPackageStore = {
   };
 };
 
-const STORE_FILE_NAME = '.local-package-store.json';
+export const timestampPattern = /-\d{17}$/;
+
+const STORE_FILE_NAME = 'local-package-store.json';
 
 /**
  * Service to manage the local package store.
  */
 export class LocalPackageStoreService {
-  /**
-   * Gets the store file path from configuration.
-   */
-  private static async getStoreFilePath(): Promise<string> {
-    const config = await ConfigService.loadConfig();
-    return path.join(config.storeLocation || process.cwd(), STORE_FILE_NAME);
-  }
-
   /**
    * Reads the local package store from the file system.
    * If the store file does not exist, it returns an empty store.
@@ -154,6 +148,53 @@ export class LocalPackageStoreService {
   }
 
   /**
+   * Removes packages from the store that match a given pattern.
+   *
+   * @param pattern - Regular expression pattern to match package names
+   */
+  static async removePackagesByPattern(pattern: RegExp): Promise<string[]> {
+    const store = await this.getStore();
+    const packageNames = Object.keys(store.packages);
+    const matchedPackages: string[] = [];
+
+    for (const packageName of packageNames) {
+      if (pattern.test(packageName)) {
+        matchedPackages.push(packageName);
+        // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+        delete store.packages[packageName];
+      }
+    }
+
+    if (matchedPackages.length > 0) {
+      await this.writeStore(store);
+    }
+
+    return matchedPackages;
+  }
+
+  /**
+   * Clears all packages from the store.
+   */
+  static async clearStore(): Promise<void> {
+    const emptyStore: LocalPackageStore = { packages: {} };
+    await this.writeStore(emptyStore);
+  }
+
+  /**
+   * Gets the store file path from configuration.
+   */
+  private static async getStoreFilePath(): Promise<string> {
+    const config = await ConfigService.loadConfig();
+    const baseDirectory = config.dataDirectory || process.cwd();
+    const storeDirectory = path.join(baseDirectory, '.local-npm-registry');
+
+    // Ensure the directory exists
+    await fs.ensureDir(storeDirectory);
+
+    return path.join(storeDirectory, STORE_FILE_NAME);
+  }
+
+  /**
    * Writes the local package store to the file system.
    *
    * @param store - The store object to write.
@@ -165,13 +206,5 @@ export class LocalPackageStoreService {
     } catch (error) {
       DR.logger.error(`Error writing local package store: ${String(error)}`);
     }
-  }
-
-  /**
-   * Clears all packages from the store.
-   */
-  static async clearStore(): Promise<void> {
-    const emptyStore: LocalPackageStore = { packages: {} };
-    await this.writeStore(emptyStore);
   }
 }

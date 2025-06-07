@@ -3,6 +3,7 @@ import os from 'os';
 import path from 'path';
 import lockfile from 'proper-lockfile';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { ConfigService } from './ConfigService.js';
 import { MutexService } from './MutexService.js';
 import { VerdaccioService } from './VerdaccioService.js';
 
@@ -92,10 +93,13 @@ describe('Integration Tests', () => {
 
   it('should prevent multiple processes from starting Verdaccio simultaneously', async () => {
     // Use lockfile directly to create a lock from "another process"
-    // We'll import lockfile and create a lock manually
+    // We need to use the same path logic as MutexService
 
-    const LOCK_DIR = path.join(os.tmpdir(), 'local-npm-registry');
-    const LOCK_FILE_PATH = path.join(LOCK_DIR, 'verdaccio-registry');
+    // Get the lock file path that MutexService would use
+    const config = await ConfigService.loadConfig();
+    const baseDirectory = config.dataDirectory || os.homedir();
+    const LOCK_DIR = path.join(baseDirectory, '.local-npm-registry');
+    const LOCK_FILE_PATH = path.join(LOCK_DIR, 'verdaccio-lock');
 
     // Ensure the lock file exists
     await fs.ensureDir(LOCK_DIR);

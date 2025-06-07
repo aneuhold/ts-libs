@@ -1,7 +1,9 @@
 import { DR, type PackageJson } from '@aneuhold/core-ts-lib';
 import { execa } from 'execa';
 import fs from 'fs-extra';
+import yaml from 'js-yaml';
 import path from 'path';
+import { DEFAULT_CONFIG } from '../types/LocalNpmConfig.js';
 import {
   PACKAGE_MANAGER_INFO,
   PackageManager
@@ -18,6 +20,18 @@ export type PackageManagerConfigBackup = {
  * Utility service for various package managers.
  */
 export class PackageManagerService {
+  /**
+   * Cache to store detected package managers for projects.
+   */
+  private static configCache = new Map<
+    string,
+    {
+      packageManager: PackageManager;
+      timestamp: number;
+    }
+  >();
+  private static readonly CACHE_TTL = 60000; // 1 minute
+
   /**
    * Reads the package.json file in the specified directory.
    *
@@ -43,10 +57,186 @@ export class PackageManagerService {
 
   /**
    * Determines the package manager to use based on lock files and packageManager field in package.json.
+   * Uses caching to reduce file I/O operations.
    *
    * @param projectPath - Path to the project directory to check
    */
   static async detectPackageManager(
+    projectPath: string
+  ): Promise<PackageManager> {
+    const cacheKey = projectPath;
+    const cached = this.configCache.get(cacheKey);
+
+    // Check if cache is still valid
+    if (cached && Date.now() - cached.timestamp < this.CACHE_TTL) {
+      return cached.packageManager;
+    }
+
+    // Cache miss or expired, detect package manager
+    const packageManager = await this.detectPackageManagerUncached(projectPath);
+
+    // Cache the result
+    this.configCache.set(projectPath, {
+      packageManager,
+      timestamp: Date.now()
+    });
+
+    return packageManager;
+  }
+
+  /**
+   * Clears the package manager cache for a specific project or all projects.
+   *
+   * @param projectPath - Optional path to clear cache for specific project
+   */
+  static clearCache(projectPath?: string): void {
+    if (projectPath) {
+      this.configCache.delete(projectPath);
+    } else {
+      this.configCache.clear();
+    }
+  }
+
+  /**
+   * Runs install command in a project directory using the specified registry.
+   *
+   * @param projectPath - Path to the project directory
+   * @param registryUrl - The registry URL to use for installation
+   */
+  static async runInstallWithRegistry(
+    projectPath: string,
+    registryUrl?: string
+  ): Promise<void> {
+    const config = await ConfigService.loadConfig();
+    const actualRegistryUrl =
+      registryUrl || config.registryUrl || DEFAULT_CONFIG.registryUrl;
+
+    // Detect the package manager based on lock files in the target project
+    const packageManager =
+      await PackageManagerService.detectPackageManager(projectPath);
+
+    // Create registry configuration to ensure packages are installed from local registry
+    const configBackup = await PackageManagerService.createRegistryConfig(
+      packageManager,
+      actualRegistryUrl,
+      projectPath
+    );
+
+    try {
+      const packageManagerInfo = PACKAGE_MANAGER_INFO[packageManager];
+      DR.logger.info(
+        `Running ${packageManagerInfo.displayName} install in ${projectPath}`
+      );
+      await execa(packageManagerInfo.command, ['install'], {
+        cwd: projectPath
+      });
+      DR.logger.info(
+        `${packageManagerInfo.displayName} install completed in ${projectPath}`
+      );
+    } catch (error) {
+      DR.logger.error(
+        `Error running install in ${projectPath}: ${String(error)}`
+      );
+      throw error;
+    } finally {
+      // Always restore original configuration
+      await PackageManagerService.restoreRegistryConfig(configBackup);
+    }
+  }
+
+  /**
+   * Creates registry configuration files for the specified package manager to use local registry.
+   *
+   * @param packageManager The package manager to configure
+   * @param registryUrl The local registry URL
+   * @param projectPath The path to the project directory
+   */
+  static async createRegistryConfig(
+    packageManager: PackageManager,
+    registryUrl: string,
+    projectPath: string
+  ): Promise<PackageManagerConfigBackup> {
+    const backup: PackageManagerConfigBackup = {};
+    const packageManagerInfo = PACKAGE_MANAGER_INFO[packageManager];
+
+    const configPath = path.join(projectPath, packageManagerInfo.configFile);
+    const existingContent = (await fs.pathExists(configPath))
+      ? await fs.readFile(configPath, 'utf8')
+      : null;
+
+    // Store backup based on config file type
+    if (packageManagerInfo.configFile === '.npmrc') {
+      backup.npmrc = { path: configPath, content: existingContent };
+    } else if (packageManagerInfo.configFile === '.yarnrc') {
+      backup.yarnrc = { path: configPath, content: existingContent };
+    } else if (packageManagerInfo.configFile === '.yarnrc.yml') {
+      backup.yarnrcYml = { path: configPath, content: existingContent };
+    }
+
+    // Create or merge registry configuration using the package manager's format
+    const registryConfig = packageManagerInfo.configFormat(registryUrl);
+    let finalConfigContent: string;
+
+    if (existingContent) {
+      // Merge with existing content
+      finalConfigContent = this.mergeConfigContent(
+        existingContent,
+        registryConfig,
+        packageManagerInfo.configFile
+      );
+    } else {
+      // No existing content, use new config directly
+      finalConfigContent = registryConfig;
+    }
+
+    await fs.writeFile(configPath, finalConfigContent);
+
+    // Handle .npmrc file for authentication token
+    await this.createOrUpdateNpmrcAuth(
+      projectPath,
+      registryUrl,
+      packageManagerInfo.configFile,
+      backup
+    );
+
+    return backup;
+  }
+
+  /**
+   * Restores the original registry configuration files.
+   *
+   * @param backup The backup of original configurations
+   */
+  static async restoreRegistryConfig(
+    backup: PackageManagerConfigBackup
+  ): Promise<void> {
+    for (const config of Object.values(backup)) {
+      if (config.content === null) {
+        // File didn't exist originally, remove it
+        if (await fs.pathExists(config.path)) {
+          await fs.remove(config.path);
+        }
+      } else {
+        const cleanedContent = this.removeLocalNpmRegistryLines(config.content);
+        if (cleanedContent.length !== config.content.length) {
+          config.content = cleanedContent.trim();
+        }
+        if (config.content === '') {
+          await fs.remove(config.path);
+        } else {
+          // Restore original content
+          await fs.writeFile(config.path, config.content);
+        }
+      }
+    }
+  }
+
+  /**
+   * Detects the package manager without caching.
+   *
+   * @param projectPath - Path to the project directory to check
+   */
+  private static async detectPackageManagerUncached(
     projectPath: string
   ): Promise<PackageManager> {
     // First, try to determine from package.json packageManager field
@@ -118,118 +308,6 @@ export class PackageManagerService {
   }
 
   /**
-   * Runs install command in a project directory using the specified registry.
-   *
-   * @param projectPath - Path to the project directory
-   * @param registryUrl - The registry URL to use for installation
-   */
-  static async runInstallWithRegistry(
-    projectPath: string,
-    registryUrl?: string
-  ): Promise<void> {
-    const config = await ConfigService.loadConfig();
-    const actualRegistryUrl =
-      registryUrl || config.registryUrl || 'http://localhost:4873';
-
-    // Detect the package manager based on lock files in the target project
-    const packageManager =
-      await PackageManagerService.detectPackageManager(projectPath);
-
-    // Create registry configuration to ensure packages are installed from local registry
-    const configBackup = await PackageManagerService.createRegistryConfig(
-      packageManager,
-      actualRegistryUrl,
-      projectPath
-    );
-
-    try {
-      const packageManagerInfo = PACKAGE_MANAGER_INFO[packageManager];
-      DR.logger.info(
-        `Running ${packageManagerInfo.displayName} install in ${projectPath}`
-      );
-      await execa(packageManagerInfo.command, ['install'], {
-        cwd: projectPath
-      });
-      DR.logger.info(
-        `${packageManagerInfo.displayName} install completed in ${projectPath}`
-      );
-    } catch (error) {
-      DR.logger.error(
-        `Error running install in ${projectPath}: ${String(error)}`
-      );
-      throw error;
-    } finally {
-      // Always restore original configuration
-      await PackageManagerService.restoreRegistryConfig(configBackup);
-    }
-  }
-
-  /**
-   * Creates registry configuration files for the specified package manager to use local registry.
-   *
-   * @param packageManager The package manager to configure
-   * @param registryUrl The local registry URL
-   * @param projectPath The path to the project directory
-   */
-  static async createRegistryConfig(
-    packageManager: PackageManager,
-    registryUrl: string,
-    projectPath: string
-  ): Promise<PackageManagerConfigBackup> {
-    const backup: PackageManagerConfigBackup = {};
-    const packageManagerInfo = PACKAGE_MANAGER_INFO[packageManager];
-
-    const configPath = path.join(projectPath, packageManagerInfo.configFile);
-    const existingContent = (await fs.pathExists(configPath))
-      ? await fs.readFile(configPath, 'utf8')
-      : null;
-
-    // Store backup based on config file type
-    if (packageManagerInfo.configFile === '.npmrc') {
-      backup.npmrc = { path: configPath, content: existingContent };
-    } else if (packageManagerInfo.configFile === '.yarnrc') {
-      backup.yarnrc = { path: configPath, content: existingContent };
-    } else if (packageManagerInfo.configFile === '.yarnrc.yml') {
-      backup.yarnrcYml = { path: configPath, content: existingContent };
-    }
-
-    // Create registry configuration using the package manager's format
-    const registryConfig = packageManagerInfo.configFormat(registryUrl);
-    await fs.writeFile(configPath, registryConfig);
-
-    // Handle .npmrc file for authentication token
-    await this.createOrUpdateNpmrcAuth(
-      projectPath,
-      registryUrl,
-      packageManagerInfo.configFile,
-      backup
-    );
-
-    return backup;
-  }
-
-  /**
-   * Restores the original registry configuration files.
-   *
-   * @param backup The backup of original configurations
-   */
-  static async restoreRegistryConfig(
-    backup: PackageManagerConfigBackup
-  ): Promise<void> {
-    for (const config of Object.values(backup)) {
-      if (config.content === null) {
-        // File didn't exist originally, remove it
-        if (await fs.pathExists(config.path)) {
-          await fs.remove(config.path);
-        }
-      } else {
-        // Restore original content
-        await fs.writeFile(config.path, config.content);
-      }
-    }
-  }
-
-  /**
    * Creates or updates the .npmrc file with authentication token for the registry.
    *
    * @param projectPath The path to the project directory
@@ -256,16 +334,135 @@ export class PackageManagerService {
 
     // Create the auth token line for .npmrc
     const url = registryUrl.replace('http://', '');
-    const authTokenLine = `//${url}/:_authToken=fake`;
+    const authTokenLine = `//${url}/:_authToken=fake #local-npm-registry`;
 
-    // Create or update .npmrc content
+    // Create or update .npmrc content using merge logic
     let npmrcContent = existingNpmrcContent || '';
 
-    // Add the auth token line if needed
-    if (!npmrcContent.includes(authTokenLine)) {
-      npmrcContent += '\n' + authTokenLine;
+    // Use the same merge logic as the main config files
+    if (npmrcContent.trim() === '') {
+      npmrcContent = authTokenLine;
+    } else {
+      npmrcContent = this.mergeConfigContent(
+        npmrcContent,
+        authTokenLine,
+        '.npmrc'
+      );
     }
 
     await fs.writeFile(npmrcPath, npmrcContent);
+  }
+
+  /**
+   * Removes lines from configuration content that were previously added by local-npm-registry.
+   *
+   * @param content The configuration file content to clean
+   */
+  private static removeLocalNpmRegistryLines(content: string): string {
+    const lines = content.split('\n');
+    const cleanedLines = lines.filter((line) => {
+      const trimmedLine = line.trim();
+      // Remove lines that have the local-npm-registry comment
+      return !trimmedLine.includes('#local-npm-registry');
+    });
+    return cleanedLines.join('\n');
+  }
+
+  /**
+   * Merges new configuration content with existing configuration content.
+   *
+   * @param existingContent The existing configuration file content
+   * @param newConfig The new configuration content to merge
+   * @param configFile The configuration file name to determine merge strategy
+   */
+  private static mergeConfigContent(
+    existingContent: string,
+    newConfig: string,
+    configFile: string
+  ): string {
+    if (configFile === '.yarnrc.yml') {
+      return this.mergeYamlConfig(existingContent, newConfig);
+    }
+    return this.mergeKeyValueConfig(existingContent, newConfig);
+  }
+
+  /**
+   * Merges YAML configuration content using proper YAML parsing.
+   *
+   * @param existingContent The existing YAML content
+   * @param newConfig The new YAML content to merge
+   */
+  private static mergeYamlConfig(
+    existingContent: string,
+    newConfig: string
+  ): string {
+    const existingParsed = yaml.load(existingContent);
+    const newParsed = yaml.load(newConfig);
+
+    const existingData =
+      typeof existingParsed === 'object' && existingParsed !== null
+        ? (existingParsed as Record<string, unknown>)
+        : {};
+
+    const newData =
+      typeof newParsed === 'object' && newParsed !== null
+        ? (newParsed as Record<string, unknown>)
+        : {};
+
+    const mergedData = { ...existingData, ...newData };
+    return yaml.dump(mergedData, { lineWidth: -1 });
+  }
+
+  /**
+   * Merges key-value configuration content (for .npmrc and .yarnrc files).
+   *
+   * @param existingContent The existing key-value content
+   * @param newConfig The new key-value content to merge
+   */
+  private static mergeKeyValueConfig(
+    existingContent: string,
+    newConfig: string
+  ): string {
+    const configMap = new Map<string, string>();
+
+    // Parse existing content into map
+    this.parseKeyValueLines(existingContent, configMap);
+
+    // Parse and merge new content
+    this.parseKeyValueLines(newConfig, configMap);
+
+    // Convert back to string format
+    return Array.from(configMap.values()).join('\n');
+  }
+
+  /**
+   * Parses key-value lines and adds them to the provided map.
+   *
+   * @param content The content to parse
+   * @param configMap The map to store key-value pairs
+   */
+  private static parseKeyValueLines(
+    content: string,
+    configMap: Map<string, string>
+  ): void {
+    const lines = content.split('\n').filter((line) => line.trim() !== '');
+
+    for (const line of lines) {
+      const trimmedLine = line.trim();
+      if (!trimmedLine || trimmedLine.startsWith('#')) {
+        // Preserve comments and empty lines with original content
+        configMap.set(trimmedLine || line, line);
+        continue;
+      }
+
+      const separatorIndex = trimmedLine.indexOf('=');
+      if (separatorIndex > 0) {
+        const key = trimmedLine.substring(0, separatorIndex).trim();
+        configMap.set(key, line); // Store original line format
+      } else {
+        // Non-key-value line, preserve as-is
+        configMap.set(trimmedLine, line);
+      }
+    }
   }
 }

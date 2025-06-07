@@ -3,6 +3,7 @@ import fs from 'fs-extra';
 import path from 'path';
 import {
   LocalPackageStoreService,
+  timestampPattern,
   type PackageEntry
 } from './LocalPackageStoreService.js';
 import { PackageManagerService } from './PackageManagerService.js';
@@ -16,19 +17,26 @@ export class CommandService {
    * Implements the 'local-npm publish' command.
    */
   static async publish(): Promise<void> {
-    const packageInfo = await this.getPackageInfo();
+    const packageInfo = await PackageManagerService.getPackageInfo();
     if (!packageInfo) {
       throw new Error('No package.json found in current directory');
     }
 
-    const { name: packageName, version: originalVersion } = packageInfo;
+    const { name: packageName, version: currentPackageJsonVersion } =
+      packageInfo;
+
+    const existingEntry =
+      await LocalPackageStoreService.getPackageEntry(packageName);
+
+    // Prefer to use existing entry's original version if it exists. This helps
+    // prevent a bug where the current package.json version has a timestamp.
+    const originalVersion = existingEntry
+      ? existingEntry.originalVersion
+      : currentPackageJsonVersion;
 
     // Start Verdaccio server
     await VerdaccioService.start();
 
-    // Get existing entry to preserve subscribers
-    const existingEntry =
-      await LocalPackageStoreService.getPackageEntry(packageName);
     const existingSubscribers = existingEntry?.subscribers || [];
 
     // Publish package and update subscribers
@@ -95,7 +103,7 @@ export class CommandService {
     if (packageName) {
       targetPackageName = packageName;
     } else {
-      const packageInfo = await this.getPackageInfo();
+      const packageInfo = await PackageManagerService.getPackageInfo();
       if (!packageInfo) {
         throw new Error(
           'No package.json found in current directory and no package name provided'
@@ -201,7 +209,8 @@ export class CommandService {
         `Unsubscribing from ${subscribedPackages.length} package(s)`
       );
 
-      for (const pkgName of subscribedPackages) {
+      // Perform unsubscribe operations in parallel
+      const unsubscribePromises = subscribedPackages.map(async (pkgName) => {
         try {
           const entry = await LocalPackageStoreService.getPackageEntry(pkgName);
           if (entry) {
@@ -217,13 +226,31 @@ export class CommandService {
               pkgName,
               entry.originalVersion
             );
+
+            return { packageName: pkgName, success: true };
           }
+          return {
+            packageName: pkgName,
+            success: false,
+            error: 'Entry not found'
+          };
         } catch (error) {
           DR.logger.error(
             `Failed to unsubscribe from ${pkgName}: ${String(error)}`
           );
+          return { packageName: pkgName, success: false, error };
         }
-      }
+      });
+
+      // Wait for all unsubscribe operations to complete
+      const results = await Promise.allSettled(unsubscribePromises);
+      const successCount = results.filter(
+        (result) => result.status === 'fulfilled' && result.value.success
+      ).length;
+
+      DR.logger.info(
+        `Parallel unsubscribe completed: ${successCount}/${subscribedPackages.length} successful`
+      );
 
       // Run install once after all updates
       await PackageManagerService.runInstallWithRegistry(currentProjectPath);
@@ -249,10 +276,14 @@ export class CommandService {
       `Clearing ${packageNames.length} package(s) from local registry`
     );
 
-    let successCount = 0;
-    let errorCount = 0;
+    // Collect all subscriber reset operations across all packages
+    const resetOperations: Array<{
+      subscriberPath: string;
+      packageName: string;
+      originalVersion: string;
+    }> = [];
 
-    // Reset all subscribers for all packages
+    // Collect all reset operations first
     for (const packageName of packageNames) {
       const entry = store.packages[packageName];
       if (!entry) {
@@ -261,84 +292,100 @@ export class CommandService {
 
       DR.logger.info(`Processing package: ${packageName}`);
 
-      // Reset all subscribers to original version
+      // Collect subscriber reset operations
       if (entry.subscribers.length > 0) {
         DR.logger.info(
-          `  Resetting ${entry.subscribers.length} subscriber(s) to original version`
+          `  Adding ${entry.subscribers.length} subscriber reset operation(s)`
         );
 
         for (const subscriberPath of entry.subscribers) {
-          try {
-            await this.updatePackageJsonVersion(
-              subscriberPath,
-              packageName,
-              entry.originalVersion
-            );
-            await PackageManagerService.runInstallWithRegistry(subscriberPath);
-            DR.logger.info(`    ✓ Reset subscriber: ${subscriberPath}`);
-          } catch (error) {
-            DR.logger.error(
-              `    ✗ Failed to reset subscriber ${subscriberPath}: ${String(error)}`
-            );
-            errorCount++;
-          }
+          resetOperations.push({
+            subscriberPath,
+            packageName,
+            originalVersion: entry.originalVersion
+          });
         }
       }
-
-      successCount++;
     }
 
-    // Clear the entire store
-    await LocalPackageStoreService.clearStore();
-
-    if (errorCount > 0) {
-      DR.logger.warn(
-        `Cleared ${successCount} package(s) with ${errorCount} subscriber reset error(s)`
-      );
-    } else {
+    // Execute all reset operations in parallel
+    if (resetOperations.length > 0) {
       DR.logger.info(
-        `Successfully cleared all ${successCount} package(s) and reset all subscribers`
+        `Executing ${resetOperations.length} subscriber reset operations in parallel`
+      );
+
+      const resetPromises = resetOperations.map(async (operation) => {
+        try {
+          await this.updatePackageJsonVersion(
+            operation.subscriberPath,
+            operation.packageName,
+            operation.originalVersion
+          );
+          await PackageManagerService.runInstallWithRegistry(
+            operation.subscriberPath
+          );
+          DR.logger.info(
+            `✓ Reset ${operation.packageName} in ${operation.subscriberPath}`
+          );
+          return { success: true, operation };
+        } catch (error) {
+          DR.logger.error(
+            `✗ Failed to reset ${operation.packageName} in ${operation.subscriberPath}: ${String(error)}`
+          );
+          return { success: false, operation, error };
+        }
+      });
+
+      const results = await Promise.allSettled(resetPromises);
+      const successCount = results.filter(
+        (result) => result.status === 'fulfilled' && result.value.success
+      ).length;
+      const errorCount = resetOperations.length - successCount;
+
+      DR.logger.info(
+        `Parallel reset completed: ${successCount}/${resetOperations.length} successful`
+      );
+
+      // Clear the entire store
+      await LocalPackageStoreService.clearStore();
+
+      if (errorCount > 0) {
+        DR.logger.warn(
+          `Cleared ${packageNames.length} package(s) with ${errorCount} subscriber reset error(s)`
+        );
+      } else {
+        DR.logger.info(
+          `Successfully cleared all ${packageNames.length} package(s) and reset all subscribers`
+        );
+      }
+    } else {
+      // No subscribers to reset, just clear the store
+      await LocalPackageStoreService.clearStore();
+      DR.logger.info(
+        `Successfully cleared all ${packageNames.length} package(s)`
       );
     }
   }
 
   /**
    * Generates a timestamp version by appending current timestamp to the original version.
+   * If the version already contains a timestamp, it replaces the existing timestamp.
    *
-   * @param originalVersion - The original version string
+   * @param originalVersion - The original version string (may already contain a timestamp)
    */
   private static generateTimestampVersion(originalVersion: string): string {
     const timestamp = new Date()
       .toISOString()
       .replace(/[-:T.]/g, '')
       .slice(0, 17); // Include milliseconds (YYYYMMDDHHMMssSSS)
-    return `${originalVersion}-${timestamp}`;
-  }
 
-  /**
-   * Reads the package.json file in the current directory.
-   *
-   * @param dir - Directory to search for package.json
-   */
-  private static async getPackageInfo(
-    dir: string = process.cwd()
-  ): Promise<PackageJson | null> {
-    try {
-      const packageJsonPath = path.join(dir, 'package.json');
-      const packageJson = (await fs.readJson(packageJsonPath)) as PackageJson;
-
-      if (!packageJson.name || !packageJson.version) {
-        throw new Error('package.json must contain name and version fields');
-      }
-
-      return {
-        name: packageJson.name,
-        version: packageJson.version
-      };
-    } catch (error) {
-      DR.logger.error(`Error reading package.json: ${String(error)}`);
-      return null;
+    if (timestampPattern.test(originalVersion)) {
+      // Replace existing timestamp with new one
+      return originalVersion.replace(timestampPattern, `-${timestamp}`);
     }
+
+    // No existing timestamp, append new one
+    return `${originalVersion}-${timestamp}`;
   }
 
   /**
@@ -440,11 +487,11 @@ export class CommandService {
 
       await LocalPackageStoreService.updatePackageEntry(packageName, entry);
 
-      // Update all subscribers
+      // Update all subscribers in parallel
       if (entry.subscribers.length > 0) {
         DR.logger.info(`Updating ${entry.subscribers.length} subscriber(s)`);
 
-        for (const subscriberPath of entry.subscribers) {
+        const updatePromises = entry.subscribers.map(async (subscriberPath) => {
           try {
             await this.updatePackageJsonVersion(
               subscriberPath,
@@ -452,15 +499,30 @@ export class CommandService {
               timestampVersion
             );
             await PackageManagerService.runInstallWithRegistry(subscriberPath);
+            DR.logger.info(
+              `Successfully updated subscriber: ${subscriberPath}`
+            );
+            return { subscriberPath, success: true };
           } catch (error) {
             DR.logger.error(
               `Failed to update subscriber ${subscriberPath}: ${String(error)}`
             );
+            return { subscriberPath, success: false, error };
           }
-        }
+        });
+
+        // Execute all updates in parallel
+        const results = await Promise.allSettled(updatePromises);
+        const successCount = results.filter(
+          (result) => result.status === 'fulfilled' && result.value.success
+        ).length;
+
+        DR.logger.info(
+          `Completed parallel subscriber updates: ${successCount}/${entry.subscribers.length} successful`
+        );
       }
 
-      // Restore original version in the source package.json
+      // Restore original version in package.json after publishing
       await this.updatePackageJsonVersion(
         packageRootPath,
         packageName,

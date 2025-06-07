@@ -92,7 +92,8 @@ That's it! Your frontend project will now automatically receive updates whenever
 ✅ **Automatic updates** - Changes propagate instantly to all consuming projects  
 ✅ **Clean workflow** - Easy to set up and tear down  
 ✅ **Version safety** - Always keeps track of original versions to restore  
-✅ **Multiple subscribers** - One library can update many consuming projects at once
+✅ **Multiple subscribers** - One library can update many consuming projects at once  
+✅ **True package installation behavior** - Unlike [local file paths](https://docs.npmjs.com/cli/v11/configuring-npm/package-json#local-paths), this tool installs packages the same way as remote registries, ensuring your local testing matches production behavior
 
 ## 🔧 Additional Commands
 
@@ -109,6 +110,17 @@ That's it! Your frontend project will now automatically receive updates whenever
 This tool uses Verdaccio (a private npm registry) under the hood to simulate publishing packages locally. It maintains a JSON store that tracks package versions and subscriber relationships, ensuring clean workflows and easy cleanup.
 
 > **Note:** Verdaccio is only started for commands that need to publish packages (`publish` and `subscribe`). The `unpublish` and `unsubscribe` commands only modify package.json files and the local store, so they don't require Verdaccio to be running.
+
+### Why Not Use Local File Paths?
+
+While npm supports [local file paths](https://docs.npmjs.com/cli/v11/configuring-npm/package-json#local-paths) as dependencies (e.g., `"my-package": "file:../my-package"`), this approach has significant limitations:
+
+- **Different installation behavior**: Local paths don't install the package the same way as remote registries do
+- **Missing dependency resolution**: The local package's own dependencies aren't automatically installed in the consuming project
+- **No build processes**: Pre-publish scripts and build steps are often skipped
+- **Inconsistent testing**: Your local testing environment differs from how the package will actually be consumed in production
+
+This tool solves these issues by using a real npm registry (Verdaccio) locally, ensuring that packages are installed, built, and resolved exactly as they would be when published to the public npm registry.
 
 <details>
 
