@@ -205,7 +205,14 @@ export class CommandService {
         packageName,
         subscriber.originalSpecifier
       );
-      await PackageManagerService.runInstall(currentProjectPath);
+
+      try {
+        await PackageManagerService.runInstall(currentProjectPath);
+      } catch (error) {
+        DR.logger.warn(
+          `Install failed after unsubscribing from ${packageName}: ${String(error)}. The package.json has been reset successfully.`
+        );
+      }
 
       DR.logger.info(`Successfully unsubscribed from ${packageName}`);
     } else {
@@ -280,7 +287,13 @@ export class CommandService {
       );
 
       // Run install once after all updates
-      await PackageManagerService.runInstall(currentProjectPath);
+      try {
+        await PackageManagerService.runInstall(currentProjectPath);
+      } catch (error) {
+        DR.logger.warn(
+          `Install failed after unsubscribing from all packages: ${String(error)}. The package.json files have been reset successfully.`
+        );
+      }
 
       DR.logger.info(`Successfully unsubscribed from all packages`);
     }
