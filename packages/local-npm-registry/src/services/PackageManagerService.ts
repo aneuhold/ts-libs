@@ -1,6 +1,7 @@
 import { DR, type PackageJson } from '@aneuhold/core-ts-lib';
 import { execa } from 'execa';
 import fs from 'fs-extra';
+import yaml from 'js-yaml';
 import path from 'path';
 import { DEFAULT_CONFIG } from '../types/LocalNpmConfig.js';
 import {
@@ -380,61 +381,88 @@ export class PackageManagerService {
     configFile: string
   ): string {
     if (configFile === '.yarnrc.yml') {
-      // For YAML files, merge by checking if content already exists
-      const lines = existingContent.split('\n');
-      const newLines = newConfig
-        .split('\n')
-        .filter((line) => line.trim() !== '');
+      return this.mergeYamlConfig(existingContent, newConfig);
+    }
+    return this.mergeKeyValueConfig(existingContent, newConfig);
+  }
 
-      for (const newLine of newLines) {
-        const [key] = newLine.split(':');
-        const keyTrimmed = key.trim();
+  /**
+   * Merges YAML configuration content using proper YAML parsing.
+   *
+   * @param existingContent The existing YAML content
+   * @param newConfig The new YAML content to merge
+   */
+  private static mergeYamlConfig(
+    existingContent: string,
+    newConfig: string
+  ): string {
+    const existingParsed = yaml.load(existingContent);
+    const newParsed = yaml.load(newConfig);
 
-        if (keyTrimmed) {
-          // Check if this key already exists
-          const existingLineIndex = lines.findIndex((line) =>
-            line.trim().startsWith(keyTrimmed + ':')
-          );
+    const existingData =
+      typeof existingParsed === 'object' && existingParsed !== null
+        ? (existingParsed as Record<string, unknown>)
+        : {};
 
-          if (existingLineIndex >= 0) {
-            // Replace existing line
-            lines[existingLineIndex] = newLine;
-          } else {
-            // Add new line
-            lines.push(newLine);
-          }
-        }
+    const newData =
+      typeof newParsed === 'object' && newParsed !== null
+        ? (newParsed as Record<string, unknown>)
+        : {};
+
+    const mergedData = { ...existingData, ...newData };
+    return yaml.dump(mergedData, { lineWidth: -1 });
+  }
+
+  /**
+   * Merges key-value configuration content (for .npmrc and .yarnrc files).
+   *
+   * @param existingContent The existing key-value content
+   * @param newConfig The new key-value content to merge
+   */
+  private static mergeKeyValueConfig(
+    existingContent: string,
+    newConfig: string
+  ): string {
+    const configMap = new Map<string, string>();
+
+    // Parse existing content into map
+    this.parseKeyValueLines(existingContent, configMap);
+
+    // Parse and merge new content
+    this.parseKeyValueLines(newConfig, configMap);
+
+    // Convert back to string format
+    return Array.from(configMap.values()).join('\n');
+  }
+
+  /**
+   * Parses key-value lines and adds them to the provided map.
+   *
+   * @param content The content to parse
+   * @param configMap The map to store key-value pairs
+   */
+  private static parseKeyValueLines(
+    content: string,
+    configMap: Map<string, string>
+  ): void {
+    const lines = content.split('\n').filter((line) => line.trim() !== '');
+
+    for (const line of lines) {
+      const trimmedLine = line.trim();
+      if (!trimmedLine || trimmedLine.startsWith('#')) {
+        // Preserve comments and empty lines with original content
+        configMap.set(trimmedLine || line, line);
+        continue;
       }
 
-      return lines.join('\n');
-    } else {
-      // For .npmrc and .yarnrc files, merge by checking if lines already exist
-      const existingLines = existingContent.split('\n');
-      const newLines = newConfig
-        .split('\n')
-        .filter((line) => line.trim() !== '');
-
-      for (const newLine of newLines) {
-        const [key] = newLine.split('=');
-        const keyTrimmed = key.trim();
-
-        if (keyTrimmed) {
-          // Check if this key already exists
-          const existingLineIndex = existingLines.findIndex((line) =>
-            line.trim().startsWith(keyTrimmed + '=')
-          );
-
-          if (existingLineIndex >= 0) {
-            // Replace existing line
-            existingLines[existingLineIndex] = newLine;
-          } else {
-            // Add new line
-            existingLines.push(newLine);
-          }
-        }
+      const separatorIndex = trimmedLine.indexOf('=');
+      if (separatorIndex > 0) {
+        const key = trimmedLine.substring(0, separatorIndex).trim();
+        configMap.set(key, line); // Store original line format
+      } else {
+        // Non-key-value line, preserve as-is
+        configMap.set(trimmedLine, line);
       }
-
-      return existingLines.join('\n');
     }
   }
 }
