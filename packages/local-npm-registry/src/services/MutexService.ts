@@ -12,10 +12,10 @@ import lockfile from 'proper-lockfile';
  * the process exits unexpectedly.
  */
 export class MutexService {
-  private static readonly LOCK_FILE_NAME = 'verdaccio-registry';
+  private static readonly LOCK_FILE_NAME = 'verdaccio-lock';
   private static readonly LOCK_DIR = path.join(
-    os.tmpdir(),
-    'local-npm-registry'
+    os.homedir(),
+    '.local-npm-registry'
   );
   private static readonly LOCK_FILE_PATH = path.join(
     MutexService.LOCK_DIR,

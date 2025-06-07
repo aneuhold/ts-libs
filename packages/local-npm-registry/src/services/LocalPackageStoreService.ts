@@ -26,20 +26,12 @@ export type LocalPackageStore = {
   };
 };
 
-const STORE_FILE_NAME = '.local-package-store.json';
+const STORE_FILE_NAME = 'local-package-store.json';
 
 /**
  * Service to manage the local package store.
  */
 export class LocalPackageStoreService {
-  /**
-   * Gets the store file path from configuration.
-   */
-  private static async getStoreFilePath(): Promise<string> {
-    const config = await ConfigService.loadConfig();
-    return path.join(config.storeLocation || process.cwd(), STORE_FILE_NAME);
-  }
-
   /**
    * Reads the local package store from the file system.
    * If the store file does not exist, it returns an empty store.
@@ -154,6 +146,28 @@ export class LocalPackageStoreService {
   }
 
   /**
+   * Clears all packages from the store.
+   */
+  static async clearStore(): Promise<void> {
+    const emptyStore: LocalPackageStore = { packages: {} };
+    await this.writeStore(emptyStore);
+  }
+
+  /**
+   * Gets the store file path from configuration.
+   */
+  private static async getStoreFilePath(): Promise<string> {
+    const config = await ConfigService.loadConfig();
+    const baseDirectory = config.dataDirectory || process.cwd();
+    const storeDirectory = path.join(baseDirectory, '.local-npm-registry');
+
+    // Ensure the directory exists
+    await fs.ensureDir(storeDirectory);
+
+    return path.join(storeDirectory, STORE_FILE_NAME);
+  }
+
+  /**
    * Writes the local package store to the file system.
    *
    * @param store - The store object to write.
@@ -165,13 +179,5 @@ export class LocalPackageStoreService {
     } catch (error) {
       DR.logger.error(`Error writing local package store: ${String(error)}`);
     }
-  }
-
-  /**
-   * Clears all packages from the store.
-   */
-  static async clearStore(): Promise<void> {
-    const emptyStore: LocalPackageStore = { packages: {} };
-    await this.writeStore(emptyStore);
   }
 }

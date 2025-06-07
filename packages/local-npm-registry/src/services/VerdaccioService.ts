@@ -242,7 +242,12 @@ export class VerdaccioService {
   private static createVerdaccioConfig(
     config: LocalNpmConfig
   ): VerdaccioConfig {
-    const storageLocation = config.storeLocation || '~';
+    const baseDirectory = config.dataDirectory || '~';
+    const verdaccioDirectory = path.join(
+      baseDirectory,
+      '.local-npm-registry',
+      'verdaccio'
+    );
     const isVerbose = DR.logger.isVerboseLoggingEnabled();
 
     // Just a partial, because VerdaccioConfig seems to contain unnecessary
@@ -278,7 +283,7 @@ export class VerdaccioService {
       },
       debug: isVerbose,
       // Not quite sure what this impacts, but Verdaccio requires it
-      self_path: path.join(storageLocation, 'verdaccio-self'),
+      self_path: verdaccioDirectory,
       ...config.verdaccioConfig
     };
 
