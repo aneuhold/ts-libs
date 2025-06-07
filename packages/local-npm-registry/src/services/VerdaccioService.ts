@@ -4,7 +4,10 @@ import { execa } from 'execa';
 import http from 'http';
 import path from 'path';
 import { runServer } from 'verdaccio';
-import type { LocalNpmConfig } from '../types/LocalNpmConfig.js';
+import {
+  DEFAULT_CONFIG,
+  type LocalNpmConfig
+} from '../types/LocalNpmConfig.js';
 import {
   PACKAGE_MANAGER_INFO,
   PackageManager
@@ -53,7 +56,7 @@ export class VerdaccioService {
       await MutexService.acquireLock();
 
       const config = await ConfigService.loadConfig();
-      const port = config.registryPort || 4873;
+      const port = config.registryPort || DEFAULT_CONFIG.registryPort;
 
       DR.logger.info(`Starting Verdaccio on port ${port}...`);
 
@@ -133,7 +136,7 @@ export class VerdaccioService {
    */
   static async publishPackage(packagePath: string): Promise<void> {
     const config = await ConfigService.loadConfig();
-    const registryUrl = config.registryUrl || 'http://localhost:4873';
+    const registryUrl = config.registryUrl || DEFAULT_CONFIG.registryUrl;
 
     // Create registry configuration (including .npmrc with auth token) for publishing
     const configBackup = await PackageManagerService.createRegistryConfig(
@@ -203,7 +206,7 @@ export class VerdaccioService {
           DR.logger.info('Verdaccio server created, starting to listen...');
 
           // Get the port from config or use default
-          const port = config.registryPort || 4873;
+          const port = config.registryPort || DEFAULT_CONFIG.registryPort;
 
           // Start listening on the specified port
           verdaccioServer.listen(port, (error?: Error) => {

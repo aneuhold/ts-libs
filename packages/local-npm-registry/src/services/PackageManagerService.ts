@@ -2,6 +2,7 @@ import { DR, type PackageJson } from '@aneuhold/core-ts-lib';
 import { execa } from 'execa';
 import fs from 'fs-extra';
 import path from 'path';
+import { DEFAULT_CONFIG } from '../types/LocalNpmConfig.js';
 import {
   PACKAGE_MANAGER_INFO,
   PackageManager
@@ -107,7 +108,7 @@ export class PackageManagerService {
   ): Promise<void> {
     const config = await ConfigService.loadConfig();
     const actualRegistryUrl =
-      registryUrl || config.registryUrl || 'http://localhost:4873';
+      registryUrl || config.registryUrl || DEFAULT_CONFIG.registryUrl;
 
     // Detect the package manager based on lock files in the target project
     const packageManager =

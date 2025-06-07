@@ -2,6 +2,7 @@ import { DR, PackageJson } from '@aneuhold/core-ts-lib';
 import { execa } from 'execa';
 import fs from 'fs-extra';
 import path from 'path';
+import { DEFAULT_CONFIG } from '../types/LocalNpmConfig.js';
 import { ConfigService } from './ConfigService.js';
 import { LocalPackageStoreService } from './LocalPackageStoreService.js';
 import {
@@ -20,7 +21,7 @@ export class LocalPackageInstallService {
    */
   async installLocalPackage(packageName: string): Promise<void> {
     const config = await ConfigService.loadConfig();
-    const registryUrl = config.registryUrl || 'http://localhost:4873';
+    const registryUrl = config.registryUrl || DEFAULT_CONFIG.registryUrl;
     const projectPath = process.cwd();
     const packageManager =
       await PackageManagerService.detectPackageManager(projectPath);
@@ -109,7 +110,7 @@ export class LocalPackageInstallService {
    */
   async updateLocalPackage(packageName: string): Promise<void> {
     const config = await ConfigService.loadConfig();
-    const registryUrl = config.registryUrl || 'http://localhost:4873';
+    const registryUrl = config.registryUrl || DEFAULT_CONFIG.registryUrl;
     const projectPath = process.cwd();
     const packageManager =
       await PackageManagerService.detectPackageManager(projectPath);
