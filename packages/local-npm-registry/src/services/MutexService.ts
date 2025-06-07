@@ -3,6 +3,7 @@ import fs from 'fs-extra';
 import os from 'os';
 import path from 'path';
 import lockfile from 'proper-lockfile';
+import { ConfigService } from './ConfigService.js';
 
 /**
  * Service to manage system-wide mutex locks for Verdaccio registry instances.
@@ -13,14 +14,6 @@ import lockfile from 'proper-lockfile';
  */
 export class MutexService {
   private static readonly LOCK_FILE_NAME = 'verdaccio-lock';
-  private static readonly LOCK_DIR = path.join(
-    os.homedir(),
-    '.local-npm-registry'
-  );
-  private static readonly LOCK_FILE_PATH = path.join(
-    MutexService.LOCK_DIR,
-    MutexService.LOCK_FILE_NAME
-  );
   /**
    * Default timeout for acquiring the lock in milliseconds.
    */
@@ -49,23 +42,22 @@ export class MutexService {
       // Ensure lock directory exists
       await MutexService.ensureLockFileExists();
 
+      const lockFilePath = await MutexService.getLockFilePath();
+
       // Use proper-lockfile's built-in retry mechanism
-      MutexService.lockRelease = await lockfile.lock(
-        MutexService.LOCK_FILE_PATH,
-        {
-          // Stale lock timeout - if a process crashes, the lock will be considered stale
-          // after this time.
-          stale: timeoutMs,
-          // Use built-in retry mechanism with custom options
-          retries: {
-            retries: Math.floor(timeoutMs / MutexService.LOCK_CHECK_TIMEOUT), // Retry for the duration of timeout
-            factor: 1, // No exponential backoff
-            minTimeout: MutexService.LOCK_CHECK_TIMEOUT, // Wait between retries
-            maxTimeout: MutexService.LOCK_CHECK_TIMEOUT, // Keep constant interval
-            randomize: false // No jitter
-          }
+      MutexService.lockRelease = await lockfile.lock(lockFilePath, {
+        // Stale lock timeout - if a process crashes, the lock will be considered stale
+        // after this time.
+        stale: timeoutMs,
+        // Use built-in retry mechanism with custom options
+        retries: {
+          retries: Math.floor(timeoutMs / MutexService.LOCK_CHECK_TIMEOUT), // Retry for the duration of timeout
+          factor: 1, // No exponential backoff
+          minTimeout: MutexService.LOCK_CHECK_TIMEOUT, // Wait between retries
+          maxTimeout: MutexService.LOCK_CHECK_TIMEOUT, // Keep constant interval
+          randomize: false // No jitter
         }
-      );
+      });
 
       DR.logger.info('Successfully acquired Verdaccio mutex lock');
     } catch (error) {
@@ -103,7 +95,8 @@ export class MutexService {
     try {
       // Ensure lock directory exists before checking
       await MutexService.ensureLockFileExists();
-      const result = await lockfile.check(MutexService.LOCK_FILE_PATH);
+      const lockFilePath = await MutexService.getLockFilePath();
+      const result = await lockfile.check(lockFilePath);
       return result;
     } catch {
       // If file doesn't exist or other error, assume not locked
@@ -125,14 +118,16 @@ export class MutexService {
 
     try {
       DR.logger.warn('Force releasing Verdaccio mutex lock...');
-      await lockfile.unlock(MutexService.LOCK_FILE_PATH);
+      const lockFilePath = await MutexService.getLockFilePath();
+      await lockfile.unlock(lockFilePath);
       MutexService.lockRelease = null;
       DR.logger.info('Successfully force released Verdaccio mutex lock');
     } catch (error) {
       // If lockfile.unlock fails, try to manually remove the lock file
       try {
-        const lockFilePath = `${MutexService.LOCK_FILE_PATH}.lock`;
-        await fs.remove(lockFilePath);
+        const lockFilePath = await MutexService.getLockFilePath();
+        const lockFileWithExt = `${lockFilePath}.lock`;
+        await fs.remove(lockFileWithExt);
         MutexService.lockRelease = null;
         DR.logger.info(
           'Successfully manually removed Verdaccio mutex lock file'
@@ -150,10 +145,29 @@ export class MutexService {
    */
   private static async ensureLockFileExists(): Promise<void> {
     // Ensure the directory exists
-    await fs.ensureDir(MutexService.LOCK_DIR);
+    const lockDir = await MutexService.getLockDir();
+    await fs.ensureDir(lockDir);
 
     // Ensure the lock file exists (proper-lockfile requires the file to exist)
     // This creates an empty file if it doesn't exist, or does nothing if it already exists
-    await fs.ensureFile(MutexService.LOCK_FILE_PATH);
+    const lockFilePath = await MutexService.getLockFilePath();
+    await fs.ensureFile(lockFilePath);
+  }
+
+  /**
+   * Gets the lock directory path from configuration.
+   */
+  private static async getLockDir(): Promise<string> {
+    const config = await ConfigService.loadConfig();
+    const baseDirectory = config.dataDirectory || os.homedir();
+    return path.join(baseDirectory, '.local-npm-registry');
+  }
+
+  /**
+   * Gets the lock file path from configuration.
+   */
+  private static async getLockFilePath(): Promise<string> {
+    const lockDir = await this.getLockDir();
+    return path.join(lockDir, this.LOCK_FILE_NAME);
   }
 }

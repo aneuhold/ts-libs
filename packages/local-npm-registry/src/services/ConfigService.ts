@@ -73,11 +73,9 @@ export class ConfigService {
   static async createDefaultConfig(directory: string): Promise<string> {
     const configPath = `${directory}/${CONFIG_FILE_NAME}`;
     const defaultConfig: LocalNpmConfig = {
-      storeLocation: directory,
-      registryPort: 4873,
-      registryUrl: 'http://localhost:4873',
-      verdaccioConfig: {}
+      ...DEFAULT_CONFIG
     };
+    defaultConfig.dataDirectory = directory;
 
     await fs.writeJson(configPath, defaultConfig, { spaces: 2 });
     return configPath;
