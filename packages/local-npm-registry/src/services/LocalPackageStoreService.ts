@@ -146,6 +146,31 @@ export class LocalPackageStoreService {
   }
 
   /**
+   * Removes packages from the store that match a given pattern.
+   *
+   * @param pattern - Regular expression pattern to match package names
+   */
+  static async removePackagesByPattern(pattern: RegExp): Promise<string[]> {
+    const store = await this.getStore();
+    const packageNames = Object.keys(store.packages);
+    const matchedPackages: string[] = [];
+
+    for (const packageName of packageNames) {
+      if (pattern.test(packageName)) {
+        matchedPackages.push(packageName);
+        // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+        delete store.packages[packageName];
+      }
+    }
+
+    if (matchedPackages.length > 0) {
+      await this.writeStore(store);
+    }
+
+    return matchedPackages;
+  }
+
+  /**
    * Clears all packages from the store.
    */
   static async clearStore(): Promise<void> {

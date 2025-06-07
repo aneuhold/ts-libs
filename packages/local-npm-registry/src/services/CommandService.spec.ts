@@ -46,6 +46,8 @@ describe('Integration Tests', () => {
 
   afterAll(async () => {
     await TestProjectUtils.cleanupGlobalTempDir();
+    const testPackagePattern = /^@test-[a-fA-F0-9]{8}\//;
+    await LocalPackageStoreService.removePackagesByPattern(testPackagePattern);
   });
 
   // Per-test setup/teardown for unique test instances
