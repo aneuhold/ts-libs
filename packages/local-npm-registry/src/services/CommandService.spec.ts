@@ -375,7 +375,7 @@ describe('Integration Tests', () => {
       const subscriberPath = await TestProjectUtils.createSubscriberProject(
         `@test-${testId}/new-subscriber`,
         `@test-${testId}/subscribe-target`,
-        '1.0.0'
+        '^1.0.0'
       );
 
       // Subscribe from subscriber directory
@@ -388,7 +388,9 @@ describe('Integration Tests', () => {
       );
       expect(
         packageEntry?.subscribers.some(
-          (s) => s.subscriberPath === subscriberPath
+          (s) =>
+            s.subscriberPath === subscriberPath &&
+            s.originalSpecifier === '^1.0.0'
         )
       ).toBe(true);
     });
