@@ -361,14 +361,24 @@ export class CommandService {
 
   /**
    * Generates a timestamp version by appending current timestamp to the original version.
+   * If the version already contains a timestamp, it replaces the existing timestamp.
    *
-   * @param originalVersion - The original version string
+   * @param originalVersion - The original version string (may already contain a timestamp)
    */
   private static generateTimestampVersion(originalVersion: string): string {
     const timestamp = new Date()
       .toISOString()
       .replace(/[-:T.]/g, '')
       .slice(0, 17); // Include milliseconds (YYYYMMDDHHMMssSSS)
+
+    // Check if the version already has a timestamp suffix (format: -YYYYMMDDHHMMssSSS)
+    const timestampPattern = /-\d{17}$/;
+    if (timestampPattern.test(originalVersion)) {
+      // Replace existing timestamp with new one
+      return originalVersion.replace(timestampPattern, `-${timestamp}`);
+    }
+
+    // No existing timestamp, append new one
     return `${originalVersion}-${timestamp}`;
   }
 
