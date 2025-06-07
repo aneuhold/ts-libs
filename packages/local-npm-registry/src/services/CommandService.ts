@@ -3,6 +3,7 @@ import fs from 'fs-extra';
 import path from 'path';
 import {
   LocalPackageStoreService,
+  timestampPattern,
   type PackageEntry
 } from './LocalPackageStoreService.js';
 import { PackageManagerService } from './PackageManagerService.js';
@@ -16,7 +17,7 @@ export class CommandService {
    * Implements the 'local-npm publish' command.
    */
   static async publish(): Promise<void> {
-    const packageInfo = await this.getPackageInfo();
+    const packageInfo = await PackageManagerService.getPackageInfo();
     if (!packageInfo) {
       throw new Error('No package.json found in current directory');
     }
@@ -95,7 +96,7 @@ export class CommandService {
     if (packageName) {
       targetPackageName = packageName;
     } else {
-      const packageInfo = await this.getPackageInfo();
+      const packageInfo = await PackageManagerService.getPackageInfo();
       if (!packageInfo) {
         throw new Error(
           'No package.json found in current directory and no package name provided'
@@ -371,8 +372,6 @@ export class CommandService {
       .replace(/[-:T.]/g, '')
       .slice(0, 17); // Include milliseconds (YYYYMMDDHHMMssSSS)
 
-    // Check if the version already has a timestamp suffix (format: -YYYYMMDDHHMMssSSS)
-    const timestampPattern = /-\d{17}$/;
     if (timestampPattern.test(originalVersion)) {
       // Replace existing timestamp with new one
       return originalVersion.replace(timestampPattern, `-${timestamp}`);
@@ -380,32 +379,6 @@ export class CommandService {
 
     // No existing timestamp, append new one
     return `${originalVersion}-${timestamp}`;
-  }
-
-  /**
-   * Reads the package.json file in the current directory.
-   *
-   * @param dir - Directory to search for package.json
-   */
-  private static async getPackageInfo(
-    dir: string = process.cwd()
-  ): Promise<PackageJson | null> {
-    try {
-      const packageJsonPath = path.join(dir, 'package.json');
-      const packageJson = (await fs.readJson(packageJsonPath)) as PackageJson;
-
-      if (!packageJson.name || !packageJson.version) {
-        throw new Error('package.json must contain name and version fields');
-      }
-
-      return {
-        name: packageJson.name,
-        version: packageJson.version
-      };
-    } catch (error) {
-      DR.logger.error(`Error reading package.json: ${String(error)}`);
-      return null;
-    }
   }
 
   /**
