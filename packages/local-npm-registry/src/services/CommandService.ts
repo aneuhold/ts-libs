@@ -4,7 +4,8 @@ import path from 'path';
 import {
   LocalPackageStoreService,
   timestampPattern,
-  type PackageEntry
+  type PackageEntry,
+  type PackageSubscriber
 } from './LocalPackageStoreService.js';
 import { PackageManagerService } from './PackageManagerService.js';
 import { VerdaccioService } from './VerdaccioService.js';
@@ -75,6 +76,17 @@ export class CommandService {
 
     const currentProjectPath = process.cwd();
 
+    // Get the current specifier from package.json to save as original
+    const originalSpecifier = await PackageManagerService.getCurrentSpecifier(
+      currentProjectPath,
+      packageName
+    );
+    if (!originalSpecifier) {
+      throw new Error(
+        `Package '${packageName}' not found in current project's dependencies. Please add it to package.json first.`
+      );
+    }
+
     // Start Verdaccio server
     await VerdaccioService.start();
 
@@ -84,7 +96,7 @@ export class CommandService {
       entry.packageRootPath,
       entry.originalVersion,
       entry.subscribers,
-      currentProjectPath
+      { subscriberPath: currentProjectPath, originalSpecifier }
     );
 
     await VerdaccioService.stop();
@@ -126,17 +138,19 @@ export class CommandService {
         `Resetting ${entry.subscribers.length} subscriber(s) to original version`
       );
 
-      for (const subscriberPath of entry.subscribers) {
+      for (const subscriber of entry.subscribers) {
         try {
           await this.updatePackageJsonVersion(
-            subscriberPath,
+            subscriber.subscriberPath,
             targetPackageName,
-            entry.originalVersion
+            subscriber.originalSpecifier
           );
-          await PackageManagerService.runInstallWithRegistry(subscriberPath);
+          await PackageManagerService.runInstallWithRegistry(
+            subscriber.subscriberPath
+          );
         } catch (error) {
           DR.logger.error(
-            `Failed to reset subscriber ${subscriberPath}: ${String(error)}`
+            `Failed to reset subscriber ${subscriber.subscriberPath}: ${String(error)}`
           );
         }
       }
@@ -174,8 +188,11 @@ export class CommandService {
         throw new Error(`Package '${packageName}' not found in local registry`);
       }
 
-      if (!entry.subscribers.includes(currentProjectPath)) {
-        throw new Error(`Current project is not subscribed to ${packageName}`);
+      const subscriber = entry.subscribers.find(
+        (sub) => sub.subscriberPath === currentProjectPath
+      );
+      if (!subscriber) {
+        throw new Error(`Subscriber data not found for ${packageName}`);
       }
 
       // Remove current project from subscribers list
@@ -188,7 +205,7 @@ export class CommandService {
       await this.updatePackageJsonVersion(
         currentProjectPath,
         packageName,
-        entry.originalVersion
+        subscriber.originalSpecifier
       );
       await PackageManagerService.runInstallWithRegistry(currentProjectPath);
 
@@ -214,17 +231,29 @@ export class CommandService {
         try {
           const entry = await LocalPackageStoreService.getPackageEntry(pkgName);
           if (entry) {
+            // Find the subscriber to get their original specifier
+            const subscriber = entry.subscribers.find(
+              (sub) => sub.subscriberPath === currentProjectPath
+            );
+            if (!subscriber) {
+              return {
+                packageName: pkgName,
+                success: false,
+                error: 'Subscriber data not found'
+              };
+            }
+
             // Remove current project from subscribers list
             await LocalPackageStoreService.removeSubscriber(
               pkgName,
               currentProjectPath
             );
 
-            // Reset to original version
+            // Reset to original version using subscriber's original specifier
             await this.updatePackageJsonVersion(
               currentProjectPath,
               pkgName,
-              entry.originalVersion
+              subscriber.originalSpecifier
             );
 
             return { packageName: pkgName, success: true };
@@ -298,11 +327,11 @@ export class CommandService {
           `  Adding ${entry.subscribers.length} subscriber reset operation(s)`
         );
 
-        for (const subscriberPath of entry.subscribers) {
+        for (const subscriber of entry.subscribers) {
           resetOperations.push({
-            subscriberPath,
+            subscriberPath: subscriber.subscriberPath,
             packageName,
-            originalVersion: entry.originalVersion
+            originalVersion: subscriber.originalSpecifier
           });
         }
       }
@@ -448,8 +477,8 @@ export class CommandService {
     packageName: string,
     packageRootPath: string,
     originalVersion: string,
-    existingSubscribers: string[] = [],
-    additionalSubscriber?: string
+    existingSubscribers: PackageSubscriber[] = [],
+    additionalSubscriber?: PackageSubscriber
   ): Promise<string> {
     // Generate fresh timestamp version
     const timestampVersion = this.generateTimestampVersion(originalVersion);
@@ -491,23 +520,29 @@ export class CommandService {
       if (entry.subscribers.length > 0) {
         DR.logger.info(`Updating ${entry.subscribers.length} subscriber(s)`);
 
-        const updatePromises = entry.subscribers.map(async (subscriberPath) => {
+        const updatePromises = entry.subscribers.map(async (subscriber) => {
           try {
             await this.updatePackageJsonVersion(
-              subscriberPath,
+              subscriber.subscriberPath,
               packageName,
               timestampVersion
             );
-            await PackageManagerService.runInstallWithRegistry(subscriberPath);
-            DR.logger.info(
-              `Successfully updated subscriber: ${subscriberPath}`
+            await PackageManagerService.runInstallWithRegistry(
+              subscriber.subscriberPath
             );
-            return { subscriberPath, success: true };
+            DR.logger.info(
+              `Successfully updated subscriber: ${subscriber.subscriberPath}`
+            );
+            return { subscriberPath: subscriber.subscriberPath, success: true };
           } catch (error) {
             DR.logger.error(
-              `Failed to update subscriber ${subscriberPath}: ${String(error)}`
+              `Failed to update subscriber ${subscriber.subscriberPath}: ${String(error)}`
             );
-            return { subscriberPath, success: false, error };
+            return {
+              subscriberPath: subscriber.subscriberPath,
+              success: false,
+              error
+            };
           }
         });
 
