@@ -1,8 +1,10 @@
 import { DR, FileSystemService } from '@aneuhold/core-ts-lib';
 import fs from 'fs-extra';
+import path from 'path';
 import { DEFAULT_CONFIG, LocalNpmConfig } from '../types/LocalNpmConfig.js';
 
 const CONFIG_FILE_NAME = '.local-npm-registry.json';
+export const DATA_DIRECTORY_NAME = '.local-npm-registry';
 
 let cachedConfig: LocalNpmConfig | null = null;
 let configFilePath: string | null = null;
@@ -79,5 +81,17 @@ export class ConfigService {
 
     await fs.writeJson(configPath, defaultConfig, { spaces: 2 });
     return configPath;
+  }
+
+  /**
+   * Gets the path to the data directory where local-npm-registry stores its data.
+   * This is typically a subdirectory of the configured data directory.
+   *
+   * @returns The full path to the data directory.
+   */
+  static async getDataDirectoryPath(): Promise<string> {
+    const config = await ConfigService.loadConfig();
+    const baseDirectory = config.dataDirectory || DEFAULT_CONFIG.dataDirectory;
+    return path.join(baseDirectory, DATA_DIRECTORY_NAME);
   }
 }

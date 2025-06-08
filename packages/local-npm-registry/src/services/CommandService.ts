@@ -166,6 +166,9 @@ export class CommandService {
     // Remove package from local store
     await LocalPackageStoreService.removePackage(targetPackageName);
 
+    // Unpublish from Verdaccio
+    await VerdaccioService.unpublishPackage(targetPackageName);
+
     DR.logger.info(
       `Successfully unpublished ${targetPackageName} and reset all subscribers`
     );

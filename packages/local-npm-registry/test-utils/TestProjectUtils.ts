@@ -26,11 +26,6 @@ import {
  * ```txt
  * local-npm-registry/
  * └── tmp/                                    (Global temp directory)
- *     ├── .local-npm-registry.json           (Test-specific config file)
- *     ├── .local-package-store.json          (Isolated package store)
- *     ├── verdaccio-storage/                  (Verdaccio package storage)
- *     │   └── [packages published during tests]
- *     ├── verdaccio-self/                     (Verdaccio internal files)
  *     └── {test-instance-uuid}/              (Unique directory per test)
  *         └── [test packages created by individual tests]
  * ```
