@@ -2,7 +2,7 @@
   "name": "@aneuhold/local-npm-registry",
   "author": "Anton G. Neuhold Jr.",
   "license": "MIT",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "Manages local npm package installations and updates across your machine.",
   "packageManager": "pnpm@10.11.1",
   "type": "module",
@@ -48,8 +48,7 @@
     "js-yaml": "^4.1.0",
     "proper-lockfile": "^4.1.2",
     "semver": "^7.6.3",
-    "verdaccio": "^6.1.2",
-    "verdaccio-memory": "^10.3.2"
+    "verdaccio": "^6.1.2"
   },
   "devDependencies": {
     "@aneuhold/main-scripts": "^2.3.0",
