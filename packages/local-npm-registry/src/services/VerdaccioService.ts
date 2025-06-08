@@ -56,11 +56,7 @@ export class VerdaccioService {
    * This must be called before any npm publish commands can work.
    */
   static async start(): Promise<void> {
-    // Setup the Verdaccio configuration if not already done
-    if (!this._verdaccioConfig) {
-      const config = await ConfigService.loadConfig();
-      this._verdaccioConfig = await this.createVerdaccioConfig(config);
-    }
+    await this.loadVerdaccioConfig();
 
     if (this.isStarting) {
       DR.logger.info('Verdaccio is already starting...');
@@ -226,6 +222,19 @@ export class VerdaccioService {
   }
 
   /**
+   * Unpublishes a package from the local Verdaccio registry.
+   * This removes the package from the local Verdaccio storage.
+   *
+   * @param packageName - The name of the package to unpublish
+   */
+  static async unpublishPackage(packageName: string): Promise<void> {
+    // Ensure the config is created
+    await this.loadVerdaccioConfig();
+
+    await this.clearPublishedPackagesLocally(packageName);
+  }
+
+  /**
    * Starts Verdaccio using the runServer function.
    * Verdaccio will automatically stop when the process exits.
    *
@@ -332,6 +341,13 @@ export class VerdaccioService {
         `Failed to clear package "${packageName}" locally: ${String(error)}`
       );
       throw error;
+    }
+  }
+
+  private static async loadVerdaccioConfig(): Promise<void> {
+    const config = await ConfigService.loadConfig();
+    if (!this._verdaccioConfig) {
+      this._verdaccioConfig = await this.createVerdaccioConfig(config);
     }
   }
 
