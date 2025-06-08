@@ -204,9 +204,7 @@ export class LocalPackageStoreService {
    * Gets the store file path from configuration.
    */
   private static async getStoreFilePath(): Promise<string> {
-    const config = await ConfigService.loadConfig();
-    const baseDirectory = config.dataDirectory || process.cwd();
-    const storeDirectory = path.join(baseDirectory, '.local-npm-registry');
+    const storeDirectory = await ConfigService.getDataDirectoryPath();
 
     // Ensure the directory exists
     await fs.ensureDir(storeDirectory);

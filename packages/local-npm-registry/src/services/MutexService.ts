@@ -1,6 +1,5 @@
 import { DR } from '@aneuhold/core-ts-lib';
 import fs from 'fs-extra';
-import os from 'os';
 import path from 'path';
 import lockfile from 'proper-lockfile';
 import { ConfigService } from './ConfigService.js';
@@ -158,9 +157,7 @@ export class MutexService {
    * Gets the lock directory path from configuration.
    */
   private static async getLockDir(): Promise<string> {
-    const config = await ConfigService.loadConfig();
-    const baseDirectory = config.dataDirectory || os.homedir();
-    return path.join(baseDirectory, '.local-npm-registry');
+    return await ConfigService.getDataDirectoryPath();
   }
 
   /**

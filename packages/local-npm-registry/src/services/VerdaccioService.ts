@@ -1,6 +1,7 @@
 import { DR } from '@aneuhold/core-ts-lib';
 import type { Config as VerdaccioConfig } from '@verdaccio/types';
 import { execa } from 'execa';
+import fs from 'fs-extra';
 import http from 'http';
 import path from 'path';
 import { runServer } from 'verdaccio';
@@ -12,6 +13,10 @@ import {
   PACKAGE_MANAGER_INFO,
   PackageManager
 } from '../types/PackageManager.js';
+import {
+  VERDACCIO_DB_FILE_NAME,
+  type VerdaccioDb
+} from '../types/VerdaccioDb.js';
 import { ConfigService } from './ConfigService.js';
 import { MutexService } from './MutexService.js';
 import { PackageManagerService } from './PackageManagerService.js';
@@ -27,18 +32,36 @@ const verdaccioRunServer = runServer as unknown as (
   config: VerdaccioConfig
 ) => Promise<http.Server>;
 
+type StrictVerdaccioConfig = VerdaccioConfig & {
+  storage: string; // Ensure storage is always a string
+};
+
 /**
  * Service to manage the local Verdaccio registry.
  */
 export class VerdaccioService {
   private static verdaccioServer: http.Server | null = null;
   private static isStarting = false;
+  private static _verdaccioConfig: StrictVerdaccioConfig | null = null;
+
+  static get verdaccioConfig(): StrictVerdaccioConfig {
+    if (!this._verdaccioConfig) {
+      throw new Error('Verdaccio configuration not initialized');
+    }
+    return this._verdaccioConfig;
+  }
 
   /**
    * Starts the Verdaccio registry server.
    * This must be called before any npm publish commands can work.
    */
   static async start(): Promise<void> {
+    // Setup the Verdaccio configuration if not already done
+    if (!this._verdaccioConfig) {
+      const config = await ConfigService.loadConfig();
+      this._verdaccioConfig = await this.createVerdaccioConfig(config);
+    }
+
     if (this.isStarting) {
       DR.logger.info('Verdaccio is already starting...');
       return;
@@ -150,6 +173,17 @@ export class VerdaccioService {
         throw new Error('Verdaccio server is not running. Call start() first.');
       }
 
+      const packageJson =
+        await PackageManagerService.getPackageInfo(packagePath);
+      if (!packageJson || !packageJson.name) {
+        throw new Error(
+          `No valid package.json found in ${packagePath}. Ensure it contains a valid "name" field.`
+        );
+      }
+
+      // Clear any previously published package with the same name
+      await VerdaccioService.clearPublishedPackagesLocally(packageJson.name);
+
       DR.logger.info(
         `Publishing package from ${packagePath} to ${registryUrl}...`
       );
@@ -199,7 +233,7 @@ export class VerdaccioService {
    */
   private static async startVerdaccio(config: LocalNpmConfig): Promise<void> {
     return new Promise((resolve, reject) => {
-      verdaccioRunServer(VerdaccioService.createVerdaccioConfig(config))
+      verdaccioRunServer(this.verdaccioConfig)
         .then((verdaccioServer: http.Server) => {
           VerdaccioService.verdaccioServer = verdaccioServer;
 
@@ -238,30 +272,86 @@ export class VerdaccioService {
   }
 
   /**
+   * Clears a specific published package from the local Verdaccio storage.
+   * This removes the package from the .verdaccio-db.json file and deletes
+   * the package folder from the verdaccio directory.
+   *
+   * @param packageName - The name of the package to clear from local storage
+   */
+  private static async clearPublishedPackagesLocally(
+    packageName: string
+  ): Promise<void> {
+    try {
+      const dbFilePath = path.join(
+        this.verdaccioConfig.storage,
+        VERDACCIO_DB_FILE_NAME
+      );
+
+      DR.logger.info(`Clearing package "${packageName}" locally...`);
+
+      // Check if the database file exists
+      if (await fs.pathExists(dbFilePath)) {
+        // Read the current database
+        const dbContent = (await fs.readJson(dbFilePath)) as VerdaccioDb;
+
+        // Remove the specific package from the list
+        if (dbContent.list.includes(packageName)) {
+          dbContent.list = dbContent.list.filter((pkg) => pkg !== packageName);
+          DR.logger.info(`Removed "${packageName}" from verdaccio database`);
+
+          // Write the updated database back
+          await fs.writeJson(dbFilePath, dbContent);
+        } else {
+          DR.logger.info(
+            `Package "${packageName}" not found in verdaccio database`
+          );
+        }
+      }
+
+      // Remove the specific package directory from verdaccio storage
+      const packagePath = path.join(
+        this.verdaccioConfig.storage,
+        ...packageName.split('/')
+      );
+      if (await fs.pathExists(packagePath)) {
+        const stat = await fs.stat(packagePath).catch(() => null);
+
+        if (stat?.isDirectory()) {
+          await fs.remove(packagePath);
+          DR.logger.info(`Removed package directory: ${packageName}`);
+        }
+      } else {
+        DR.logger.info(
+          `Package directory "${packageName}" not found in verdaccio storage`
+        );
+      }
+
+      DR.logger.info(`Successfully cleared package "${packageName}" locally`);
+    } catch (error) {
+      DR.logger.error(
+        `Failed to clear package "${packageName}" locally: ${String(error)}`
+      );
+      throw error;
+    }
+  }
+
+  /**
    * Creates a basic Verdaccio configuration object.
    *
    * @param config - The local npm configuration
    */
-  private static createVerdaccioConfig(
+  private static async createVerdaccioConfig(
     config: LocalNpmConfig
-  ): VerdaccioConfig {
-    const baseDirectory = config.dataDirectory || '~';
-    const verdaccioDirectory = path.join(
-      baseDirectory,
-      '.local-npm-registry',
-      'verdaccio'
-    );
+  ): Promise<StrictVerdaccioConfig> {
+    const dataDirectoryPath = await ConfigService.getDataDirectoryPath();
+    const verdaccioDirectory = path.join(dataDirectoryPath, 'verdaccio');
     const isVerbose = DR.logger.isVerboseLoggingEnabled();
 
     // Just a partial, because VerdaccioConfig seems to contain unnecessary
     // required properties that we don't need to set.
-    const verdaccioConfig: Partial<VerdaccioConfig> = {
-      // Use in-memory storage to avoid conflicts between runs
-      store: {
-        memory: {
-          limit: 1000
-        }
-      },
+    const verdaccioConfig: Partial<StrictVerdaccioConfig> = {
+      // Storage is managed manually by local-npm-registry.
+      storage: verdaccioDirectory,
       uplinks: {
         npmjs: {
           url: 'https://registry.npmjs.org/'
@@ -290,6 +380,6 @@ export class VerdaccioService {
       ...config.verdaccioConfig
     };
 
-    return verdaccioConfig as VerdaccioConfig;
+    return verdaccioConfig as StrictVerdaccioConfig;
   }
 }
