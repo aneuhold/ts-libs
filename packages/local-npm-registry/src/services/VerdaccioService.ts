@@ -189,7 +189,14 @@ export class VerdaccioService {
       const npmInfo = PACKAGE_MANAGER_INFO[PackageManager.Npm];
       const result = await execa(
         npmInfo.command,
-        ['publish', '--registry', registryUrl, '--tag', 'local'],
+        [
+          'publish',
+          '--registry',
+          registryUrl,
+          '--tag',
+          'local',
+          '--ignore-scripts'
+        ],
         {
           cwd: packagePath,
           stdio: 'pipe'
