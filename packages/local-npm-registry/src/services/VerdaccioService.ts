@@ -157,13 +157,6 @@ export class VerdaccioService {
     const config = await ConfigService.loadConfig();
     const registryUrl = config.registryUrl || DEFAULT_CONFIG.registryUrl;
 
-    // Create registry configuration (including .npmrc with auth token) for publishing
-    const configBackup = await PackageManagerService.createRegistryConfig(
-      PackageManager.Npm,
-      registryUrl,
-      packagePath
-    );
-
     try {
       if (!VerdaccioService.verdaccioServer) {
         throw new Error('Verdaccio server is not running. Call start() first.');
@@ -184,24 +177,14 @@ export class VerdaccioService {
         `Publishing package from ${packagePath} to ${registryUrl}...`
       );
 
-      // Use npm publish with the local registry. Also set the tag to 'local'.
-      // A tag is required for NPM to publish pre-release versions.
+      // Build npm publish arguments with direct registry and auth config
+      const publishArgs = this.buildPublishArgs(packageJson.name, registryUrl);
+
       const npmInfo = PACKAGE_MANAGER_INFO[PackageManager.Npm];
-      const result = await execa(
-        npmInfo.command,
-        [
-          'publish',
-          '--registry',
-          registryUrl,
-          '--tag',
-          'local',
-          '--ignore-scripts'
-        ],
-        {
-          cwd: packagePath,
-          stdio: 'pipe'
-        }
-      );
+      const result = await execa(npmInfo.command, publishArgs, {
+        cwd: packagePath,
+        stdio: 'pipe'
+      });
 
       DR.logger.info('Package published successfully');
       if (result.stdout) {
@@ -222,9 +205,6 @@ export class VerdaccioService {
 
       DR.logger.error(`Failed to publish package: ${errorMessage}`);
       throw error;
-    } finally {
-      // Always restore original configuration
-      await PackageManagerService.restoreRegistryConfig(configBackup);
     }
   }
 
@@ -404,5 +384,39 @@ export class VerdaccioService {
     };
 
     return verdaccioConfig as StrictVerdaccioConfig;
+  }
+
+  /**
+   * Builds npm publish arguments with direct registry and auth token configuration.
+   *
+   * @param packageName - The name of the package being published
+   * @param registryUrl - The registry URL to publish to
+   */
+  private static buildPublishArgs(
+    packageName: string,
+    registryUrl: string
+  ): string[] {
+    const args = ['publish'];
+
+    // Extract organization from package name (e.g., @aneuhold/package -> aneuhold)
+    const orgMatch = packageName.match(/^@([^/]+)\//);
+
+    if (orgMatch) {
+      // Scoped package: use --@org:registry format
+      const org = orgMatch[1];
+      args.push(`--@${org}:registry=${registryUrl}`);
+    } else {
+      // Non-scoped package: use --registry format
+      args.push(`--registry=${registryUrl}`);
+    }
+
+    // Add auth token for the registry
+    const registryHost = registryUrl.replace(/^https?:\/\//, '');
+    args.push(`--//${registryHost}/:_authToken=fake`);
+
+    // Add other standard arguments
+    args.push('--tag', 'local', '--ignore-scripts');
+
+    return args;
   }
 }

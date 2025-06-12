@@ -213,14 +213,6 @@ export class PackageManagerService {
 
     await fs.writeFile(configPath, finalConfigContent);
 
-    // Handle .npmrc file for authentication token
-    await this.createOrUpdateNpmrcAuth(
-      projectPath,
-      registryUrl,
-      packageManagerInfo.configFile,
-      backup
-    );
-
     return backup;
   }
 
@@ -361,52 +353,6 @@ export class PackageManagerService {
 
     // Default to npm if no lock file is found
     return PackageManager.Npm;
-  }
-
-  /**
-   * Creates or updates the .npmrc file with authentication token for the registry.
-   *
-   * @param projectPath The path to the project directory
-   * @param registryUrl The registry URL
-   * @param configFile The config file being used by the package manager
-   * @param backup The backup object to store .npmrc backup if needed
-   */
-  private static async createOrUpdateNpmrcAuth(
-    projectPath: string,
-    registryUrl: string,
-    configFile: string,
-    backup: PackageManagerConfigBackup
-  ): Promise<void> {
-    // Always create/update .npmrc file with authentication token
-    const npmrcPath = path.join(projectPath, '.npmrc');
-    const existingNpmrcContent = (await fs.pathExists(npmrcPath))
-      ? await fs.readFile(npmrcPath, 'utf8')
-      : null;
-
-    // Only backup .npmrc if we haven't already backed it up above
-    if (configFile !== '.npmrc') {
-      backup.npmrc = { path: npmrcPath, content: existingNpmrcContent };
-    }
-
-    // Create the auth token line for .npmrc
-    const url = registryUrl.replace('http://', '');
-    const authTokenLine = `//${url}/:_authToken=fake #local-npm-registry`;
-
-    // Create or update .npmrc content using merge logic
-    let npmrcContent = existingNpmrcContent || '';
-
-    // Use the same merge logic as the main config files
-    if (npmrcContent.trim() === '') {
-      npmrcContent = authTokenLine;
-    } else {
-      npmrcContent = this.mergeConfigContent(
-        npmrcContent,
-        authTokenLine,
-        '.npmrc'
-      );
-    }
-
-    await fs.writeFile(npmrcPath, npmrcContent);
   }
 
   /**
