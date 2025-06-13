@@ -392,7 +392,7 @@ describe('Integration Tests', () => {
         await TestProjectUtils.readPackageJson(subscriber2Path);
 
       const versionPattern = new RegExp(
-        `^${version.replace(/\./g, '\\.')}-\\d{17}$`
+        `^\\^?${version.replace(/\./g, '\\.')}-\\d{17}$`
       );
       expect(
         subscriber1PackageJson.dependencies?.[
