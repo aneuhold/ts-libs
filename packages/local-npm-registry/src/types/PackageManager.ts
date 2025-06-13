@@ -20,6 +20,8 @@ export type PackageManagerInfo = {
   configFile: string;
   /** Configuration format/content template for registry settings */
   configFormat: (registryUrl: string) => string;
+  /** CLI arguments for setting registry during install command */
+  installWithRegistryArgs: (registryUrl: string) => string[];
   /** Display name for user-facing messages */
   displayName: string;
 };
@@ -36,6 +38,11 @@ export const PACKAGE_MANAGER_INFO: Record<PackageManager, PackageManagerInfo> =
       configFile: '.npmrc',
       configFormat: (registryUrl: string) =>
         `registry=${registryUrl} #local-npm-registry\n`,
+      installWithRegistryArgs: (registryUrl: string) => [
+        'install',
+        '--registry',
+        registryUrl
+      ],
       displayName: 'npm'
     },
     [PackageManager.Pnpm]: {
@@ -44,6 +51,11 @@ export const PACKAGE_MANAGER_INFO: Record<PackageManager, PackageManagerInfo> =
       configFile: '.npmrc',
       configFormat: (registryUrl: string) =>
         `registry=${registryUrl} #local-npm-registry\n`,
+      installWithRegistryArgs: (registryUrl: string) => [
+        'install',
+        '--registry',
+        registryUrl
+      ],
       displayName: 'pnpm'
     },
     [PackageManager.Yarn]: {
@@ -52,6 +64,11 @@ export const PACKAGE_MANAGER_INFO: Record<PackageManager, PackageManagerInfo> =
       configFile: '.npmrc',
       configFormat: (registryUrl: string) =>
         `registry=${registryUrl} #local-npm-registry\n`,
+      installWithRegistryArgs: (registryUrl: string) => [
+        'install',
+        '--registry',
+        registryUrl
+      ],
       displayName: 'Yarn Classic'
     },
     [PackageManager.Yarn4]: {
@@ -60,6 +77,11 @@ export const PACKAGE_MANAGER_INFO: Record<PackageManager, PackageManagerInfo> =
       configFile: '.yarnrc.yml',
       configFormat: (registryUrl: string) =>
         `npmRegistryServer: ${registryUrl} #local-npm-registry\nunsafeHttpWhitelist: ['localhost'] #local-npm-registry\n`,
+      installWithRegistryArgs: (registryUrl: string) => [
+        'install',
+        '--registry',
+        registryUrl
+      ],
       displayName: 'Yarn Berry'
     }
   };

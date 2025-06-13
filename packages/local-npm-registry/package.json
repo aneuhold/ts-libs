@@ -8,6 +8,7 @@
   "type": "module",
   "scripts": {
     "cli:test": "node lib/index.js",
+    "refresh": "pnpm build && npm uninstall -g @aneuhold/local-npm-registry && npm install -g .",
     "build": "rimraf lib && tsc -p tsconfig.build.json && tsx scripts/copyTsFiles.ts",
     "watch": "nodemon --ignore lib/ -e ts --exec \"tsc --project tsconfig.build.json && tsx ./scripts/copyTsFiles.ts\"",
     "lint": "eslint",

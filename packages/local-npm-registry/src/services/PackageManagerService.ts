@@ -132,10 +132,12 @@ export class PackageManagerService {
    *
    * @param projectPath - Path to the project directory
    * @param registryUrl - The registry URL to use for installation
+   * @param useCliArgs - If true, use CLI arguments instead of config files
    */
   static async runInstallWithRegistry(
     projectPath: string,
-    registryUrl?: string
+    registryUrl?: string,
+    useCliArgs = true
   ): Promise<void> {
     const config = await ConfigService.loadConfig();
     const actualRegistryUrl =
@@ -145,24 +147,33 @@ export class PackageManagerService {
     const packageManager =
       await PackageManagerService.detectPackageManager(projectPath);
 
-    // Create registry configuration to ensure packages are installed from local registry
-    const configBackup = await PackageManagerService.createRegistryConfig(
-      packageManager,
-      actualRegistryUrl,
-      projectPath
-    );
-
-    try {
-      // Use the base runInstall method to perform the actual installation
-      await this.runInstall(projectPath);
-    } catch (error) {
-      DR.logger.error(
-        `Error running install with registry in ${projectPath}: ${String(error)}`
+    if (useCliArgs) {
+      // Use CLI arguments approach
+      await this.runInstallWithCliArgs(
+        projectPath,
+        packageManager,
+        actualRegistryUrl
       );
-      throw error;
-    } finally {
-      // Always restore original configuration
-      await PackageManagerService.restoreRegistryConfig(configBackup);
+    } else {
+      // Use config file approach (existing behavior)
+      const configBackup = await PackageManagerService.createRegistryConfig(
+        packageManager,
+        actualRegistryUrl,
+        projectPath
+      );
+
+      try {
+        // Use the base runInstall method to perform the actual installation
+        await this.runInstall(projectPath);
+      } catch (error) {
+        DR.logger.error(
+          `Error running install with registry in ${projectPath}: ${String(error)}`
+        );
+        throw error;
+      } finally {
+        // Always restore original configuration
+        await PackageManagerService.restoreRegistryConfig(configBackup);
+      }
     }
   }
 
@@ -510,5 +521,40 @@ export class PackageManagerService {
   static extractOrganization(packageName: string): string | null {
     const orgMatch = packageName.match(/^@([^/]+)\//);
     return orgMatch ? orgMatch[1] : null;
+  }
+
+  /**
+   * Runs install command using CLI arguments for registry configuration.
+   *
+   * @param projectPath - Path to the project directory
+   * @param packageManager - The package manager to use
+   * @param registryUrl - The registry URL to use for installation
+   */
+  private static async runInstallWithCliArgs(
+    projectPath: string,
+    packageManager: PackageManager,
+    registryUrl: string
+  ): Promise<void> {
+    const packageManagerInfo = PACKAGE_MANAGER_INFO[packageManager];
+    const installArgs = packageManagerInfo.installWithRegistryArgs(registryUrl);
+
+    try {
+      DR.logger.info(
+        `Running ${packageManagerInfo.displayName} install with CLI registry args in ${projectPath}`
+      );
+
+      await execa(packageManagerInfo.command, installArgs, {
+        cwd: projectPath
+      });
+
+      DR.logger.info(
+        `${packageManagerInfo.displayName} install with CLI args completed in ${projectPath}`
+      );
+    } catch (error) {
+      DR.logger.error(
+        `Error running install with CLI args in ${projectPath}: ${String(error)}`
+      );
+      throw error;
+    }
   }
 }

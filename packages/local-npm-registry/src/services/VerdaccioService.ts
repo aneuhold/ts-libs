@@ -358,18 +358,9 @@ export class VerdaccioService {
       uplinks: {
         npmjs: {
           url: 'https://registry.npmjs.org/'
-        },
-        githubPackages: {
-          url: 'https://npm.pkg.github.com/'
         }
       },
       packages: {
-        // This needs to be refactored somehow, or added into a config.
-        '@predictiveindex/*': {
-          access: ['$all'],
-          publish: ['$all'],
-          proxy: ['githubPackages']
-        },
         '@*/*': {
           access: ['$all'],
           publish: ['$all'],
