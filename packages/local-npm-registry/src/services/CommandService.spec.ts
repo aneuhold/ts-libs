@@ -258,6 +258,63 @@ describe('Integration Tests', () => {
       );
     });
 
+    it('should publish locally even with existing .npmrc org-specific registry setting', async () => {
+      // Create a test package with a scoped name
+      const packagePath = await TestProjectUtils.createTestPackage(
+        `@test-${testId}/npmrc-override-test`,
+        '1.0.0'
+      );
+
+      // Create an .npmrc file with org-specific registry setting pointing to real npm
+      const npmrcPath = path.join(packagePath, '.npmrc');
+      const npmrcContent = `@test-${testId}:registry=https://registry.npmjs.org/
+//registry.npmjs.org/:_authToken=real-npm-token`;
+      await fs.writeFile(npmrcPath, npmrcContent);
+
+      // Change to the package directory
+      TestProjectUtils.changeToProject(packagePath);
+
+      // Run publish command - this should publish to local registry, not npm
+      await CommandService.publish();
+
+      // Verify the package entry was created in the local store
+      const packageEntry = await TestProjectUtils.getPackageEntry(
+        `@test-${testId}/npmrc-override-test`
+      );
+      expect(packageEntry).toBeTruthy();
+      expect(packageEntry?.originalVersion).toBe('1.0.0');
+      expect(packageEntry?.currentVersion).toMatch(/^1\.0\.0-\d{17}$/);
+      expect(packageEntry?.subscribers).toEqual([]);
+      expect(packageEntry?.packageRootPath).toBe(packagePath);
+
+      // Verify the .npmrc file is still there and unchanged
+      const finalNpmrcContent = await fs.readFile(npmrcPath, 'utf8');
+      expect(finalNpmrcContent).toBe(npmrcContent);
+
+      // Verify the package.json was restored to original version
+      const finalPackageJson =
+        await TestProjectUtils.readPackageJson(packagePath);
+      expect(finalPackageJson.version).toBe('1.0.0');
+
+      // Verify success was logged
+      expect(DR.logger.info).toHaveBeenCalledWith(
+        expect.stringMatching(
+          new RegExp(
+            `Successfully published @test-${testId}/npmrc-override-test@1\\.0\\.0-\\d{17}`
+          )
+        )
+      );
+
+      // Verify the publish was done to local registry, not npm
+      // We can check this by verifying that the command used the correct registry arguments
+      expect(DR.logger.info).toHaveBeenCalledWith(
+        expect.stringContaining('Publishing package from')
+      );
+      expect(DR.logger.info).toHaveBeenCalledWith(
+        expect.stringContaining('http://localhost:4873')
+      );
+    });
+
     /**
      * Helper function to test publish with subscribers functionality for different package managers
      *
