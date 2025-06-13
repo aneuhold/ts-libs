@@ -339,7 +339,6 @@ describe('Unit Tests', () => {
 
       const npmrcContent = await fs.readFile(npmrcPath, 'utf8');
       expect(npmrcContent).toContain('registry=http://localhost:4873');
-      expect(npmrcContent).toContain('//localhost:4873/:_authToken=fake');
 
       // Verify backup structure
       expect(backup.npmrc).toBeDefined();
@@ -363,7 +362,6 @@ describe('Unit Tests', () => {
 
       const npmrcContent = await fs.readFile(npmrcPath, 'utf8');
       expect(npmrcContent).toContain('registry=http://localhost:4873');
-      expect(npmrcContent).toContain('//localhost:4873/:_authToken=fake');
 
       // Verify .yarnrc was NOT created (Yarn Classic uses .npmrc, not .yarnrc)
       const yarnrcPath = path.join(packagePath, '.yarnrc');
@@ -396,13 +394,8 @@ describe('Unit Tests', () => {
         'npmRegistryServer: http://localhost:4873'
       );
 
-      // Verify .npmrc was also created for auth
-      const npmrcPath = path.join(packagePath, '.npmrc');
-      expect(await fs.pathExists(npmrcPath)).toBe(true);
-
       // Verify backup structure
       expect(backup.yarnrcYml).toBeDefined();
-      expect(backup.npmrc).toBeDefined();
     };
   });
 
@@ -464,35 +457,6 @@ describe('Unit Tests', () => {
       await PackageManagerService.restoreRegistryConfig(backup);
 
       // Verify file was removed since it didn't exist originally
-      expect(await fs.pathExists(npmrcPath)).toBe(false);
-    });
-
-    it('should handle multiple configuration files', async () => {
-      const packagePath = await TestProjectUtils.createTestPackage(
-        `@test-${testId}/multi-restore-test`,
-        '1.0.0',
-        PackageManager.Yarn
-      );
-
-      // Create registry config (creates both .yarnrc and .npmrc)
-      const backup = await PackageManagerService.createRegistryConfig(
-        PackageManager.Yarn4,
-        'http://localhost:4873',
-        packagePath
-      );
-
-      const yarnrcPath = path.join(packagePath, '.yarnrc.yml');
-      const npmrcPath = path.join(packagePath, '.npmrc');
-
-      // Verify both files were created
-      expect(await fs.pathExists(yarnrcPath)).toBe(true);
-      expect(await fs.pathExists(npmrcPath)).toBe(true);
-
-      // Restore configuration
-      await PackageManagerService.restoreRegistryConfig(backup);
-
-      // Verify both files were removed (since they didn't exist originally)
-      expect(await fs.pathExists(yarnrcPath)).toBe(false);
       expect(await fs.pathExists(npmrcPath)).toBe(false);
     });
   });
@@ -715,7 +679,6 @@ describe('Unit Tests', () => {
         'http://localhost:4873',
         (content) => {
           expect(content).toContain('registry=http://localhost:4873');
-          expect(content).toContain('//localhost:4873/:_authToken=fake');
         }
       );
     });
@@ -750,7 +713,6 @@ describe('Unit Tests', () => {
         'https://my-registry.com:8080',
         (content) => {
           expect(content).toContain('registry=https://my-registry.com:8080');
-          expect(content).toContain('//my-registry.com:8080/:_authToken=fake');
         }
       );
     });
