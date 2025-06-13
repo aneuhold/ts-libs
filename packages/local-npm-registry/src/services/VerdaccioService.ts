@@ -360,7 +360,7 @@ export class VerdaccioService {
           url: 'https://registry.npmjs.org/'
         },
         githubPackages: {
-          url: 'https://npm.pkg.github.com'
+          url: 'https://npm.pkg.github.com/'
         }
       },
       packages: {
