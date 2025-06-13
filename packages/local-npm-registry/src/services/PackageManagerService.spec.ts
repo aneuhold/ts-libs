@@ -336,7 +336,7 @@ describe('Unit Tests', () => {
         '@myorg:registry=https://another-custom-registry.com/'
       );
       expect(newContent).not.toContain(
-        '@test-${testId}:registry=https://custom-org-registry.com/'
+        `@test-${testId}:registry=https://custom-org-registry.com/`
       );
     });
 
