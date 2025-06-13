@@ -364,15 +364,21 @@ export class VerdaccioService {
         }
       },
       packages: {
+        // This needs to be refactored somehow, or added into a config.
+        '@predictiveindex/*': {
+          access: ['$all'],
+          publish: ['$all'],
+          proxy: ['githubPackages']
+        },
         '@*/*': {
           access: ['$all'],
           publish: ['$all'],
-          proxy: ['npmjs', 'githubPackages']
+          proxy: ['npmjs']
         },
         '**': {
           access: ['$all'],
           publish: ['$all'],
-          proxy: ['npmjs', 'githubPackages']
+          proxy: ['npmjs']
         }
       },
       logs: {
