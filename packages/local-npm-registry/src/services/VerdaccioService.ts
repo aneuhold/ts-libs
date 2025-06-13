@@ -358,18 +358,21 @@ export class VerdaccioService {
       uplinks: {
         npmjs: {
           url: 'https://registry.npmjs.org/'
+        },
+        githubPackages: {
+          url: 'https://npm.pkg.github.com'
         }
       },
       packages: {
         '@*/*': {
           access: ['$all'],
           publish: ['$all'],
-          proxy: ['npmjs']
+          proxy: ['npmjs', 'githubPackages']
         },
         '**': {
           access: ['$all'],
           publish: ['$all'],
-          proxy: ['npmjs']
+          proxy: ['npmjs', 'githubPackages']
         }
       },
       logs: {
@@ -398,12 +401,11 @@ export class VerdaccioService {
   ): string[] {
     const args = ['publish'];
 
-    // Extract organization from package name (e.g., @aneuhold/package -> aneuhold)
-    const orgMatch = packageName.match(/^@([^/]+)\//);
+    // Extract organization from package name using PackageManagerService
+    const org = PackageManagerService.extractOrganization(packageName);
 
-    if (orgMatch) {
+    if (org) {
       // Scoped package: use --@org:registry format
-      const org = orgMatch[1];
       args.push(`--@${org}:registry=${registryUrl}`);
     } else {
       // Non-scoped package: use --registry format
