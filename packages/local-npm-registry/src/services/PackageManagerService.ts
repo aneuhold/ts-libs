@@ -195,8 +195,15 @@ export class PackageManagerService {
       backup.yarnrcYml = { path: configPath, content: existingContent };
     }
 
+    // Get package info to determine if we need organization-specific config
+    const packageInfo = await this.getPackageInfo(projectPath);
+
     // Create or merge registry configuration using the package manager's format
-    const registryConfig = packageManagerInfo.configFormat(registryUrl);
+    const registryConfig = this.generateRegistryConfig(
+      packageManager,
+      registryUrl,
+      packageInfo
+    );
     let finalConfigContent: string;
 
     if (existingContent) {
@@ -430,7 +437,7 @@ export class PackageManagerService {
     // Parse existing content into map
     this.parseKeyValueLines(existingContent, configMap);
 
-    // Parse and merge new content
+    // Parse and merge new content, which may override existing keys
     this.parseKeyValueLines(newConfig, configMap);
 
     // Convert back to string format
@@ -466,5 +473,42 @@ export class PackageManagerService {
         configMap.set(trimmedLine, line);
       }
     }
+  }
+
+  /**
+   * Generates registry configuration content based on package manager type and package info.
+   *
+   * @param packageManager The package manager to configure
+   * @param registryUrl The registry URL to use
+   * @param packageInfo The package information (optional, for organization-specific config)
+   */
+  private static generateRegistryConfig(
+    packageManager: PackageManager,
+    registryUrl: string,
+    packageInfo?: PackageJson | null
+  ): string {
+    const packageManagerInfo = PACKAGE_MANAGER_INFO[packageManager];
+    let config = packageManagerInfo.configFormat(registryUrl);
+
+    // For npm-compatible config files, add organization-specific registry if package is scoped
+    if (packageManagerInfo.configFile === '.npmrc' && packageInfo?.name) {
+      const org = this.extractOrganization(packageInfo.name);
+      if (org) {
+        config += `@${org}:registry=${registryUrl} #local-npm-registry\n`;
+      }
+    }
+
+    return config;
+  }
+
+  /**
+   * Extracts the organization name from a scoped package name.
+   *
+   * @param packageName The package name (e.g., "@myorg/package-name")
+   * @returns The organization name or null if not a scoped package
+   */
+  static extractOrganization(packageName: string): string | null {
+    const orgMatch = packageName.match(/^@([^/]+)\//);
+    return orgMatch ? orgMatch[1] : null;
   }
 }

@@ -297,6 +297,49 @@ describe('Unit Tests', () => {
       expect(newContent).toContain('localhost:4873');
     });
 
+    it('should override organization prefix registry in existing .npmrc', async () => {
+      const packagePath = await TestProjectUtils.createTestPackage(
+        `@test-${testId}/org-prefix-override`,
+        '1.0.0',
+        PackageManager.Npm
+      );
+
+      // Create existing .npmrc file with organization prefix registry
+      const npmrcPath = path.join(packagePath, '.npmrc');
+      const existingContent = `registry=https://registry.npmjs.org/
+@test-${testId}:registry=https://custom-org-registry.com/
+@myorg:registry=https://another-custom-registry.com/`;
+      await fs.writeFile(npmrcPath, existingContent);
+
+      const backup = await PackageManagerService.createRegistryConfig(
+        PackageManager.Npm,
+        DEFAULT_CONFIG.registryUrl,
+        packagePath
+      );
+
+      // Verify backup contains original content
+      expect(backup.npmrc?.content).toBe(existingContent);
+      expect(backup.npmrc?.path).toBe(npmrcPath);
+
+      // Verify file was overwritten with local registry configuration
+      const newContent = await fs.readFile(npmrcPath, 'utf8');
+      expect(newContent).not.toBe(existingContent);
+      expect(newContent).toContain('localhost:4873');
+
+      // Verify that the organization prefix for the test package is now pointing to local registry
+      expect(newContent).toContain(
+        `@test-${testId}:registry=http://localhost:4873`
+      );
+
+      // Verify that other organization prefixes are preserved but not the test one
+      expect(newContent).toContain(
+        '@myorg:registry=https://another-custom-registry.com/'
+      );
+      expect(newContent).not.toContain(
+        '@test-${testId}:registry=https://custom-org-registry.com/'
+      );
+    });
+
     /**
      * Helper function to create registry config for testing
      *
@@ -752,5 +795,34 @@ describe('Unit Tests', () => {
 
       verifyContent(configContent);
     };
+  });
+
+  describe('extractOrganization', () => {
+    it('should extract organization from scoped package name', () => {
+      expect(
+        PackageManagerService.extractOrganization('@myorg/package-name')
+      ).toBe('myorg');
+      expect(
+        PackageManagerService.extractOrganization('@test/another-package')
+      ).toBe('test');
+      expect(PackageManagerService.extractOrganization('@company/ui-lib')).toBe(
+        'company'
+      );
+    });
+
+    it('should return null for non-scoped package names', () => {
+      expect(
+        PackageManagerService.extractOrganization('package-name')
+      ).toBeNull();
+      expect(PackageManagerService.extractOrganization('react')).toBeNull();
+      expect(PackageManagerService.extractOrganization('lodash')).toBeNull();
+    });
+
+    it('should return null for invalid package names', () => {
+      expect(PackageManagerService.extractOrganization('')).toBeNull();
+      expect(PackageManagerService.extractOrganization('@')).toBeNull();
+      expect(PackageManagerService.extractOrganization('@/')).toBeNull();
+      expect(PackageManagerService.extractOrganization('@org')).toBeNull();
+    });
   });
 });
