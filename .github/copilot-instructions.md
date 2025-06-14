@@ -48,3 +48,4 @@
 - Test files: `filename.spec.ts` (matching source file name)
 - Never test private methods directly
 - Structure: Root describe as "Unit Tests"/"Integration Tests", nested describes named after tested methods
+- Always prefer to use the built-in Vitest VS Code extension for testing
