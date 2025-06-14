@@ -8,6 +8,6 @@ export default [
     rules: {}
   },
   {
-    ignores: ['**/dist']
+    ignores: ['**/lib']
   }
 ];

@@ -17,5 +17,6 @@
   },
   "eslint.useFlatConfig": true,
   "eslint.run": "onSave",
-  "eslint.format.enable": true
+  "eslint.format.enable": true,
+  "vitest.rootConfig": "vitest.config.ts"
 }
