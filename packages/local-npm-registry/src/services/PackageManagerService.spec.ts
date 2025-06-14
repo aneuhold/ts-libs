@@ -331,12 +331,15 @@ describe('Unit Tests', () => {
         `@test-${testId}:registry=http://localhost:4873`
       );
 
-      // Verify that other organization prefixes are preserved but not the test one
-      expect(newContent).toContain(
-        '@myorg:registry=https://another-custom-registry.com/'
-      );
+      // Verify that other organization prefixes are also redirected to local registry
+      expect(newContent).toContain('@myorg:registry=http://localhost:4873');
+
+      // Verify that the original organization registry URLs are no longer present
       expect(newContent).not.toContain(
         `@test-${testId}:registry=https://custom-org-registry.com/`
+      );
+      expect(newContent).not.toContain(
+        '@myorg:registry=https://another-custom-registry.com/'
       );
     });
 

@@ -203,11 +203,15 @@ export class PackageManagerService {
     // Get package info to determine if we need organization-specific config
     const packageInfo = await this.getPackageInfo(projectPath);
 
+    // Get all npmrc configurations to find existing organization registries
+    const npmrcConfigs = await this.getAllNpmrcConfigs(projectPath);
+
     // Create or merge registry configuration using the package manager's format
     const registryConfig = this.generateRegistryConfig(
       packageManager,
       registryUrl,
-      packageInfo
+      packageInfo,
+      npmrcConfigs
     );
     let finalConfigContent: string;
 
@@ -503,19 +507,43 @@ export class PackageManagerService {
    * @param packageManager The package manager to configure
    * @param registryUrl The registry URL to use
    * @param packageInfo The package information (optional, for organization-specific config)
+   * @param npmrcConfigs The existing npmrc configurations to extract organizations from
    */
   private static generateRegistryConfig(
     packageManager: PackageManager,
     registryUrl: string,
-    packageInfo?: PackageJson | null
+    packageInfo?: PackageJson | null,
+    npmrcConfigs?: Map<string, string>
   ): string {
     const packageManagerInfo = PACKAGE_MANAGER_INFO[packageManager];
     let config = packageManagerInfo.configFormat(registryUrl);
 
-    // For npm-compatible config files, add organization-specific registry if package is scoped
-    if (packageManagerInfo.configFile === '.npmrc' && packageInfo?.name) {
-      const org = this.extractOrganization(packageInfo.name);
-      if (org) {
+    // For npm-compatible config files, add organization-specific registries
+    if (packageManagerInfo.configFile === '.npmrc') {
+      const organizations = new Set<string>();
+
+      // Add organization from current package if it's scoped
+      if (packageInfo?.name) {
+        const org = this.extractOrganization(packageInfo.name);
+        if (org) {
+          organizations.add(org);
+        }
+      }
+
+      // Extract organizations from existing npmrc configurations
+      if (npmrcConfigs) {
+        for (const [key] of npmrcConfigs) {
+          // Look for organization-specific registry configurations: @org:registry=URL
+          const orgRegistryMatch = key.match(/^@([^:]+):registry$/);
+          if (orgRegistryMatch) {
+            const org = orgRegistryMatch[1];
+            organizations.add(org);
+          }
+        }
+      }
+
+      // Add organization-specific registry configurations
+      for (const org of organizations) {
         config += `@${org}:registry=${registryUrl} #local-npm-registry\n`;
       }
     }
