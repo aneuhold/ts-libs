@@ -390,4 +390,148 @@ export class TestProjectUtils {
       expect(hasLockFile).toBe(true);
     }
   }
+
+  /**
+   * Creates a .npmrc file with the specified content in a directory
+   *
+   * @param directoryPath - Path to the directory where .npmrc should be created
+   * @param npmrcContent - Content to write to the .npmrc file
+   */
+  static async createNpmrcFile(
+    directoryPath: string,
+    npmrcContent: string
+  ): Promise<string> {
+    await fs.ensureDir(directoryPath);
+    const npmrcPath = path.join(directoryPath, '.npmrc');
+    await fs.writeFile(npmrcPath, npmrcContent);
+    return npmrcPath;
+  }
+
+  /**
+   * Creates a multi-layer directory structure with .npmrc files for testing
+   * npmrc parsing up the directory tree.
+   *
+   * @param baseDir - Base directory to create the structure in
+   * @param layers - Array of objects describing each layer with directory name and npmrc content
+   * @returns Object with paths to created directories and npmrc files
+   */
+  static async createMultiLayerNpmrcStructure(
+    baseDir: string,
+    layers: Array<{ dirName: string; npmrcContent: string }>
+  ): Promise<{
+    directories: string[];
+    npmrcFiles: string[];
+    deepestDir: string;
+  }> {
+    const directories: string[] = [];
+    const npmrcFiles: string[] = [];
+    let currentPath = baseDir;
+
+    for (const layer of layers) {
+      currentPath = path.join(currentPath, layer.dirName);
+      directories.push(currentPath);
+
+      await fs.ensureDir(currentPath);
+      const npmrcPath = await this.createNpmrcFile(
+        currentPath,
+        layer.npmrcContent
+      );
+      npmrcFiles.push(npmrcPath);
+    }
+
+    return {
+      directories,
+      npmrcFiles,
+      deepestDir: currentPath
+    };
+  }
+
+  /**
+   * Creates a test scenario with .npmrc files at different levels with unique
+   * test registries to avoid conflicts with any existing local .npmrc files.
+   *
+   * @param testInstanceDir - The test instance directory to create structure in
+   * @returns Object with created structure information and expected parsed values
+   */
+  static async createTestNpmrcScenario(testInstanceDir: string): Promise<{
+    structure: {
+      directories: string[];
+      npmrcFiles: string[];
+      deepestDir: string;
+    };
+    expectedConfigs: Map<string, string>;
+    uniqueRegistries: string[];
+  }> {
+    const timestamp = Date.now();
+    const uniqueRegistries = [
+      `https://test-registry-${timestamp}-1.example.com`,
+      `https://test-registry-${timestamp}-2.example.com`,
+      `https://test-registry-${timestamp}-3.example.com`
+    ];
+
+    const layers = [
+      {
+        dirName: 'root-level',
+        npmrcContent: `# Root level .npmrc
+@test-org1:registry=${uniqueRegistries[0]}
+//${uniqueRegistries[0].replace('https://', '')}/:_authToken=root-auth-token-${timestamp}
+some-global-setting=root-value
+`
+      },
+      {
+        dirName: 'middle-level',
+        npmrcContent: `# Middle level .npmrc
+@test-org2:registry=${uniqueRegistries[1]}
+//${uniqueRegistries[1].replace('https://', '')}/:_authToken=middle-auth-token-${timestamp}
+some-global-setting=middle-value
+middle-specific-setting=middle-specific-value
+`
+      },
+      {
+        dirName: 'project-level',
+        npmrcContent: `# Project level .npmrc (closest)
+@test-org3:registry=${uniqueRegistries[2]}
+//${uniqueRegistries[2].replace('https://', '')}/:_authToken=project-auth-token-${timestamp}
+some-global-setting=project-value
+project-specific-setting=project-specific-value
+`
+      }
+    ];
+
+    const structure = await this.createMultiLayerNpmrcStructure(
+      testInstanceDir,
+      layers
+    );
+
+    // Expected configurations with closest files taking precedence
+    const expectedConfigs = new Map<string, string>([
+      // Organization registries from all levels
+      ['@test-org1:registry', uniqueRegistries[0]],
+      ['@test-org2:registry', uniqueRegistries[1]],
+      ['@test-org3:registry', uniqueRegistries[2]],
+      // Auth tokens from all levels
+      [
+        `//${uniqueRegistries[0].replace('https://', '')}/:_authToken`,
+        `root-auth-token-${timestamp}`
+      ],
+      [
+        `//${uniqueRegistries[1].replace('https://', '')}/:_authToken`,
+        `middle-auth-token-${timestamp}`
+      ],
+      [
+        `//${uniqueRegistries[2].replace('https://', '')}/:_authToken`,
+        `project-auth-token-${timestamp}`
+      ],
+      // Settings with project level taking precedence
+      ['some-global-setting', 'project-value'], // Project level wins
+      ['middle-specific-setting', 'middle-specific-value'],
+      ['project-specific-setting', 'project-specific-value']
+    ]);
+
+    return {
+      structure,
+      expectedConfigs,
+      uniqueRegistries
+    };
+  }
 }
