@@ -350,28 +350,41 @@ export class VerdaccioService {
     const verdaccioDirectory = path.join(dataDirectoryPath, 'verdaccio');
     const isVerbose = DR.logger.isVerboseLoggingEnabled();
 
+    // Get all npmrc configurations from current directory up the tree
+    const npmrcConfigs = await PackageManagerService.getAllNpmrcConfigs();
+
+    // Parse npmrc configurations to extract organization registries and auth tokens
+    const { uplinks, packages } = this.parseNpmrcForVerdaccio(npmrcConfigs);
+
+    // Base uplinks and packages configuration
+    const baseUplinks = {
+      npmjs: {
+        url: 'https://registry.npmjs.org/'
+      },
+      ...uplinks
+    };
+
+    const basePackages = {
+      '@*/*': {
+        access: ['$all'],
+        publish: ['$all'],
+        proxy: ['npmjs']
+      },
+      '**': {
+        access: ['$all'],
+        publish: ['$all'],
+        proxy: ['npmjs']
+      },
+      ...packages
+    };
+
     // Just a partial, because VerdaccioConfig seems to contain unnecessary
     // required properties that we don't need to set.
     const verdaccioConfig: Partial<StrictVerdaccioConfig> = {
       // Storage is managed manually by local-npm-registry.
       storage: verdaccioDirectory,
-      uplinks: {
-        npmjs: {
-          url: 'https://registry.npmjs.org/'
-        }
-      },
-      packages: {
-        '@*/*': {
-          access: ['$all'],
-          publish: ['$all'],
-          proxy: ['npmjs']
-        },
-        '**': {
-          access: ['$all'],
-          publish: ['$all'],
-          proxy: ['npmjs']
-        }
-      },
+      uplinks: baseUplinks,
+      packages: basePackages,
       logs: {
         type: 'stdout',
         format: 'pretty',
@@ -384,6 +397,105 @@ export class VerdaccioService {
     };
 
     return verdaccioConfig as StrictVerdaccioConfig;
+  }
+
+  /**
+   * Parses npmrc configurations to extract organization-specific registries and auth tokens
+   * for Verdaccio uplinks and packages configuration.
+   *
+   * @param npmrcConfigs - Map of npmrc key-value pairs
+   */
+  private static parseNpmrcForVerdaccio(npmrcConfigs: Map<string, string>): {
+    uplinks: Record<
+      string,
+      { url: string; auth?: { type: string; token: string } }
+    >;
+    packages: Record<
+      string,
+      { access: string[]; publish: string[]; proxy: string[] }
+    >;
+  } {
+    const uplinks: Record<
+      string,
+      { url: string; auth?: { type: string; token: string } }
+    > = {};
+    const packages: Record<
+      string,
+      { access: string[]; publish: string[]; proxy: string[] }
+    > = {};
+    const registryToUplink = new Map<string, string>();
+
+    // Process all npmrc configurations
+    for (const [key, value] of npmrcConfigs) {
+      // Look for organization-specific registry configurations: @org:registry=URL
+      const orgRegistryMatch = key.match(/^@([^:]+):registry$/);
+      if (orgRegistryMatch) {
+        const org = orgRegistryMatch[1];
+        const registryUrl = value;
+
+        // Create a safe uplink name from the registry URL
+        const uplinkName = this.createUplinkName(registryUrl);
+        registryToUplink.set(registryUrl, uplinkName);
+
+        // Create uplink configuration
+        uplinks[uplinkName] = {
+          url: registryUrl
+        };
+
+        // Create package configuration for this organization
+        packages[`@${org}/*`] = {
+          access: ['$all'],
+          publish: ['$all'],
+          proxy: [uplinkName]
+        };
+      }
+    }
+
+    // Look for auth tokens and add them to existing uplinks
+    for (const [key, value] of npmrcConfigs) {
+      // Look for auth tokens: //registry.url/:_authToken=token
+      const authTokenMatch = key.match(/^\/\/([^/]+)\/:_authToken$/);
+      if (authTokenMatch) {
+        const registryHost = authTokenMatch[1];
+        const token = value;
+
+        // Find the corresponding uplink by matching the host
+        for (const [registryUrl, uplinkName] of registryToUplink) {
+          const registryHost2 = registryUrl.replace(/^https?:\/\//, '');
+          if (registryHost === registryHost2) {
+            // Add auth configuration to the uplink
+            uplinks[uplinkName].auth = {
+              type: 'Bearer',
+              token: token
+            };
+            break;
+          }
+        }
+      }
+    }
+
+    return { uplinks, packages };
+  }
+
+  /**
+   * Creates a safe uplink name from a registry URL.
+   *
+   * @param registryUrl - The registry URL
+   */
+  private static createUplinkName(registryUrl: string): string {
+    // Remove protocol and common endings to create a clean name
+    let name = registryUrl
+      .replace(/^https?:\/\//, '')
+      .replace(/\/$/, '')
+      .replace(/\./g, '')
+      .replace(/[^a-zA-Z0-9]/g, '');
+
+    // Ensure it doesn't conflict with default uplinks
+    if (name === 'npmjs') {
+      name = `${name}custom`;
+    }
+
+    return name;
   }
 
   /**
