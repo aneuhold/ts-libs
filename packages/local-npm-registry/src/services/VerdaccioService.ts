@@ -1,5 +1,9 @@
 import { DR } from '@aneuhold/core-ts-lib';
-import type { Config as VerdaccioConfig } from '@verdaccio/types';
+import type {
+  UpLinksConfList,
+  Config as VerdaccioConfig,
+  PackageList as VerdaccioPackageList
+} from '@verdaccio/types';
 import { execa } from 'execa';
 import fs from 'fs-extra';
 import http from 'http';
@@ -357,14 +361,14 @@ export class VerdaccioService {
     const { uplinks, packages } = this.parseNpmrcForVerdaccio(npmrcConfigs);
 
     // Base uplinks and packages configuration
-    const baseUplinks = {
+    const baseUplinks: UpLinksConfList = {
       npmjs: {
         url: 'https://registry.npmjs.org/'
       },
       ...uplinks
     };
 
-    const basePackages = {
+    const basePackages: VerdaccioPackageList = {
       '@*/*': {
         access: ['$all'],
         publish: ['$all'],
@@ -406,23 +410,11 @@ export class VerdaccioService {
    * @param npmrcConfigs - Map of npmrc key-value pairs
    */
   private static parseNpmrcForVerdaccio(npmrcConfigs: Map<string, string>): {
-    uplinks: Record<
-      string,
-      { url: string; auth?: { type: string; token: string } }
-    >;
-    packages: Record<
-      string,
-      { access: string[]; publish: string[]; proxy: string[] }
-    >;
+    uplinks: UpLinksConfList;
+    packages: VerdaccioPackageList;
   } {
-    const uplinks: Record<
-      string,
-      { url: string; auth?: { type: string; token: string } }
-    > = {};
-    const packages: Record<
-      string,
-      { access: string[]; publish: string[]; proxy: string[] }
-    > = {};
+    const uplinks: UpLinksConfList = {};
+    const packages: VerdaccioPackageList = {};
     const registryToUplink = new Map<string, string>();
 
     // Process all npmrc configurations
