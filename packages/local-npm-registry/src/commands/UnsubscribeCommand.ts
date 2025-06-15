@@ -1,7 +1,7 @@
 import { DR } from '@aneuhold/core-ts-lib';
 import { LocalPackageStoreService } from '../services/LocalPackageStoreService.js';
 import { PackageJsonService } from '../services/PackageJsonService.js';
-import { PackageManagerService } from '../services/PackageManagerService.js';
+import { PackageManagerService } from '../services/PackageManagerService/PackageManagerService.js';
 
 /**
  * Implements the 'local-npm unsubscribe [<package-name>]' command.

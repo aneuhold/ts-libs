@@ -6,7 +6,7 @@ import {
   type PackageSubscriber
 } from './LocalPackageStoreService.js';
 import { PackageJsonService } from './PackageJsonService.js';
-import { PackageManagerService } from './PackageManagerService.js';
+import { PackageManagerService } from './PackageManagerService/PackageManagerService.js';
 import { VerdaccioService } from './VerdaccioService.js';
 
 /**

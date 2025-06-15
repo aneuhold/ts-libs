@@ -11,15 +11,15 @@ import {
   it,
   vi
 } from 'vitest';
-import { TestProjectUtils } from '../../test-utils/TestProjectUtils.js';
-import { DEFAULT_CONFIG } from '../types/LocalNpmConfig.js';
-import { PackageManager } from '../types/PackageManager.js';
-import { MutexService } from './MutexService.js';
+import { TestProjectUtils } from '../../../../test-utils/TestProjectUtils.js';
+import { DEFAULT_CONFIG } from '../../../types/LocalNpmConfig.js';
+import { PackageManager } from '../../../types/PackageManager.js';
+import { MutexService } from '../../MutexService.js';
+import { VerdaccioService } from '../../VerdaccioService.js';
 import {
   RegistryConfigService,
   type PackageManagerConfigBackup
 } from './RegistryConfigService.js';
-import { VerdaccioService } from './VerdaccioService.js';
 
 vi.mock('@aneuhold/core-ts-lib', async () => {
   const actual = await vi.importActual('@aneuhold/core-ts-lib');

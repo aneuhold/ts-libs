@@ -5,9 +5,9 @@ import path from 'path';
 import {
   PACKAGE_MANAGER_INFO,
   PackageManager
-} from '../types/PackageManager.js';
-import { NpmrcService } from './NpmrcService.js';
-import { PackageJsonService } from './PackageJsonService.js';
+} from '../../../types/PackageManager.js';
+import { NpmrcService } from '../../NpmrcService.js';
+import { PackageJsonService } from '../../PackageJsonService.js';
 
 export type PackageManagerConfigBackup = {
   npmrc?: { path: string; content: string | null };

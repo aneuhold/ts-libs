@@ -2,14 +2,14 @@ import { DR } from '@aneuhold/core-ts-lib';
 import { execa } from 'execa';
 import fs from 'fs-extra';
 import path from 'path';
-import { DEFAULT_CONFIG } from '../types/LocalNpmConfig.js';
+import { DEFAULT_CONFIG } from '../../types/LocalNpmConfig.js';
 import {
   PACKAGE_MANAGER_INFO,
   PackageManager
-} from '../types/PackageManager.js';
-import { ConfigService } from './ConfigService.js';
-import { PackageJsonService } from './PackageJsonService.js';
-import { RegistryConfigService } from './RegistryConfigService.js';
+} from '../../types/PackageManager.js';
+import { ConfigService } from '../ConfigService.js';
+import { PackageJsonService } from '../PackageJsonService.js';
+import { RegistryConfigService } from './RegistryConfigService/RegistryConfigService.js';
 
 /**
  * Utility service for various package managers.

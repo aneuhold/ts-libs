@@ -12,15 +12,15 @@ import {
   it,
   vi
 } from 'vitest';
-import { TestProjectUtils } from '../../test-utils/TestProjectUtils.js';
+import { TestProjectUtils } from '../../../test-utils/TestProjectUtils.js';
 import {
   PACKAGE_MANAGER_INFO,
   PackageManager
-} from '../types/PackageManager.js';
-import { MutexService } from './MutexService.js';
+} from '../../types/PackageManager.js';
+import { MutexService } from '../MutexService.js';
+import { VerdaccioService } from '../VerdaccioService.js';
 import { PackageManagerService } from './PackageManagerService.js';
-import { RegistryConfigService } from './RegistryConfigService.js';
-import { VerdaccioService } from './VerdaccioService.js';
+import { RegistryConfigService } from './RegistryConfigService/RegistryConfigService.js';
 
 vi.mock('@aneuhold/core-ts-lib', async () => {
   const actual = await vi.importActual('@aneuhold/core-ts-lib');
