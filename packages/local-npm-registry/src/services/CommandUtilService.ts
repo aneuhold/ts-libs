@@ -1,12 +1,11 @@
-import { DR, type PackageJson } from '@aneuhold/core-ts-lib';
-import fs from 'fs-extra';
-import path from 'path';
+import { DR } from '@aneuhold/core-ts-lib';
 import {
   LocalPackageStoreService,
   timestampPattern,
   type PackageEntry,
   type PackageSubscriber
 } from './LocalPackageStoreService.js';
+import { PackageJsonService } from './PackageJsonService.js';
 import { PackageManagerService } from './PackageManagerService.js';
 import { VerdaccioService } from './VerdaccioService.js';
 
@@ -36,52 +35,6 @@ export class CommandUtilService {
   }
 
   /**
-   * Updates a package.json file with a new version.
-   *
-   * @param projectPath - Path to the project directory containing package.json
-   * @param packageName - Name of the package to update
-   * @param version - New version to set
-   */
-  static async updatePackageJsonVersion(
-    projectPath: string,
-    packageName: string,
-    version: string
-  ): Promise<void> {
-    try {
-      const packageJsonPath = path.join(projectPath, 'package.json');
-      const packageJson = (await fs.readJson(packageJsonPath)) as PackageJson;
-
-      // Update the package's own version if this is the package being published
-      if (packageJson.name === packageName) {
-        packageJson.version = version;
-      }
-
-      // Update dependencies
-      if (packageJson.dependencies?.[packageName]) {
-        packageJson.dependencies[packageName] = version;
-      }
-
-      // Update devDependencies
-      if (packageJson.devDependencies?.[packageName]) {
-        packageJson.devDependencies[packageName] = version;
-      }
-
-      // Update peerDependencies
-      if (packageJson.peerDependencies?.[packageName]) {
-        packageJson.peerDependencies[packageName] = version;
-      }
-
-      await fs.writeJson(packageJsonPath, packageJson, { spaces: 2 });
-      DR.logger.info(`Updated ${packageName} to ${version} in ${projectPath}`);
-    } catch (error) {
-      DR.logger.error(
-        `Error updating package.json in ${projectPath}: ${String(error)}`
-      );
-      throw error;
-    }
-  }
-
-  /**
    * Publishes a package with a fresh timestamp version and updates all subscribers.
    * This unified method is used by both publish and subscribe commands.
    *
@@ -107,7 +60,7 @@ export class CommandUtilService {
       );
 
       // Update package.json with timestamp version
-      await this.updatePackageJsonVersion(
+      await PackageJsonService.updatePackageVersion(
         packageRootPath,
         packageName,
         timestampVersion
@@ -140,7 +93,7 @@ export class CommandUtilService {
 
         const updatePromises = entry.subscribers.map(async (subscriber) => {
           try {
-            await this.updatePackageJsonVersion(
+            await PackageJsonService.updatePackageVersion(
               subscriber.subscriberPath,
               packageName,
               timestampVersion
@@ -169,7 +122,7 @@ export class CommandUtilService {
       }
 
       // Restore original version in package.json after publishing
-      await this.updatePackageJsonVersion(
+      await PackageJsonService.updatePackageVersion(
         packageRootPath,
         packageName,
         originalVersion
@@ -183,7 +136,7 @@ export class CommandUtilService {
     } catch (error) {
       // Ensure we restore the original version even if publishing fails
       try {
-        await this.updatePackageJsonVersion(
+        await PackageJsonService.updatePackageVersion(
           packageRootPath,
           packageName,
           originalVersion

@@ -1,7 +1,7 @@
 import { DR } from '@aneuhold/core-ts-lib';
 import { CommandUtilService } from '../services/CommandUtilService.js';
 import { LocalPackageStoreService } from '../services/LocalPackageStoreService.js';
-import { PackageManagerService } from '../services/PackageManagerService.js';
+import { PackageJsonService } from '../services/PackageJsonService.js';
 import { VerdaccioService } from '../services/VerdaccioService.js';
 
 /**
@@ -30,7 +30,7 @@ export class SubscribeCommand {
     const currentProjectPath = process.cwd();
 
     // Get the current specifier from package.json to save as original
-    const originalSpecifier = await PackageManagerService.getCurrentSpecifier(
+    const originalSpecifier = await PackageJsonService.getCurrentSpecifier(
       currentProjectPath,
       packageName
     );

@@ -1,7 +1,7 @@
 import { DR } from '@aneuhold/core-ts-lib';
 import { CommandUtilService } from '../services/CommandUtilService.js';
 import { LocalPackageStoreService } from '../services/LocalPackageStoreService.js';
-import { PackageManagerService } from '../services/PackageManagerService.js';
+import { PackageJsonService } from '../services/PackageJsonService.js';
 import { VerdaccioService } from '../services/VerdaccioService.js';
 
 /**
@@ -12,7 +12,7 @@ export class PublishCommand {
    * Implements the 'local-npm publish' command.
    */
   static async execute(): Promise<void> {
-    const packageInfo = await PackageManagerService.getPackageInfo();
+    const packageInfo = await PackageJsonService.getPackageInfo();
     if (!packageInfo) {
       throw new Error('No package.json found in current directory');
     }

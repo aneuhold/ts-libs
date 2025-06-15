@@ -9,6 +9,7 @@ import {
   PackageManager
 } from '../types/PackageManager.js';
 import { ConfigService } from './ConfigService.js';
+import { PackageJsonService } from './PackageJsonService.js';
 
 export type PackageManagerConfigBackup = {
   npmrc?: { path: string; content: string | null };
@@ -36,29 +37,6 @@ export class PackageManagerService {
    * Cache to store merged npmrc configurations by starting directory.
    */
   private static npmrcCache = new Map<string, Map<string, string>>();
-
-  /**
-   * Reads the package.json file in the specified directory.
-   *
-   * @param dir - Directory to search for package.json
-   */
-  static async getPackageInfo(
-    dir: string = process.cwd()
-  ): Promise<PackageJson | null> {
-    try {
-      const packageJsonPath = path.join(dir, 'package.json');
-      const packageJson = (await fs.readJson(packageJsonPath)) as PackageJson;
-
-      if (!packageJson.name || !packageJson.version) {
-        throw new Error('package.json must contain name and version fields');
-      }
-
-      return packageJson;
-    } catch (error) {
-      DR.logger.error(`Error reading package.json: ${String(error)}`);
-      return null;
-    }
-  }
 
   /**
    * Determines the package manager to use based on lock files and packageManager field in package.json.
@@ -201,7 +179,7 @@ export class PackageManagerService {
     }
 
     // Get package info to determine if we need organization-specific config
-    const packageInfo = await this.getPackageInfo(projectPath);
+    const packageInfo = await PackageJsonService.getPackageInfo(projectPath);
 
     // Get all npmrc configurations to find existing organization registries
     const npmrcConfigs = await this.getAllNpmrcConfigs(projectPath);
@@ -262,40 +240,6 @@ export class PackageManagerService {
   }
 
   /**
-   * Gets the current version specifier for a package from a project's package.json.
-   *
-   * @param projectPath - Path to the project directory containing package.json
-   * @param packageName - Name of the package to find the specifier for
-   * @returns The current version specifier or null if not found
-   */
-  static async getCurrentSpecifier(
-    projectPath: string,
-    packageName: string
-  ): Promise<string | null> {
-    const packageInfo = await this.getPackageInfo(projectPath);
-    if (!packageInfo) {
-      return null;
-    }
-
-    // Check dependencies
-    if (packageInfo.dependencies?.[packageName]) {
-      return packageInfo.dependencies[packageName];
-    }
-
-    // Check devDependencies
-    if (packageInfo.devDependencies?.[packageName]) {
-      return packageInfo.devDependencies[packageName];
-    }
-
-    // Check peerDependencies
-    if (packageInfo.peerDependencies?.[packageName]) {
-      return packageInfo.peerDependencies[packageName];
-    }
-
-    return null;
-  }
-
-  /**
    * Detects the package manager without caching.
    *
    * @param projectPath - Path to the project directory to check
@@ -304,7 +248,7 @@ export class PackageManagerService {
     projectPath: string
   ): Promise<PackageManager> {
     // First, try to determine from package.json packageManager field
-    const packageInfo = await this.getPackageInfo(projectPath);
+    const packageInfo = await PackageJsonService.getPackageInfo(projectPath);
     if (packageInfo && packageInfo.packageManager) {
       const packageManagerField = packageInfo.packageManager.toLowerCase();
 
@@ -524,7 +468,7 @@ export class PackageManagerService {
 
       // Add organization from current package if it's scoped
       if (packageInfo?.name) {
-        const org = this.extractOrganization(packageInfo.name);
+        const org = PackageJsonService.extractOrganization(packageInfo.name);
         if (org) {
           organizations.add(org);
         }
@@ -549,17 +493,6 @@ export class PackageManagerService {
     }
 
     return config;
-  }
-
-  /**
-   * Extracts the organization name from a scoped package name.
-   *
-   * @param packageName The package name (e.g., "@myorg/package-name")
-   * @returns The organization name or null if not a scoped package
-   */
-  static extractOrganization(packageName: string): string | null {
-    const orgMatch = packageName.match(/^@([^/]+)\//);
-    return orgMatch ? orgMatch[1] : null;
   }
 
   /**

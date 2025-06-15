@@ -23,6 +23,7 @@ import {
 } from '../types/VerdaccioDb.js';
 import { ConfigService } from './ConfigService.js';
 import { MutexService } from './MutexService.js';
+import { PackageJsonService } from './PackageJsonService.js';
 import { PackageManagerService } from './PackageManagerService.js';
 
 /**
@@ -166,8 +167,7 @@ export class VerdaccioService {
         throw new Error('Verdaccio server is not running. Call start() first.');
       }
 
-      const packageJson =
-        await PackageManagerService.getPackageInfo(packagePath);
+      const packageJson = await PackageJsonService.getPackageInfo(packagePath);
       if (!packageJson || !packageJson.name) {
         throw new Error(
           `No valid package.json found in ${packagePath}. Ensure it contains a valid "name" field.`
@@ -502,8 +502,8 @@ export class VerdaccioService {
   ): string[] {
     const args = ['publish'];
 
-    // Extract organization from package name using PackageManagerService
-    const org = PackageManagerService.extractOrganization(packageName);
+    // Extract organization from package name using PackageJsonService
+    const org = PackageJsonService.extractOrganization(packageName);
 
     if (org) {
       // Scoped package: use --@org:registry format

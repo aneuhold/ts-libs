@@ -1,6 +1,6 @@
 import { DR } from '@aneuhold/core-ts-lib';
-import { CommandUtilService } from '../services/CommandUtilService.js';
 import { LocalPackageStoreService } from '../services/LocalPackageStoreService.js';
+import { PackageJsonService } from '../services/PackageJsonService.js';
 import { PackageManagerService } from '../services/PackageManagerService.js';
 import { VerdaccioService } from '../services/VerdaccioService.js';
 
@@ -19,7 +19,7 @@ export class UnpublishCommand {
     if (packageName) {
       targetPackageName = packageName;
     } else {
-      const packageInfo = await PackageManagerService.getPackageInfo();
+      const packageInfo = await PackageJsonService.getPackageInfo();
       if (!packageInfo) {
         throw new Error(
           'No package.json found in current directory and no package name provided'
@@ -44,7 +44,7 @@ export class UnpublishCommand {
 
       for (const subscriber of entry.subscribers) {
         try {
-          await CommandUtilService.updatePackageJsonVersion(
+          await PackageJsonService.updatePackageVersion(
             subscriber.subscriberPath,
             targetPackageName,
             subscriber.originalSpecifier
@@ -60,7 +60,7 @@ export class UnpublishCommand {
 
     // Reset current package.json to original version if we're in the package directory
     if (!packageName) {
-      await CommandUtilService.updatePackageJsonVersion(
+      await PackageJsonService.updatePackageVersion(
         process.cwd(),
         targetPackageName,
         entry.originalVersion

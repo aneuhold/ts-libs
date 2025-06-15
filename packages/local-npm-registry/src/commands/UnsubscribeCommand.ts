@@ -1,6 +1,6 @@
 import { DR } from '@aneuhold/core-ts-lib';
-import { CommandUtilService } from '../services/CommandUtilService.js';
 import { LocalPackageStoreService } from '../services/LocalPackageStoreService.js';
+import { PackageJsonService } from '../services/PackageJsonService.js';
 import { PackageManagerService } from '../services/PackageManagerService.js';
 
 /**
@@ -56,7 +56,7 @@ export class UnsubscribeCommand {
     );
 
     // Reset to original version
-    await CommandUtilService.updatePackageJsonVersion(
+    await PackageJsonService.updatePackageVersion(
       currentProjectPath,
       packageName,
       subscriber.originalSpecifier
@@ -117,7 +117,7 @@ export class UnsubscribeCommand {
           );
 
           // Reset to original version using subscriber's original specifier
-          await CommandUtilService.updatePackageJsonVersion(
+          await PackageJsonService.updatePackageVersion(
             currentProjectPath,
             pkgName,
             subscriber.originalSpecifier

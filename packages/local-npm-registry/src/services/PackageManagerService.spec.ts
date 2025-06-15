@@ -84,74 +84,6 @@ describe('Unit Tests', () => {
     }
   });
 
-  describe('getPackageInfo', () => {
-    it('should successfully read package.json file', async () => {
-      const packagePath = await TestProjectUtils.createTestPackage(
-        `@test-${testId}/get-package-info`,
-        '1.0.0'
-      );
-
-      const packageInfo =
-        await PackageManagerService.getPackageInfo(packagePath);
-
-      expect(packageInfo).toBeTruthy();
-      expect(packageInfo?.name).toBe(`@test-${testId}/get-package-info`);
-      expect(packageInfo?.version).toBe('1.0.0');
-    });
-
-    it('should return null for non-existent directory', async () => {
-      const nonExistentPath = path.join(
-        TestProjectUtils.getTestInstanceDir(),
-        'non-existent'
-      );
-
-      const packageInfo =
-        await PackageManagerService.getPackageInfo(nonExistentPath);
-
-      expect(packageInfo).toBeNull();
-      expect(DR.logger.error).toHaveBeenCalledWith(
-        expect.stringContaining('Error reading package.json')
-      );
-    });
-
-    it('should return null for invalid package.json', async () => {
-      const invalidDir = path.join(
-        TestProjectUtils.getTestInstanceDir(),
-        'invalid'
-      );
-      await fs.ensureDir(invalidDir);
-      await fs.writeJson(path.join(invalidDir, 'package.json'), {
-        description: 'Missing name and version'
-      });
-
-      const packageInfo =
-        await PackageManagerService.getPackageInfo(invalidDir);
-
-      expect(packageInfo).toBeNull();
-      expect(DR.logger.error).toHaveBeenCalledWith(
-        expect.stringContaining(
-          'package.json must contain name and version fields'
-        )
-      );
-    });
-
-    it('should use current working directory when no dir specified', async () => {
-      const packagePath = await TestProjectUtils.createTestPackage(
-        `@test-${testId}/cwd-test`,
-        '2.0.0'
-      );
-
-      // Change to the package directory
-      TestProjectUtils.changeToProject(packagePath);
-
-      const packageInfo = await PackageManagerService.getPackageInfo();
-
-      expect(packageInfo).toBeTruthy();
-      expect(packageInfo?.name).toBe(`@test-${testId}/cwd-test`);
-      expect(packageInfo?.version).toBe('2.0.0');
-    });
-  });
-
   describe('detectPackageManager', () => {
     it('should detect npm from package-lock.json', async () => {
       await testPackageManagerDetection('npm-detect', PackageManager.Npm);
@@ -667,26 +599,6 @@ describe('Unit Tests', () => {
   });
 
   describe('error handling', () => {
-    it('should handle malformed package.json gracefully', async () => {
-      const invalidDir = path.join(
-        TestProjectUtils.getTestInstanceDir(),
-        'malformed'
-      );
-      await fs.ensureDir(invalidDir);
-
-      // Create malformed JSON file
-      const packageJsonPath = path.join(invalidDir, 'package.json');
-      await fs.writeFile(packageJsonPath, '{ invalid json');
-
-      const packageInfo =
-        await PackageManagerService.getPackageInfo(invalidDir);
-
-      expect(packageInfo).toBeNull();
-      expect(DR.logger.error).toHaveBeenCalledWith(
-        expect.stringContaining('Error reading package.json')
-      );
-    });
-
     it('should handle permission errors during config creation', async () => {
       // This test simulates permission errors that might occur in real scenarios
       const packagePath = await TestProjectUtils.createTestPackage(
@@ -798,35 +710,6 @@ describe('Unit Tests', () => {
 
       verifyContent(configContent);
     };
-  });
-
-  describe('extractOrganization', () => {
-    it('should extract organization from scoped package name', () => {
-      expect(
-        PackageManagerService.extractOrganization('@myorg/package-name')
-      ).toBe('myorg');
-      expect(
-        PackageManagerService.extractOrganization('@test/another-package')
-      ).toBe('test');
-      expect(PackageManagerService.extractOrganization('@company/ui-lib')).toBe(
-        'company'
-      );
-    });
-
-    it('should return null for non-scoped package names', () => {
-      expect(
-        PackageManagerService.extractOrganization('package-name')
-      ).toBeNull();
-      expect(PackageManagerService.extractOrganization('react')).toBeNull();
-      expect(PackageManagerService.extractOrganization('lodash')).toBeNull();
-    });
-
-    it('should return null for invalid package names', () => {
-      expect(PackageManagerService.extractOrganization('')).toBeNull();
-      expect(PackageManagerService.extractOrganization('@')).toBeNull();
-      expect(PackageManagerService.extractOrganization('@/')).toBeNull();
-      expect(PackageManagerService.extractOrganization('@org')).toBeNull();
-    });
   });
 
   describe('getAllNpmrcConfigs', () => {

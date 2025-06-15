@@ -1,6 +1,6 @@
 import { DR } from '@aneuhold/core-ts-lib';
-import { CommandUtilService } from '../services/CommandUtilService.js';
 import { LocalPackageStoreService } from '../services/LocalPackageStoreService.js';
+import { PackageJsonService } from '../services/PackageJsonService.js';
 import { PackageManagerService } from '../services/PackageManagerService.js';
 
 /**
@@ -64,7 +64,7 @@ export class ClearStoreCommand {
 
       const resetPromises = resetOperations.map(async (operation) => {
         try {
-          await CommandUtilService.updatePackageJsonVersion(
+          await PackageJsonService.updatePackageVersion(
             operation.subscriberPath,
             operation.packageName,
             operation.originalVersion
