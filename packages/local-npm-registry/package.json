@@ -2,12 +2,13 @@
   "name": "@aneuhold/local-npm-registry",
   "author": "Anton G. Neuhold Jr.",
   "license": "MIT",
-  "version": "0.1.9",
+  "version": "0.1.10",
   "description": "Manages local npm package installations and updates across your machine.",
   "packageManager": "pnpm@10.11.1",
   "type": "module",
   "scripts": {
     "cli:test": "node lib/index.js",
+    "refresh": "pnpm build && npm uninstall -g @aneuhold/local-npm-registry && npm install -g .",
     "build": "rimraf lib && tsc -p tsconfig.build.json && tsx scripts/copyTsFiles.ts",
     "watch": "nodemon --ignore lib/ -e ts --exec \"tsc --project tsconfig.build.json && tsx ./scripts/copyTsFiles.ts\"",
     "lint": "eslint",
@@ -64,6 +65,6 @@
     "rimraf": "^6.0.1",
     "tsx": "^4.19.4",
     "typescript": "~5.8.3",
-    "vitest": "^3.1.4"
+    "vitest": "^3.2.3"
   }
 }

@@ -206,6 +206,52 @@ export default class FileSystemService {
     fileName: string,
     stopAt?: string
   ): Promise<string | null> {
+    const results = await this.traverseDirectoryTree(
+      startDir,
+      fileName,
+      stopAt,
+      true // findFirst = true
+    );
+    return results.length > 0 ? results[0] : null;
+  }
+
+  /**
+   * Searches for all files with the given name by traversing up the directory tree
+   * starting from the specified directory. Returns all found files from closest
+   * to furthest (root).
+   *
+   * @param startDir - The directory to start searching from
+   * @param fileName - The name of the file to search for
+   * @param stopAt - Optional directory path to stop searching at (defaults to root)
+   */
+  static async findAllFilesUpTree(
+    startDir: string,
+    fileName: string,
+    stopAt?: string
+  ): Promise<string[]> {
+    return this.traverseDirectoryTree(
+      startDir,
+      fileName,
+      stopAt,
+      false // findFirst = false
+    );
+  }
+
+  /**
+   * Internal helper method that traverses up the directory tree looking for files.
+   *
+   * @param startDir - The directory to start searching from
+   * @param fileName - The name of the file to search for
+   * @param stopAt - Optional directory path to stop searching at (defaults to root)
+   * @param findFirst - If true, stops after finding the first file
+   */
+  private static async traverseDirectoryTree(
+    startDir: string,
+    fileName: string,
+    stopAt?: string,
+    findFirst = false
+  ): Promise<string[]> {
+    const results: string[] = [];
     let currentDir = path.resolve(startDir);
     const rootDir = stopAt ? path.resolve(stopAt) : path.parse(currentDir).root;
 
@@ -214,7 +260,10 @@ export default class FileSystemService {
 
       try {
         await access(filePath);
-        return filePath;
+        results.push(filePath);
+        if (findFirst) {
+          return results;
+        }
       } catch {
         // File doesn't exist, continue searching
       }
@@ -231,10 +280,11 @@ export default class FileSystemService {
     const filePath = path.join(currentDir, fileName);
     try {
       await access(filePath);
-      return filePath;
+      results.push(filePath);
     } catch {
       // File not found
-      return null;
     }
+
+    return results;
   }
 }

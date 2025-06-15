@@ -1,13 +1,15 @@
-import { defineConfig } from 'vitest/config';
+import { defineProject } from 'vitest/config';
 
-export default defineConfig({
+export default defineProject({
   test: {
     exclude: ['lib/**/*', 'node_modules/**/*', 'tmp/**/*'],
     testTimeout: 10000, // 10 seconds per test for integration tests
     globalSetup: ['./test-utils/globalSetup.ts'],
-    // Disable parallelism for test files because it causes issues with
-    // the file locking mechanism.
-    fileParallelism: false,
+    poolOptions: {
+      forks: {
+        singleFork: true // Use a single fork for tests to avoid issues with local registry
+      }
+    },
     env: {
       // Clear npm configuration environment variables that interfere with local registry tests
       npm_config_registry: undefined,
