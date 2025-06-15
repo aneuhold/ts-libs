@@ -35,6 +35,8 @@ export class RegistryConfigService {
     const packageManagerInfo = PACKAGE_MANAGER_INFO[packageManager];
 
     const configPath = path.join(projectPath, packageManagerInfo.configFile);
+    const tmpConfigPath = `${configPath}.tmp`;
+
     const existingContent = (await fs.pathExists(configPath))
       ? await fs.readFile(configPath, 'utf8')
       : null;
@@ -46,6 +48,13 @@ export class RegistryConfigService {
       backup.yarnrc = { path: configPath, content: existingContent };
     } else if (packageManagerInfo.configFile === '.yarnrc.yml') {
       backup.yarnrcYml = { path: configPath, content: existingContent };
+    }
+
+    // Create .tmp file if it doesn't exist
+    if (!(await fs.pathExists(tmpConfigPath))) {
+      if (existingContent) {
+        await fs.writeFile(tmpConfigPath, existingContent);
+      }
     }
 
     // Get package info to determine if we need organization-specific config
@@ -63,15 +72,20 @@ export class RegistryConfigService {
     );
     let finalConfigContent: string;
 
-    if (existingContent) {
-      // Merge with existing content
+    // Read original content from .tmp file if it exists, otherwise use existing content
+    const originalContent = (await fs.pathExists(tmpConfigPath))
+      ? await fs.readFile(tmpConfigPath, 'utf8')
+      : existingContent;
+
+    if (originalContent) {
+      // Merge with original content from .tmp file
       finalConfigContent = this.mergeConfigContent(
-        existingContent,
+        originalContent,
         registryConfig,
         packageManagerInfo.configFile
       );
     } else {
-      // No existing content, use new config directly
+      // No original content, use new config directly
       finalConfigContent = registryConfig;
     }
 
@@ -81,7 +95,7 @@ export class RegistryConfigService {
   }
 
   /**
-   * Restores the original registry configuration files.
+   * Restores the original registry configuration files by replacing current config with .tmp version.
    *
    * @param backup The backup of original configurations
    */
@@ -89,39 +103,34 @@ export class RegistryConfigService {
     backup: PackageManagerConfigBackup
   ): Promise<void> {
     for (const config of Object.values(backup)) {
-      if (config.content === null) {
-        // File didn't exist originally, remove it
+      const tmpConfigPath = `${config.path}.tmp`;
+
+      // Check if .tmp file exists
+      if (await fs.pathExists(tmpConfigPath)) {
+        // Delete current config file if it exists
         if (await fs.pathExists(config.path)) {
           await fs.remove(config.path);
         }
+
+        // Rename .tmp file to original name
+        await fs.move(tmpConfigPath, config.path);
       } else {
-        const cleanedContent = this.removeLocalNpmRegistryLines(config.content);
-        if (cleanedContent.length !== config.content.length) {
-          config.content = cleanedContent.trim();
-        }
-        if (config.content === '') {
-          await fs.remove(config.path);
+        // Fallback to original backup approach if no .tmp file exists
+        if (config.content === null) {
+          // File didn't exist originally, remove it
+          if (await fs.pathExists(config.path)) {
+            await fs.remove(config.path);
+          }
         } else {
-          // Restore original content
-          await fs.writeFile(config.path, config.content);
+          if (config.content === '') {
+            await fs.remove(config.path);
+          } else {
+            // Restore original content
+            await fs.writeFile(config.path, config.content);
+          }
         }
       }
     }
-  }
-
-  /**
-   * Removes lines from configuration content that were previously added by local-npm-registry.
-   *
-   * @param content The configuration file content to clean
-   */
-  private static removeLocalNpmRegistryLines(content: string): string {
-    const lines = content.split('\n');
-    const cleanedLines = lines.filter((line) => {
-      const trimmedLine = line.trim();
-      // Remove lines that have the local-npm-registry comment
-      return !trimmedLine.includes('#local-npm-registry');
-    });
-    return cleanedLines.join('\n');
   }
 
   /**
@@ -282,7 +291,7 @@ export class RegistryConfigService {
 
       // Add organization-specific registry configurations
       for (const org of organizations) {
-        config += `@${org}:registry=${registryUrl} #local-npm-registry\n`;
+        config += `@${org}:registry=${registryUrl}\n`;
       }
     }
 

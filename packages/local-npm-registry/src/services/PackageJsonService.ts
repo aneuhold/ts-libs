@@ -31,6 +31,7 @@ export class PackageJsonService {
 
   /**
    * Updates a package.json file with a new version for a specific package.
+   * Preserves original formatting, indentation, and comments.
    *
    * @param projectPath - Path to the project directory containing package.json
    * @param packageName - Name of the package to update
@@ -43,30 +44,68 @@ export class PackageJsonService {
   ): Promise<void> {
     try {
       const packageJsonPath = path.join(projectPath, 'package.json');
+
+      // Read the original file content to preserve formatting
+      const originalContent = await fs.readFile(packageJsonPath, 'utf-8');
       const packageJson = (await fs.readJson(packageJsonPath)) as PackageJson;
+
+      let updatedContent = originalContent;
+      let hasUpdates = false;
 
       // Update the package's own version if this is the package being published
       if (packageJson.name === packageName) {
-        packageJson.version = version;
+        const versionRegex = new RegExp(
+          `(["']version["']\\s*:\\s*["'])([^"']+)(["'])`,
+          'g'
+        );
+        if (versionRegex.test(originalContent)) {
+          updatedContent = updatedContent.replace(
+            versionRegex,
+            `$1${version}$3`
+          );
+          hasUpdates = true;
+        }
       }
 
-      // Update dependencies
+      // Helper function to update dependencies in specific sections
+      const updateDependencySection = (sectionName: string): void => {
+        const sectionRegex = new RegExp(
+          `(["']${sectionName}["']\\s*:\\s*{[^}]*["']${this.escapeRegex(packageName)}["']\\s*:\\s*["'])([^"']+)(["'])`,
+          'g'
+        );
+        if (sectionRegex.test(updatedContent)) {
+          updatedContent = updatedContent.replace(
+            sectionRegex,
+            `$1${version}$3`
+          );
+          hasUpdates = true;
+        }
+      };
+
+      // Update dependencies sections
       if (packageJson.dependencies?.[packageName]) {
-        packageJson.dependencies[packageName] = version;
+        updateDependencySection('dependencies');
       }
 
-      // Update devDependencies
       if (packageJson.devDependencies?.[packageName]) {
-        packageJson.devDependencies[packageName] = version;
+        updateDependencySection('devDependencies');
       }
 
-      // Update peerDependencies
       if (packageJson.peerDependencies?.[packageName]) {
-        packageJson.peerDependencies[packageName] = version;
+        updateDependencySection('peerDependencies');
       }
 
-      await fs.writeJson(packageJsonPath, packageJson, { spaces: 2 });
-      DR.logger.info(`Updated ${packageName} to ${version} in ${projectPath}`);
+      // Only write if we made updates
+      if (hasUpdates) {
+        await fs.writeFile(packageJsonPath, updatedContent, 'utf-8');
+        DR.logger.info(
+          `Updated ${packageName} to ${version} in ${projectPath}`
+        );
+      } else {
+        DR.logger.info(
+          `No updates needed for ${packageName} in ${projectPath}`
+        );
+      }
     } catch (error) {
       DR.logger.error(
         `Error updating package.json in ${projectPath}: ${String(error)}`
@@ -118,5 +157,14 @@ export class PackageJsonService {
   static extractOrganization(packageName: string): string | null {
     const orgMatch = packageName.match(/^@([^/]+)\//);
     return orgMatch ? orgMatch[1] : null;
+  }
+
+  /**
+   * Escapes special regex characters in a string.
+   *
+   * @param str - String to escape
+   */
+  private static escapeRegex(str: string): string {
+    return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   }
 }
