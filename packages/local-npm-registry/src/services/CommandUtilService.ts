@@ -80,7 +80,10 @@ export class CommandUtilService {
       // Add additional subscriber if provided (for subscribe command)
       if (
         additionalSubscriber &&
-        !entry.subscribers.includes(additionalSubscriber)
+        !entry.subscribers.some(
+          (subscriber) =>
+            subscriber.subscriberPath === additionalSubscriber.subscriberPath
+        )
       ) {
         entry.subscribers.push(additionalSubscriber);
       }
