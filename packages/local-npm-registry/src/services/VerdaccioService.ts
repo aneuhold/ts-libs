@@ -23,8 +23,8 @@ import {
 } from '../types/VerdaccioDb.js';
 import { ConfigService } from './ConfigService.js';
 import { MutexService } from './MutexService.js';
+import { NpmrcService } from './NpmrcService.js';
 import { PackageJsonService } from './PackageJsonService.js';
-import { PackageManagerService } from './PackageManagerService.js';
 
 /**
  * Type definition for the Verdaccio runServer function.
@@ -355,7 +355,7 @@ export class VerdaccioService {
     const isVerbose = DR.logger.isVerboseLoggingEnabled();
 
     // Get all npmrc configurations from current directory up the tree
-    const npmrcConfigs = await PackageManagerService.getAllNpmrcConfigs();
+    const npmrcConfigs = await NpmrcService.getAllNpmrcConfigs();
 
     // Parse npmrc configurations to extract organization registries and auth tokens
     const { uplinks, packages } = this.parseNpmrcForVerdaccio(npmrcConfigs);
