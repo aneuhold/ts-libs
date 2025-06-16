@@ -66,7 +66,7 @@ export default class FileSystemService {
    * @param targetFolderPath
    * @param ignoreExtensions is an array with extensions that should be
    * ignored. For example, if you want to ignore all .ts files, you would pass
-   * in ['ts'].
+   * in ['.ts']. Multi-part extensions like '.spec.ts' are also supported.
    */
   static async copyFolderContents(
     sourceFolderPath: string,
@@ -86,18 +86,15 @@ export default class FileSystemService {
     const sourceFilePaths =
       await FileSystemService.getAllFilePathsRelative(sourceFolderPath);
 
-    // console.log(sourceFilePaths);
-
     await Promise.all(
       sourceFilePaths.map(async (sourceFilePath) => {
         const sourceFile = path.join(sourceFolderPath, sourceFilePath);
         const targetFile = path.join(targetFolderPath, sourceFilePath);
 
-        const sourceFileExtension =
-          StringService.getFileNameExtension(sourceFile);
+        // Check if the file should be ignored based on extensions
         if (
-          sourceFileExtension &&
-          ignoreExtensions?.includes(sourceFileExtension)
+          ignoreExtensions &&
+          FileSystemService.shouldIgnoreFile(sourceFile, ignoreExtensions)
         ) {
           return;
         }
@@ -105,6 +102,31 @@ export default class FileSystemService {
         await cp(sourceFile, targetFile, { recursive: true });
       })
     );
+  }
+
+  /**
+   * Checks if a file should be ignored based on the provided extensions.
+   * Supports both simple extensions (e.g., '.ts') and multi-part extensions (e.g., '.spec.ts').
+   *
+   * @param filePath the path to the file to check
+   * @param ignoreExtensions array of extensions to ignore
+   */
+  private static shouldIgnoreFile(
+    filePath: string,
+    ignoreExtensions: string[]
+  ): boolean {
+    const fileName = path.basename(filePath);
+
+    return ignoreExtensions.some((extension) => {
+      // Handle multi-part extensions like '.spec.ts'
+      if (extension.includes('.', 1)) {
+        return fileName.endsWith(extension);
+      }
+
+      // Handle simple extensions like '.ts'
+      const fileExtension = StringService.getFileNameExtension(filePath);
+      return fileExtension === extension;
+    });
   }
 
   static async checkOrCreateFolder(folderPath: string): Promise<void> {
@@ -135,7 +157,7 @@ export default class FileSystemService {
    *
    * If only relative file paths are needed, use {@link getAllFilePathsRelative}.
    *
-   * @param dirPath
+   * @param dirPath the directory path to search for files in
    */
   static async getAllFilePaths(dirPath: string): Promise<string[]> {
     const filePaths: string[] = [];
@@ -164,7 +186,7 @@ export default class FileSystemService {
    *
    * If absolute file paths are needed, use {@link getAllFilePaths}.
    *
-   * @param dirPath
+   * @param dirPath the directory path to search for files in
    */
   static async getAllFilePathsRelative(dirPath: string): Promise<string[]> {
     const filePaths = await this.getAllFilePaths(dirPath);
