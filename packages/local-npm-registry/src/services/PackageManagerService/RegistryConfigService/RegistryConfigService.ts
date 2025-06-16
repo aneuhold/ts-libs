@@ -58,7 +58,10 @@ export class RegistryConfigService {
     }
 
     // Get package info to determine if we need organization-specific config
-    const packageInfo = await PackageJsonService.getPackageInfo(projectPath);
+    const packageInfo = await PackageJsonService.getPackageInfo(
+      projectPath,
+      false
+    );
 
     // Get all npmrc configurations to find existing organization registries
     const npmrcConfigs = await NpmrcService.getAllNpmrcConfigs(projectPath);

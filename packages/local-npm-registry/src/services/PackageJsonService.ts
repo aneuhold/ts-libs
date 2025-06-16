@@ -10,16 +10,22 @@ export class PackageJsonService {
    * Reads and validates the package.json file in the specified directory.
    *
    * @param dir - Directory to search for package.json
+   * @param requireVersion - Whether to require the version field (default: true for packages being published)
    */
   static async getPackageInfo(
-    dir: string = process.cwd()
+    dir: string = process.cwd(),
+    requireVersion: boolean = true
   ): Promise<PackageJson | null> {
     try {
       const packageJsonPath = path.join(dir, 'package.json');
       const packageJson = (await fs.readJson(packageJsonPath)) as PackageJson;
 
-      if (!packageJson.name || !packageJson.version) {
-        throw new Error('package.json must contain name and version fields');
+      if (!packageJson.name || (requireVersion && !packageJson.version)) {
+        if (requireVersion) {
+          throw new Error('package.json must contain name and version fields');
+        } else {
+          throw new Error('package.json must contain name field');
+        }
       }
 
       return packageJson;
@@ -125,7 +131,7 @@ export class PackageJsonService {
     projectPath: string,
     packageName: string
   ): Promise<string | null> {
-    const packageInfo = await this.getPackageInfo(projectPath);
+    const packageInfo = await this.getPackageInfo(projectPath, false);
     if (!packageInfo) {
       return null;
     }
