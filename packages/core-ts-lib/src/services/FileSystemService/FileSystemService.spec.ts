@@ -1,5 +1,6 @@
 import { writeFile } from 'fs/promises';
 import path from 'path';
+import { afterAll, describe, expect, it } from 'vitest';
 import FileSystemService from './FileSystemService.js';
 
 const TEST_FOLDER_NAME = '__fileSystemService-tests__';

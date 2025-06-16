@@ -253,15 +253,26 @@ The local JSON store maintains the following structure:
       "originalVersion": "1.2.3",
       "currentVersion": "1.2.3-20250526123456",
       "subscribers": [
-        "/path/to/consumer-project-1",
-        "/path/to/consumer-project-2"
+        {
+          "subscriberPath": "/path/to/consumer-project-1",
+          "originalSpecifier": "^1.2.3"
+        },
+        {
+          "subscriberPath": "/path/to/consumer-project-2",
+          "originalSpecifier": "~1.2.0"
+        }
       ],
       "packageRootPath": "/path/to/core-ts-lib"
     },
     "@aneuhold/be-ts-lib": {
       "originalVersion": "2.1.0",
       "currentVersion": "2.1.0-20250526134567",
-      "subscribers": ["/path/to/consumer-project-3"],
+      "subscribers": [
+        {
+          "subscriberPath": "/path/to/consumer-project-3",
+          "originalSpecifier": "^2.1.0"
+        }
+      ],
       "packageRootPath": "/path/to/be-ts-lib"
     }
   }
