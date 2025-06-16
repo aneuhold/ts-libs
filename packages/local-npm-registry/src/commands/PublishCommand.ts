@@ -10,8 +10,10 @@ import { VerdaccioService } from '../services/VerdaccioService.js';
 export class PublishCommand {
   /**
    * Implements the 'local-npm publish' command.
+   *
+   * @param additionalArgs - Additional arguments to pass to the npm publish command
    */
-  static async execute(): Promise<void> {
+  static async execute(additionalArgs: string[] = []): Promise<void> {
     const packageInfo = await PackageJsonService.getPackageInfo();
     if (!packageInfo) {
       throw new Error('No package.json found in current directory');
@@ -39,7 +41,9 @@ export class PublishCommand {
       packageName,
       process.cwd(),
       originalVersion,
-      existingSubscribers
+      existingSubscribers,
+      undefined,
+      additionalArgs
     );
 
     if (existingSubscribers.length === 0) {

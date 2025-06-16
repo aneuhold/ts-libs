@@ -43,13 +43,15 @@ export class CommandUtilService {
    * @param originalVersion - Original version from package.json
    * @param existingSubscribers - Existing subscribers to preserve (empty array for new packages)
    * @param additionalSubscriber - Optional additional subscriber to add (used by subscribe command)
+   * @param additionalPublishArgs - Additional arguments to pass to the npm publish command
    */
   static async publishAndUpdateSubscribers(
     packageName: string,
     packageRootPath: string,
     originalVersion: string,
     existingSubscribers: PackageSubscriber[] = [],
-    additionalSubscriber?: PackageSubscriber
+    additionalSubscriber?: PackageSubscriber,
+    additionalPublishArgs: string[] = []
   ): Promise<string> {
     // Generate fresh timestamp version
     const timestampVersion = this.generateTimestampVersion(originalVersion);
@@ -67,14 +69,21 @@ export class CommandUtilService {
       );
 
       // Publish to Verdaccio registry
-      await VerdaccioService.publishPackage(packageRootPath);
+      await VerdaccioService.publishPackage(
+        packageRootPath,
+        additionalPublishArgs
+      );
 
       // Create/update local store entry
       const entry: PackageEntry = {
         originalVersion,
         currentVersion: timestampVersion,
         subscribers: [...existingSubscribers],
-        packageRootPath
+        packageRootPath,
+        publishArgs:
+          additionalPublishArgs.length > 0
+            ? [...additionalPublishArgs]
+            : undefined
       };
 
       // Add additional subscriber if provided (for subscribe command)

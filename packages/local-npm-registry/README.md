@@ -30,6 +30,8 @@ In your library project (the one you want to test changes from), set up a watch 
 }
 ```
 
+> **💡 Pro tip:** You can pass any [npm publish options](https://docs.npmjs.com/cli/v11/using-npm/config#shorthands-and-other-cli-niceties) to `local-npm publish`. For example, use `local-npm publish --ignore-scripts` if you want to skip pre/post-publish scripts.
+
 Now when you run `npm run dev`, every time you save a TypeScript file, your library will rebuild and automatically update all consuming projects!
 
 ### 2. Subscribe your frontend project to the library
@@ -56,13 +58,30 @@ That's it! Your frontend project will now automatically receive updates whenever
 
 ## 🛠️ Core Commands
 
-### `local-npm publish`
+### `local-npm publish [npm-publish-options]`
 
 📤 **Publishes your current package** and automatically updates all projects that are subscribed to it.
 
 - Creates a timestamped version (e.g., `1.2.3-20250528123456`)
 - Updates all subscriber projects with the new version
 - Perfect for the watch command in your library
+- Supports all npm publish options: Pass any [npm publish options](https://docs.npmjs.com/cli/v11/using-npm/config#shorthands-and-other-cli-niceties) directly to the underlying `npm publish` command
+
+<details>
+<summary><strong>Examples</strong></summary>
+
+```bash
+# Basic publish
+local-npm publish
+
+# Publish without running scripts
+local-npm publish --ignore-scripts
+
+# Publish with verbose output for debugging
+local-npm publish --verbose
+```
+
+</details>
 
 ### `local-npm subscribe <package-name>`
 
@@ -70,6 +89,7 @@ That's it! Your frontend project will now automatically receive updates whenever
 
 - Adds your current project as a subscriber
 - Installs the latest local version immediately
+- Preserves publish arguments: Uses the same npm publish options that were used when the package was originally published
 - Great for frontend projects consuming your libraries
 
 ### `local-npm unpublish [package-name]`
@@ -262,7 +282,8 @@ The local JSON store maintains the following structure:
           "originalSpecifier": "~1.2.0"
         }
       ],
-      "packageRootPath": "/path/to/core-ts-lib"
+      "packageRootPath": "/path/to/core-ts-lib",
+      "publishArgs": ["--ignore-scripts", "--verbose"]
     },
     "@aneuhold/be-ts-lib": {
       "originalVersion": "2.1.0",

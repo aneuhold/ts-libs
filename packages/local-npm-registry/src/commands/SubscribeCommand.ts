@@ -49,7 +49,8 @@ export class SubscribeCommand {
       entry.packageRootPath,
       entry.originalVersion,
       entry.subscribers,
-      { subscriberPath: currentProjectPath, originalSpecifier }
+      { subscriberPath: currentProjectPath, originalSpecifier },
+      entry.publishArgs || [] // Use stored publish args from when package was originally published
     );
 
     await VerdaccioService.stop();

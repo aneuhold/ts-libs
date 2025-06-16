@@ -25,6 +25,8 @@ export type PackageEntry = {
   subscribers: PackageSubscriber[];
   /** The absolute path to the root directory of the package */
   packageRootPath: string;
+  /** Additional arguments that were used when publishing this package */
+  publishArgs?: string[];
 };
 
 /**

@@ -17,12 +17,29 @@ program
 program
   .command('publish')
   .description(
-    'Publish a package and update all subscribers with timestamp version'
+    'Publish a package and update all subscribers with timestamp version. Additional arguments are passed directly to npm publish.'
   )
+  .allowUnknownOption(true)
+  .allowExcessArguments(true)
   .action(async () => {
     try {
       DR.logger.setVerboseLogging(program.getOptionValue('verbose') as boolean);
-      await CommandService.publish();
+
+      // Get the raw arguments from process.argv
+      // Find where 'publish' appears and take everything after it
+      const publishIndex = process.argv.indexOf('publish');
+      const additionalArgs =
+        publishIndex >= 0 ? process.argv.slice(publishIndex + 1) : [];
+
+      // Filter out any non-string arguments and options that are handled by the main program
+      const validAdditionalArgs = additionalArgs.filter(
+        (arg): arg is string =>
+          typeof arg === 'string' &&
+          !arg.startsWith('-v') &&
+          !arg.startsWith('--verbose')
+      );
+
+      await CommandService.publish(validAdditionalArgs);
     } catch (error) {
       DR.logger.error(`Failed to publish: ${String(error)}`);
       process.exit(1);
@@ -115,6 +132,9 @@ program
         DR.logger.info(`${packageName}:`);
         DR.logger.info(`  Original Version: ${entry.originalVersion}`);
         DR.logger.info(`  Current Version: ${entry.currentVersion}`);
+        if (entry.publishArgs && entry.publishArgs.length > 0) {
+          DR.logger.info(`  Publish Args: ${entry.publishArgs.join(' ')}`);
+        }
         DR.logger.info(`  Subscribers (${entry.subscribers.length}):`);
         if (entry.subscribers.length === 0) {
           DR.logger.info('    (none)');

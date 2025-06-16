@@ -11,9 +11,11 @@ import { UnsubscribeCommand } from '../commands/UnsubscribeCommand.js';
 export class CommandService {
   /**
    * Implements the 'local-npm publish' command.
+   *
+   * @param additionalArgs - Additional arguments to pass to the npm publish command
    */
-  static async publish(): Promise<void> {
-    return PublishCommand.execute();
+  static async publish(additionalArgs: string[] = []): Promise<void> {
+    return PublishCommand.execute(additionalArgs);
   }
 
   /**

@@ -157,8 +157,12 @@ export class VerdaccioService {
    * Note: Verdaccio must be started first using start() method.
    *
    * @param packagePath - Path to the package directory containing package.json
+   * @param additionalPublishArgs - Additional arguments to pass to the npm publish command
    */
-  static async publishPackage(packagePath: string): Promise<void> {
+  static async publishPackage(
+    packagePath: string,
+    additionalPublishArgs: string[] = []
+  ): Promise<void> {
     const config = await ConfigService.loadConfig();
     const registryUrl = config.registryUrl || DEFAULT_CONFIG.registryUrl;
 
@@ -182,7 +186,11 @@ export class VerdaccioService {
       );
 
       // Build npm publish arguments with direct registry and auth config
-      const publishArgs = this.buildPublishArgs(packageJson.name, registryUrl);
+      const publishArgs = this.buildPublishArgs(
+        packageJson.name,
+        registryUrl,
+        additionalPublishArgs
+      );
 
       const npmInfo = PACKAGE_MANAGER_INFO[PackageManager.Npm];
       const result = await execa(npmInfo.command, publishArgs, {
@@ -495,10 +503,12 @@ export class VerdaccioService {
    *
    * @param packageName - The name of the package being published
    * @param registryUrl - The registry URL to publish to
+   * @param additionalArgs - Additional arguments to pass to the npm publish command
    */
   private static buildPublishArgs(
     packageName: string,
-    registryUrl: string
+    registryUrl: string,
+    additionalArgs: string[] = []
   ): string[] {
     const args = ['publish'];
 
@@ -518,7 +528,12 @@ export class VerdaccioService {
     args.push(`--//${registryHost}/:_authToken=fake`);
 
     // Add other standard arguments
-    args.push('--tag', 'local', '--ignore-scripts');
+    args.push('--tag', 'local');
+
+    // Add any additional arguments passed from the CLI
+    if (additionalArgs.length > 0) {
+      args.push(...additionalArgs);
+    }
 
     return args;
   }
