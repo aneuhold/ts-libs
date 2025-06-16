@@ -147,7 +147,10 @@ export class PackageManagerService {
     projectPath: string
   ): Promise<PackageManager> {
     // First, try to determine from package.json packageManager field
-    const packageInfo = await PackageJsonService.getPackageInfo(projectPath);
+    const packageInfo = await PackageJsonService.getPackageInfo(
+      projectPath,
+      false
+    );
     if (packageInfo && packageInfo.packageManager) {
       const packageManagerField = packageInfo.packageManager.toLowerCase();
 
