@@ -2,7 +2,7 @@
   "name": "@aneuhold/local-npm-registry",
   "author": "Anton G. Neuhold Jr.",
   "license": "MIT",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Manages local npm package installations and updates across your machine.",
   "packageManager": "pnpm@10.11.1",
   "type": "module",
@@ -16,7 +16,7 @@
     "test": "vitest run",
     "upgrade:core": "pnpm update '@aneuhold/main-scripts' --latest",
     "jsr:validate": "tb pkg validateJsr",
-    "npm:validate": "tb pkg validateNpm",
+    "npm:validate": "tb pkg validateNpm && tsx scripts/renamePackage.ts && tb pkg validateNpm && tsx scripts/undoRenamePackage.ts",
     "checkAll": "pnpm build && pnpm lint && pnpm test && pnpm jsr:validate",
     "jsr:publish": "tb pkg publishJsr"
   },
