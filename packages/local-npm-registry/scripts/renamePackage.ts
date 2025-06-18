@@ -6,9 +6,11 @@
 
 import { readdirSync, readFileSync, statSync, writeFileSync } from 'fs';
 import { dirname, join } from 'path';
+import { fileURLToPath } from 'url';
 
 const OLD_PACKAGE_NAME = '@aneuhold/local-npm-registry';
 const NEW_PACKAGE_NAME = 'local-npm-registry';
+const __filename = fileURLToPath(import.meta.url);
 const PACKAGE_DIR = join(dirname(__filename), '..');
 
 /**
@@ -49,5 +51,4 @@ function renamePackage(): void {
   console.log('✅ Package rename complete!');
 }
 
-// Execute the rename
 renamePackage();
