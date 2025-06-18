@@ -18,7 +18,8 @@
     "jsr:validate": "tb pkg validateJsr",
     "npm:validate": "tb pkg validateNpm && tsx scripts/renamePackage.ts && tb pkg validateNpm && tsx scripts/undoRenamePackage.ts",
     "checkAll": "pnpm build && pnpm lint && pnpm test && pnpm jsr:validate",
-    "jsr:publish": "tb pkg publishJsr"
+    "jsr:publish": "tb pkg publishJsr",
+    "npm:publish": "npm publish --access public && tsx scripts/renamePackage.ts && npm publish --access public && tsx scripts/undoRenamePackage.ts"
   },
   "main": "lib/index.js",
   "module": "lib/index.js",
