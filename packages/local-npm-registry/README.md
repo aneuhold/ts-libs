@@ -146,31 +146,11 @@ This tool solves these issues by using a real npm registry (Verdaccio) locally, 
 
 <summary><code>local-npm publish</code> Command Flow</summary>
 
-```mermaid
-flowchart TD
-    A["local-npm publish executed"] --> B["Read package.json in current directory"]
-    B --> C{"Package found?"}
-    C -->|No| D["Error: No package.json found"]
-    C -->|Yes| E["Extract package name and version"]
-    E --> F["Start Verdaccio server"]
-    F --> G["Generate timestamp version"]
-    G --> H["Update package.json with timestamp version<br/>e.g., 1.2.3-20250526123456"]
-    H --> I["Build package if needed"]
-    I --> J["Publish to Verdaccio registry"]
-    J --> K["Read local JSON store"]
-    K --> L["Update package entry in store<br/>with new timestamp version"]
-    L --> M["Get all subscribers for this package"]
-    M --> N{"Subscribers exist?"}
-    N -->|No| O["Shut down Verdaccio server"]
-    N -->|Yes| P["For each subscriber project"]
-    P --> Q["Update subscriber's package.json<br/>with new timestamp version"]
-    Q --> R["Run install command in subscriber project<br/>npm install or pnpm install"]
-    R --> S{"More subscribers?"}
-    S -->|Yes| P
-    S -->|No| T["Shut down Verdaccio server"]
-    O --> U["Complete - No subscribers to update"]
-    T --> V["Complete - All subscribers updated"]
-```
+<p align="center">
+    <a href="https://mermaid.live/edit#pako:eNqNlF1v2jAYhf-K5ZvdQEYCoSSaOrX0a_2gtLSVtmUXJnkhaRM7cpxBR_nve21GEoY2lSuMnnNsn_OaFQ1FBNSns1QswphJRR5OAk7wc_Q9oKkIWdrmeUbycpomRUxgCWGpIAroD9JuH5JjpO6BRSRn4Qubg_VcCE4STsJSSuCKRImEUAn5ioqN8bERDlcBHW80ZCZKHn0O6HoDDDXwNhJv5ATdT6UU0icjsbuF0VSeG8lXKN7IqdYslWSh2ioIZxkQxiPyE2SRCF7pTs1ZzlAyUfryTyAjFoaJIAVIhCvwzIDnCJ4DB8kUEJVkUCiW5Xuu5wa-QPgxjzS6c_JFouJ98aep_HgI1txqEdtyrG7b6Thux3X6ttPtuf3K-8J4f0Hv4zJJq9xJMiMcIII6ky-GvERy_Kc8JRoXlDBPCtXo5dLwV9tCTffkcnI7IgX2BxV3ZbjrvdsRrFu-6u4Nby5k7sph8Z-wro3djUlWEZampCinRSiTKYJYsyQqTortJpXsxshGOEWTBg5LvFM9SaNqkm51xXGJ8ygW_N81j-o5GqPiDHcHFsaNI5Fcimec6EoyNge5q-Oo2Q_FTvPvTeTOON7rIkr9lpDCVEKRZXqEdb57pzHW-p1uaTx43lhX3vfGe4Kx3WBHzajr1CaNEJq_6Bwf3pfjrdnmEeGhyPIUMJa2fsLNanEaS5NYpXowqqdd1dFfE7HR6DGnLTqXSUR9JUto0QxkxvSSrrRdQFUMGZr7-DVi8iWgAV-jJmf8mxDZViZFOY-pP2NpgauN-0nC5pLVCPAI5BD_cRT1DxzPeFB_RZfUtz3X8gau17W9vuN2vX6vRV-p7_Ut2-0NvL7nem5n4LrrFv1ldnWsg27nYODYrt0fdHuevf4NM5DE4A" target="_blank">
+        <picture><img src="./docs/images/publish-mermaid.png"  alt="publish Command Mermaid Diagram" /></picture> 
+    </a>
+</p>
 
 </details>
 
@@ -178,25 +158,11 @@ flowchart TD
 
 <summary><code>local-npm subscribe <package-name></code> Command Flow</summary>
 
-```mermaid
-flowchart TD
-    A["local-npm subscribe &lt;package-name&gt; executed"] --> B["Read local JSON store"]
-    B --> C{"Package exists in store?"}
-    C -->|No| D["List available packages from store"]
-    D --> E["Error: Package not found"]
-    C -->|Yes| F["Start Verdaccio server"]
-    F --> G["Get package version from store"]
-    G --> H["Re-publish package to Verdaccio<br/>with stored timestamp version"]
-    H --> I["Add current project to subscribers list<br/>in local JSON store"]
-    I --> J["Get all subscribers for this package"]
-    J --> K["For each subscriber project<br/>including new one"]
-    K --> L["Update subscriber's package.json<br/>with timestamp version"]
-    L --> M["Run install command in subscriber project<br/>npm install or pnpm install"]
-    M --> N{"More subscribers?"}
-    N -->|Yes| K
-    N -->|No| O["Shut down Verdaccio server"]
-    O --> P["Complete - All subscribers updated"]
-```
+<p align="center">
+    <a href="https://mermaid.live/edit#pako:eNp1k19T2kAUxb_KnX2wL0IRhYTYsaPgPxR0atuZtunDkl3IanY3s7sRW-S792ZjAnWUJxLO_Z27Zw8rkmjGSUTmmV4mKTUOvo5iBfg5_hWTTCc0a6lcgi1mNjFixmEnc4c5TR7ogrcUlXxn4Q6BP_GkcJzF5De0WkdwgsNfOGXgCTC-u5mCddpwFFT4E68brmJyW8GQIayzIFSl_ByTdSUdltLnqX6GEWKvUQX0kYqMzjIOL6tYmBstX3mMvMcpDp0ao00EtZXSDua6UKyRVh4_uH2GM9TfuTKK79wwmiRCg-XmkZtGfebB5yg8565eAVBhhVZvbXLuBy58Kq28mGXCps2c0xunTzPz8WgpXFoBGDghuXVU5jW-YV545iUyjxmDpDCGK1zG6HueuBLa3JmxgIbOszHed-_k0hPHL8eiWfYfYq4NuFTYeu9mbOzHrnDsDCWcJunWXL3Qi3mSFUyoBSi-BK02jCvPuEbGt5xRx7cIHxrH9r3VapPQ-9Fce9qkjLtQ2ChU4WESLSVVzDfs7f3KptdqPEq-9dywJ549xeJOMLvthDaNnW7adLX9puzwTVmvtHDA9FK9X7Ebb3OL4qGWecYxkhYcv7qSwmdVtpjskoURjETOFHyXSG4kLR_JqsTFxKVcYtoRfmXUPMQkVmucyan6qbWsx4wuFimJ5jSz-FTRR4IuDJXNW2wZ42aI_x5HoqB_4CEkWpEnEnU7--2wH3YHwd7goLcf7uOvf0i01-m2w14nGHR7QdALO_1wvUv-et9uu9PvdnphGOyFYe-gH4Trf1CQe58" target="_blank">
+        <picture><img src="./docs/images/subscribe-mermaid.png"  alt="subscribe Command Mermaid Diagram" /></picture> 
+    </a>
+</p>
 
 </details>
 
@@ -204,61 +170,22 @@ flowchart TD
 
 <summary><code>local-npm unpublish &lt;package-name&gt;</code> Command Flow</summary>
 
-```mermaid
-flowchart TD
-    A["local-npm unpublish executed"] --> B["Read package.json in current directory"]
-    B --> C{"Package found?"}
-    C -->|No| D["Error: No package.json found"]
-    C -->|Yes| E["Extract package name"]
-    E --> F["Read local JSON store"]
-    F --> G{"Package exists in store?"}
-    G -->|No| H["Error: Package not in local registry"]
-    G -->|Yes| I["Get original version from store"]
-    I --> J["Get all subscribers for this package"]
-    J --> K{"Subscribers exist?"}
-    K -->|Yes| L["For each subscriber project"]
-    K -->|No| M["Reset current package.json<br/>to original version"]
-    L --> N["Update subscriber's package.json<br/>to original version without timestamp"]
-    N --> O["Run install command in subscriber project<br/>npm install or pnpm install"]
-    O --> P{"More subscribers?"}
-    P -->|Yes| L
-    P -->|No| M
-    M --> Q["Remove package entry from local JSON store"]
-    Q --> R["Complete - Package unpublished<br/>and all subscribers reset"]
-```
+<p align="center">
+    <a href="https://mermaid.live/edit#pako:eNqNU01T2zAU_CsaXXpJ0oTEwfZ06JQAKQTCV3to6x4UW8QCS_JIMoSG_Pc-ybXswnSmOUXy7r59-562OJUZxTG-K-RTmhNl0JejRCD4ffqR4EKmpOiLkqNKlNWqYDpHdEPTytAswT9Rv3-ADgF3Q0mGSpI-kDUd3GspEBMorZSiwqCMKZoaqZ6BUUsfOuJsm-CrmoPuZCWyjwne1YCZBbws5Qs6AvVjpaSK0VL-XcJxvGZN-Ub1Czq2nI1RJDUNAwnCqcceu_onjXHXJTq7vVwiDT5b3InDzTs-6YZpo213Dtk6nnvHn1vHDUtIYyl1HUXXoNFJY946PwXunBokFVszAeBHqjSzvSrJX5k7debO_jBIUSBdrXSq2Ao4EI5CJme6CcDTzhxtAT3dduCur7abRWvpHAqcgBglad6pgEol72GsXnfhA7hwuWow1WxAd2wfVur9gZFvWvRC587gEkS-lhkxtFP0nf4vKfTETC4rgwzjVBvCSy--dOKX1mFllxS-QnCp5JyIzI31TYeuin0CDRrCKDtnr33ptK8g2QuYU3cabbBXnWC7Ny63-uLCyVy7ELl8pH6FIUn1XG_CPzf22pFvgDyTvCwoxNf3a-jfMM1cU7bl13uj7OBADvfwWrEMx0ZVtIc5VZzYI97aQgk2ObUPKoa_GVEPCU7EDjglEd-l5A1NyWqd4_iOFBpOlZvnESNrRbi_hQ3JqJrBYzY4DsdjJ4LjLd7geBKEg2A63B-OxqP9cBJGQQ8_43gcDKIwiqZBFE7D0XCyt-vhX67s3mAvGo-CYDQNgmgYTaPJ7jfaNJSB" target="_blank">
+        <picture><img src="./docs/images/unpublish-mermaid.png"  alt="unpublish Command Mermaid Diagram" /></picture> 
+    </a>
+</p>
 
 </details>
 <details>
 
 <summary><code>local-npm unsubscribe [&lt;package-name&gt;]</code> Command Flow</summary>
 
-```mermaid
-flowchart TD
-    A["local-npm unsubscribe &#91;&lt;package-name&gt;&#93; executed"] --> B{"Package name provided?"}
-    B -->|No| C["Read local JSON store"]
-    B -->|Yes| D["Read local JSON store"]
-    C --> E["Find all packages where current project<br/>is a subscriber"]
-    D --> F{"Package exists in store?"}
-    F -->|No| G["Error: Package not found in store"]
-    E --> H{"Any subscribed packages?"}
-    H -->|No| I["No packages to unsubscribe from"]
-    H -->|Yes| J["For each subscribed package"]
-    F -->|Yes| K["Check if current project is subscriber"]
-    K --> L{"Current project subscribed?"}
-    L -->|No| M["Error: Not subscribed to this package"]
-    L -->|Yes| N["Remove current project from<br/>package's subscribers list"]
-    J --> O["Get original version for package"]
-    O --> P["Update current project's package.json<br/>to original version without timestamp"]
-    P --> Q["Remove current project from<br/>package's subscribers list"]
-    Q --> R{"More packages to process?"}
-    R -->|Yes| J
-    R -->|No| S["Run install command in current project<br/>npm install or pnpm install"]
-    N --> T["Get original version for package"]
-    T --> U["Update current project's package.json<br/>to original version without timestamp"]
-    U --> V["Run install command in current project<br/>npm install or pnpm install"]
-    S --> W["Complete - Unsubscribed from all packages"]
-    V --> X["Complete - Unsubscribed from package"]
-```
+<p align="center">
+    <a href="https://mermaid.live/edit#pako:eNq1VFtT4jAU_itnsjP6AiwUAVt23FEQ73jFvXUfYhtotE2YNPWyyH_f06BpFWecnXF5Iu35znc5p5mRQIaMeGQcy7sgokrDRd8XgL_NXz6JZUDjqpgmkIk0u0oDxa8YrHxyG92VWHenNLihE1YVNGErE93FF80usHsWZJqFPvkN1eoGbM18crKohLwSpkre8pCFX30yX3Bt5YWPQ_kIPWQ9YzQEQw3758dDSLVUDLuVa3-w9BH67xb3jIJtrBtwEQKNY3gSncJdxBSDIFOKCZ2LumaB_nKlPm_wFChYv8p265tug5Ifds9TnQIXC97C0cA62kHybaWk8sCmIDWMZYaCnoGWYttQ7CLFpngoNIRWdkGxayn2kGIoC2davpjXWMnEEuwW8e3nsUgFjAbRG1QWMiggBwjpRSy4AT5-HR1gbG-EdmAcHaKj3qv6grIwdWhNHRW5DWW5OLenIyR7rfOw0Dk0m5HI26UBmzTMlJ_gq2XVKcQ4UNtx32g_xmY7TINUfMIFLtotFnIpcIZqScSxgZwgZDQNqV7iX7W6a9epFEYJGlrqfcd1JDMNmics1TSZWoYTw3D6MQ5PTbMznM4RruGLFcJ2AUtLC3dWWp3yk3xa57mcTOBCo1j8ygKZJHSx4G99YfmV8lyah1g6W2lDI-3iX8K_MJDRfwx_ZBguP97tuWn8Lf--ZDKNGYqvwkiU1j4f64sbzGIvDfb7e9giLVIhE8VD4mmVsQpJmEpofiSzvKFPdMQSrPPwb0jVjU98MUfMlIqfUibPMCWzSUS8MY1TPGUm8T6nE0UT-xSzCJnq4WWniec6jmlCvBm5J57TXqs11p2Ws9buNBp4albIA_EarU7NdZtOveXU6-311vq8Qv4Y2kbNxYfNTsd12nW33XY7879j8Dgl" target="_blank">
+        <picture><img src="./docs/images/unsubscribe-mermaid.png"  alt="unsubscribe Command Mermaid Diagram" /></picture> 
+    </a>
+</p>
 
 </details>
 

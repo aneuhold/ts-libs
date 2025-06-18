@@ -39,7 +39,11 @@
   "homepage": "https://github.com/aneuhold/ts-libs/tree/main/packages/local-npm-registry#readme",
   "keywords": [
     "Scripting",
-    "Node.js"
+    "Node.js",
+    "npm",
+    "verdaccio",
+    "local",
+    "registry"
   ],
   "dependencies": {
     "@aneuhold/core-ts-lib": "*",
