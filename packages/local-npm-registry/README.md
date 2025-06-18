@@ -123,12 +123,12 @@ local-npm publish --verbose
 - `local-npm init-config` - Create a configuration file
 - `local-npm clear-store` - Reset everything and start fresh
 
-<details>
-<summary><strong><h2>⚙️ Configuration</h2></strong></summary>
+## ⚙️ Configuration
 
 The tool can be configured using a `.local-npm-registry.json` file. The configuration file is searched starting from the current working directory and traversing up the directory tree until found.
 
-### Configuration File Structure
+<details>
+<summary><strong>Configuration File Structure</strong></summary>
 
 ```json
 {
@@ -139,7 +139,10 @@ The tool can be configured using a `.local-npm-registry.json` file. The configur
 }
 ```
 
-### Configuration Options
+</details>
+
+<details>
+<summary><strong>Configuration Options</strong></summary>
 
 - **`dataDirectory`** (string, optional): The base directory where all local-npm-registry data should be stored. If not specified, defaults to the user's home directory. A `.local-npm-registry` subdirectory will be created within this directory.
 
@@ -149,7 +152,10 @@ The tool can be configured using a `.local-npm-registry.json` file. The configur
 
 - **`verdaccioConfig`** (object, optional): Custom Verdaccio configuration that will override the default settings. This allows you to customize the registry behavior beyond the basic options.
 
-### Creating a Configuration File
+</details>
+
+<details>
+<summary><strong>Creating a Configuration File</strong></summary>
 
 You can create a default configuration file in your project using:
 
