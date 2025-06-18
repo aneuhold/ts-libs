@@ -2,7 +2,7 @@
   "name": "@aneuhold/core-ts-lib",
   "author": "Anton G. Neuhold Jr.",
   "license": "MIT",
-  "version": "2.2.3",
+  "version": "2.2.4",
   "description": "A core library for all of my TypeScript projects",
   "type": "module",
   "scripts": {
@@ -14,6 +14,7 @@
     "npm:validate": "tsx ./scripts/validateNpmPublish.ts",
     "checkAll": "pnpm build && pnpm lint && pnpm test && pnpm jsr:validate",
     "jsr:publish": "tsx ./scripts/publishJsr.ts",
+    "npm:publish": "npm publish --access public",
     "upgrade:all": "pnpm up"
   },
   "main": "lib/index.js",

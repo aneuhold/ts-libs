@@ -38,4 +38,4 @@ runs:
       if: inputs.skip-npm != 'true'
       shell: bash
       working-directory: packages/${{ inputs.package-name }}
-      run: npm publish --access public
+      run: pnpm npm:publish
