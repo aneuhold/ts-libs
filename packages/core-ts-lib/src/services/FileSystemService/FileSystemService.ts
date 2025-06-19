@@ -19,6 +19,26 @@ import StringService from '../StringService.js';
 const execAsync = promisify(exec);
 
 /**
+ * Options for the replaceInFiles method
+ */
+export type ReplaceInFilesOptions = {
+  /** The string to search for */
+  searchString: string;
+  /** The string to replace it with */
+  replaceString: string;
+  /** The root directory to search in */
+  rootPath: string;
+  /** Array of glob-like patterns to include (defaults to all files) */
+  includePatterns?: string[];
+  /** Array of glob-like patterns to exclude (defaults to common ignore patterns) */
+  excludePatterns?: string[];
+  /** Whether to also replace URL-encoded versions of the strings */
+  includeUrlEncoded?: boolean;
+  /** If true, only shows what would be changed without making changes */
+  dryRun?: boolean;
+};
+
+/**
  * A service which can be used to interact with the file system, only in build
  * steps.
  */
@@ -191,7 +211,11 @@ export default class FileSystemService {
   static async getAllFilePathsRelative(dirPath: string): Promise<string[]> {
     const filePaths = await this.getAllFilePaths(dirPath);
     return filePaths.map((filePath) => {
-      return filePath.replace(dirPath, '');
+      const relativePath = filePath.replace(dirPath, '');
+      // Remove leading path separator if present
+      return relativePath.startsWith('/') || relativePath.startsWith('\\')
+        ? relativePath.slice(1)
+        : relativePath;
     });
   }
 
@@ -308,5 +332,176 @@ export default class FileSystemService {
     }
 
     return results;
+  }
+
+  /**
+   * Replaces all occurrences of a string in files within a directory.
+   * Supports glob patterns for including/excluding files and handles URL encoding.
+   *
+   * @param options Configuration object for the replacement operation
+   */
+  static async replaceInFiles(options: ReplaceInFilesOptions): Promise<void> {
+    const {
+      searchString,
+      replaceString,
+      rootPath,
+      includePatterns = ['**/*'],
+      excludePatterns = ['**/node_modules/**', '**/.*/**'],
+      includeUrlEncoded = true,
+      dryRun = false
+    } = options;
+
+    DR.logger.info(
+      `Replacing "${searchString}" with "${replaceString}" in ${rootPath}`
+    );
+
+    if (dryRun) {
+      DR.logger.info('DRY RUN MODE - No files will be modified');
+    }
+
+    const filesToProcess = await this.getMatchingFiles(
+      rootPath,
+      includePatterns,
+      excludePatterns
+    );
+
+    let processedCount = 0;
+    let modifiedCount = 0;
+
+    for (const filePath of filesToProcess) {
+      try {
+        const content = await readFile(filePath, 'utf8');
+        let hasChanges = false;
+        let updatedContent = content;
+
+        // Replace the main string
+        if (content.includes(searchString)) {
+          updatedContent = updatedContent.replaceAll(
+            searchString,
+            replaceString
+          );
+          hasChanges = true;
+        }
+
+        // Replace URL-encoded version if requested
+        if (includeUrlEncoded) {
+          const encodedSearchString = encodeURIComponent(searchString);
+          const encodedReplaceString = encodeURIComponent(replaceString);
+
+          if (updatedContent.includes(encodedSearchString)) {
+            updatedContent = updatedContent.replaceAll(
+              encodedSearchString,
+              encodedReplaceString
+            );
+            hasChanges = true;
+          }
+        }
+
+        if (hasChanges) {
+          const relativePath = path.relative(rootPath, filePath);
+          DR.logger.info(
+            `${dryRun ? 'Would update' : 'Updating'} ${relativePath}...`
+          );
+
+          if (!dryRun) {
+            await writeFile(filePath, updatedContent, 'utf8');
+          }
+
+          modifiedCount++;
+        }
+
+        processedCount++;
+      } catch (error) {
+        // Skip binary files or files we can't read
+        DR.logger.verbose.info(
+          `Skipping ${filePath}: ${ErrorUtils.getErrorString(error)}`
+        );
+        continue;
+      }
+    }
+
+    DR.logger.info(
+      `${dryRun ? 'Would process' : 'Processed'} ${processedCount} files, ${dryRun ? 'would modify' : 'modified'} ${modifiedCount} files`
+    );
+  }
+
+  /**
+   * Gets files matching the include patterns while excluding those that match exclude patterns.
+   * Uses simple glob-like matching for common patterns.
+   *
+   * @param rootPath The root directory to search in
+   * @param includePatterns Array of glob-like patterns to include
+   * @param excludePatterns Array of glob-like patterns to exclude
+   */
+  private static async getMatchingFiles(
+    rootPath: string,
+    includePatterns: string[],
+    excludePatterns: string[]
+  ): Promise<string[]> {
+    const allFiles = await this.getAllFilePaths(rootPath);
+
+    return allFiles.filter((filePath) => {
+      const relativePath = path.relative(rootPath, filePath);
+
+      // Check if file matches any exclude pattern
+      if (
+        excludePatterns.some((pattern) =>
+          this.matchesPattern(relativePath, pattern)
+        )
+      ) {
+        return false;
+      }
+
+      // Check if file matches any include pattern
+      return includePatterns.some((pattern) =>
+        this.matchesPattern(relativePath, pattern)
+      );
+    });
+  }
+
+  /**
+   * Simple glob-like pattern matching for common use cases.
+   * Supports:
+   * - ** for any number of directories
+   * - * for any characters except path separators
+   * - Exact matches
+   *
+   * @param filePath The file path to test
+   * @param pattern The pattern to match against
+   */
+  private static matchesPattern(filePath: string, pattern: string): boolean {
+    // Handle special case of **/* which should match everything
+    if (pattern === '**/*') {
+      return true;
+    }
+
+    // Handle patterns like **/*.ext - they should match files in root and subdirectories
+    if (pattern.startsWith('**/')) {
+      const remainingPattern = pattern.slice(3); // Remove **/
+      // Test both the root file pattern and the full pattern
+      return (
+        this.matchesPattern(filePath, remainingPattern) ||
+        this.matchesSimpleGlob(filePath, pattern)
+      );
+    }
+
+    return this.matchesSimpleGlob(filePath, pattern);
+  }
+
+  /**
+   * Matches a simple glob pattern against a file path
+   *
+   * @param filePath The file path to test
+   * @param pattern The pattern to match against
+   */
+  private static matchesSimpleGlob(filePath: string, pattern: string): boolean {
+    // Convert glob pattern to regex
+    const regexPattern = pattern
+      .replace(/\*\*/g, '.*') // ** matches any number of directories
+      .replace(/\*/g, '[^/\\\\]*') // * matches any characters except path separators
+      .replace(/\./g, '\\.'); // Escape dots
+
+    const regex = new RegExp(`^${regexPattern}$`);
+    return regex.test(filePath.replace(/\\/g, '/')); // Normalize path separators
   }
 }

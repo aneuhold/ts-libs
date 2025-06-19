@@ -7,7 +7,9 @@ import { DependencyRegistry, DR } from './services/DependencyRegistry.js';
 import DependencyService, {
   VersionType
 } from './services/DependencyService.js';
-import FileSystemService from './services/FileSystemService/FileSystemService.js';
+import FileSystemService, {
+  type ReplaceInFilesOptions
+} from './services/FileSystemService/FileSystemService.js';
 import PackageService from './services/PackageService.js';
 import StringService from './services/StringService.js';
 import { PackageJson } from './types/PackageJson.js';
@@ -30,4 +32,11 @@ export {
 };
 
 // Export TypeScript types where needed
-export type { ILogger, ISpan, ITracer, PackageJson, VersionType };
+export type {
+  ILogger,
+  ISpan,
+  ITracer,
+  PackageJson,
+  ReplaceInFilesOptions,
+  VersionType
+};
