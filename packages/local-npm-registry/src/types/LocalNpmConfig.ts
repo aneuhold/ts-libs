@@ -13,6 +13,10 @@ export type LocalNpmConfig = {
    */
   dataDirectory?: string;
 
+  /**
+   * The port on which the local Verdaccio registry will run.
+   * If not specified, defaults to 4873.
+   */
   registryPort?: number;
 
   /**

@@ -2,12 +2,11 @@
   "name": "@aneuhold/local-npm-registry",
   "author": "Anton G. Neuhold Jr.",
   "license": "MIT",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "description": "Manages local npm package installations and updates across your machine.",
-  "packageManager": "pnpm@10.11.1",
+  "packageManager": "pnpm@10.12.1",
   "type": "module",
   "scripts": {
-    "cli:test": "node lib/index.js",
     "refresh": "pnpm build && npm uninstall -g @aneuhold/local-npm-registry && npm install -g .",
     "reset:global": "npm uninstall -g @aneuhold/local-npm-registry && npm install -g @aneuhold/local-npm-registry",
     "build": "rimraf lib && tsc -p tsconfig.build.json && tsx scripts/copyTsFiles.ts",
@@ -16,10 +15,11 @@
     "test": "vitest run",
     "upgrade:core": "pnpm update '@aneuhold/main-scripts' --latest",
     "jsr:validate": "tb pkg validateJsr",
-    "npm:validate": "tb pkg validateNpm && tsx scripts/renamePackage.ts && tb pkg validateNpm && tsx scripts/undoRenamePackage.ts",
+    "npm:validate": "tb pkg validateNpm --alternative-names local-npm-registry",
+    "test:packageNameReplace": "tb pkg testStringReplacement @aneuhold/local-npm-registry local-npm-registry",
     "checkAll": "pnpm build && pnpm lint && pnpm test && pnpm jsr:validate",
     "jsr:publish": "tb pkg publishJsr",
-    "npm:publish": "npm publish --access public && tsx scripts/renamePackage.ts && npm publish --access public && tsx scripts/undoRenamePackage.ts"
+    "npm:publish": "tb pkg publishNpm --alternative-names local-npm-registry"
   },
   "main": "lib/index.js",
   "module": "lib/index.js",
@@ -27,8 +27,7 @@
     "local-npm": "lib/index.js"
   },
   "files": [
-    "lib",
-    "src"
+    "lib"
   ],
   "repository": {
     "type": "git",
@@ -48,22 +47,19 @@
   ],
   "dependencies": {
     "@aneuhold/core-ts-lib": "*",
-    "chokidar": "^4.0.1",
     "commander": "^12.1.0",
     "execa": "^9.5.2",
     "fs-extra": "^11.2.0",
     "js-yaml": "^4.1.0",
     "proper-lockfile": "^4.1.2",
-    "semver": "^7.6.3",
     "verdaccio": "^6.1.2"
   },
   "devDependencies": {
-    "@aneuhold/main-scripts": "^2.3.0",
+    "@aneuhold/main-scripts": "^2.4.0",
     "@types/fs-extra": "^11.0.4",
     "@types/js-yaml": "^4.0.9",
     "@types/node": "^22.15.3",
     "@types/proper-lockfile": "^4.1.4",
-    "@types/semver": "^7.5.8",
     "@verdaccio/types": "^10.8.0",
     "eslint": "^9.26.0",
     "jsr": "*",

@@ -2,9 +2,9 @@
   "name": "@aneuhold/be-ts-db-lib",
   "author": "Anton G. Neuhold Jr.",
   "license": "MIT",
-  "version": "2.0.72",
+  "version": "2.0.73",
   "description": "A backend database library meant to actually interact with various databases in personal projects",
-  "packageManager": "pnpm@10.11.1",
+  "packageManager": "pnpm@10.12.1",
   "type": "module",
   "scripts": {
     "build": "rimraf lib && tsc --project tsconfig.build.json && tsx ./scripts/copyTsFiles.ts",
@@ -17,7 +17,7 @@
     "npm:validate": "tb pkg validateNpm",
     "checkAll": "pnpm build && pnpm lint && pnpm test && pnpm jsr:validate",
     "jsr:publish": "tb pkg publishJsr",
-    "npm:publish": "npm publish --access public",
+    "npm:publish": "tb pkg publishNpm",
     "upgrade:core": "pnpm update '@aneuhold/main-scripts' --latest",
     "upgrade:all": "pnpm up",
     "migrate": "tsx ./scripts/migrate.ts",
@@ -27,7 +27,7 @@
   "module": "lib/index.js",
   "types": "lib/index.d.ts",
   "files": [
-    "lib/**/*"
+    "lib"
   ],
   "exports": {
     ".": {
@@ -58,7 +58,7 @@
   },
   "devDependencies": {
     "@aneuhold/local-npm-registry": "*",
-    "@aneuhold/main-scripts": "^2.3.0",
+    "@aneuhold/main-scripts": "^2.4.0",
     "@types/node": "^22.15.3",
     "@types/node-fetch": "^2.6.12",
     "dotenv": "^16.5.0",

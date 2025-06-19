@@ -632,8 +632,8 @@ export default class PackageService {
   }
 
   /**
-   * Replaces the package name in package.json and jsr.json files with a new name.
-   * Uses FileSystemService.replaceInFiles to perform the replacement.
+   * Replaces the package name in all files in the root directory, but no child directories,
+   * with a new name.
    *
    * @param originalPackageName The original package name to replace
    * @param newPackageName The new package name to use
@@ -646,12 +646,12 @@ export default class PackageService {
 
     const rootDir = process.cwd();
 
-    // Replace in package.json and jsr.json files
+    // Replace in all files in the root directory
     await FileSystemService.replaceInFiles({
       searchString: originalPackageName,
       replaceString: newPackageName,
       rootPath: rootDir,
-      includePatterns: ['package.json', 'jsr.json'],
+      includePatterns: ['*'],
       excludePatterns: []
     });
 

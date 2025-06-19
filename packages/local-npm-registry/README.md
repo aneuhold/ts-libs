@@ -1,7 +1,9 @@
 # local-npm-registry
 
-[![JSR](https://jsr.io/badges/@aneuhold/local-npm-registry)](https://jsr.io/@aneuhold/local-npm-registry)
-[![NPM](https://img.shields.io/npm/v/%40aneuhold%2Flocal-npm-registry)](https://www.npmjs.com/package/@aneuhold/local-npm-registry)
+<!--JSR is specifically using an escape character for @ in the URL because only 1 package is published to JSR, where NPM is published to two locations-->
+
+[![JSR](https://img.shields.io/jsr/v/%40aneuhold/local-npm-registry?logo=jsr&label=JSR)](https://jsr.io/%40aneuhold/local-npm-registry)
+[![NPM](https://img.shields.io/npm/v/%40aneuhold%2Flocal-npm-registry?logo=npm&label=NPM)](https://www.npmjs.com/package/@aneuhold/local-npm-registry)
 [![License](https://img.shields.io/github/license/aneuhold/ts-libs)](https://github.com/aneuhold/ts-libs/blob/main/LICENSE)
 
 🚀 **Supercharge your local development workflow!** This CLI tool manages local npm package installations as if they were published, making it effortless to test changes across multiple projects without the hassle of publishing to npm or linking packages manually.

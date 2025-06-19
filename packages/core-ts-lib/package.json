@@ -2,8 +2,9 @@
   "name": "@aneuhold/core-ts-lib",
   "author": "Anton G. Neuhold Jr.",
   "license": "MIT",
-  "version": "2.2.6",
+  "version": "2.2.9",
   "description": "A core library for all of my TypeScript projects",
+  "packageManager": "pnpm@10.12.1",
   "type": "module",
   "scripts": {
     "build": "rimraf lib && tsc --project tsconfig.build.json && tsx ./scripts/copyTsFiles.ts",
@@ -21,7 +22,7 @@
   "module": "lib/index.js",
   "types": "lib/index.d.ts",
   "files": [
-    "lib/**/*"
+    "lib"
   ],
   "exports": {
     ".": {
