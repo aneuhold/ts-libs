@@ -161,8 +161,7 @@ export default class PackageService {
       process.exit(1);
     }
 
-    const { packageName: originalPackageName, version: currentVersion } =
-      await PackageService.getPackageInfo();
+    const { packageName: originalPackageName } = await PackageService.getPackageInfo();
     const packageNamesToPublish = [originalPackageName, ...(alternativePackageNames || [])];
 
     for (const packageName of packageNamesToPublish) {
@@ -173,9 +172,6 @@ export default class PackageService {
       if (isAlternativeName) {
         await PackageService.replacePackageName(originalPackageName, packageName);
       }
-
-      // Check for version conflicts before publishing
-      await PackageService.checkNpmVersionConflicts(packageName, currentVersion);
 
       const result = await PackageService.publishNpm();
 
