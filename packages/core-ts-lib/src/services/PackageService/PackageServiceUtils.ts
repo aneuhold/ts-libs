@@ -3,9 +3,11 @@ import { access, readFile } from 'fs/promises';
 import path from 'path';
 import { promisify } from 'util';
 import { PackageJson } from '../../types/PackageJson.js';
+import { VersionType } from '../../types/VersionType.js';
 import ErrorUtils from '../../utils/ErrorUtils.js';
 import ChangelogService from '../ChangelogService/index.js';
 import { DR } from '../DependencyRegistry.js';
+import DependencyService from '../DependencyService.js';
 import FileSystemService from '../FileSystemService/FileSystemService.js';
 import StringService from '../StringService.js';
 
@@ -144,5 +146,94 @@ export default class PackageServiceUtils {
   static async initializeChangelog(packagePath?: string): Promise<void> {
     const { packageName, version } = await PackageServiceUtils.getPackageInfo();
     await ChangelogService.initializeChangelog(version, packageName, packagePath);
+  }
+
+  /**
+   * Bumps the version if needed based on npm registry comparison and initializes changelog.
+   * This operation is idempotent - it will only bump if the current version conflicts with
+   * the registry, and changelog initialization won't modify existing content.
+   *
+   * @param versionType The type of version bump (patch, minor, major). Defaults to patch.
+   * @param packagePath Optional path to the package directory (defaults to current working directory)
+   */
+  static async bumpVersionIfNeededAndInitializeChangelog(
+    versionType: VersionType = VersionType.Patch,
+    packagePath?: string
+  ): Promise<void> {
+    const { packageName, version: currentVersion } = await PackageServiceUtils.getPackageInfo();
+
+    DR.logger.info(
+      `Checking if version bump is needed for ${packageName} (current: ${currentVersion})`
+    );
+
+    // Check if version bump is needed by comparing with npm registry
+    const needsBump = await PackageServiceUtils.checkIfVersionBumpNeeded(
+      packageName,
+      currentVersion,
+      versionType
+    );
+
+    let finalVersion = currentVersion;
+    if (needsBump) {
+      DR.logger.info(`Version bump needed - bumping ${versionType} version`);
+      await DependencyService.bumpVersion(versionType);
+
+      // Get the new version after bump
+      const { version: newVersion } = await PackageServiceUtils.getPackageInfo();
+      finalVersion = newVersion;
+      DR.logger.success(`Version bumped from ${currentVersion} to ${finalVersion}`);
+    } else {
+      DR.logger.info('No version bump needed - current version is valid');
+    }
+
+    // Initialize changelog with the final version
+    await ChangelogService.initializeChangelog(finalVersion, packageName, packagePath);
+
+    DR.logger.success(`Version preparation completed for ${packageName} version ${finalVersion}`);
+  }
+
+  /**
+   * Checks if a version bump is needed by comparing current version with npm registry
+   * and considering the requested version type.
+   *
+   * @param packageName The package name to check
+   * @param currentVersion The current version from package.json
+   * @param versionType The type of version bump requested
+   * @returns true if a version bump is needed, false otherwise
+   */
+  private static async checkIfVersionBumpNeeded(
+    packageName: string,
+    currentVersion: string,
+    versionType: VersionType
+  ): Promise<boolean> {
+    DR.logger.info(`Checking npm registry for existing versions of ${packageName}...`);
+
+    let latestVersion: string | null = null;
+
+    try {
+      const { stdout } = await execAsync(`npm view ${packageName}`);
+
+      // Parse the npm view output to extract the latest version
+      const latestVersionMatch = stdout.match(/latest:\s*([^\s|]+)/);
+      if (latestVersionMatch) {
+        latestVersion = latestVersionMatch[1];
+        DR.logger.info(`Current version: ${currentVersion}, Latest on npm: ${latestVersion}`);
+      }
+    } catch (error) {
+      const errorString = ErrorUtils.getErrorString(error);
+
+      // If the package doesn't exist on npm, no bump needed for first publish
+      if (errorString.includes('404') || errorString.includes('not found')) {
+        DR.logger.info('Package not found on npm - no version bump needed for first publish.');
+        return false;
+      }
+
+      // For other npm command errors, log but assume no bump needed to be safe
+      DR.logger.warn(`Could not check npm registry: ${errorString}`);
+      return false;
+    }
+
+    // Use the new logic to determine if bump is needed based on version type
+    return StringService.shouldBumpVersion(currentVersion, latestVersion, versionType);
   }
 }

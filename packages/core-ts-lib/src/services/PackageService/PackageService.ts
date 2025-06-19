@@ -1,3 +1,4 @@
+import { VersionType } from '../../types/VersionType.js';
 import { DR } from '../DependencyRegistry.js';
 import JsrPackageService from './JsrPackageService.js';
 import NpmPackageService from './NpmPackageService.js';
@@ -88,5 +89,20 @@ export default class PackageService {
    */
   static async initializeChangelog(packagePath?: string): Promise<void> {
     return PackageServiceUtils.initializeChangelog(packagePath);
+  }
+
+  /**
+   * Bumps the version if needed based on npm registry comparison and initializes changelog.
+   * This operation is idempotent - it will only bump if the current version conflicts with
+   * the registry, and changelog initialization won't modify existing content.
+   *
+   * @param versionType The type of version bump (patch, minor, major). Defaults to patch.
+   * @param packagePath Optional path to the package directory (defaults to current working directory)
+   */
+  static async bumpVersionIfNeededAndInitializeChangelog(
+    versionType?: VersionType,
+    packagePath?: string
+  ): Promise<void> {
+    return PackageServiceUtils.bumpVersionIfNeededAndInitializeChangelog(versionType, packagePath);
   }
 }
