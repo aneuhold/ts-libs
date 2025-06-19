@@ -22,57 +22,187 @@ export default class PackageService {
    * project has any pending changes first, then update the version of the
    * jsr.json to match the package.json file, then run the
    * `jsr publish --dry-run` command, and finally cleanup the changes made.
+   *
+   * @param alternativePackageNames Optional array of alternative package names to validate publishing under
+   *
+   * **Warning:** This method uses simple string replacement for package names, which may have unintended effects
+   * if the package name appears in unexpected places. Use with caution.
    */
-  static async validateJsrPublish(): Promise<void> {
+  static async validateJsrPublish(alternativePackageNames?: string[]): Promise<void> {
     if (await FileSystemService.hasPendingChanges()) {
       DR.logger.error('Please commit or stash your changes before publishing.');
       process.exit(1);
     }
-    await PackageService.replaceMonorepoImportsWithNpmSpecifiers();
-    const { packageName, version: currentVersion } =
-      await PackageService.updateJsrFromPackageJson();
-    const successfulDryRun = await PackageService.publishJsrDryRun(packageName, currentVersion);
-    await PackageService.revertGitChanges();
 
-    if (!successfulDryRun) {
-      process.exit(1);
-    } else {
-      DR.logger.success('Successfully validated JSR publishing.');
+    const { packageName: originalPackageName } = await PackageService.getPackageInfo();
+    const packageNamesToValidate = [originalPackageName, ...(alternativePackageNames || [])];
+
+    for (const packageName of packageNamesToValidate) {
+      const isAlternativeName = packageName !== originalPackageName;
+
+      DR.logger.info(`Validating JSR publishing for package: ${packageName}`);
+
+      if (isAlternativeName) {
+        await PackageService.replacePackageName(originalPackageName, packageName);
+      }
+
+      await PackageService.replaceMonorepoImportsWithNpmSpecifiers();
+      const { version: currentVersion } = await PackageService.updateJsrFromPackageJson();
+      const successfulDryRun = await PackageService.publishJsrDryRun(packageName, currentVersion);
+
+      await PackageService.resetGitChanges();
+
+      if (!successfulDryRun) {
+        process.exit(1);
+      }
     }
+
+    DR.logger.success('Successfully validated JSR publishing for all package names.');
   }
 
-  static async publishToJsr(): Promise<void> {
+  /**
+   * Publishes the current project to JSR.
+   *
+   * @param alternativePackageNames Optional array of alternative package names to publish under
+   *
+   * **Warning:** This method uses simple string replacement for package names, which may have unintended effects
+   * if the package name appears in unexpected places. Use with caution.
+   */
+  static async publishToJsr(alternativePackageNames?: string[]): Promise<void> {
     if (await FileSystemService.hasPendingChanges()) {
       DR.logger.error('Please commit or stash your changes before publishing.');
       process.exit(1);
     }
-    await PackageService.replaceMonorepoImportsWithNpmSpecifiers();
-    await PackageService.updateJsrFromPackageJson();
-    const result = await PackageService.publishJsr();
-    await PackageService.revertGitChanges();
 
-    if (!result) {
-      process.exit(1);
-    } else {
-      DR.logger.success('Successfully published to JSR.');
+    const { packageName: originalPackageName } = await PackageService.getPackageInfo();
+    const packageNamesToPublish = [originalPackageName, ...(alternativePackageNames || [])];
+
+    for (const packageName of packageNamesToPublish) {
+      const isAlternativeName = packageName !== originalPackageName;
+
+      DR.logger.info(`Publishing to JSR for package: ${packageName}`);
+
+      if (isAlternativeName) {
+        await PackageService.replacePackageName(originalPackageName, packageName);
+      }
+
+      await PackageService.replaceMonorepoImportsWithNpmSpecifiers();
+      await PackageService.updateJsrFromPackageJson();
+      const result = await PackageService.publishJsr();
+
+      await PackageService.resetGitChanges();
+
+      if (!result) {
+        process.exit(1);
+      }
     }
+
+    DR.logger.success('Successfully published to JSR for all package names.');
   }
 
   /**
    * Validates the current project for publishing to npm. This will run
    * `npm publish --access public --dry-run` and check for version conflicts
    * on the npm registry.
+   *
+   * @param alternativePackageNames Optional array of alternative package names to validate publishing under
+   *
+   * **Warning:** This method uses simple string replacement for package names, which may have unintended effects
+   * if the package name appears in unexpected places. Use with caution.
    */
-  static async validateNpmPublish(): Promise<void> {
-    const { packageName, version: currentVersion } = await PackageService.getPackageInfo();
-
-    const successfulDryRun = await PackageService.publishNpmDryRun();
-    if (!successfulDryRun) {
+  static async validateNpmPublish(alternativePackageNames?: string[]): Promise<void> {
+    if (await FileSystemService.hasPendingChanges()) {
+      DR.logger.error('Please commit or stash your changes before publishing.');
       process.exit(1);
     }
 
-    await PackageService.checkNpmVersionConflicts(packageName, currentVersion);
-    DR.logger.success('Successfully validated npm publishing.');
+    const { packageName: originalPackageName, version: currentVersion } =
+      await PackageService.getPackageInfo();
+    const packageNamesToValidate = [originalPackageName, ...(alternativePackageNames || [])];
+
+    for (const packageName of packageNamesToValidate) {
+      const isAlternativeName = packageName !== originalPackageName;
+
+      DR.logger.info(`Validating npm publishing for package: ${packageName}`);
+
+      if (isAlternativeName) {
+        await PackageService.replacePackageName(originalPackageName, packageName);
+      }
+
+      const successfulDryRun = await PackageService.publishNpmDryRun();
+      if (!successfulDryRun) {
+        if (isAlternativeName) {
+          await PackageService.resetGitChanges();
+        }
+        process.exit(1);
+      }
+
+      await PackageService.checkNpmVersionConflicts(packageName, currentVersion);
+
+      if (isAlternativeName) {
+        await PackageService.resetGitChanges();
+      }
+    }
+
+    DR.logger.success('Successfully validated npm publishing for all package names.');
+  }
+
+  /**
+   * Publishes the current project to npm.
+   *
+   * @param alternativePackageNames Optional array of alternative package names to publish under
+   *
+   * **Warning:** This method uses simple string replacement for package names, which may have unintended effects
+   * if the package name appears in unexpected places. Use with caution.
+   */
+  static async publishToNpm(alternativePackageNames?: string[]): Promise<void> {
+    if (await FileSystemService.hasPendingChanges()) {
+      DR.logger.error('Please commit or stash your changes before publishing.');
+      process.exit(1);
+    }
+
+    const { packageName: originalPackageName } = await PackageService.getPackageInfo();
+    const packageNamesToPublish = [originalPackageName, ...(alternativePackageNames || [])];
+
+    for (const packageName of packageNamesToPublish) {
+      const isAlternativeName = packageName !== originalPackageName;
+
+      DR.logger.info(`Publishing to npm for package: ${packageName}`);
+
+      if (isAlternativeName) {
+        await PackageService.replacePackageName(originalPackageName, packageName);
+      }
+
+      const result = await PackageService.publishNpm();
+
+      if (isAlternativeName) {
+        await PackageService.resetGitChanges();
+      }
+
+      if (!result) {
+        process.exit(1);
+      }
+    }
+
+    DR.logger.success('Successfully published to npm for all package names.');
+  }
+
+  /**
+   * Test method for string replacement functionality. This method allows testing
+   * the string replacement behavior without performing actual publishing operations.
+   *
+   * @param originalString The original string to replace
+   * @param newString The new string to replace it with
+   *
+   * **Warning:** This method uses simple string replacement, which may have unintended effects
+   * if the string appears in unexpected places. Use with caution.
+   */
+  static async testStringReplacement(originalString: string, newString: string): Promise<void> {
+    DR.logger.info(`Testing string replacement from "${originalString}" to "${newString}"`);
+
+    await PackageService.replacePackageName(originalString, newString);
+
+    DR.logger.info('Test completed - package name replacement has been applied');
   }
 
   /**
@@ -426,15 +556,6 @@ export default class PackageService {
     );
   }
 
-  private static async revertGitChanges(): Promise<void> {
-    DR.logger.info('Reverting changes made to jsr.json, package.json, and source files');
-    try {
-      await execAsync('git checkout -- jsr.json package.json src/');
-    } catch (error) {
-      DR.logger.error(`Failed to revert changes: ${ErrorUtils.getErrorString(error)}`);
-    }
-  }
-
   /**
    * Checks for version conflicts on JSR by looking up the current package
    * and comparing versions. Throws an error if the current version already
@@ -508,5 +629,69 @@ export default class PackageService {
     }
 
     DR.logger.info('Version check passed - ready to publish.');
+  }
+
+  /**
+   * Replaces the package name in package.json and jsr.json files with a new name.
+   * Uses FileSystemService.replaceInFiles to perform the replacement.
+   *
+   * @param originalPackageName The original package name to replace
+   * @param newPackageName The new package name to use
+   */
+  private static async replacePackageName(
+    originalPackageName: string,
+    newPackageName: string
+  ): Promise<void> {
+    DR.logger.info(`Replacing package name from "${originalPackageName}" to "${newPackageName}"`);
+
+    const rootDir = process.cwd();
+
+    // Replace in package.json and jsr.json files
+    await FileSystemService.replaceInFiles({
+      searchString: originalPackageName,
+      replaceString: newPackageName,
+      rootPath: rootDir,
+      includePatterns: ['package.json', 'jsr.json'],
+      excludePatterns: []
+    });
+
+    DR.logger.info(`Successfully replaced package name in configuration files`);
+  }
+
+  /**
+   * Performs a git reset to discard all changes in the working directory.
+   * This is used between alternative package name operations.
+   */
+  private static async resetGitChanges(): Promise<void> {
+    DR.logger.info('Resetting git changes');
+    try {
+      await execAsync('git reset --hard HEAD');
+    } catch (error) {
+      DR.logger.error(`Failed to reset git changes: ${ErrorUtils.getErrorString(error)}`);
+      throw error;
+    }
+  }
+
+  /**
+   * Publishes the current project to npm.
+   *
+   * @returns true if the publish was successful, false otherwise.
+   */
+  private static async publishNpm(): Promise<boolean> {
+    DR.logger.info('Running `npm publish --access public`');
+    return new Promise((resolve) => {
+      const child = spawn('npm publish', ['--access', 'public'], {
+        stdio: 'inherit',
+        shell: true
+      });
+
+      child.on('exit', (code) => {
+        if (code === 0) {
+          resolve(true);
+        } else {
+          resolve(false);
+        }
+      });
+    });
   }
 }
