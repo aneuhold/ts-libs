@@ -71,7 +71,7 @@ jobs:
           github-token: ${{ secrets.CONFIG_GITHUB_TOKEN }}
 
   status-check:
-    name: 'Pull Request Status'
+    name: 'PR Status'
     runs-on: ubuntu-latest
     needs: [detect-changes, version-check, test]
     if: always()
