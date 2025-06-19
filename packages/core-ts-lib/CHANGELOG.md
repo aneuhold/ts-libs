@@ -9,12 +9,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### ✅ Added
 
-### 🏗️ Changed
-
-### 🩹 Fixed
-
-### 🔥 Removed
-
+- New ChangeLog parsing
 
 <!-- Link References -->
+
 [2.2.10]: https://github.com/aneuhold/ts-libs/releases/tag/core-ts-lib-v2.2.10
