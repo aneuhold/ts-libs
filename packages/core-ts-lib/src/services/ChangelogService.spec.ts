@@ -1,7 +1,12 @@
 import { access, mkdir, readFile, rmdir, writeFile } from 'fs/promises';
 import path from 'path';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import ChangelogService from './ChangelogService.js';
+
+// Mock child_process module
+vi.mock('child_process', () => ({
+  execSync: vi.fn()
+}));
 
 const TEST_DIR = path.join(process.cwd(), 'test-temp-changelog');
 const TEST_CHANGELOG_PATH = path.join(TEST_DIR, 'CHANGELOG.md');
@@ -15,6 +20,9 @@ describe('Unit Tests', () => {
       // Directory might not exist, ignore
     }
     await mkdir(TEST_DIR, { recursive: true });
+
+    // Clear mocks
+    vi.clearAllMocks();
   });
 
   afterEach(async () => {
@@ -58,10 +66,15 @@ describe('Unit Tests', () => {
     });
 
     it('should add new version entry to existing changelog', async () => {
-      // First initialization
+      const { execSync } = await import('child_process');
+      const mockExecSync = vi.mocked(execSync);
+
+      // First initialization - no tags yet
+      mockExecSync.mockReturnValue('');
       await ChangelogService.initializeChangelog('1.0.0', 'test-package', TEST_DIR);
 
-      // Add new version
+      // Second call - mock that 1.0.0 now has a tag
+      mockExecSync.mockReturnValue('test-package-v1.0.0\n');
       await ChangelogService.initializeChangelog('1.1.0', 'test-package', TEST_DIR);
 
       const content = await readFile(TEST_CHANGELOG_PATH, 'utf-8');
@@ -105,6 +118,9 @@ describe('Unit Tests', () => {
     });
 
     it('should generate compare links for multiple versions', async () => {
+      const { execSync } = await import('child_process');
+      const mockExecSync = vi.mocked(execSync);
+
       // Create a mock package.json with repository information
       const mockPackageJson = {
         name: '@test/test-package',
@@ -117,10 +133,12 @@ describe('Unit Tests', () => {
       const packageJsonPath = path.join(TEST_DIR, 'package.json');
       await writeFile(packageJsonPath, JSON.stringify(mockPackageJson, null, 2));
 
-      // Initialize with first version
+      // Initialize with first version - no tags yet
+      mockExecSync.mockReturnValue('');
       await ChangelogService.initializeChangelog('1.0.0', '@test/test-package', TEST_DIR);
 
-      // Add second version
+      // Add second version - mock that 1.0.0 now has a tag
+      mockExecSync.mockReturnValue('test-package-v1.0.0\n');
       await ChangelogService.initializeChangelog('1.1.0', '@test/test-package', TEST_DIR);
 
       const content = await readFile(TEST_CHANGELOG_PATH, 'utf-8');
@@ -133,6 +151,142 @@ describe('Unit Tests', () => {
       expect(content).toContain(
         '[1.0.0]: https://github.com/test-owner/test-repo/releases/tag/test-package-v1.0.0'
       );
+    });
+
+    it('should handle existing changelog with tags and add new version', async () => {
+      const { execSync } = await import('child_process');
+      const mockExecSync = vi.mocked(execSync);
+      mockExecSync.mockReturnValue('test-package-v1.0.0\n');
+
+      // Create a mock package.json with repository information
+      const mockPackageJson = {
+        name: 'test-package',
+        repository: {
+          type: 'git',
+          url: 'git+https://github.com/test-owner/test-repo.git'
+        }
+      };
+
+      const packageJsonPath = path.join(TEST_DIR, 'package.json');
+      await writeFile(packageJsonPath, JSON.stringify(mockPackageJson, null, 2));
+
+      // Create an existing changelog with version 1.0.0
+      const existingChangelog = `# Changelog
+
+## 🔖 [1.0.0] (2025-06-18)
+
+### ✅ Added
+
+- Initial release
+`;
+      await writeFile(TEST_CHANGELOG_PATH, existingChangelog);
+
+      // Initialize with new version 1.1.0
+      await ChangelogService.initializeChangelog('1.1.0', 'test-package', TEST_DIR);
+
+      const content = await readFile(TEST_CHANGELOG_PATH, 'utf-8');
+
+      // Should contain both versions
+      expect(content).toContain('[1.1.0]');
+      expect(content).toContain('[1.0.0]');
+
+      // 1.1.0 should appear before 1.0.0 (newest first)
+      const v110Index = content.indexOf('[1.1.0]');
+      const v100Index = content.indexOf('[1.0.0]');
+      expect(v110Index).toBeLessThan(v100Index);
+    });
+
+    it('should update most recent version when no corresponding tag exists', async () => {
+      const { execSync } = await import('child_process');
+      const mockExecSync = vi.mocked(execSync);
+      mockExecSync.mockReturnValue('\n');
+
+      // Create an existing changelog with version 1.0.0
+      const existingChangelog = `# Changelog
+
+## 🔖 [1.0.0] (2025-06-18)
+
+### ✅ Added
+
+- Some feature
+`;
+      await writeFile(TEST_CHANGELOG_PATH, existingChangelog);
+
+      // Initialize with new version 1.1.0 - should update existing entry
+      await ChangelogService.initializeChangelog('1.1.0', 'test-package', TEST_DIR);
+
+      const content = await readFile(TEST_CHANGELOG_PATH, 'utf-8');
+
+      // Should contain 1.1.0 but not 1.0.0
+      expect(content).toContain('[1.1.0]');
+      expect(content).not.toContain('[1.0.0]');
+
+      // Should preserve existing content
+      expect(content).toContain('Some feature');
+    });
+
+    it('should remove older changelog entries that lack corresponding tags', async () => {
+      const { execSync } = await import('child_process');
+      const mockExecSync = vi.mocked(execSync);
+      mockExecSync.mockReturnValue('test-package-v1.0.0\n');
+
+      // Create an existing changelog with multiple versions
+      const existingChangelog = `# Changelog
+
+## 🔖 [1.1.0] (2025-06-19)
+
+### ✅ Added
+
+- New feature
+
+## 🔖 [1.0.0] (2025-06-18)
+
+### ✅ Added
+
+- Initial release
+`;
+      await writeFile(TEST_CHANGELOG_PATH, existingChangelog);
+
+      // Should remove 1.1.0 (no tag) and keep 1.0.0 (has tag), then update to 1.2.0
+      await ChangelogService.initializeChangelog('1.2.0', 'test-package', TEST_DIR);
+
+      const content = await readFile(TEST_CHANGELOG_PATH, 'utf-8');
+
+      // Should contain 1.2.0 and 1.0.0, but not 1.1.0
+      expect(content).toContain('[1.2.0]');
+      expect(content).toContain('[1.0.0]');
+      expect(content).not.toContain('[1.1.0]');
+
+      // Should preserve content from 1.0.0
+      expect(content).toContain('Initial release');
+    });
+
+    it('should handle git command failure gracefully', async () => {
+      const { execSync } = await import('child_process');
+      const mockExecSync = vi.mocked(execSync);
+      mockExecSync.mockImplementation(() => {
+        throw new Error('Not a git repository');
+      });
+
+      // Create an existing changelog
+      const existingChangelog = `# Changelog
+
+## 🔖 [1.0.0] (2025-06-18)
+
+### ✅ Added
+
+- Initial release
+`;
+      await writeFile(TEST_CHANGELOG_PATH, existingChangelog);
+
+      // Should not throw but treat as no tags exist and update version
+      await ChangelogService.initializeChangelog('1.1.0', 'test-package', TEST_DIR);
+
+      const content = await readFile(TEST_CHANGELOG_PATH, 'utf-8');
+
+      // Should update to 1.1.0
+      expect(content).toContain('[1.1.0]');
+      expect(content).not.toContain('[1.0.0]');
     });
   });
 

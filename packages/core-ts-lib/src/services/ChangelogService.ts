@@ -1,3 +1,4 @@
+import { execSync } from 'child_process';
 import { access, readFile, writeFile } from 'fs/promises';
 import path from 'path';
 import ErrorUtils from '../utils/ErrorUtils.js';
@@ -88,10 +89,10 @@ export default class ChangelogService {
 
   /**
    * Initializes a changelog file for the current package if one doesn't exist.
-   * If a changelog already exists, this operation is idempotent and will not
-   * modify existing content.
+   * If a changelog already exists, validates it against existing Git tags and
+   * updates the most recent entry if needed to match the current version.
    *
-   * @param version The initial version for the changelog
+   * @param version The current version for the changelog
    * @param packageName The name of the package
    * @param packagePath Optional path to the package directory (defaults to current working directory)
    */
@@ -109,17 +110,15 @@ export default class ChangelogService {
       // Check if changelog already exists
       await access(changelogPath);
 
-      // If it exists, check if it already has content for this version
+      // If it exists, validate against Git tags and update if necessary
       const existingContent = await readFile(changelogPath, 'utf-8');
-      const versionEntries = this.parseChangelog(existingContent);
-
-      if (versionEntries.some((entry) => entry.version === version)) {
-        DR.logger.info(`Changelog already contains entry for version ${version} - no changes made`);
-        return;
-      }
-
-      DR.logger.info(`Changelog exists but missing entry for version ${version} - adding entry`);
-      await this.addVersionEntry(changelogPath, version, existingContent, packageName, workingDir);
+      await this.validateAndUpdateExistingChangelog(
+        changelogPath,
+        version,
+        packageName,
+        existingContent,
+        workingDir
+      );
     } catch {
       // Changelog doesn't exist, create a new one
       DR.logger.info(`Creating new changelog file: ${changelogPath}`);
@@ -132,6 +131,198 @@ export default class ChangelogService {
     }
 
     DR.logger.success(`Changelog initialization completed for ${packageName}`);
+  }
+
+  /**
+   * Validates an existing changelog against Git tags and updates if necessary.
+   *
+   * @param changelogPath Path to the changelog file
+   * @param currentVersion The current version
+   * @param packageName The package name
+   * @param existingContent The current changelog content
+   * @param workingDir The working directory
+   */
+  private static async validateAndUpdateExistingChangelog(
+    changelogPath: string,
+    currentVersion: string,
+    packageName: string,
+    existingContent: string,
+    workingDir: string
+  ): Promise<void> {
+    const versionEntries = this.parseChangelog(existingContent);
+
+    if (versionEntries.length === 0) {
+      // No version entries exist, add the current version
+      DR.logger.info(
+        `Changelog exists but has no version entries - adding entry for ${currentVersion}`
+      );
+      await this.addVersionEntry(
+        changelogPath,
+        currentVersion,
+        existingContent,
+        packageName,
+        workingDir
+      );
+      return;
+    }
+
+    // Get existing Git tags for this package
+    const existingTags = this.getPackageTags(packageName, workingDir);
+
+    // Check which entries have corresponding tags and remove ones that don't (except most recent)
+    const mostRecentEntry = versionEntries[0];
+    const olderEntries = versionEntries.slice(1);
+    const validOlderEntries: ChangelogVersionEntry[] = [];
+    const removedVersions: string[] = [];
+
+    for (const entry of olderEntries) {
+      const expectedTag = this.getTagName(packageName, entry.version);
+      if (existingTags.includes(expectedTag)) {
+        validOlderEntries.push(entry);
+      } else {
+        removedVersions.push(entry.version);
+      }
+    }
+
+    // If we removed any older entries, we need to regenerate the changelog
+    if (removedVersions.length > 0) {
+      DR.logger.info(
+        `Removing changelog entries without corresponding Git tags: ${removedVersions.join(', ')}`
+      );
+
+      const validEntries = [mostRecentEntry, ...validOlderEntries];
+      const updatedContent = await this.regenerateChangelogContent(
+        validEntries,
+        packageName,
+        workingDir
+      );
+      await writeFile(changelogPath, updatedContent);
+    }
+
+    // Now handle the most recent entry
+    const mostRecentTag = this.getTagName(packageName, mostRecentEntry.version);
+    const hasTagForMostRecent = existingTags.includes(mostRecentTag);
+
+    if (hasTagForMostRecent) {
+      // Most recent entry has a tag, so we need to add a new entry for current version
+      if (mostRecentEntry.version === currentVersion) {
+        DR.logger.info(
+          `Changelog already contains entry for version ${currentVersion} with corresponding tag - no changes made`
+        );
+        return;
+      }
+
+      DR.logger.info(
+        `Most recent changelog entry has a tag - adding new entry for version ${currentVersion}`
+      );
+      await this.addVersionEntry(
+        changelogPath,
+        currentVersion,
+        existingContent,
+        packageName,
+        workingDir
+      );
+    } else {
+      // Most recent entry doesn't have a tag
+      if (mostRecentEntry.version === currentVersion) {
+        DR.logger.info(
+          `Changelog already contains entry for version ${currentVersion} without tag - no changes made`
+        );
+        return;
+      }
+
+      // Update the most recent entry to match current version
+      DR.logger.info(
+        `Updating most recent changelog entry from ${mostRecentEntry.version} to ${currentVersion}`
+      );
+      await this.updateMostRecentVersionEntry(
+        changelogPath,
+        currentVersion,
+        existingContent,
+        packageName,
+        workingDir
+      );
+    }
+  }
+
+  /**
+   * Gets Git tags for a specific package.
+   *
+   * @param packageName The package name
+   * @param workingDir The working directory
+   * @returns Array of Git tags for the package
+   */
+  private static getPackageTags(packageName: string, workingDir: string): string[] {
+    try {
+      // Convert package name to tag prefix (remove scope if present)
+      const tagPrefix = packageName.replace(/^@[\w-]+\//, '');
+      const tagPattern = `${tagPrefix}-v*`;
+
+      // Get all tags matching the pattern
+      const output = execSync(`git tag -l "${tagPattern}"`, {
+        cwd: workingDir,
+        encoding: 'utf-8'
+      });
+
+      return output
+        .trim()
+        .split('\n')
+        .filter((tag) => tag.length > 0);
+    } catch (error) {
+      // If git command fails (e.g., not a git repo), return empty array
+      DR.logger.warn(`Failed to retrieve Git tags: ${ErrorUtils.getErrorString(error)}`);
+      return [];
+    }
+  }
+
+  /**
+   * Generates the expected Git tag name for a package version.
+   *
+   * @param packageName The package name
+   * @param version The version
+   * @returns The expected Git tag name
+   */
+  private static getTagName(packageName: string, version: string): string {
+    const tagPrefix = packageName.replace(/^@[\w-]+\//, '');
+    return `${tagPrefix}-v${version}`;
+  }
+
+  /**
+   * Updates the most recent version entry in the changelog.
+   *
+   * @param changelogPath Path to the changelog file
+   * @param newVersion The new version to update to
+   * @param existingContent The current changelog content
+   * @param packageName The package name
+   * @param workingDir The working directory
+   */
+  private static async updateMostRecentVersionEntry(
+    changelogPath: string,
+    newVersion: string,
+    existingContent: string,
+    packageName: string,
+    workingDir: string
+  ): Promise<void> {
+    const versionEntries = this.parseChangelog(existingContent);
+
+    if (versionEntries.length === 0) {
+      throw new Error('No version entries found to update');
+    }
+
+    const mostRecentEntry = versionEntries[0];
+    const oldVersionPattern = `## 🔖 [${mostRecentEntry.version}]`;
+    const newVersionPattern = `## 🔖 [${newVersion}]`;
+
+    // Replace the version in the changelog content
+    let updatedContent = existingContent.replace(oldVersionPattern, newVersionPattern);
+
+    // Update version links if they exist
+    const repositoryInfo = await this.getRepositoryInfo(workingDir);
+    if (repositoryInfo) {
+      updatedContent = this.addVersionLinksToChangelog(updatedContent, repositoryInfo, packageName);
+    }
+
+    await writeFile(changelogPath, updatedContent);
   }
 
   /**
@@ -478,5 +669,49 @@ ${this.createVersionEntryContent(version, currentDate)}
       const newLinkSection = `\n\n<!-- Link References -->\n${linkReferences.join('\n')}\n`;
       return content + newLinkSection;
     }
+  }
+
+  /**
+   * Regenerates changelog content from a list of version entries.
+   *
+   * @param versionEntries The version entries to include
+   * @param packageName The package name for generating version links
+   * @param workingDir The working directory
+   * @returns The regenerated changelog content
+   */
+  private static async regenerateChangelogContent(
+    versionEntries: ChangelogVersionEntry[],
+    packageName: string,
+    workingDir: string
+  ): Promise<string> {
+    // Start with the header
+    let content = `# Changelog
+
+All notable changes to this project will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
+and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
+
+`;
+
+    // Add each version entry
+    for (const entry of versionEntries) {
+      content += `## 🔖 [${entry.version}] (${entry.date})\n\n`;
+
+      for (const section of entry.sections) {
+        content += `### ${section.type}\n\n`;
+        if (section.content.trim()) {
+          content += `${section.content}\n\n`;
+        }
+      }
+    }
+
+    // Add version links if repository info is available
+    const repositoryInfo = await this.getRepositoryInfo(workingDir);
+    if (repositoryInfo) {
+      content = this.addVersionLinksToChangelog(content, repositoryInfo, packageName);
+    }
+
+    return content;
   }
 }
