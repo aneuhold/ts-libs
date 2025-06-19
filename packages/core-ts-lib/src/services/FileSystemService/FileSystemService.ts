@@ -15,6 +15,7 @@ import { promisify } from 'util';
 import ErrorUtils from '../../utils/ErrorUtils.js';
 import { DR } from '../DependencyRegistry.js';
 import StringService from '../StringService.js';
+import GlobMatchingService from './GlobMatchingService.js';
 
 const execAsync = promisify(exec);
 
@@ -50,8 +51,8 @@ export default class FileSystemService {
    *
    * @param folderPath the path to the folder which contains the file that should
    * be updated
-   * @param fileName
-   * @param textToInsert
+   * @param fileName the name of the file to update
+   * @param textToInsert the text to insert into the file
    */
   static async findAndInsertText(
     folderPath: string,
@@ -82,8 +83,8 @@ export default class FileSystemService {
   /**
    * Copies the contents of one folder to another folder.
    *
-   * @param sourceFolderPath
-   * @param targetFolderPath
+   * @param sourceFolderPath the path to the source folder
+   * @param targetFolderPath the path to the target folder
    * @param ignoreExtensions is an array with extensions that should be
    * ignored. For example, if you want to ignore all .ts files, you would pass
    * in ['.ts']. Multi-part extensions like '.spec.ts' are also supported.
@@ -359,7 +360,9 @@ export default class FileSystemService {
       DR.logger.info('DRY RUN MODE - No files will be modified');
     }
 
-    const filesToProcess = await this.getMatchingFiles(
+    const allFiles = await this.getAllFilePaths(rootPath);
+    const filesToProcess = GlobMatchingService.getMatchingFiles(
+      allFiles,
       rootPath,
       includePatterns,
       excludePatterns
@@ -423,85 +426,5 @@ export default class FileSystemService {
     DR.logger.info(
       `${dryRun ? 'Would process' : 'Processed'} ${processedCount} files, ${dryRun ? 'would modify' : 'modified'} ${modifiedCount} files`
     );
-  }
-
-  /**
-   * Gets files matching the include patterns while excluding those that match exclude patterns.
-   * Uses simple glob-like matching for common patterns.
-   *
-   * @param rootPath The root directory to search in
-   * @param includePatterns Array of glob-like patterns to include
-   * @param excludePatterns Array of glob-like patterns to exclude
-   */
-  private static async getMatchingFiles(
-    rootPath: string,
-    includePatterns: string[],
-    excludePatterns: string[]
-  ): Promise<string[]> {
-    const allFiles = await this.getAllFilePaths(rootPath);
-
-    return allFiles.filter((filePath) => {
-      const relativePath = path.relative(rootPath, filePath);
-
-      // Check if file matches any exclude pattern
-      if (
-        excludePatterns.some((pattern) =>
-          this.matchesPattern(relativePath, pattern)
-        )
-      ) {
-        return false;
-      }
-
-      // Check if file matches any include pattern
-      return includePatterns.some((pattern) =>
-        this.matchesPattern(relativePath, pattern)
-      );
-    });
-  }
-
-  /**
-   * Simple glob-like pattern matching for common use cases.
-   * Supports:
-   * - ** for any number of directories
-   * - * for any characters except path separators
-   * - Exact matches
-   *
-   * @param filePath The file path to test
-   * @param pattern The pattern to match against
-   */
-  private static matchesPattern(filePath: string, pattern: string): boolean {
-    // Handle special case of **/* which should match everything
-    if (pattern === '**/*') {
-      return true;
-    }
-
-    // Handle patterns like **/*.ext - they should match files in root and subdirectories
-    if (pattern.startsWith('**/')) {
-      const remainingPattern = pattern.slice(3); // Remove **/
-      // Test both the root file pattern and the full pattern
-      return (
-        this.matchesPattern(filePath, remainingPattern) ||
-        this.matchesSimpleGlob(filePath, pattern)
-      );
-    }
-
-    return this.matchesSimpleGlob(filePath, pattern);
-  }
-
-  /**
-   * Matches a simple glob pattern against a file path
-   *
-   * @param filePath The file path to test
-   * @param pattern The pattern to match against
-   */
-  private static matchesSimpleGlob(filePath: string, pattern: string): boolean {
-    // Convert glob pattern to regex
-    const regexPattern = pattern
-      .replace(/\*\*/g, '.*') // ** matches any number of directories
-      .replace(/\*/g, '[^/\\\\]*') // * matches any characters except path separators
-      .replace(/\./g, '\\.'); // Escape dots
-
-    const regex = new RegExp(`^${regexPattern}$`);
-    return regex.test(filePath.replace(/\\/g, '/')); // Normalize path separators
   }
 }
