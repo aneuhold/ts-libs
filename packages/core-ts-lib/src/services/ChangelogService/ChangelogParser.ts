@@ -58,7 +58,30 @@ export default class ChangelogParser {
       const sectionType = lines[0].trim() as ChangelogSectionType;
 
       if (REQUIRED_SECTION_TYPES.includes(sectionType)) {
-        const sectionContent = lines.slice(1).join('\n').trim();
+        // Get content after the section header
+        let sectionContent = lines.slice(1).join('\n');
+
+        // Stop at HTML comments or link references which are not part of the section content
+        const stopPatterns = [
+          /^<!--/, // HTML comments
+          /^\[.*\]:/ // Link references like [1.0.0]: http://...
+        ];
+
+        const contentLines = sectionContent.split('\n');
+        const validContentLines: string[] = [];
+
+        for (const line of contentLines) {
+          const trimmedLine = line.trim();
+
+          // Stop if we hit a pattern that indicates we're outside the section
+          if (stopPatterns.some((pattern) => pattern.test(trimmedLine))) {
+            break;
+          }
+
+          validContentLines.push(line);
+        }
+
+        sectionContent = validContentLines.join('\n').trim();
         sections.push({
           type: sectionType,
           content: sectionContent

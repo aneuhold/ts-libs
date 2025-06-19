@@ -401,5 +401,29 @@ Some text but no sections.
         'has no changelog sections'
       );
     });
+
+    it('should properly detect empty sections even when followed by HTML comments or link references', async () => {
+      const changelogWithEmptySectionsAndComments = `# Changelog
+
+## 🔖 [1.0.0] (2025-06-19)
+
+### ✅ Added
+
+### 🏗️ Changed
+
+### 🩹 Fixed
+
+### 🔥 Removed
+
+
+<!-- Link References -->
+[1.0.0]: https://github.com/test-owner/test-repo/releases/tag/test-package-v1.0.0
+`;
+      await writeFile(TEST_CHANGELOG_PATH, changelogWithEmptySectionsAndComments);
+
+      await expect(ChangelogService.validateChangelogForVersion('1.0.0', TEST_DIR)).rejects.toThrow(
+        'has empty changelog sections. The following sections exist but have no content: ✅ Added, 🏗️ Changed, 🩹 Fixed, 🔥 Removed'
+      );
+    });
   });
 });
