@@ -78,7 +78,7 @@ export default class DependencyService {
   }
 
   /**
-   * Bumps the version of the package.json and jsr.json files in the current
+   * Bumps the version of the package.json file in the current
    * working directory.
    *
    * @param versionType The type of version bump (patch, minor, major).
@@ -120,7 +120,6 @@ export default class DependencyService {
 
     const rootDir = process.cwd();
     await updateVersion(path.join(rootDir, 'package.json'));
-    await updateVersion(path.join(rootDir, 'jsr.json'));
   }
 
   /**

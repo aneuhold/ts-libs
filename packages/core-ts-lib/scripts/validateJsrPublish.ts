@@ -1,4 +1,4 @@
-import PackageService from '../src/services/PackageService.js';
+import PackageService from '../src/services/PackageService/PackageService.js';
 
 /**
  * Validates JSR. This is a separate script here, but it will be integrated
