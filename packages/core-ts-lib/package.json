@@ -2,7 +2,7 @@
   "name": "@aneuhold/core-ts-lib",
   "author": "Anton G. Neuhold Jr.",
   "license": "MIT",
-  "version": "2.2.7",
+  "version": "2.2.8",
   "description": "A core library for all of my TypeScript projects",
   "type": "module",
   "scripts": {
