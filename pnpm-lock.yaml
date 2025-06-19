@@ -58,8 +58,8 @@ importers:
         specifier: '*'
         version: link:../local-npm-registry
       '@aneuhold/main-scripts':
-        specifier: ^2.4.0
-        version: 2.4.0(@types/node@22.15.32)
+        specifier: ^2.5.0
+        version: 2.5.0(@types/node@22.15.32)
       '@types/node':
         specifier: ^22.15.32
         version: 22.15.32
@@ -119,8 +119,8 @@ importers:
         specifier: '*'
         version: link:../local-npm-registry
       '@aneuhold/main-scripts':
-        specifier: ^2.4.0
-        version: 2.4.0(@types/node@22.15.32)
+        specifier: ^2.5.0
+        version: 2.5.0(@types/node@22.15.32)
       '@types/node':
         specifier: ^22.15.32
         version: 22.15.32
@@ -165,8 +165,8 @@ importers:
         specifier: '*'
         version: link:../local-npm-registry
       '@aneuhold/main-scripts':
-        specifier: ^2.4.0
-        version: 2.4.0(@types/node@22.15.32)
+        specifier: ^2.5.0
+        version: 2.5.0(@types/node@22.15.32)
       '@types/node':
         specifier: ^22.15.32
         version: 22.15.32
@@ -205,8 +205,8 @@ importers:
         specifier: '*'
         version: link:../local-npm-registry
       '@aneuhold/main-scripts':
-        specifier: ^2.4.0
-        version: 2.4.0(@types/node@22.15.32)
+        specifier: ^2.5.0
+        version: 2.5.0(@types/node@22.15.32)
       '@types/node':
         specifier: ^22.15.32
         version: 22.15.32
@@ -287,8 +287,8 @@ importers:
         version: 6.1.4(typanion@3.14.0)
     devDependencies:
       '@aneuhold/main-scripts':
-        specifier: ^2.4.0
-        version: 2.4.0(@types/node@22.15.32)
+        specifier: ^2.5.0
+        version: 2.5.0(@types/node@22.15.32)
       '@types/fs-extra':
         specifier: ^11.0.4
         version: 11.0.4
@@ -332,16 +332,16 @@ packages:
     resolution: {integrity: sha512-30iZtAPgz+LTIYoeivqYo853f02jBYSd5uGnGpkFV0M3xOt9aN73erkgYAmZU43x4VfqcnLxW9Kpg3R5LC4YYw==}
     engines: {node: '>=6.0.0'}
 
-  '@aneuhold/core-ts-lib@2.2.8':
-    resolution: {integrity: sha512-pmeWjd8UrWHzaSX1MNjaXscQIKX4vyRTJC72yUa9gltoRD1+Tb3++xRhriqyEb1SwQgafzyW9eUz24MB/ad1TA==}
+  '@aneuhold/core-ts-lib@2.2.10':
+    resolution: {integrity: sha512-JfZxB9HXWByjE5vaG/Zz31rDpVSaR8WWnTUxwEL5hcJrZWql2eNS7UsDDrqq/xLjvRiYVoELuG/04vhafIzwxw==}
 
   '@aneuhold/eslint-config@1.0.108':
     resolution: {integrity: sha512-vXo9maN7FvDDy9QaYarwPiAdWXxxO0fxc8RPPIxHscF0ImGdwFXMgGdH1kZkQ1zOnOSkhltlB5HCoqtQetcodw==}
     peerDependencies:
       eslint: '>= 9.29.0'
 
-  '@aneuhold/main-scripts@2.4.0':
-    resolution: {integrity: sha512-3+9GIA3r7/kRbfupVgdr3abFsP6REiQZIyfWFzfuqBH9xKxkpGh+KSsB508mWxjiNy/dXo6ZR6i1XamEeXaLWQ==}
+  '@aneuhold/main-scripts@2.5.0':
+    resolution: {integrity: sha512-47qpAoRfVNoZbzSmu6NbZAxR4HfkkLEEuW+IfwB+1bDU3XA9xcbwmksFOGTvAGmJCxnRovvRB2/iWXfp02PrqA==}
     hasBin: true
 
   '@angular-devkit/architect@0.2000.3':
@@ -3790,7 +3790,7 @@ snapshots:
       '@jridgewell/gen-mapping': 0.3.8
       '@jridgewell/trace-mapping': 0.3.25
 
-  '@aneuhold/core-ts-lib@2.2.8': {}
+  '@aneuhold/core-ts-lib@2.2.10': {}
 
   '@aneuhold/eslint-config@1.0.108(@types/eslint@9.6.1)(chokidar@4.0.3)(eslint@9.29.0(jiti@2.4.2))(prettier@3.5.3)(svelte@5.28.2)(typescript@5.8.3)':
     dependencies:
@@ -3821,9 +3821,9 @@ snapshots:
       - ts-node
       - typescript
 
-  '@aneuhold/main-scripts@2.4.0(@types/node@22.15.32)':
+  '@aneuhold/main-scripts@2.5.0(@types/node@22.15.32)':
     dependencies:
-      '@aneuhold/core-ts-lib': 2.2.8
+      '@aneuhold/core-ts-lib': 2.2.10
       '@inquirer/prompts': 7.5.3(@types/node@22.15.32)
       commander: 12.1.0
       fluent-ffmpeg: 2.1.3

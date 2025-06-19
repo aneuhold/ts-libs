@@ -9,9 +9,8 @@
     "watch": "tsx scripts/watchAll.ts",
     "lint": "pnpm -r --stream lint",
     "test": "pnpm -r --stream test",
-    "upgrade:core": "pnpm update '@aneuhold/*' --latest && pnpm -r --stream upgrade:core",
-    "detectChanges": "./scripts/package-utils.sh detect-changes",
-    "bumpVersions": "./scripts/package-utils.sh bump-versions"
+    "prepare": "pnpm -r --stream prepare",
+    "upgrade:core": "pnpm update '@aneuhold/*' --latest && pnpm -r --stream upgrade:core"
   },
   "devDependencies": {
     "@aneuhold/eslint-config": "^1.0.108",

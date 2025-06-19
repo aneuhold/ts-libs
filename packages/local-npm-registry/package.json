@@ -13,6 +13,7 @@
     "watch": "nodemon --ignore lib/ -e ts --exec \"tsc --project tsconfig.build.json && tsx ./scripts/copyTsFiles.ts\"",
     "lint": "eslint",
     "test": "vitest run",
+    "prepare": "tb pkg prepare",
     "upgrade:core": "pnpm update '@aneuhold/main-scripts' --latest",
     "jsr:validate": "tb pkg validateJsr",
     "npm:validate": "tb pkg validateNpm --alternative-names local-npm-registry",
@@ -55,7 +56,7 @@
     "verdaccio": "^6.1.4"
   },
   "devDependencies": {
-    "@aneuhold/main-scripts": "^2.4.0",
+    "@aneuhold/main-scripts": "^2.5.0",
     "@types/fs-extra": "^11.0.4",
     "@types/js-yaml": "^4.0.9",
     "@types/node": "^22.15.32",

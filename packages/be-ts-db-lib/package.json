@@ -11,6 +11,7 @@
     "watch": "nodemon --ignore lib/ -e ts --exec \"tsc --project tsconfig.build.json && tsx ./scripts/copyTsFiles.ts && local-npm publish\"",
     "lint": "eslint",
     "test": "vitest run && pnpm validate:dry",
+    "prepare": "tb pkg prepare",
     "validate": "tsx ./scripts/validateSchema.ts",
     "validate:dry": "tsx ./scripts/validateSchemaDryRun.ts",
     "jsr:validate": "tb pkg validateJsr",
@@ -58,7 +59,7 @@
   },
   "devDependencies": {
     "@aneuhold/local-npm-registry": "*",
-    "@aneuhold/main-scripts": "^2.4.0",
+    "@aneuhold/main-scripts": "^2.5.0",
     "@types/node": "^22.15.32",
     "@types/node-fetch": "^2.6.12",
     "dotenv": "^16.5.0",
