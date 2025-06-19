@@ -82,9 +82,7 @@ export interface DOFunctionCallOutput<TOutput extends DOFunctionOutput> {
  * @param input - The input object to check.
  * @returns True if the input is DOFunctionRawInput, false otherwise.
  */
-export function isDOFunctionRawInput(
-  input: unknown
-): input is DOFunctionRawInput {
+export function isDOFunctionRawInput(input: unknown): input is DOFunctionRawInput {
   return (
     !!input &&
     typeof input === 'object' &&
@@ -156,11 +154,8 @@ export default abstract class DOFunction<
    * @param response - The response to decode.
    * @returns The decoded output.
    */
-  private async decodeResponse(
-    response: Response
-  ): Promise<DOFunctionCallOutput<TOutput>> {
-    const isBson =
-      response.headers.get('Content-Type') === 'application/octet-stream';
+  private async decodeResponse(response: Response): Promise<DOFunctionCallOutput<TOutput>> {
+    const isBson = response.headers.get('Content-Type') === 'application/octet-stream';
     if (isBson) {
       const buffer = await response.arrayBuffer();
       const uint8Array = new Uint8Array(buffer);

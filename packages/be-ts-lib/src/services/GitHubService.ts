@@ -18,10 +18,7 @@ export default class GitHubService {
    * @returns The content of the file as a string.
    * @throws Will throw an error if the content cannot be retrieved.
    */
-  static async getContentFromRepo(
-    repoName: string,
-    filePath: string
-  ): Promise<string> {
+  static async getContentFromRepo(repoName: string, filePath: string): Promise<string> {
     if (!GitHubService.gitHub) {
       GitHubService.gitHub = GitHubService.getGitHubClient();
     }
@@ -36,9 +33,7 @@ export default class GitHubService {
       });
       return result.data as unknown as string;
     } catch (error) {
-      DR.logger.error(
-        `Failed to load ${filePath} from ${repoName}, error: ${error as string}`
-      );
+      DR.logger.error(`Failed to load ${filePath} from ${repoName}, error: ${error as string}`);
       throw error;
     }
   }
@@ -52,9 +47,7 @@ export default class GitHubService {
   private static getGitHubClient(): Octokit {
     const authToken = process.env['CONFIG_GITHUB_TOKEN'];
     if (!authToken) {
-      throw new Error(
-        'No CONFIG_GITHUB_TOKEN key found in environment variables.'
-      );
+      throw new Error('No CONFIG_GITHUB_TOKEN key found in environment variables.');
     }
     return new Octokit({
       auth: authToken

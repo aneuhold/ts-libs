@@ -57,22 +57,13 @@ export class CommandUtilService {
     const timestampVersion = this.generateTimestampVersion(originalVersion);
 
     try {
-      DR.logger.info(
-        `Publishing ${packageName}@${timestampVersion} to Verdaccio`
-      );
+      DR.logger.info(`Publishing ${packageName}@${timestampVersion} to Verdaccio`);
 
       // Update package.json with timestamp version
-      await PackageJsonService.updatePackageVersion(
-        packageRootPath,
-        packageName,
-        timestampVersion
-      );
+      await PackageJsonService.updatePackageVersion(packageRootPath, packageName, timestampVersion);
 
       // Publish to Verdaccio registry
-      await VerdaccioService.publishPackage(
-        packageRootPath,
-        additionalPublishArgs
-      );
+      await VerdaccioService.publishPackage(packageRootPath, additionalPublishArgs);
 
       // Create/update local store entry
       const entry: PackageEntry = {
@@ -80,18 +71,14 @@ export class CommandUtilService {
         currentVersion: timestampVersion,
         subscribers: [...existingSubscribers],
         packageRootPath,
-        publishArgs:
-          additionalPublishArgs.length > 0
-            ? [...additionalPublishArgs]
-            : undefined
+        publishArgs: additionalPublishArgs.length > 0 ? [...additionalPublishArgs] : undefined
       };
 
       // Add additional subscriber if provided (for subscribe command)
       if (
         additionalSubscriber &&
         !entry.subscribers.some(
-          (subscriber) =>
-            subscriber.subscriberPath === additionalSubscriber.subscriberPath
+          (subscriber) => subscriber.subscriberPath === additionalSubscriber.subscriberPath
         )
       ) {
         entry.subscribers.push(additionalSubscriber);
@@ -110,9 +97,7 @@ export class CommandUtilService {
               packageName,
               timestampVersion
             );
-            await PackageManagerService.runInstallWithRegistry(
-              subscriber.subscriberPath
-            );
+            await PackageManagerService.runInstallWithRegistry(subscriber.subscriberPath);
             return { success: true, subscriber };
           } catch (error) {
             DR.logger.error(
@@ -134,15 +119,9 @@ export class CommandUtilService {
       }
 
       // Restore original version in package.json after publishing
-      await PackageJsonService.updatePackageVersion(
-        packageRootPath,
-        packageName,
-        originalVersion
-      );
+      await PackageJsonService.updatePackageVersion(packageRootPath, packageName, originalVersion);
 
-      DR.logger.info(
-        `Successfully published ${packageName}@${timestampVersion}`
-      );
+      DR.logger.info(`Successfully published ${packageName}@${timestampVersion}`);
 
       return timestampVersion;
     } catch (error) {

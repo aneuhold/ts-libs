@@ -3,10 +3,7 @@ import { execa } from 'execa';
 import fs from 'fs-extra';
 import path from 'path';
 import { DEFAULT_CONFIG } from '../../types/LocalNpmConfig.js';
-import {
-  PACKAGE_MANAGER_INFO,
-  PackageManager
-} from '../../types/PackageManager.js';
+import { PACKAGE_MANAGER_INFO, PackageManager } from '../../types/PackageManager.js';
 import { ConfigService } from '../ConfigService.js';
 import { PackageJsonService } from '../PackageJsonService.js';
 import { RegistryConfigService } from './RegistryConfigService/RegistryConfigService.js';
@@ -33,9 +30,7 @@ export class PackageManagerService {
    *
    * @param projectPath - Path to the project directory to check
    */
-  static async detectPackageManager(
-    projectPath: string
-  ): Promise<PackageManager> {
+  static async detectPackageManager(projectPath: string): Promise<PackageManager> {
     const cacheKey = projectPath;
     const cached = this.configCache.get(cacheKey);
 
@@ -76,25 +71,18 @@ export class PackageManagerService {
    */
   static async runInstall(projectPath: string): Promise<void> {
     // Detect the package manager based on lock files in the target project
-    const packageManager =
-      await PackageManagerService.detectPackageManager(projectPath);
+    const packageManager = await PackageManagerService.detectPackageManager(projectPath);
 
     const packageManagerInfo = PACKAGE_MANAGER_INFO[packageManager];
 
     try {
-      DR.logger.info(
-        `Running ${packageManagerInfo.displayName} install in ${projectPath}`
-      );
+      DR.logger.info(`Running ${packageManagerInfo.displayName} install in ${projectPath}`);
       await execa(packageManagerInfo.command, ['install'], {
         cwd: projectPath
       });
-      DR.logger.info(
-        `${packageManagerInfo.displayName} install completed in ${projectPath}`
-      );
+      DR.logger.info(`${packageManagerInfo.displayName} install completed in ${projectPath}`);
     } catch (error) {
-      DR.logger.error(
-        `Error running install in ${projectPath}: ${String(error)}`
-      );
+      DR.logger.error(`Error running install in ${projectPath}: ${String(error)}`);
       throw error;
     }
   }
@@ -105,17 +93,12 @@ export class PackageManagerService {
    * @param projectPath - Path to the project directory
    * @param registryUrl - The registry URL to use for installation
    */
-  static async runInstallWithRegistry(
-    projectPath: string,
-    registryUrl?: string
-  ): Promise<void> {
+  static async runInstallWithRegistry(projectPath: string, registryUrl?: string): Promise<void> {
     const config = await ConfigService.loadConfig();
-    const actualRegistryUrl =
-      registryUrl || config.registryUrl || DEFAULT_CONFIG.registryUrl;
+    const actualRegistryUrl = registryUrl || config.registryUrl || DEFAULT_CONFIG.registryUrl;
 
     // Detect the package manager based on lock files in the target project
-    const packageManager =
-      await PackageManagerService.detectPackageManager(projectPath);
+    const packageManager = await PackageManagerService.detectPackageManager(projectPath);
 
     // Create registry configuration to ensure packages are installed from local registry
     const configBackup = await RegistryConfigService.createRegistryConfig(
@@ -128,9 +111,7 @@ export class PackageManagerService {
       // Use the base runInstall method to perform the actual installation
       await this.runInstall(projectPath);
     } catch (error) {
-      DR.logger.error(
-        `Error running install with registry in ${projectPath}: ${String(error)}`
-      );
+      DR.logger.error(`Error running install with registry in ${projectPath}: ${String(error)}`);
       throw error;
     } finally {
       // Always restore original configuration
@@ -143,14 +124,9 @@ export class PackageManagerService {
    *
    * @param projectPath - Path to the project directory to check
    */
-  private static async detectPackageManagerUncached(
-    projectPath: string
-  ): Promise<PackageManager> {
+  private static async detectPackageManagerUncached(projectPath: string): Promise<PackageManager> {
     // First, try to determine from package.json packageManager field
-    const packageInfo = await PackageJsonService.getPackageInfo(
-      projectPath,
-      false
-    );
+    const packageInfo = await PackageJsonService.getPackageInfo(projectPath, false);
     if (packageInfo && packageInfo.packageManager) {
       const packageManagerField = packageInfo.packageManager.toLowerCase();
 
@@ -181,10 +157,7 @@ export class PackageManagerService {
     // Check for lock files in order of preference
     if (
       await fs.pathExists(
-        path.join(
-          projectPath,
-          PACKAGE_MANAGER_INFO[PackageManager.Pnpm].lockFile
-        )
+        path.join(projectPath, PACKAGE_MANAGER_INFO[PackageManager.Pnpm].lockFile)
       )
     ) {
       return PackageManager.Pnpm;
@@ -192,10 +165,7 @@ export class PackageManagerService {
 
     if (
       await fs.pathExists(
-        path.join(
-          projectPath,
-          PACKAGE_MANAGER_INFO[PackageManager.Yarn].lockFile
-        )
+        path.join(projectPath, PACKAGE_MANAGER_INFO[PackageManager.Yarn].lockFile)
       )
     ) {
       // If we have a yarn.lock but no packageManager field, default to Yarn Classic
@@ -203,12 +173,7 @@ export class PackageManagerService {
     }
 
     if (
-      await fs.pathExists(
-        path.join(
-          projectPath,
-          PACKAGE_MANAGER_INFO[PackageManager.Npm].lockFile
-        )
-      )
+      await fs.pathExists(path.join(projectPath, PACKAGE_MANAGER_INFO[PackageManager.Npm].lockFile))
     ) {
       return PackageManager.Npm;
     }

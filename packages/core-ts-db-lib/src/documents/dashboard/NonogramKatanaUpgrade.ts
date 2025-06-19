@@ -11,9 +11,9 @@ import BaseDocumentWithType from '../BaseDocumentWithType.js';
  * @param upgrade The {@link NonogramKatanaUpgrade} document to validate.
  * @returns An object containing the updated document and any validation errors.
  */
-export const validateNonogramKatanaUpgrade: DocumentValidator<
-  NonogramKatanaUpgrade
-> = (upgrade: NonogramKatanaUpgrade) => {
+export const validateNonogramKatanaUpgrade: DocumentValidator<NonogramKatanaUpgrade> = (
+  upgrade: NonogramKatanaUpgrade
+) => {
   const errors: string[] = [];
 
   // No validation at the moment.
@@ -31,10 +31,7 @@ export const validateNonogramKatanaUpgrade: DocumentValidator<
  * upgrade.priority = 5;
  * ```
  */
-export default class NonogramKatanaUpgrade
-  extends BaseDocumentWithType
-  implements RequiredUserId
-{
+export default class NonogramKatanaUpgrade extends BaseDocumentWithType implements RequiredUserId {
   static docType = 'nonogramKatanaUpgrade';
 
   docType = NonogramKatanaUpgrade.docType;

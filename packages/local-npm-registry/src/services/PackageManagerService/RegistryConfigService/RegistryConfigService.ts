@@ -2,10 +2,7 @@ import { type PackageJson } from '@aneuhold/core-ts-lib';
 import fs from 'fs-extra';
 import yaml from 'js-yaml';
 import path from 'path';
-import {
-  PACKAGE_MANAGER_INFO,
-  PackageManager
-} from '../../../types/PackageManager.js';
+import { PACKAGE_MANAGER_INFO, PackageManager } from '../../../types/PackageManager.js';
 import { NpmrcService } from '../../NpmrcService.js';
 import { PackageJsonService } from '../../PackageJsonService.js';
 
@@ -58,10 +55,7 @@ export class RegistryConfigService {
     }
 
     // Get package info to determine if we need organization-specific config
-    const packageInfo = await PackageJsonService.getPackageInfo(
-      projectPath,
-      false
-    );
+    const packageInfo = await PackageJsonService.getPackageInfo(projectPath, false);
 
     // Get all npmrc configurations to find existing organization registries
     const npmrcConfigs = await NpmrcService.getAllNpmrcConfigs(projectPath);
@@ -102,9 +96,7 @@ export class RegistryConfigService {
    *
    * @param backup The backup of original configurations
    */
-  static async restoreRegistryConfig(
-    backup: PackageManagerConfigBackup
-  ): Promise<void> {
+  static async restoreRegistryConfig(backup: PackageManagerConfigBackup): Promise<void> {
     for (const config of Object.values(backup)) {
       const tmpConfigPath = `${config.path}.tmp`;
 
@@ -160,10 +152,7 @@ export class RegistryConfigService {
    * @param existingContent The existing YAML content
    * @param newConfig The new YAML content to merge
    */
-  private static mergeYamlConfig(
-    existingContent: string,
-    newConfig: string
-  ): string {
+  private static mergeYamlConfig(existingContent: string, newConfig: string): string {
     const existingParsed = yaml.load(existingContent);
     const newParsed = yaml.load(newConfig);
 
@@ -187,10 +176,7 @@ export class RegistryConfigService {
    * @param existingContent The existing key-value content
    * @param newConfig The new key-value content to merge
    */
-  private static mergeKeyValueConfig(
-    existingContent: string,
-    newConfig: string
-  ): string {
+  private static mergeKeyValueConfig(existingContent: string, newConfig: string): string {
     const configMap = new Map<string, string>();
 
     // Parse existing content into map
@@ -220,11 +206,7 @@ export class RegistryConfigService {
     for (const line of lines) {
       const trimmedLine = line.trim();
 
-      if (
-        !trimmedLine ||
-        trimmedLine.startsWith('#') ||
-        trimmedLine.startsWith(';')
-      ) {
+      if (!trimmedLine || trimmedLine.startsWith('#') || trimmedLine.startsWith(';')) {
         if (preserveLines) {
           // Preserve comments and empty lines with original content
           configMap.set(trimmedLine || line, line);

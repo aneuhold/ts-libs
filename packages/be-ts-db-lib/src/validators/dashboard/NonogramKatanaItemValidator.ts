@@ -1,7 +1,4 @@
-import {
-  NonogramKatanaItem,
-  validateNonogramKatanaItem
-} from '@aneuhold/core-ts-db-lib';
+import { NonogramKatanaItem, validateNonogramKatanaItem } from '@aneuhold/core-ts-db-lib';
 import { DR, ErrorUtils } from '@aneuhold/core-ts-lib';
 import { ObjectId } from 'bson';
 import UserRepository from '../../repositories/common/UserRepository.js';
@@ -25,23 +22,15 @@ export default class DashboardNonogramKatanaItemValidator extends IValidator<Non
     const userRepo = UserRepository.getRepo();
     const user = await userRepo.get({ _id: newItem.userId });
     if (!user) {
-      ErrorUtils.throwError(
-        `User does not exist: ${newItem.userId.toString()}`,
-        newItem
-      );
+      ErrorUtils.throwError(`User does not exist: ${newItem.userId.toString()}`, newItem);
     }
   }
 
   // eslint-disable-next-line @typescript-eslint/require-await
-  async validateUpdateObject(
-    updatedItem: Partial<NonogramKatanaItem>
-  ): Promise<void> {
+  async validateUpdateObject(updatedItem: Partial<NonogramKatanaItem>): Promise<void> {
     // Check if an id is defined
     if (!updatedItem._id) {
-      ErrorUtils.throwError(
-        `No _id defined for NonogramKatanaItem update.`,
-        updatedItem
-      );
+      ErrorUtils.throwError(`No _id defined for NonogramKatanaItem update.`, updatedItem);
     }
   }
 

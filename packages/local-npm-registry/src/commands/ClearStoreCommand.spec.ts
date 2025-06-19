@@ -1,15 +1,6 @@
 import { DR } from '@aneuhold/core-ts-lib';
 import { randomUUID } from 'crypto';
-import {
-  afterAll,
-  afterEach,
-  beforeAll,
-  beforeEach,
-  describe,
-  expect,
-  it,
-  vi
-} from 'vitest';
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TestProjectUtils } from '../../test-utils/TestProjectUtils.js';
 import { LocalPackageStoreService } from '../services/LocalPackageStoreService.js';
 import { MutexService } from '../services/MutexService.js';
@@ -91,12 +82,8 @@ describe('Integration Tests', () => {
     await PublishCommand.execute();
 
     // Verify packages exist in store
-    let package1Entry = await TestProjectUtils.getPackageEntry(
-      `@test-${testId}/clear-test-1`
-    );
-    let package2Entry = await TestProjectUtils.getPackageEntry(
-      `@test-${testId}/clear-test-2`
-    );
+    let package1Entry = await TestProjectUtils.getPackageEntry(`@test-${testId}/clear-test-1`);
+    let package2Entry = await TestProjectUtils.getPackageEntry(`@test-${testId}/clear-test-2`);
     expect(package1Entry).toBeTruthy();
     expect(package2Entry).toBeTruthy();
 
@@ -104,19 +91,13 @@ describe('Integration Tests', () => {
     await ClearStoreCommand.execute();
 
     // Verify packages are removed from store
-    package1Entry = await TestProjectUtils.getPackageEntry(
-      `@test-${testId}/clear-test-1`
-    );
-    package2Entry = await TestProjectUtils.getPackageEntry(
-      `@test-${testId}/clear-test-2`
-    );
+    package1Entry = await TestProjectUtils.getPackageEntry(`@test-${testId}/clear-test-1`);
+    package2Entry = await TestProjectUtils.getPackageEntry(`@test-${testId}/clear-test-2`);
     expect(package1Entry).toBeNull();
     expect(package2Entry).toBeNull();
 
     // Verify success message was logged
-    expect(DR.logger.info).toHaveBeenCalledWith(
-      'Successfully cleared all 2 package(s)'
-    );
+    expect(DR.logger.info).toHaveBeenCalledWith('Successfully cleared all 2 package(s)');
   });
 
   it('should handle clearing an empty store gracefully', async () => {
@@ -124,8 +105,6 @@ describe('Integration Tests', () => {
     await ClearStoreCommand.execute();
 
     // Verify success message was still logged
-    expect(DR.logger.info).toHaveBeenCalledWith(
-      'No packages in local registry to clear'
-    );
+    expect(DR.logger.info).toHaveBeenCalledWith('No packages in local registry to clear');
   });
 });

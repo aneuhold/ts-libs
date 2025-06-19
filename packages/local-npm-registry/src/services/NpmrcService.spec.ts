@@ -1,13 +1,4 @@
-import {
-  afterAll,
-  afterEach,
-  beforeAll,
-  beforeEach,
-  describe,
-  expect,
-  it,
-  vi
-} from 'vitest';
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TestProjectUtils } from '../../test-utils/TestProjectUtils.js';
 import { NpmrcService } from './NpmrcService.js';
 
@@ -74,27 +65,22 @@ test-setting=test-value
 
       expect(configs.size).toBeGreaterThanOrEqual(3);
       expect(configs.get('@test-org:registry')).toBe(uniqueRegistry);
-      expect(
-        configs.get(`//${uniqueRegistry.replace('https://', '')}/:_authToken`)
-      ).toBe(`test-token-${timestamp}`);
+      expect(configs.get(`//${uniqueRegistry.replace('https://', '')}/:_authToken`)).toBe(
+        `test-token-${timestamp}`
+      );
       expect(configs.get('test-setting')).toBe('test-value');
     });
 
     it('should handle multi-layer .npmrc files with correct precedence', async () => {
       const testInstanceDir = TestProjectUtils.getTestInstanceDir();
 
-      const scenario =
-        await TestProjectUtils.createTestNpmrcScenario(testInstanceDir);
+      const scenario = await TestProjectUtils.createTestNpmrcScenario(testInstanceDir);
 
       // Change to the deepest directory to test parsing up the tree
-      const configs = await NpmrcService.getAllNpmrcConfigs(
-        scenario.structure.deepestDir
-      );
+      const configs = await NpmrcService.getAllNpmrcConfigs(scenario.structure.deepestDir);
 
       // Should contain at least our expected configs (may have more from local machine)
-      expect(configs.size).toBeGreaterThanOrEqual(
-        scenario.expectedConfigs.size
-      );
+      expect(configs.size).toBeGreaterThanOrEqual(scenario.expectedConfigs.size);
 
       // Verify all expected configurations are present with correct values
       for (const [key, expectedValue] of scenario.expectedConfigs) {
@@ -125,9 +111,7 @@ valid-setting=valid-value
       const configs = await NpmrcService.getAllNpmrcConfigs(testInstanceDir);
 
       // Should only have the valid key-value pairs, not comments
-      expect(configs.get('@test-org:registry')).toBe(
-        `https://test-${timestamp}.example.com`
-      );
+      expect(configs.get('@test-org:registry')).toBe(`https://test-${timestamp}.example.com`);
       expect(configs.get('valid-setting')).toBe('valid-value');
 
       // Should not contain comment keys
@@ -146,9 +130,7 @@ valid-setting=valid-value
 
       // First call should read from files
       const configs1 = await NpmrcService.getAllNpmrcConfigs(testInstanceDir);
-      expect(configs1.get('test-cached-setting')).toBe(
-        `cached-value-${timestamp}`
-      );
+      expect(configs1.get('test-cached-setting')).toBe(`cached-value-${timestamp}`);
 
       // Modify the .npmrc file after first call
       await TestProjectUtils.createNpmrcFile(
@@ -158,17 +140,13 @@ valid-setting=valid-value
 
       // Second call should return cached result (not the modified value)
       const configs2 = await NpmrcService.getAllNpmrcConfigs(testInstanceDir);
-      expect(configs2.get('test-cached-setting')).toBe(
-        `cached-value-${timestamp}`
-      );
+      expect(configs2.get('test-cached-setting')).toBe(`cached-value-${timestamp}`);
       expect(configs1).toBe(configs2); // Should be the same Map instance
 
       // Clear cache and call again should read the modified file
       NpmrcService.clearNpmrcCache();
       const configs3 = await NpmrcService.getAllNpmrcConfigs(testInstanceDir);
-      expect(configs3.get('test-cached-setting')).toBe(
-        `modified-value-${timestamp}`
-      );
+      expect(configs3.get('test-cached-setting')).toBe(`modified-value-${timestamp}`);
     });
 
     it('should handle malformed .npmrc files gracefully', async () => {
@@ -184,18 +162,13 @@ key-without-value=
 another=valid-entry
 `;
 
-      await TestProjectUtils.createNpmrcFile(
-        testInstanceDir,
-        malformedNpmrcContent
-      );
+      await TestProjectUtils.createNpmrcFile(testInstanceDir, malformedNpmrcContent);
 
       const configs = await NpmrcService.getAllNpmrcConfigs(testInstanceDir);
 
       // Should successfully parse valid entries
       expect(configs.get('valid-key')).toBe('valid-value');
-      expect(configs.get('@test-org:registry')).toBe(
-        `https://test-${timestamp}.example.com`
-      );
+      expect(configs.get('@test-org:registry')).toBe(`https://test-${timestamp}.example.com`);
       expect(configs.get('another')).toBe('valid-entry');
       expect(configs.get('key-without-value')).toBe('');
 
@@ -234,16 +207,12 @@ save-exact=true
       expect(configs.get('@test-org2:registry')).toBe(testRegistries[1]);
 
       // Verify auth tokens
-      expect(
-        configs.get(
-          `//${testRegistries[0].replace('https://', '')}/:_authToken`
-        )
-      ).toBe(`token1-${timestamp}`);
-      expect(
-        configs.get(
-          `//${testRegistries[1].replace('https://', '')}/:_authToken`
-        )
-      ).toBe(`token2-${timestamp}`);
+      expect(configs.get(`//${testRegistries[0].replace('https://', '')}/:_authToken`)).toBe(
+        `token1-${timestamp}`
+      );
+      expect(configs.get(`//${testRegistries[1].replace('https://', '')}/:_authToken`)).toBe(
+        `token2-${timestamp}`
+      );
 
       // Verify other settings
       expect(configs.get('registry')).toBe('https://registry.npmjs.org/');
@@ -254,8 +223,7 @@ save-exact=true
       const testInstanceDir = TestProjectUtils.getTestInstanceDir();
 
       // Create nested directory structure with .npmrc files
-      const scenario =
-        await TestProjectUtils.createTestNpmrcScenario(testInstanceDir);
+      const scenario = await TestProjectUtils.createTestNpmrcScenario(testInstanceDir);
 
       // Test from root level directory
       const configsFromRoot = await NpmrcService.getAllNpmrcConfigs(
@@ -263,9 +231,7 @@ save-exact=true
       );
 
       // Test from deepest directory
-      const configsFromDeep = await NpmrcService.getAllNpmrcConfigs(
-        scenario.structure.deepestDir
-      );
+      const configsFromDeep = await NpmrcService.getAllNpmrcConfigs(scenario.structure.deepestDir);
 
       // Root level should only see its own .npmrc
       expect(configsFromRoot.get('some-global-setting')).toBe('root-value');
@@ -274,12 +240,8 @@ save-exact=true
 
       // Deep level should see all .npmrc files with correct precedence
       expect(configsFromDeep.get('some-global-setting')).toBe('project-value');
-      expect(configsFromDeep.get('middle-specific-setting')).toBe(
-        'middle-specific-value'
-      );
-      expect(configsFromDeep.get('project-specific-setting')).toBe(
-        'project-specific-value'
-      );
+      expect(configsFromDeep.get('middle-specific-setting')).toBe('middle-specific-value');
+      expect(configsFromDeep.get('project-specific-setting')).toBe('project-specific-value');
     });
   });
 });

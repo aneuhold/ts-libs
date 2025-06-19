@@ -1,15 +1,5 @@
 import { exec } from 'child_process';
-import {
-  access,
-  appendFile,
-  cp,
-  mkdir,
-  readFile,
-  readdir,
-  rm,
-  stat,
-  writeFile
-} from 'fs/promises';
+import { access, appendFile, cp, mkdir, readFile, readdir, rm, stat, writeFile } from 'fs/promises';
 import path from 'path';
 import { promisify } from 'util';
 import ErrorUtils from '../../utils/ErrorUtils.js';
@@ -104,8 +94,7 @@ export default class FileSystemService {
     await FileSystemService.checkOrCreateFolder(targetFolderPath);
 
     // Get the files in the source directory
-    const sourceFilePaths =
-      await FileSystemService.getAllFilePathsRelative(sourceFolderPath);
+    const sourceFilePaths = await FileSystemService.getAllFilePathsRelative(sourceFolderPath);
 
     await Promise.all(
       sourceFilePaths.map(async (sourceFilePath) => {
@@ -113,10 +102,7 @@ export default class FileSystemService {
         const targetFile = path.join(targetFolderPath, sourceFilePath);
 
         // Check if the file should be ignored based on extensions
-        if (
-          ignoreExtensions &&
-          FileSystemService.shouldIgnoreFile(sourceFile, ignoreExtensions)
-        ) {
+        if (ignoreExtensions && FileSystemService.shouldIgnoreFile(sourceFile, ignoreExtensions)) {
           return;
         }
 
@@ -132,10 +118,7 @@ export default class FileSystemService {
    * @param filePath the path to the file to check
    * @param ignoreExtensions array of extensions to ignore
    */
-  private static shouldIgnoreFile(
-    filePath: string,
-    ignoreExtensions: string[]
-  ): boolean {
+  private static shouldIgnoreFile(filePath: string, ignoreExtensions: string[]): boolean {
     const fileName = path.basename(filePath);
 
     return ignoreExtensions.some((extension) => {
@@ -154,9 +137,7 @@ export default class FileSystemService {
     try {
       await access(folderPath);
     } catch {
-      DR.logger.verbose.info(
-        `Directory "${folderPath}" does not exist. Creating it now...`
-      );
+      DR.logger.verbose.info(`Directory "${folderPath}" does not exist. Creating it now...`);
       await mkdir(folderPath, { recursive: true });
     }
   }
@@ -231,9 +212,7 @@ export default class FileSystemService {
       const { stdout } = await execAsync('git status --porcelain');
       return stdout.trim().length > 0;
     } catch (error) {
-      DR.logger.error(
-        `Failed to check for pending changes: ${ErrorUtils.getErrorString(error)}`
-      );
+      DR.logger.error(`Failed to check for pending changes: ${ErrorUtils.getErrorString(error)}`);
       return false;
     }
   }
@@ -352,9 +331,7 @@ export default class FileSystemService {
       dryRun = false
     } = options;
 
-    DR.logger.info(
-      `Replacing "${searchString}" with "${replaceString}" in ${rootPath}`
-    );
+    DR.logger.info(`Replacing "${searchString}" with "${replaceString}" in ${rootPath}`);
 
     if (dryRun) {
       DR.logger.info('DRY RUN MODE - No files will be modified');
@@ -379,10 +356,7 @@ export default class FileSystemService {
 
         // Replace the main string
         if (content.includes(searchString)) {
-          updatedContent = updatedContent.replaceAll(
-            searchString,
-            replaceString
-          );
+          updatedContent = updatedContent.replaceAll(searchString, replaceString);
           hasChanges = true;
         }
 
@@ -392,19 +366,14 @@ export default class FileSystemService {
           const encodedReplaceString = encodeURIComponent(replaceString);
 
           if (updatedContent.includes(encodedSearchString)) {
-            updatedContent = updatedContent.replaceAll(
-              encodedSearchString,
-              encodedReplaceString
-            );
+            updatedContent = updatedContent.replaceAll(encodedSearchString, encodedReplaceString);
             hasChanges = true;
           }
         }
 
         if (hasChanges) {
           const relativePath = path.relative(rootPath, filePath);
-          DR.logger.info(
-            `${dryRun ? 'Would update' : 'Updating'} ${relativePath}...`
-          );
+          DR.logger.info(`${dryRun ? 'Would update' : 'Updating'} ${relativePath}...`);
 
           if (!dryRun) {
             await writeFile(filePath, updatedContent, 'utf8');
@@ -416,9 +385,7 @@ export default class FileSystemService {
         processedCount++;
       } catch (error) {
         // Skip binary files or files we can't read
-        DR.logger.verbose.info(
-          `Skipping ${filePath}: ${ErrorUtils.getErrorString(error)}`
-        );
+        DR.logger.verbose.info(`Skipping ${filePath}: ${ErrorUtils.getErrorString(error)}`);
         continue;
       }
     }

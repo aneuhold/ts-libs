@@ -9,10 +9,7 @@ export default class ArrayService {
    * @param array2
    * @returns true if the arrays have the same primitive values, false otherwise.
    */
-  static arraysHaveSamePrimitiveValues(
-    array1: Array<unknown>,
-    array2: Array<unknown>
-  ): boolean {
+  static arraysHaveSamePrimitiveValues(array1: Array<unknown>, array2: Array<unknown>): boolean {
     if (array1.length !== array2.length) {
       return false;
     }

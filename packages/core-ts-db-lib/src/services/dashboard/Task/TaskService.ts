@@ -1,7 +1,5 @@
 import { ObjectId } from 'bson';
-import DashboardTask, {
-  DashboardTaskMap
-} from '../../../documents/dashboard/Task.js';
+import DashboardTask, { DashboardTaskMap } from '../../../documents/dashboard/Task.js';
 import { DashboardTaskListFilterSettings } from '../../../embedded-types/dashboard/task/FilterSettings.js';
 import { RecurrenceFrequency } from '../../../embedded-types/dashboard/task/RecurrenceInfo.js';
 import {
@@ -9,9 +7,7 @@ import {
   DashboardTaskSortDirection
 } from '../../../embedded-types/dashboard/task/SortSettings.js';
 import { DashboardTagSettings } from '../../../embedded-types/dashboard/userConfig/Tags.js';
-import DashboardTaskFilterService, {
-  DashboardTaskFilterResult
-} from './TaskFilterService.js';
+import DashboardTaskFilterService, { DashboardTaskFilterResult } from './TaskFilterService.js';
 import DashboardTaskRecurrenceService from './TaskRecurrenceService.js';
 import DashboardTaskSortService from './TaskSortService.js';
 
@@ -59,9 +55,7 @@ export default class DashboardTaskService {
         if (!parentToTaskIdsDict[task.parentTaskId.toString()]) {
           parentToTaskIdsDict[task.parentTaskId.toString()] = [];
         }
-        parentToTaskIdsDict[task.parentTaskId.toString()].push(
-          task._id.toString()
-        );
+        parentToTaskIdsDict[task.parentTaskId.toString()].push(task._id.toString());
       }
     });
     const childrenIds: ObjectId[] = [];
@@ -87,14 +81,8 @@ export default class DashboardTaskService {
    * @param frequency - The recurrence frequency.
    * @returns The next frequency date or null if the frequency is invalid.
    */
-  static getNextFrequencyDate(
-    basisDate: Date,
-    frequency: RecurrenceFrequency
-  ): Date | null {
-    return DashboardTaskRecurrenceService.getNextFrequencyDate(
-      basisDate,
-      frequency
-    );
+  static getNextFrequencyDate(basisDate: Date, frequency: RecurrenceFrequency): Date | null {
+    return DashboardTaskRecurrenceService.getNextFrequencyDate(basisDate, frequency);
   }
 
   /**

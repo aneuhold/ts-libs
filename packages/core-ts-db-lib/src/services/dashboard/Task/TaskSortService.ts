@@ -1,6 +1,4 @@
-import DashboardTask, {
-  DashboardTaskMap
-} from '../../../documents/dashboard/Task.js';
+import DashboardTask, { DashboardTaskMap } from '../../../documents/dashboard/Task.js';
 import {
   DashboardTaskListSortSettings,
   DashboardTaskSortBy,
@@ -76,12 +74,7 @@ export default class DashboardTaskSortService {
     if (taskIds.length === 0 || taskIds.length === 1) return tagHeaderMap;
     const firstTask = taskMap[taskIds[0]];
     if (!firstTask) return tagHeaderMap;
-    let tag = this.getHighestPriorityTag(
-      firstTask,
-      userId,
-      tagSettings,
-      sortDirection
-    );
+    let tag = this.getHighestPriorityTag(firstTask, userId, tagSettings, sortDirection);
     if (!tag) {
       tagHeaderMap[taskIds[0]] = noPriorityTagsIndicator;
     } else {
@@ -90,12 +83,7 @@ export default class DashboardTaskSortService {
     for (let i = 1; i < taskIds.length; i += 1) {
       const task = taskMap[taskIds[i]];
       if (task) {
-        const taskTag = this.getHighestPriorityTag(
-          task,
-          userId,
-          tagSettings,
-          sortDirection
-        );
+        const taskTag = this.getHighestPriorityTag(task, userId, tagSettings, sortDirection);
         if (taskTag !== tag && tag !== noPriorityTagsIndicator) {
           tag = taskTag || noPriorityTagsIndicator;
           tagHeaderMap[taskIds[i]] = tag;
@@ -196,12 +184,7 @@ export default class DashboardTaskSortService {
     tagSettings: DashboardTagSettings,
     sortDirection: DashboardTaskSortDirection
   ): string | null {
-    const priorityTag = this.getPriorityTagForTask(
-      task,
-      userId,
-      tagSettings,
-      sortDirection
-    );
+    const priorityTag = this.getPriorityTagForTask(task, userId, tagSettings, sortDirection);
     return priorityTag ? priorityTag.tag : null;
   }
 
@@ -220,12 +203,7 @@ export default class DashboardTaskSortService {
     tagSettings: DashboardTagSettings,
     sortDirection: DashboardTaskSortDirection
   ): number {
-    const priorityTag = this.getPriorityTagForTask(
-      task,
-      userId,
-      tagSettings,
-      sortDirection
-    );
+    const priorityTag = this.getPriorityTagForTask(task, userId, tagSettings, sortDirection);
     return priorityTag ? priorityTag.priority : 0;
   }
 

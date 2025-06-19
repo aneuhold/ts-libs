@@ -21,11 +21,6 @@ export default abstract class DashboardBaseRepository<
         ? updateCleaner(CleanDocument.docType(updatedDoc))
         : CleanDocument.docType(updatedDoc);
     const defaultFilter = { docType } as Partial<TBaseType>;
-    super(
-      DashboardBaseRepository.COLLECTION_NAME,
-      validator,
-      defaultFilter,
-      defaultUpdateCleaner
-    );
+    super(DashboardBaseRepository.COLLECTION_NAME, validator, defaultFilter, defaultUpdateCleaner);
   }
 }

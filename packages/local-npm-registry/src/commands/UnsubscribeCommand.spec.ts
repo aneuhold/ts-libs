@@ -1,15 +1,6 @@
 import { DR } from '@aneuhold/core-ts-lib';
 import { randomUUID } from 'crypto';
-import {
-  afterAll,
-  afterEach,
-  beforeAll,
-  beforeEach,
-  describe,
-  expect,
-  it,
-  vi
-} from 'vitest';
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TestProjectUtils } from '../../test-utils/TestProjectUtils.js';
 import { LocalPackageStoreService } from '../services/LocalPackageStoreService.js';
 import { MutexService } from '../services/MutexService.js';
@@ -99,9 +90,7 @@ describe('Integration Tests', () => {
 
     TestProjectUtils.changeToProject(subscriberPath);
 
-    await expect(
-      UnsubscribeCommand.execute(`@test-${testId}/non-existent`)
-    ).rejects.toThrow(
+    await expect(UnsubscribeCommand.execute(`@test-${testId}/non-existent`)).rejects.toThrow(
       `Package '@test-${testId}/non-existent' not found in local registry`
     );
   });
@@ -147,14 +136,9 @@ describe('Integration Tests', () => {
     );
 
     // Verify subscription is active (package has timestamp version)
-    let subscriberPackageJson =
-      await TestProjectUtils.readPackageJson(subscriberPath);
-    const timestampPattern = new RegExp(
-      `^${version.replace(/\./g, '\\.')}-\\d{17}$`
-    );
-    expect(subscriberPackageJson.dependencies?.[packageName]).toMatch(
-      timestampPattern
-    );
+    let subscriberPackageJson = await TestProjectUtils.readPackageJson(subscriberPath);
+    const timestampPattern = new RegExp(`^${version.replace(/\./g, '\\.')}-\\d{17}$`);
+    expect(subscriberPackageJson.dependencies?.[packageName]).toMatch(timestampPattern);
 
     // Unsubscribe from the package
     TestProjectUtils.changeToProject(subscriberPath);
@@ -162,19 +146,14 @@ describe('Integration Tests', () => {
 
     // Verify package entry no longer has this subscriber
     const packageEntry = await TestProjectUtils.getPackageEntry(packageName);
-    expect(
-      packageEntry?.subscribers.some((s) => s.subscriberPath === subscriberPath)
-    ).toBe(false);
+    expect(packageEntry?.subscribers.some((s) => s.subscriberPath === subscriberPath)).toBe(false);
 
     // Verify subscriber's package.json was reset to original version
-    subscriberPackageJson =
-      await TestProjectUtils.readPackageJson(subscriberPath);
+    subscriberPackageJson = await TestProjectUtils.readPackageJson(subscriberPath);
     expect(subscriberPackageJson.dependencies?.[packageName]).toBe(version);
 
     // Verify success message was logged
-    expect(DR.logger.info).toHaveBeenCalledWith(
-      `Successfully unsubscribed from ${packageName}`
-    );
+    expect(DR.logger.info).toHaveBeenCalledWith(`Successfully unsubscribed from ${packageName}`);
   };
 
   /**

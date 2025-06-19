@@ -19,14 +19,10 @@ function undoRenamePackage(): void {
       stdio: 'inherit'
     });
 
-    console.log(
-      '✅ Package rename undo complete! All files reset to original state.'
-    );
+    console.log('✅ Package rename undo complete! All files reset to original state.');
   } catch (error) {
     console.error('❌ Error resetting git changes:', error);
-    console.log(
-      '💡 Make sure you have git initialized and files are committed.'
-    );
+    console.log('💡 Make sure you have git initialized and files are committed.');
   }
 }
 

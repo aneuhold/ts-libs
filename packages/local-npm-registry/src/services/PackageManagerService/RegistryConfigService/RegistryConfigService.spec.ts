@@ -1,25 +1,13 @@
 import { randomUUID } from 'crypto';
 import fs from 'fs-extra';
 import path from 'path';
-import {
-  afterAll,
-  afterEach,
-  beforeAll,
-  beforeEach,
-  describe,
-  expect,
-  it,
-  vi
-} from 'vitest';
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TestProjectUtils } from '../../../../test-utils/TestProjectUtils.js';
 import { DEFAULT_CONFIG } from '../../../types/LocalNpmConfig.js';
 import { PackageManager } from '../../../types/PackageManager.js';
 import { MutexService } from '../../MutexService.js';
 import { VerdaccioService } from '../../VerdaccioService.js';
-import {
-  RegistryConfigService,
-  type PackageManagerConfigBackup
-} from './RegistryConfigService.js';
+import { RegistryConfigService, type PackageManagerConfigBackup } from './RegistryConfigService.js';
 
 vi.mock('@aneuhold/core-ts-lib', async () => {
   const actual = await vi.importActual('@aneuhold/core-ts-lib');
@@ -91,10 +79,7 @@ describe('Unit Tests', () => {
     });
 
     it('should create pnpm registry configuration', async () => {
-      const { backup } = await createRegistryConfigTest(
-        'pnpm-config',
-        PackageManager.Pnpm
-      );
+      const { backup } = await createRegistryConfigTest('pnpm-config', PackageManager.Pnpm);
 
       // Verify backup structure
       expect(backup.npmrc).toBeDefined();
@@ -176,20 +161,14 @@ describe('Unit Tests', () => {
       expect(newContent).toContain('localhost:4873');
 
       // Verify that the organization prefix for the test package is now pointing to local registry
-      expect(newContent).toContain(
-        `@test-${testId}:registry=http://localhost:4873`
-      );
+      expect(newContent).toContain(`@test-${testId}:registry=http://localhost:4873`);
 
       // Verify that other organization prefixes are also redirected to local registry
       expect(newContent).toContain('@myorg:registry=http://localhost:4873');
 
       // Verify that the original organization registry URLs are no longer present
-      expect(newContent).not.toContain(
-        `@test-${testId}:registry=https://custom-org-registry.com/`
-      );
-      expect(newContent).not.toContain(
-        '@myorg:registry=https://another-custom-registry.com/'
-      );
+      expect(newContent).not.toContain(`@test-${testId}:registry=https://custom-org-registry.com/`);
+      expect(newContent).not.toContain('@myorg:registry=https://another-custom-registry.com/');
     });
 
     /**
@@ -198,10 +177,7 @@ describe('Unit Tests', () => {
      * @param suffix The suffix for the package name
      * @param packageManager The package manager to test
      */
-    const createRegistryConfigTest = async (
-      suffix: string,
-      packageManager: PackageManager
-    ) => {
+    const createRegistryConfigTest = async (suffix: string, packageManager: PackageManager) => {
       const packagePath = await TestProjectUtils.createTestPackage(
         `@test-${testId}/${suffix}`,
         '1.0.0',
@@ -285,9 +261,7 @@ describe('Unit Tests', () => {
       expect(await fs.pathExists(yarnrcYmlPath)).toBe(true);
 
       const yarnrcYmlContent = await fs.readFile(yarnrcYmlPath, 'utf8');
-      expect(yarnrcYmlContent).toContain(
-        'npmRegistryServer: http://localhost:4873'
-      );
+      expect(yarnrcYmlContent).toContain('npmRegistryServer: http://localhost:4873');
 
       // Verify backup structure
       expect(backup.yarnrcYml).toBeDefined();
@@ -367,9 +341,7 @@ describe('Unit Tests', () => {
 
       // Mock fs.writeFile to throw a permission error
       const writeFileSpy = vi.spyOn(fs, 'writeFile');
-      writeFileSpy.mockRejectedValueOnce(
-        new Error('EACCES: permission denied')
-      );
+      writeFileSpy.mockRejectedValueOnce(new Error('EACCES: permission denied'));
 
       try {
         await RegistryConfigService.createRegistryConfig(
@@ -455,16 +427,9 @@ describe('Unit Tests', () => {
         packageManager
       );
 
-      await RegistryConfigService.createRegistryConfig(
-        packageManager,
-        registryUrl,
-        packagePath
-      );
+      await RegistryConfigService.createRegistryConfig(packageManager, registryUrl, packagePath);
 
-      const configContent = await fs.readFile(
-        path.join(packagePath, configFile),
-        'utf8'
-      );
+      const configContent = await fs.readFile(path.join(packagePath, configFile), 'utf8');
 
       verifyContent(configContent);
     };

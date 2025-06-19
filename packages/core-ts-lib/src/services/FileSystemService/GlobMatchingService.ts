@@ -27,18 +27,12 @@ export default class GlobMatchingService {
       const relativePath = path.relative(rootPath, filePath);
 
       // Check if file matches any exclude pattern
-      if (
-        excludePatterns.some((pattern) =>
-          this.matchesPattern(relativePath, pattern)
-        )
-      ) {
+      if (excludePatterns.some((pattern) => this.matchesPattern(relativePath, pattern))) {
         return false;
       }
 
       // Check if file matches any include pattern
-      return includePatterns.some((pattern) =>
-        this.matchesPattern(relativePath, pattern)
-      );
+      return includePatterns.some((pattern) => this.matchesPattern(relativePath, pattern));
     });
   }
 
@@ -78,17 +72,11 @@ export default class GlobMatchingService {
    * @param pathSegments Array of path segments
    * @param patternSegments Array of pattern segments
    */
-  private static matchSegments(
-    pathSegments: string[],
-    patternSegments: string[]
-  ): boolean {
+  private static matchSegments(pathSegments: string[], patternSegments: string[]): boolean {
     let pathIndex = 0;
     let patternIndex = 0;
 
-    while (
-      pathIndex < pathSegments.length &&
-      patternIndex < patternSegments.length
-    ) {
+    while (pathIndex < pathSegments.length && patternIndex < patternSegments.length) {
       const pathSegment = pathSegments[pathIndex];
       const patternSegment = patternSegments[patternIndex];
 
@@ -145,10 +133,7 @@ export default class GlobMatchingService {
    * @param pathSegment Single path segment
    * @param patternSegment Single pattern segment
    */
-  private static matchSingleSegment(
-    pathSegment: string,
-    patternSegment: string
-  ): boolean {
+  private static matchSingleSegment(pathSegment: string, patternSegment: string): boolean {
     if (patternSegment === '*') {
       return true;
     }

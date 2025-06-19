@@ -1,8 +1,4 @@
-import {
-  DashboardTask,
-  DashboardUserConfig,
-  User
-} from '@aneuhold/core-ts-db-lib';
+import { DashboardTask, DashboardUserConfig, User } from '@aneuhold/core-ts-db-lib';
 import crypto from 'crypto';
 import { afterAll, expect, it } from 'vitest';
 import UserRepository from '../../repositories/common/UserRepository.js';

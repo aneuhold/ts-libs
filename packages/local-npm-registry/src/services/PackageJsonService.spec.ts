@@ -2,16 +2,7 @@ import { DR } from '@aneuhold/core-ts-lib';
 import { randomUUID } from 'crypto';
 import fs from 'fs-extra';
 import path from 'path';
-import {
-  afterAll,
-  afterEach,
-  beforeAll,
-  beforeEach,
-  describe,
-  expect,
-  it,
-  vi
-} from 'vitest';
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TestProjectUtils } from '../../test-utils/TestProjectUtils.js';
 import { PackageJsonService } from './PackageJsonService.js';
 
@@ -66,13 +57,9 @@ describe('PackageJsonService', () => {
     });
 
     it('should return null for non-existent directory', async () => {
-      const nonExistentPath = path.join(
-        TestProjectUtils.getTestInstanceDir(),
-        'non-existent'
-      );
+      const nonExistentPath = path.join(TestProjectUtils.getTestInstanceDir(), 'non-existent');
 
-      const packageInfo =
-        await PackageJsonService.getPackageInfo(nonExistentPath);
+      const packageInfo = await PackageJsonService.getPackageInfo(nonExistentPath);
 
       expect(packageInfo).toBeNull();
       expect(DR.logger.error).toHaveBeenCalledWith(
@@ -81,10 +68,7 @@ describe('PackageJsonService', () => {
     });
 
     it('should return null for invalid package.json', async () => {
-      const invalidDir = path.join(
-        TestProjectUtils.getTestInstanceDir(),
-        'invalid'
-      );
+      const invalidDir = path.join(TestProjectUtils.getTestInstanceDir(), 'invalid');
       await fs.ensureDir(invalidDir);
       await fs.writeJson(path.join(invalidDir, 'package.json'), {
         description: 'Missing name and version'
@@ -94,9 +78,7 @@ describe('PackageJsonService', () => {
 
       expect(packageInfo).toBeNull();
       expect(DR.logger.error).toHaveBeenCalledWith(
-        expect.stringContaining(
-          'package.json must contain name and version fields'
-        )
+        expect.stringContaining('package.json must contain name and version fields')
       );
     });
 
@@ -117,10 +99,7 @@ describe('PackageJsonService', () => {
     });
 
     it('should handle malformed package.json gracefully', async () => {
-      const invalidDir = path.join(
-        TestProjectUtils.getTestInstanceDir(),
-        'malformed'
-      );
+      const invalidDir = path.join(TestProjectUtils.getTestInstanceDir(), 'malformed');
       await fs.ensureDir(invalidDir);
 
       // Create malformed JSON file
@@ -138,15 +117,9 @@ describe('PackageJsonService', () => {
 
   describe('extractOrganization', () => {
     it('should extract organization from scoped package name', () => {
-      expect(
-        PackageJsonService.extractOrganization('@myorg/package-name')
-      ).toBe('myorg');
-      expect(
-        PackageJsonService.extractOrganization('@test/another-package')
-      ).toBe('test');
-      expect(PackageJsonService.extractOrganization('@company/ui-lib')).toBe(
-        'company'
-      );
+      expect(PackageJsonService.extractOrganization('@myorg/package-name')).toBe('myorg');
+      expect(PackageJsonService.extractOrganization('@test/another-package')).toBe('test');
+      expect(PackageJsonService.extractOrganization('@company/ui-lib')).toBe('company');
     });
 
     it('should return null for non-scoped package names', () => {

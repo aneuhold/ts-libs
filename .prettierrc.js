@@ -20,7 +20,7 @@ const config = {
   singleQuote: true,
   tabWidth: 2,
   trailingComma: 'none',
-  printWidth: 120
+  printWidth: 100
 };
 
 export default config;

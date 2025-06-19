@@ -71,10 +71,7 @@ export default class DateService {
    * @param date2 - The second date to compare.
    * @returns True if the dates are equal, false otherwise.
    */
-  static datesAreEqual(
-    date1: Date | undefined | null,
-    date2: Date | undefined | null
-  ): boolean {
+  static datesAreEqual(date1: Date | undefined | null, date2: Date | undefined | null): boolean {
     if (!date1 && !date2) {
       return true;
     }
@@ -111,17 +108,12 @@ export default class DateService {
     const firstDayOfMonthWeekday = firstDayOfMonth.getDay();
     const firstDayOfSecondWeek = new Date(firstDayOfMonth);
     const daysUntilSecondWeek = 7 - firstDayOfMonthWeekday;
-    firstDayOfSecondWeek.setDate(
-      firstDayOfSecondWeek.getDate() + daysUntilSecondWeek
-    );
+    firstDayOfSecondWeek.setDate(firstDayOfSecondWeek.getDate() + daysUntilSecondWeek);
     if (date < firstDayOfSecondWeek) {
       return 1;
     }
-    const daysSinceFirstDayOfSecondWeek =
-      date.getDate() - firstDayOfSecondWeek.getDate();
-    const weeksSinceFirstDayOfSecondWeek = Math.floor(
-      daysSinceFirstDayOfSecondWeek / 7
-    );
+    const daysSinceFirstDayOfSecondWeek = date.getDate() - firstDayOfSecondWeek.getDate();
+    const weeksSinceFirstDayOfSecondWeek = Math.floor(daysSinceFirstDayOfSecondWeek / 7);
     return weeksSinceFirstDayOfSecondWeek + 2;
   }
 
@@ -163,16 +155,8 @@ export default class DateService {
    * @param week - The week of the month to get the date for.
    * @returns The date of the specified weekday in the specified week of the month.
    */
-  static getWeekDayOfXWeekOfMonth(
-    date: Date,
-    day: number,
-    week: number | 'last'
-  ): Date | null {
-    if (
-      (typeof week === 'number' && (week < 1 || week > 5)) ||
-      day < 0 ||
-      day > 6
-    ) {
+  static getWeekDayOfXWeekOfMonth(date: Date, day: number, week: number | 'last'): Date | null {
+    if ((typeof week === 'number' && (week < 1 || week > 5)) || day < 0 || day > 6) {
       return null;
     }
     if (week === 'last') {
@@ -185,9 +169,7 @@ export default class DateService {
     const firstDayOfMonth = new Date(date);
     firstDayOfMonth.setDate(1);
     let resultDate = new Date(firstDayOfMonth);
-    resultDate.setDate(
-      resultDate.getDate() + this.getDaysUntilWeekDay(firstDayOfMonth, day)
-    );
+    resultDate.setDate(resultDate.getDate() + this.getDaysUntilWeekDay(firstDayOfMonth, day));
     // The number of times the day has shown up so far.
     let instanceOfDay = 1;
     while (instanceOfDay < week) {

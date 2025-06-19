@@ -13,9 +13,7 @@ export default class ErrorUtils {
     for (let i = 0; i < errorList.length; i += 1) {
       errorString += `${errorList[i]}\n`;
     }
-    throw new Error(
-      `${errorString}${JSON.stringify(erroneousObject, null, 2)}`
-    );
+    throw new Error(`${errorString}${JSON.stringify(erroneousObject, null, 2)}`);
   }
 
   /**

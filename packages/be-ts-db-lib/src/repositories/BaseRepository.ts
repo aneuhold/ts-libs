@@ -42,9 +42,7 @@ export default abstract class BaseRepository<TBasetype extends BaseDocument> {
     collectionName: string,
     private validator: IValidator<TBasetype>,
     private defaultFilter?: Partial<TBasetype>,
-    private defaultUpdateCleaner?: (
-      doc: Partial<TBasetype>
-    ) => Partial<TBasetype>
+    private defaultUpdateCleaner?: (doc: Partial<TBasetype>) => Partial<TBasetype>
   ) {
     this.collectionName = collectionName;
   }
@@ -71,8 +69,7 @@ export default abstract class BaseRepository<TBasetype extends BaseDocument> {
    * @param listeners - The listeners to register.
    */
   subscribeToChanges(listeners: RepoListeners<TBasetype>) {
-    const { insertNew, updateOne, updateMany, deleteOne, deleteList } =
-      listeners;
+    const { insertNew, updateOne, updateMany, deleteOne, deleteList } = listeners;
     if (insertNew) {
       this.subscribers.insertNew.push(insertNew);
     }
@@ -99,15 +96,11 @@ export default abstract class BaseRepository<TBasetype extends BaseDocument> {
   async insertNew(newDoc: TBasetype): Promise<TBasetype | null> {
     const collection = await this.getCollection();
     await this.validator.validateNewObject(newDoc);
-    const insertResult = await collection.insertOne(
-      newDoc as OptionalUnlessRequiredId<TBasetype>
-    );
+    const insertResult = await collection.insertOne(newDoc as OptionalUnlessRequiredId<TBasetype>);
     if (!insertResult.acknowledged) {
       return null;
     }
-    await Promise.all(
-      this.subscribers.insertNew.map((subscriber) => subscriber(newDoc))
-    );
+    await Promise.all(this.subscribers.insertNew.map((subscriber) => subscriber(newDoc)));
     return newDoc;
   }
 
@@ -119,18 +112,14 @@ export default abstract class BaseRepository<TBasetype extends BaseDocument> {
    */
   async insertMany(newDocs: TBasetype[]): Promise<TBasetype[]> {
     const collection = await this.getCollection();
-    await Promise.all(
-      newDocs.map((doc) => this.validator.validateNewObject(doc))
-    );
+    await Promise.all(newDocs.map((doc) => this.validator.validateNewObject(doc)));
     const insertResult = await collection.insertMany(
       newDocs as OptionalUnlessRequiredId<TBasetype>[]
     );
     if (!insertResult.acknowledged) {
       return [];
     }
-    await Promise.all(
-      this.subscribers.insertMany.map((subscriber) => subscriber(newDocs))
-    );
+    await Promise.all(this.subscribers.insertMany.map((subscriber) => subscriber(newDocs)));
     return newDocs;
   }
 
@@ -193,9 +182,7 @@ export default abstract class BaseRepository<TBasetype extends BaseDocument> {
    */
   async delete(docId: ObjectId): Promise<DeleteResult> {
     const collection = await this.getCollection();
-    await Promise.all(
-      this.subscribers.deleteOne.map((subscriber) => subscriber(docId))
-    );
+    await Promise.all(this.subscribers.deleteOne.map((subscriber) => subscriber(docId)));
     return collection.deleteOne({ _id: docId } as Filter<TBasetype>);
   }
 
@@ -210,9 +197,7 @@ export default abstract class BaseRepository<TBasetype extends BaseDocument> {
     const deleteResult = collection.deleteMany({
       _id: { $in: docIds }
     } as Filter<TBasetype>);
-    await Promise.all(
-      this.subscribers.deleteList.map((subscriber) => subscriber(docIds))
-    );
+    await Promise.all(this.subscribers.deleteList.map((subscriber) => subscriber(docIds)));
     return deleteResult;
   }
 
@@ -245,9 +230,7 @@ export default abstract class BaseRepository<TBasetype extends BaseDocument> {
     const result = collection.updateOne({ _id: docId } as Filter<TBasetype>, {
       $set: cleanedDoc
     });
-    await Promise.all(
-      this.subscribers.updateOne.map((subscriber) => subscriber(updatedDoc))
-    );
+    await Promise.all(this.subscribers.updateOne.map((subscriber) => subscriber(updatedDoc)));
     return result;
   }
 
@@ -259,13 +242,9 @@ export default abstract class BaseRepository<TBasetype extends BaseDocument> {
    * @param updatedDocs - The documents to update.
    * @returns The result of the bulk update operation.
    */
-  async updateMany(
-    updatedDocs: Array<Partial<TBasetype>>
-  ): Promise<BulkWriteResult> {
+  async updateMany(updatedDocs: Array<Partial<TBasetype>>): Promise<BulkWriteResult> {
     const collection = await this.getCollection();
-    await Promise.all(
-      updatedDocs.map((doc) => this.validator.validateUpdateObject(doc))
-    );
+    await Promise.all(updatedDocs.map((doc) => this.validator.validateUpdateObject(doc)));
 
     const bulkOps = updatedDocs.map((doc) => {
       const docId = doc._id;
@@ -278,9 +257,7 @@ export default abstract class BaseRepository<TBasetype extends BaseDocument> {
       };
     }) as AnyBulkWriteOperation<TBasetype>[];
 
-    await Promise.all(
-      this.subscribers.updateMany.map((subscriber) => subscriber(updatedDocs))
-    );
+    await Promise.all(this.subscribers.updateMany.map((subscriber) => subscriber(updatedDocs)));
 
     return collection.bulkWrite(bulkOps);
   }
@@ -294,9 +271,7 @@ export default abstract class BaseRepository<TBasetype extends BaseDocument> {
    * @param filter - The filter to apply.
    * @returns The filter with the default filter applied.
    */
-  protected getFilterWithDefault(
-    filter: Filter<Document> = {}
-  ): Filter<Document> {
+  protected getFilterWithDefault(filter: Filter<Document> = {}): Filter<Document> {
     if (!this.defaultFilter) {
       return filter;
     }
@@ -310,10 +285,7 @@ export default abstract class BaseRepository<TBasetype extends BaseDocument> {
    * @param array2 - The second array.
    * @returns True if the arrays are equal, false otherwise.
    */
-  protected objectIdArraysAreEqual(
-    array1: ObjectId[],
-    array2: ObjectId[]
-  ): boolean {
+  protected objectIdArraysAreEqual(array1: ObjectId[], array2: ObjectId[]): boolean {
     if (array1.length !== array2.length) {
       return false;
     }
@@ -329,9 +301,7 @@ export default abstract class BaseRepository<TBasetype extends BaseDocument> {
    * @param updatedDoc - The document to clean.
    * @returns The cleaned document.
    */
-  private cleanUpdateObject(
-    updatedDoc: Partial<TBasetype>
-  ): Partial<TBasetype> {
+  private cleanUpdateObject(updatedDoc: Partial<TBasetype>): Partial<TBasetype> {
     return this.defaultUpdateCleaner
       ? this.defaultUpdateCleaner(DocumentCleaner.id(updatedDoc))
       : DocumentCleaner.id(updatedDoc);

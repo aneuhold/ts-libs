@@ -5,7 +5,9 @@ import ArrayService from './services/ArrayService.js';
 import DateService from './services/DateService/DateService.js';
 import { DependencyRegistry, DR } from './services/DependencyRegistry.js';
 import DependencyService, { VersionType } from './services/DependencyService.js';
-import FileSystemService, { type ReplaceInFilesOptions } from './services/FileSystemService/FileSystemService.js';
+import FileSystemService, {
+  type ReplaceInFilesOptions
+} from './services/FileSystemService/FileSystemService.js';
 import GlobMatchingService from './services/FileSystemService/GlobMatchingService.js';
 import PackageService from './services/PackageService.js';
 import StringService from './services/StringService.js';

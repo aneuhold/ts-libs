@@ -10,9 +10,7 @@ export class TestUtil {
    */
   static mockFetch(expectedOutput: object) {
     global.fetch = vi.fn().mockResolvedValue({
-      arrayBuffer: vi
-        .fn()
-        .mockResolvedValue(Buffer.from(BSON.serialize(expectedOutput))),
+      arrayBuffer: vi.fn().mockResolvedValue(Buffer.from(BSON.serialize(expectedOutput))),
       headers: new Map([['Content-Type', 'application/octet-stream']])
     });
   }

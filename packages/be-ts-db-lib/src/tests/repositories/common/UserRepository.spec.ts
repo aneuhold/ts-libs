@@ -92,10 +92,7 @@ describe('Update operations', () => {
       await userRepo.update(newUser);
     });
 
-    await Promise.all([
-      cleanupDoc(userRepo, newUser),
-      cleanupDoc(userRepo, userWithOtherUserName)
-    ]);
+    await Promise.all([cleanupDoc(userRepo, newUser), cleanupDoc(userRepo, userWithOtherUserName)]);
   });
 
   it('throws if the user doesnt exist', async () => {

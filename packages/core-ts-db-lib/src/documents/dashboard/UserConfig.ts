@@ -19,9 +19,9 @@ import BaseDocumentWithType from '../BaseDocumentWithType.js';
  * @param config - The {@link DashboardUserConfig} to validate.
  * @returns An object containing the updated document and any validation errors.
  */
-export const validateDashboardUserConfig: DocumentValidator<
-  DashboardUserConfig
-> = (config: DashboardUserConfig) => {
+export const validateDashboardUserConfig: DocumentValidator<DashboardUserConfig> = (
+  config: DashboardUserConfig
+) => {
   const errors: string[] = [];
   const validate = new Validate(config, errors);
   const exampleConfig = new DashboardUserConfig(new ObjectId());
@@ -48,10 +48,7 @@ export const validateDashboardUserConfig: DocumentValidator<
 /**
  * Represents the user configuration for the dashboard.
  */
-export default class DashboardUserConfig
-  extends BaseDocumentWithType
-  implements RequiredUserId
-{
+export default class DashboardUserConfig extends BaseDocumentWithType implements RequiredUserId {
   static docType = 'userConfig';
 
   docType = DashboardUserConfig.docType;

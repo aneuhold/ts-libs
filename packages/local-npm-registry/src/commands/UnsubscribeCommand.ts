@@ -17,10 +17,7 @@ export class UnsubscribeCommand {
 
     if (packageName) {
       // Unsubscribe from specific package
-      await this.unsubscribeFromSpecificPackage(
-        packageName,
-        currentProjectPath
-      );
+      await this.unsubscribeFromSpecificPackage(packageName, currentProjectPath);
     } else {
       // Unsubscribe from all packages
       await this.unsubscribeFromAllPackages(currentProjectPath);
@@ -42,18 +39,13 @@ export class UnsubscribeCommand {
       throw new Error(`Package '${packageName}' not found in local registry`);
     }
 
-    const subscriber = entry.subscribers.find(
-      (sub) => sub.subscriberPath === currentProjectPath
-    );
+    const subscriber = entry.subscribers.find((sub) => sub.subscriberPath === currentProjectPath);
     if (!subscriber) {
       throw new Error(`Subscriber data not found for ${packageName}`);
     }
 
     // Remove current project from subscribers list
-    await LocalPackageStoreService.removeSubscriber(
-      packageName,
-      currentProjectPath
-    );
+    await LocalPackageStoreService.removeSubscriber(packageName, currentProjectPath);
 
     // Reset to original version
     await PackageJsonService.updatePackageVersion(
@@ -78,9 +70,7 @@ export class UnsubscribeCommand {
    *
    * @param currentProjectPath - Path to the current project
    */
-  private static async unsubscribeFromAllPackages(
-    currentProjectPath: string
-  ): Promise<void> {
+  private static async unsubscribeFromAllPackages(currentProjectPath: string): Promise<void> {
     const subscribedPackages =
       await LocalPackageStoreService.getSubscribedPackages(currentProjectPath);
 
@@ -89,9 +79,7 @@ export class UnsubscribeCommand {
       return;
     }
 
-    DR.logger.info(
-      `Unsubscribing from ${subscribedPackages.length} package(s)`
-    );
+    DR.logger.info(`Unsubscribing from ${subscribedPackages.length} package(s)`);
 
     // Perform unsubscribe operations in parallel
     const unsubscribePromises = subscribedPackages.map(async (pkgName) => {
@@ -111,10 +99,7 @@ export class UnsubscribeCommand {
           }
 
           // Remove current project from subscribers list
-          await LocalPackageStoreService.removeSubscriber(
-            pkgName,
-            currentProjectPath
-          );
+          await LocalPackageStoreService.removeSubscriber(pkgName, currentProjectPath);
 
           // Reset to original version using subscriber's original specifier
           await PackageJsonService.updatePackageVersion(
@@ -131,9 +116,7 @@ export class UnsubscribeCommand {
           error: 'Entry not found'
         };
       } catch (error) {
-        DR.logger.error(
-          `Failed to unsubscribe from ${pkgName}: ${String(error)}`
-        );
+        DR.logger.error(`Failed to unsubscribe from ${pkgName}: ${String(error)}`);
         return { packageName: pkgName, success: false, error };
       }
     });

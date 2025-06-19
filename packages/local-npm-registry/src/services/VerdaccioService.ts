@@ -9,18 +9,9 @@ import fs from 'fs-extra';
 import http from 'http';
 import path from 'path';
 import { runServer } from 'verdaccio';
-import {
-  DEFAULT_CONFIG,
-  type LocalNpmConfig
-} from '../types/LocalNpmConfig.js';
-import {
-  PACKAGE_MANAGER_INFO,
-  PackageManager
-} from '../types/PackageManager.js';
-import {
-  VERDACCIO_DB_FILE_NAME,
-  type VerdaccioDb
-} from '../types/VerdaccioDb.js';
+import { DEFAULT_CONFIG, type LocalNpmConfig } from '../types/LocalNpmConfig.js';
+import { PACKAGE_MANAGER_INFO, PackageManager } from '../types/PackageManager.js';
+import { VERDACCIO_DB_FILE_NAME, type VerdaccioDb } from '../types/VerdaccioDb.js';
 import { ConfigService } from './ConfigService.js';
 import { MutexService } from './MutexService.js';
 import { NpmrcService } from './NpmrcService.js';
@@ -87,9 +78,7 @@ export class VerdaccioService {
       // Start Verdaccio server
       await this.startVerdaccio(config);
 
-      DR.logger.info(
-        `Verdaccio started successfully on http://localhost:${port}`
-      );
+      DR.logger.info(`Verdaccio started successfully on http://localhost:${port}`);
     } catch (error) {
       DR.logger.error(`Failed to start Verdaccio: ${String(error)}`);
       this.verdaccioServer = null;
@@ -123,9 +112,7 @@ export class VerdaccioService {
       if (server) {
         server.close((error) => {
           if (error) {
-            DR.logger.error(
-              `Failed to stop Verdaccio server: ${String(error)}`
-            );
+            DR.logger.error(`Failed to stop Verdaccio server: ${String(error)}`);
             reject(error);
           } else {
             DR.logger.info('Verdaccio server stopped successfully');
@@ -181,9 +168,7 @@ export class VerdaccioService {
       // Clear any previously published package with the same name
       await VerdaccioService.clearPublishedPackagesLocally(packageJson.name);
 
-      DR.logger.info(
-        `Publishing package from ${packagePath} to ${registryUrl}...`
-      );
+      DR.logger.info(`Publishing package from ${packagePath} to ${registryUrl}...`);
 
       // Build npm publish arguments with direct registry and auth config
       const publishArgs = this.buildPublishArgs(
@@ -256,9 +241,7 @@ export class VerdaccioService {
               DR.logger.error(`Failed to start Verdaccio: ${String(error)}`);
               reject(error);
             } else {
-              DR.logger.info(
-                `Verdaccio server started successfully on port ${port}`
-              );
+              DR.logger.info(`Verdaccio server started successfully on port ${port}`);
               resolve();
             }
           });
@@ -286,14 +269,9 @@ export class VerdaccioService {
    *
    * @param packageName - The name of the package to clear from local storage
    */
-  private static async clearPublishedPackagesLocally(
-    packageName: string
-  ): Promise<void> {
+  private static async clearPublishedPackagesLocally(packageName: string): Promise<void> {
     try {
-      const dbFilePath = path.join(
-        this.verdaccioConfig.storage,
-        VERDACCIO_DB_FILE_NAME
-      );
+      const dbFilePath = path.join(this.verdaccioConfig.storage, VERDACCIO_DB_FILE_NAME);
 
       DR.logger.info(`Clearing package "${packageName}" locally...`);
 
@@ -310,17 +288,12 @@ export class VerdaccioService {
           // Write the updated database back
           await fs.writeJson(dbFilePath, dbContent);
         } else {
-          DR.logger.info(
-            `Package "${packageName}" not found in verdaccio database`
-          );
+          DR.logger.info(`Package "${packageName}" not found in verdaccio database`);
         }
       }
 
       // Remove the specific package directory from verdaccio storage
-      const packagePath = path.join(
-        this.verdaccioConfig.storage,
-        ...packageName.split('/')
-      );
+      const packagePath = path.join(this.verdaccioConfig.storage, ...packageName.split('/'));
       if (await fs.pathExists(packagePath)) {
         const stat = await fs.stat(packagePath).catch(() => null);
 
@@ -329,16 +302,12 @@ export class VerdaccioService {
           DR.logger.info(`Removed package directory: ${packageName}`);
         }
       } else {
-        DR.logger.info(
-          `Package directory "${packageName}" not found in verdaccio storage`
-        );
+        DR.logger.info(`Package directory "${packageName}" not found in verdaccio storage`);
       }
 
       DR.logger.info(`Successfully cleared package "${packageName}" locally`);
     } catch (error) {
-      DR.logger.error(
-        `Failed to clear package "${packageName}" locally: ${String(error)}`
-      );
+      DR.logger.error(`Failed to clear package "${packageName}" locally: ${String(error)}`);
       throw error;
     }
   }

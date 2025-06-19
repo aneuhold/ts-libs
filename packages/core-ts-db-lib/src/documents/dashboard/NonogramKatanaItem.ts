@@ -10,9 +10,9 @@ import BaseDocumentWithType from '../BaseDocumentWithType.js';
  * @param item - The {@link NonogramKatanaItem} to validate.
  * @returns An object containing the updated document and any validation errors.
  */
-export const validateNonogramKatanaItem: DocumentValidator<
-  NonogramKatanaItem
-> = (item: NonogramKatanaItem) => {
+export const validateNonogramKatanaItem: DocumentValidator<NonogramKatanaItem> = (
+  item: NonogramKatanaItem
+) => {
   const errors: string[] = [];
 
   // No validation at the moment.
@@ -23,10 +23,7 @@ export const validateNonogramKatanaItem: DocumentValidator<
 /**
  * An item in the Nonogram Katana game.
  */
-export default class NonogramKatanaItem
-  extends BaseDocumentWithType
-  implements RequiredUserId
-{
+export default class NonogramKatanaItem extends BaseDocumentWithType implements RequiredUserId {
   static docType = 'nonogramKatanaItem';
 
   docType = NonogramKatanaItem.docType;

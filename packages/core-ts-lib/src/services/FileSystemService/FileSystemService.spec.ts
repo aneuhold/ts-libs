@@ -25,16 +25,10 @@ describe('FileSystemService', () => {
         }
       });
 
-      const targetFolderPath = path.join(
-        TEST_FOLDER_NAME,
-        `${testName}-target`
-      );
+      const targetFolderPath = path.join(TEST_FOLDER_NAME, `${testName}-target`);
 
       // Execute
-      await FileSystemService.copyFolderContents(
-        sourceFolderPath,
-        targetFolderPath
-      );
+      await FileSystemService.copyFolderContents(sourceFolderPath, targetFolderPath);
 
       // Assert
       const expectedContents = (
@@ -68,22 +62,13 @@ describe('FileSystemService', () => {
         }
       });
 
-      const targetFolderPath = path.join(
-        TEST_FOLDER_NAME,
-        `${testName}-target`
-      );
+      const targetFolderPath = path.join(TEST_FOLDER_NAME, `${testName}-target`);
 
       // Execute
-      await FileSystemService.copyFolderContents(
-        sourceFolderPath,
-        targetFolderPath,
-        ['ts']
-      );
+      await FileSystemService.copyFolderContents(sourceFolderPath, targetFolderPath, ['ts']);
 
       // Assert
-      const expectedContents = (
-        await FileSystemService.getAllFilePathsRelative(sourceFolderPath)
-      )
+      const expectedContents = (await FileSystemService.getAllFilePathsRelative(sourceFolderPath))
         .filter((sourceFilePath) => !sourceFilePath.endsWith('.ts'))
         .sort();
       const actualContents = (
@@ -120,18 +105,9 @@ describe('FileSystemService', () => {
       });
 
       // Verify replacements
-      const file1Content = await readFile(
-        path.join(testFolderPath, 'file1.txt'),
-        'utf8'
-      );
-      const file2Content = await readFile(
-        path.join(testFolderPath, 'file2.js'),
-        'utf8'
-      );
-      const file3Content = await readFile(
-        path.join(testFolderPath, 'file3.md'),
-        'utf8'
-      );
+      const file1Content = await readFile(path.join(testFolderPath, 'file1.txt'), 'utf8');
+      const file2Content = await readFile(path.join(testFolderPath, 'file2.js'), 'utf8');
+      const file3Content = await readFile(path.join(testFolderPath, 'file3.md'), 'utf8');
       const nestedContent = await readFile(
         path.join(testFolderPath, 'subfolder', 'nested.txt'),
         'utf8'
@@ -166,10 +142,7 @@ describe('FileSystemService', () => {
         dryRun: false
       });
 
-      const configContent = await readFile(
-        path.join(testFolderPath, 'config.json'),
-        'utf8'
-      );
+      const configContent = await readFile(path.join(testFolderPath, 'config.json'), 'utf8');
       const config = JSON.parse(configContent) as {
         name: string;
         encoded: string;
@@ -194,10 +167,7 @@ describe('FileSystemService', () => {
         dryRun: true
       });
 
-      const content = await readFile(
-        path.join(testFolderPath, 'test.txt'),
-        'utf8'
-      );
+      const content = await readFile(path.join(testFolderPath, 'test.txt'), 'utf8');
 
       expect(content).toBe('Original OLD_TEXT content'); // Should not change in dry run
     });

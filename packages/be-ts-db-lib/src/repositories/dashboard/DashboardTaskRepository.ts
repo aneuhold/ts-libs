@@ -1,8 +1,4 @@
-import {
-  DashboardTask,
-  DashboardTaskService,
-  User
-} from '@aneuhold/core-ts-db-lib';
+import { DashboardTask, DashboardTaskService, User } from '@aneuhold/core-ts-db-lib';
 import { ObjectId } from 'bson';
 import { DeleteResult } from 'mongodb';
 import { RepoListeners } from '../../services/RepoSubscriptionService.js';
@@ -21,16 +17,12 @@ export default class DashboardTaskRepository extends DashboardBaseRepository<Das
    * Private constructor to enforce singleton pattern.
    */
   private constructor() {
-    super(
-      DashboardTask.docType,
-      new DashboardTaskValidator(),
-      (task: Partial<DashboardTask>) => {
-        const docCopy = CleanDocument.userId(task);
-        delete docCopy.createdDate;
-        docCopy.lastUpdatedDate = new Date();
-        return docCopy;
-      }
-    );
+    super(DashboardTask.docType, new DashboardTaskValidator(), (task: Partial<DashboardTask>) => {
+      const docCopy = CleanDocument.userId(task);
+      delete docCopy.createdDate;
+      docCopy.lastUpdatedDate = new Date();
+      return docCopy;
+    });
   }
 
   /**
@@ -146,9 +138,7 @@ export default class DashboardTaskRepository extends DashboardBaseRepository<Das
    * @param taskIds The IDs of the tasks to delete.
    * @returns The list of task IDs to delete.
    */
-  private async getAllTaskIDsToDelete(
-    taskIds: ObjectId[]
-  ): Promise<ObjectId[]> {
+  private async getAllTaskIDsToDelete(taskIds: ObjectId[]): Promise<ObjectId[]> {
     if (taskIds.length === 0) {
       return taskIds;
     }
@@ -157,10 +147,7 @@ export default class DashboardTaskRepository extends DashboardBaseRepository<Das
       return taskIds;
     }
     const allUserTasks = await this.getAllForUser(initialTask.userId);
-    const childrenIds = DashboardTaskService.getChildrenIds(
-      allUserTasks,
-      taskIds
-    );
+    const childrenIds = DashboardTaskService.getChildrenIds(allUserTasks, taskIds);
     return [...taskIds, ...childrenIds];
   }
 }

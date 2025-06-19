@@ -21,26 +21,19 @@ export class UnpublishCommand {
     } else {
       const packageInfo = await PackageJsonService.getPackageInfo();
       if (!packageInfo) {
-        throw new Error(
-          'No package.json found in current directory and no package name provided'
-        );
+        throw new Error('No package.json found in current directory and no package name provided');
       }
       targetPackageName = packageInfo.name;
     }
 
-    const entry =
-      await LocalPackageStoreService.getPackageEntry(targetPackageName);
+    const entry = await LocalPackageStoreService.getPackageEntry(targetPackageName);
     if (!entry) {
-      throw new Error(
-        `Package '${targetPackageName}' not found in local registry`
-      );
+      throw new Error(`Package '${targetPackageName}' not found in local registry`);
     }
 
     // Reset all subscribers to original version
     if (entry.subscribers.length > 0) {
-      DR.logger.info(
-        `Resetting ${entry.subscribers.length} subscriber(s) to original version`
-      );
+      DR.logger.info(`Resetting ${entry.subscribers.length} subscriber(s) to original version`);
 
       for (const subscriber of entry.subscribers) {
         try {
@@ -73,8 +66,6 @@ export class UnpublishCommand {
     // Unpublish from Verdaccio
     await VerdaccioService.unpublishPackage(targetPackageName);
 
-    DR.logger.info(
-      `Successfully unpublished ${targetPackageName} and reset all subscribers`
-    );
+    DR.logger.info(`Successfully unpublished ${targetPackageName} and reset all subscribers`);
   }
 }

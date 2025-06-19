@@ -7,9 +7,7 @@ import Validate from '../../../schemas/validators/ValidateUtil.js';
  * @param userId - The ID of the user.
  * @returns The default task list sort settings for the user.
  */
-export function getDefaultTaskListSortSettings(
-  userId: string
-): DashboardTaskListSortSettings {
+export function getDefaultTaskListSortSettings(userId: string): DashboardTaskListSortSettings {
   return {
     userId,
     sortList: []
@@ -22,25 +20,14 @@ export function getDefaultTaskListSortSettings(
  * @param validate - The validation utility.
  * @param config - The user configuration for the dashboard.
  */
-export function validateSortSettings(
-  validate: Validate,
-  config: DashboardUserConfig
-) {
+export function validateSortSettings(validate: Validate, config: DashboardUserConfig) {
   validate.object('taskListSortSettings', {});
   const categories = Object.keys(config.taskListSortSettings);
   if (categories.length > 0) {
-    const defaultSettings = getDefaultTaskListSortSettings(
-      config.userId.toString()
-    );
+    const defaultSettings = getDefaultTaskListSortSettings(config.userId.toString());
     categories.forEach((category) => {
-      validate.string(
-        `taskListSortSettings.${category}.userId`,
-        defaultSettings.userId
-      );
-      validate.array(
-        `taskListSortSettings.${category}.sortList`,
-        defaultSettings.sortList
-      );
+      validate.string(`taskListSortSettings.${category}.userId`, defaultSettings.userId);
+      validate.array(`taskListSortSettings.${category}.sortList`, defaultSettings.sortList);
     });
   }
 }

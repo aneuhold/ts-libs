@@ -1,14 +1,5 @@
 import { randomUUID } from 'crypto';
-import {
-  afterAll,
-  afterEach,
-  beforeAll,
-  beforeEach,
-  describe,
-  expect,
-  it,
-  vi
-} from 'vitest';
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TestProjectUtils } from '../../test-utils/TestProjectUtils.js';
 import { LocalPackageStoreService } from '../services/LocalPackageStoreService.js';
 import { MutexService } from '../services/MutexService.js';
@@ -94,14 +85,10 @@ describe('Integration Tests', () => {
     await SubscribeCommand.execute(`@test-${testId}/subscribe-target`);
 
     // Verify subscriber was added
-    const packageEntry = await TestProjectUtils.getPackageEntry(
-      `@test-${testId}/subscribe-target`
-    );
+    const packageEntry = await TestProjectUtils.getPackageEntry(`@test-${testId}/subscribe-target`);
     expect(
       packageEntry?.subscribers.some(
-        (s) =>
-          s.subscriberPath === subscriberPath &&
-          s.originalSpecifier === '^1.0.0'
+        (s) => s.subscriberPath === subscriberPath && s.originalSpecifier === '^1.0.0'
       )
     ).toBe(true);
   });

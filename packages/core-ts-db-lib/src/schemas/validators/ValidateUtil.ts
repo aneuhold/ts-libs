@@ -37,10 +37,7 @@ export default class Validate {
    * @param fieldName - The name of the field to validate.
    */
   optionalString(fieldName: string) {
-    if (
-      this.fieldPathIsValid(fieldName) &&
-      !isOptionalString(this.getField(fieldName))
-    ) {
+    if (this.fieldPathIsValid(fieldName) && !isOptionalString(this.getField(fieldName))) {
       this.errorsArray.push(`${fieldName} must be a string or undefined`);
       this.deleteField(fieldName);
     }
@@ -52,10 +49,7 @@ export default class Validate {
    * @param fieldName - The name of the field to validate.
    */
   optionalNumber(fieldName: string) {
-    if (
-      this.fieldPathIsValid(fieldName) &&
-      !isOptionalNumber(this.getField(fieldName))
-    ) {
+    if (this.fieldPathIsValid(fieldName) && !isOptionalNumber(this.getField(fieldName))) {
       this.errorsArray.push(`${fieldName} must be a number or undefined`);
       this.deleteField(fieldName);
     }
@@ -67,10 +61,7 @@ export default class Validate {
    * @param fieldName - The name of the field to validate.
    */
   optionalBoolean(fieldName: string) {
-    if (
-      this.fieldPathIsValid(fieldName) &&
-      !isOptionalBoolean(this.getField(fieldName))
-    ) {
+    if (this.fieldPathIsValid(fieldName) && !isOptionalBoolean(this.getField(fieldName))) {
       this.errorsArray.push(`${fieldName} must be a boolean or undefined`);
       this.deleteField(fieldName);
     }
@@ -82,10 +73,7 @@ export default class Validate {
    * @param fieldName - The name of the field to validate.
    */
   optionalArray(fieldName: string) {
-    if (
-      this.fieldPathIsValid(fieldName) &&
-      !isOptionalArray(this.getField(fieldName))
-    ) {
+    if (this.fieldPathIsValid(fieldName) && !isOptionalArray(this.getField(fieldName))) {
       this.errorsArray.push(`${fieldName} must be an array or undefined`);
       this.deleteField(fieldName);
     }
@@ -97,10 +85,7 @@ export default class Validate {
    * @param fieldName - The name of the field to validate.
    */
   optionalObject(fieldName: string) {
-    if (
-      this.fieldPathIsValid(fieldName) &&
-      !isOptionalObject(this.getField(fieldName))
-    ) {
+    if (this.fieldPathIsValid(fieldName) && !isOptionalObject(this.getField(fieldName))) {
       this.errorsArray.push(`${fieldName} must be an object or undefined`);
       this.deleteField(fieldName);
     }
@@ -113,10 +98,7 @@ export default class Validate {
    * @param defaultValue - The default value to set if validation fails.
    */
   string(fieldName: string, defaultValue: string) {
-    if (
-      this.fieldPathIsValid(fieldName) &&
-      typeof this.getField(fieldName) !== 'string'
-    ) {
+    if (this.fieldPathIsValid(fieldName) && typeof this.getField(fieldName) !== 'string') {
       this.errorsArray.push(`${fieldName} must be a string`);
       this.updateField(fieldName, defaultValue);
     }
@@ -131,8 +113,7 @@ export default class Validate {
   object(fieldName: string, defaultValue: object) {
     if (
       this.fieldPathIsValid(fieldName) &&
-      (Array.isArray(this.getField(fieldName)) ||
-        typeof this.getField(fieldName) !== 'object')
+      (Array.isArray(this.getField(fieldName)) || typeof this.getField(fieldName) !== 'object')
     ) {
       this.errorsArray.push(`${fieldName} must be an object`);
       this.updateField(fieldName, defaultValue);
@@ -146,10 +127,7 @@ export default class Validate {
    * @param defaultValue - The default value to set if validation fails.
    */
   number(fieldName: string, defaultValue: number) {
-    if (
-      this.fieldPathIsValid(fieldName) &&
-      typeof this.getField(fieldName) !== 'number'
-    ) {
+    if (this.fieldPathIsValid(fieldName) && typeof this.getField(fieldName) !== 'number') {
       this.errorsArray.push(`${fieldName} must be a number`);
       this.updateField(fieldName, defaultValue);
     }
@@ -162,10 +140,7 @@ export default class Validate {
    * @param defaultValue - The default value to set if validation fails.
    */
   boolean(fieldName: string, defaultValue: boolean) {
-    if (
-      this.fieldPathIsValid(fieldName) &&
-      typeof this.getField(fieldName) !== 'boolean'
-    ) {
+    if (this.fieldPathIsValid(fieldName) && typeof this.getField(fieldName) !== 'boolean') {
       this.errorsArray.push(`${fieldName} must be a boolean`);
       this.updateField(fieldName, defaultValue);
     }
@@ -178,10 +153,7 @@ export default class Validate {
    * @param defaultValue - The default value to set if validation fails.
    */
   array(fieldName: string, defaultValue: unknown[]) {
-    if (
-      this.fieldPathIsValid(fieldName) &&
-      !Array.isArray(this.getField(fieldName))
-    ) {
+    if (this.fieldPathIsValid(fieldName) && !Array.isArray(this.getField(fieldName))) {
       this.errorsArray.push(`${fieldName} must be an array`);
       this.updateField(fieldName, defaultValue);
     }

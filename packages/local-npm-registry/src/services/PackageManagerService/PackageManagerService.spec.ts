@@ -2,21 +2,9 @@ import { DR, PackageJson } from '@aneuhold/core-ts-lib';
 import { randomUUID } from 'crypto';
 import fs from 'fs-extra';
 import path from 'path';
-import {
-  afterAll,
-  afterEach,
-  beforeAll,
-  beforeEach,
-  describe,
-  expect,
-  it,
-  vi
-} from 'vitest';
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TestProjectUtils } from '../../../test-utils/TestProjectUtils.js';
-import {
-  PACKAGE_MANAGER_INFO,
-  PackageManager
-} from '../../types/PackageManager.js';
+import { PACKAGE_MANAGER_INFO, PackageManager } from '../../types/PackageManager.js';
 import { MutexService } from '../MutexService.js';
 import { VerdaccioService } from '../VerdaccioService.js';
 import { PackageManagerService } from './PackageManagerService.js';
@@ -99,10 +87,7 @@ describe('Unit Tests', () => {
     });
 
     it('should default to npm when no lock files exist', async () => {
-      const emptyDir = path.join(
-        TestProjectUtils.getTestInstanceDir(),
-        'no-locks'
-      );
+      const emptyDir = path.join(TestProjectUtils.getTestInstanceDir(), 'no-locks');
       await fs.ensureDir(emptyDir);
 
       // Create a basic package.json without lock files
@@ -111,8 +96,7 @@ describe('Unit Tests', () => {
         version: '1.0.0'
       });
 
-      const packageManager =
-        await PackageManagerService.detectPackageManager(emptyDir);
+      const packageManager = await PackageManagerService.detectPackageManager(emptyDir);
 
       expect(packageManager).toBe(PackageManager.Npm);
     });
@@ -130,8 +114,7 @@ describe('Unit Tests', () => {
       packageJson.packageManager = 'pnpm@8.0.0';
       await fs.writeJson(packageJsonPath, packageJson);
 
-      const packageManager =
-        await PackageManagerService.detectPackageManager(packagePath);
+      const packageManager = await PackageManagerService.detectPackageManager(packagePath);
 
       // Should detect pnpm from packageManager field despite npm lock file
       expect(packageManager).toBe(PackageManager.Pnpm);
@@ -143,18 +126,14 @@ describe('Unit Tests', () => {
      * @param suffix The suffix for the package name
      * @param expectedManager The expected package manager to be detected
      */
-    const testPackageManagerDetection = async (
-      suffix: string,
-      expectedManager: PackageManager
-    ) => {
+    const testPackageManagerDetection = async (suffix: string, expectedManager: PackageManager) => {
       const packagePath = await TestProjectUtils.createTestPackage(
         `@test-${testId}/${suffix}`,
         '1.0.0',
         expectedManager
       );
 
-      const packageManager =
-        await PackageManagerService.detectPackageManager(packagePath);
+      const packageManager = await PackageManagerService.detectPackageManager(packagePath);
 
       expect(packageManager).toBe(expectedManager);
     };
@@ -229,24 +208,15 @@ describe('Unit Tests', () => {
     });
 
     it('should successfully run install with npm', async () => {
-      await testInstallWithPackageManager(
-        PackageManager.Npm,
-        'Running npm install'
-      );
+      await testInstallWithPackageManager(PackageManager.Npm, 'Running npm install');
     });
 
     it('should successfully run install with pnpm', async () => {
-      await testInstallWithPackageManager(
-        PackageManager.Pnpm,
-        'Running pnpm install'
-      );
+      await testInstallWithPackageManager(PackageManager.Pnpm, 'Running pnpm install');
     });
 
     it('should successfully run install with yarn', async () => {
-      await testInstallWithPackageManager(
-        PackageManager.Yarn,
-        'Running Yarn Classic install'
-      );
+      await testInstallWithPackageManager(PackageManager.Yarn, 'Running Yarn Classic install');
     });
 
     it('should use custom registry URL when provided', async () => {
@@ -261,19 +231,14 @@ describe('Unit Tests', () => {
       // This will likely fail since the custom registry doesn't exist,
       // but we can verify the configuration was created with the right URL
       try {
-        await PackageManagerService.runInstallWithRegistry(
-          packagePath,
-          customRegistryUrl
-        );
+        await PackageManagerService.runInstallWithRegistry(packagePath, customRegistryUrl);
       } catch {
         // Expected to fail since registry doesn't exist
       }
 
       // During the test, the configuration would have been created and then restored
       // We can verify the process attempted to use the custom URL by checking logs
-      expect(DR.logger.info).toHaveBeenCalledWith(
-        expect.stringContaining('Running npm install')
-      );
+      expect(DR.logger.info).toHaveBeenCalledWith(expect.stringContaining('Running npm install'));
     });
 
     it('should restore configuration even when install fails', async () => {
@@ -292,10 +257,7 @@ describe('Unit Tests', () => {
       const badRegistryUrl = 'http://localhost:9999';
 
       try {
-        await PackageManagerService.runInstallWithRegistry(
-          packagePath,
-          badRegistryUrl
-        );
+        await PackageManagerService.runInstallWithRegistry(packagePath, badRegistryUrl);
       } catch {
         // Expected to fail
       }
@@ -362,22 +324,15 @@ describe('Unit Tests', () => {
       await PackageManagerService.runInstallWithRegistry(subscriberPath);
 
       // Verify install succeeded by checking that the lock file has content
-      const lockFilePath = path.join(
-        subscriberPath,
-        PACKAGE_MANAGER_INFO[packageManager].lockFile
-      );
+      const lockFilePath = path.join(subscriberPath, PACKAGE_MANAGER_INFO[packageManager].lockFile);
       expect(await fs.pathExists(lockFilePath)).toBe(true);
 
       const lockFileContent = await fs.readFile(lockFilePath, 'utf8');
       expect(lockFileContent.trim().length).toBeGreaterThan(0);
-      expect(lockFileContent).toContain(
-        `@test-${testId}/${packageManagerName}-install-publisher`
-      );
+      expect(lockFileContent).toContain(`@test-${testId}/${packageManagerName}-install-publisher`);
 
       // Verify package manager was detected correctly
-      expect(DR.logger.info).toHaveBeenCalledWith(
-        expect.stringContaining(expectedLogMessage)
-      );
+      expect(DR.logger.info).toHaveBeenCalledWith(expect.stringContaining(expectedLogMessage));
     };
   });
 });

@@ -27,9 +27,7 @@ export class MutexService {
    *
    * @param timeoutMs - Maximum time to wait for lock in milliseconds (default: 30 seconds)
    */
-  static async acquireLock(
-    timeoutMs: number = MutexService.LOCK_TIMEOUT
-  ): Promise<void> {
+  static async acquireLock(timeoutMs: number = MutexService.LOCK_TIMEOUT): Promise<void> {
     if (MutexService.lockRelease) {
       DR.logger.info('Lock already acquired by this process');
       return;
@@ -128,9 +126,7 @@ export class MutexService {
         const lockFileWithExt = `${lockFilePath}.lock`;
         await fs.remove(lockFileWithExt);
         MutexService.lockRelease = null;
-        DR.logger.info(
-          'Successfully manually removed Verdaccio mutex lock file'
-        );
+        DR.logger.info('Successfully manually removed Verdaccio mutex lock file');
       } catch (manualRemovalError) {
         const errorMessage = `Failed to force release mutex lock via both unlock and manual removal: ${String(error)}, manual removal error: ${String(manualRemovalError)}`;
         DR.logger.error(errorMessage);

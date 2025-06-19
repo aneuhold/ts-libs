@@ -58,10 +58,7 @@ export default class ConfigService {
   static async useConfig(env: ConfigEnv): Promise<void> {
     ConfigService.env = env;
     try {
-      const jsonString = await GitHubService.getContentFromRepo(
-        'config',
-        `${env}.jsonc`
-      );
+      const jsonString = await GitHubService.getContentFromRepo('config', `${env}.jsonc`);
       ConfigService.configObject = parse(jsonString) as Config;
     } catch (error) {
       DR.logger.error(`Failed to load ${env}.json, error: ${error as string}`);

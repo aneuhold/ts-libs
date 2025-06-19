@@ -7,10 +7,7 @@ import DashboardTask from '../../../documents/dashboard/Task.js';
  * @param task - The dashboard task to validate.
  * @param errors - An array to collect validation error messages.
  */
-export function validateRecurrenceInfo(
-  task: DashboardTask,
-  errors: string[]
-): void {
+export function validateRecurrenceInfo(task: DashboardTask, errors: string[]): void {
   const recurrenceErrors: string[] = [];
   if (!task.recurrenceInfo) {
     return;
