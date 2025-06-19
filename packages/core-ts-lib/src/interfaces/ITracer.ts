@@ -25,10 +25,7 @@ export interface ITracer {
    *                   It receives the span object as an argument.
    * @returns A promise that resolves with the result of the callback.
    */
-  startSpan<T>(
-    name: string,
-    callback: (span?: ISpan) => Promise<T>
-  ): Promise<T>;
+  startSpan<T>(name: string, callback: (span?: ISpan) => Promise<T>): Promise<T>;
 
   /**
    * Captures an exception for reporting.
@@ -73,10 +70,7 @@ export class NoopTracer implements ITracer {
    * @param _name
    * @param callback
    */
-  async startSpan<T>(
-    _name: string,
-    callback: (span?: ISpan) => Promise<T>
-  ): Promise<T> {
+  async startSpan<T>(_name: string, callback: (span?: ISpan) => Promise<T>): Promise<T> {
     // Provide a dummy span object that does nothing
     const noopSpan: ISpan = {
       setStatus: () => {}

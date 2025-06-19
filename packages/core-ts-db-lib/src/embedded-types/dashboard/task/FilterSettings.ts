@@ -7,9 +7,7 @@ import Validate from '../../../schemas/validators/ValidateUtil.js';
  * @param userId - The ID of the user.
  * @returns The default filter settings for the user's task list.
  */
-export function getDefaultTaskListFilterSettings(
-  userId: string
-): DashboardTaskListFilterSettings {
+export function getDefaultTaskListFilterSettings(userId: string): DashboardTaskListFilterSettings {
   return {
     userId,
     completed: { show: true },
@@ -25,25 +23,14 @@ export function getDefaultTaskListFilterSettings(
  * @param validate - The validation utility.
  * @param config - The user configuration containing the filter settings.
  */
-export function validateFilterSettings(
-  validate: Validate,
-  config: DashboardUserConfig
-) {
+export function validateFilterSettings(validate: Validate, config: DashboardUserConfig) {
   validate.object('taskListFilterSettings', {});
   const categories = Object.keys(config.taskListFilterSettings);
   if (categories.length > 0) {
-    const defaultSettings = getDefaultTaskListFilterSettings(
-      config.userId.toString()
-    );
+    const defaultSettings = getDefaultTaskListFilterSettings(config.userId.toString());
     categories.forEach((category) => {
-      validate.string(
-        `taskListFilterSettings.${category}.userId`,
-        defaultSettings.userId
-      );
-      validate.object(
-        `taskListFilterSettings.${category}.completed`,
-        defaultSettings.completed
-      );
+      validate.string(`taskListFilterSettings.${category}.userId`, defaultSettings.userId);
+      validate.object(`taskListFilterSettings.${category}.completed`, defaultSettings.completed);
       validate.boolean(
         `taskListFilterSettings.${category}.completed.show`,
         defaultSettings.completed.show
@@ -56,18 +43,12 @@ export function validateFilterSettings(
         `taskListFilterSettings.${category}.grandChildrenTasks.show`,
         defaultSettings.grandChildrenTasks.show
       );
-      validate.object(
-        `taskListFilterSettings.${category}.startDate`,
-        defaultSettings.startDate
-      );
+      validate.object(`taskListFilterSettings.${category}.startDate`, defaultSettings.startDate);
       validate.boolean(
         `taskListFilterSettings.${category}.startDate.showFutureTasks`,
         defaultSettings.startDate.showFutureTasks
       );
-      validate.object(
-        `taskListFilterSettings.${category}.tags`,
-        defaultSettings.tags
-      );
+      validate.object(`taskListFilterSettings.${category}.tags`, defaultSettings.tags);
     });
   }
 }

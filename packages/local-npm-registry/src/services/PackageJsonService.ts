@@ -60,15 +60,9 @@ export class PackageJsonService {
 
       // Update the package's own version if this is the package being published
       if (packageJson.name === packageName) {
-        const versionRegex = new RegExp(
-          `(["']version["']\\s*:\\s*["'])([^"']+)(["'])`,
-          'g'
-        );
+        const versionRegex = new RegExp(`(["']version["']\\s*:\\s*["'])([^"']+)(["'])`, 'g');
         if (versionRegex.test(originalContent)) {
-          updatedContent = updatedContent.replace(
-            versionRegex,
-            `$1${version}$3`
-          );
+          updatedContent = updatedContent.replace(versionRegex, `$1${version}$3`);
           hasUpdates = true;
         }
       }
@@ -80,10 +74,7 @@ export class PackageJsonService {
           'g'
         );
         if (sectionRegex.test(updatedContent)) {
-          updatedContent = updatedContent.replace(
-            sectionRegex,
-            `$1${version}$3`
-          );
+          updatedContent = updatedContent.replace(sectionRegex, `$1${version}$3`);
           hasUpdates = true;
         }
       };
@@ -104,18 +95,12 @@ export class PackageJsonService {
       // Only write if we made updates
       if (hasUpdates) {
         await fs.writeFile(packageJsonPath, updatedContent, 'utf-8');
-        DR.logger.info(
-          `Updated ${packageName} to ${version} in ${projectPath}`
-        );
+        DR.logger.info(`Updated ${packageName} to ${version} in ${projectPath}`);
       } else {
-        DR.logger.info(
-          `No updates needed for ${packageName} in ${projectPath}`
-        );
+        DR.logger.info(`No updates needed for ${packageName} in ${projectPath}`);
       }
     } catch (error) {
-      DR.logger.error(
-        `Error updating package.json in ${projectPath}: ${String(error)}`
-      );
+      DR.logger.error(`Error updating package.json in ${projectPath}: ${String(error)}`);
       throw error;
     }
   }

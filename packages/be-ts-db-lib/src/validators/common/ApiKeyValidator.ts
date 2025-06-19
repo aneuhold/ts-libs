@@ -24,9 +24,7 @@ export default class ApiKeyValidator extends IValidator<ApiKey> {
     const apiKeyRepo = ApiKeyRepository.getRepo();
     const apiKeyInDb = await apiKeyRepo.get({ userId: newApiKey.userId });
     if (apiKeyInDb) {
-      DR.logger.error(
-        `User with ID: ${newApiKey.userId.toString()} already has an API key.`
-      );
+      DR.logger.error(`User with ID: ${newApiKey.userId.toString()} already has an API key.`);
       ErrorUtils.throwError(
         `User with ID: ${newApiKey.userId.toString()} already has an API key.`,
         newApiKey
@@ -37,9 +35,7 @@ export default class ApiKeyValidator extends IValidator<ApiKey> {
   // eslint-disable-next-line @typescript-eslint/require-await
   async validateUpdateObject(updatedApiKey: Partial<ApiKey>): Promise<void> {
     // Throw, because API keys should not be updated. Only created and deleted.
-    DR.logger.error(
-      `API keys should not be updated at this time. Only created and deleted.`
-    );
+    DR.logger.error(`API keys should not be updated at this time. Only created and deleted.`);
     ErrorUtils.throwError(
       `API keys should not be updated at this time. Only created and deleted.`,
       updatedApiKey

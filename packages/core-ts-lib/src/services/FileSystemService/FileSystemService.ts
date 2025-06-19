@@ -1,22 +1,33 @@
 import { exec } from 'child_process';
-import {
-  access,
-  appendFile,
-  cp,
-  mkdir,
-  readFile,
-  readdir,
-  rm,
-  stat,
-  writeFile
-} from 'fs/promises';
+import { access, appendFile, cp, mkdir, readFile, readdir, rm, stat, writeFile } from 'fs/promises';
 import path from 'path';
 import { promisify } from 'util';
 import ErrorUtils from '../../utils/ErrorUtils.js';
 import { DR } from '../DependencyRegistry.js';
 import StringService from '../StringService.js';
+import GlobMatchingService from './GlobMatchingService.js';
 
 const execAsync = promisify(exec);
+
+/**
+ * Options for the replaceInFiles method
+ */
+export type ReplaceInFilesOptions = {
+  /** The string to search for */
+  searchString: string;
+  /** The string to replace it with */
+  replaceString: string;
+  /** The root directory to search in */
+  rootPath: string;
+  /** Array of glob-like patterns to include (defaults to all files) */
+  includePatterns?: string[];
+  /** Array of glob-like patterns to exclude (defaults to common ignore patterns) */
+  excludePatterns?: string[];
+  /** Whether to also replace URL-encoded versions of the strings */
+  includeUrlEncoded?: boolean;
+  /** If true, only shows what would be changed without making changes */
+  dryRun?: boolean;
+};
 
 /**
  * A service which can be used to interact with the file system, only in build
@@ -30,8 +41,8 @@ export default class FileSystemService {
    *
    * @param folderPath the path to the folder which contains the file that should
    * be updated
-   * @param fileName
-   * @param textToInsert
+   * @param fileName the name of the file to update
+   * @param textToInsert the text to insert into the file
    */
   static async findAndInsertText(
     folderPath: string,
@@ -62,8 +73,8 @@ export default class FileSystemService {
   /**
    * Copies the contents of one folder to another folder.
    *
-   * @param sourceFolderPath
-   * @param targetFolderPath
+   * @param sourceFolderPath the path to the source folder
+   * @param targetFolderPath the path to the target folder
    * @param ignoreExtensions is an array with extensions that should be
    * ignored. For example, if you want to ignore all .ts files, you would pass
    * in ['.ts']. Multi-part extensions like '.spec.ts' are also supported.
@@ -83,8 +94,7 @@ export default class FileSystemService {
     await FileSystemService.checkOrCreateFolder(targetFolderPath);
 
     // Get the files in the source directory
-    const sourceFilePaths =
-      await FileSystemService.getAllFilePathsRelative(sourceFolderPath);
+    const sourceFilePaths = await FileSystemService.getAllFilePathsRelative(sourceFolderPath);
 
     await Promise.all(
       sourceFilePaths.map(async (sourceFilePath) => {
@@ -92,10 +102,7 @@ export default class FileSystemService {
         const targetFile = path.join(targetFolderPath, sourceFilePath);
 
         // Check if the file should be ignored based on extensions
-        if (
-          ignoreExtensions &&
-          FileSystemService.shouldIgnoreFile(sourceFile, ignoreExtensions)
-        ) {
+        if (ignoreExtensions && FileSystemService.shouldIgnoreFile(sourceFile, ignoreExtensions)) {
           return;
         }
 
@@ -111,10 +118,7 @@ export default class FileSystemService {
    * @param filePath the path to the file to check
    * @param ignoreExtensions array of extensions to ignore
    */
-  private static shouldIgnoreFile(
-    filePath: string,
-    ignoreExtensions: string[]
-  ): boolean {
+  private static shouldIgnoreFile(filePath: string, ignoreExtensions: string[]): boolean {
     const fileName = path.basename(filePath);
 
     return ignoreExtensions.some((extension) => {
@@ -133,9 +137,7 @@ export default class FileSystemService {
     try {
       await access(folderPath);
     } catch {
-      DR.logger.verbose.info(
-        `Directory "${folderPath}" does not exist. Creating it now...`
-      );
+      DR.logger.verbose.info(`Directory "${folderPath}" does not exist. Creating it now...`);
       await mkdir(folderPath, { recursive: true });
     }
   }
@@ -191,7 +193,11 @@ export default class FileSystemService {
   static async getAllFilePathsRelative(dirPath: string): Promise<string[]> {
     const filePaths = await this.getAllFilePaths(dirPath);
     return filePaths.map((filePath) => {
-      return filePath.replace(dirPath, '');
+      const relativePath = filePath.replace(dirPath, '');
+      // Remove leading path separator if present
+      return relativePath.startsWith('/') || relativePath.startsWith('\\')
+        ? relativePath.slice(1)
+        : relativePath;
     });
   }
 
@@ -206,9 +212,7 @@ export default class FileSystemService {
       const { stdout } = await execAsync('git status --porcelain');
       return stdout.trim().length > 0;
     } catch (error) {
-      DR.logger.error(
-        `Failed to check for pending changes: ${ErrorUtils.getErrorString(error)}`
-      );
+      DR.logger.error(`Failed to check for pending changes: ${ErrorUtils.getErrorString(error)}`);
       return false;
     }
   }
@@ -308,5 +312,86 @@ export default class FileSystemService {
     }
 
     return results;
+  }
+
+  /**
+   * Replaces all occurrences of a string in files within a directory.
+   * Supports glob patterns for including/excluding files and handles URL encoding.
+   *
+   * @param options Configuration object for the replacement operation
+   */
+  static async replaceInFiles(options: ReplaceInFilesOptions): Promise<void> {
+    const {
+      searchString,
+      replaceString,
+      rootPath,
+      includePatterns = ['**/*'],
+      excludePatterns = ['**/node_modules/**', '**/.*/**'],
+      includeUrlEncoded = true,
+      dryRun = false
+    } = options;
+
+    DR.logger.info(`Replacing "${searchString}" with "${replaceString}" in ${rootPath}`);
+
+    if (dryRun) {
+      DR.logger.info('DRY RUN MODE - No files will be modified');
+    }
+
+    const allFiles = await this.getAllFilePaths(rootPath);
+    const filesToProcess = GlobMatchingService.getMatchingFiles(
+      allFiles,
+      rootPath,
+      includePatterns,
+      excludePatterns
+    );
+
+    let processedCount = 0;
+    let modifiedCount = 0;
+
+    for (const filePath of filesToProcess) {
+      try {
+        const content = await readFile(filePath, 'utf8');
+        let hasChanges = false;
+        let updatedContent = content;
+
+        // Replace the main string
+        if (content.includes(searchString)) {
+          updatedContent = updatedContent.replaceAll(searchString, replaceString);
+          hasChanges = true;
+        }
+
+        // Replace URL-encoded version if requested
+        if (includeUrlEncoded) {
+          const encodedSearchString = encodeURIComponent(searchString);
+          const encodedReplaceString = encodeURIComponent(replaceString);
+
+          if (updatedContent.includes(encodedSearchString)) {
+            updatedContent = updatedContent.replaceAll(encodedSearchString, encodedReplaceString);
+            hasChanges = true;
+          }
+        }
+
+        if (hasChanges) {
+          const relativePath = path.relative(rootPath, filePath);
+          DR.logger.info(`${dryRun ? 'Would update' : 'Updating'} ${relativePath}...`);
+
+          if (!dryRun) {
+            await writeFile(filePath, updatedContent, 'utf8');
+          }
+
+          modifiedCount++;
+        }
+
+        processedCount++;
+      } catch (error) {
+        // Skip binary files or files we can't read
+        DR.logger.verbose.info(`Skipping ${filePath}: ${ErrorUtils.getErrorString(error)}`);
+        continue;
+      }
+    }
+
+    DR.logger.info(
+      `${dryRun ? 'Would process' : 'Processed'} ${processedCount} files, ${dryRun ? 'would modify' : 'modified'} ${modifiedCount} files`
+    );
   }
 }

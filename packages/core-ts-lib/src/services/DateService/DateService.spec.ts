@@ -34,65 +34,37 @@ describe('DateService', () => {
 
   describe('getWeekDayOfXWeekOfMonth', () => {
     it('should successfully get the 2nd monday of January 2024', () => {
-      const result = DateService.getWeekDayOfXWeekOfMonth(
-        new Date(2024, 0, 1),
-        1,
-        2
-      );
+      const result = DateService.getWeekDayOfXWeekOfMonth(new Date(2024, 0, 1), 1, 2);
       expect(result).toEqual(new Date(2024, 0, 8));
     });
 
     it('should successfully get the 3rd monday of January 2024', () => {
-      const result = DateService.getWeekDayOfXWeekOfMonth(
-        new Date(2024, 0, 1),
-        1,
-        3
-      );
+      const result = DateService.getWeekDayOfXWeekOfMonth(new Date(2024, 0, 1), 1, 3);
       expect(result).toEqual(new Date(2024, 0, 15));
     });
 
     it('should successfully get the 3rd tuesday of January 2024', () => {
-      const result = DateService.getWeekDayOfXWeekOfMonth(
-        new Date(2024, 0, 1),
-        2,
-        3
-      );
+      const result = DateService.getWeekDayOfXWeekOfMonth(new Date(2024, 0, 1), 2, 3);
       expect(result).toEqual(new Date(2024, 0, 16));
     });
 
     it('should successfully get the 1st Saturday of January 2024', () => {
-      const result = DateService.getWeekDayOfXWeekOfMonth(
-        new Date(2024, 0, 1),
-        6,
-        1
-      );
+      const result = DateService.getWeekDayOfXWeekOfMonth(new Date(2024, 0, 1), 6, 1);
       expect(result).toEqual(new Date(2024, 0, 6));
     });
 
     it('should successfully get the 1st sunday of January 2024', () => {
-      const result = DateService.getWeekDayOfXWeekOfMonth(
-        new Date(2024, 0, 1),
-        0,
-        1
-      );
+      const result = DateService.getWeekDayOfXWeekOfMonth(new Date(2024, 0, 1), 0, 1);
       expect(result).toEqual(new Date(2024, 0, 7));
     });
 
     it('should successfully get the last sunday of January 2024', () => {
-      const result = DateService.getWeekDayOfXWeekOfMonth(
-        new Date(2024, 0, 1),
-        0,
-        'last'
-      );
+      const result = DateService.getWeekDayOfXWeekOfMonth(new Date(2024, 0, 1), 0, 'last');
       expect(result).toEqual(new Date(2024, 0, 28));
     });
 
     it('should return null if the week and day do not exist', () => {
-      const result = DateService.getWeekDayOfXWeekOfMonth(
-        new Date(2024, 0, 1),
-        0,
-        5
-      );
+      const result = DateService.getWeekDayOfXWeekOfMonth(new Date(2024, 0, 1), 0, 5);
       expect(result).toEqual(null);
     });
   });

@@ -14,10 +14,7 @@ export default class DashboardTaskRecurrenceService {
    * @param frequency - The recurrence frequency details.
    * @returns The next frequency date or null if the frequency is in an invalid state.
    */
-  static getNextFrequencyDate(
-    basisDate: Date,
-    frequency: RecurrenceFrequency
-  ): Date | null {
+  static getNextFrequencyDate(basisDate: Date, frequency: RecurrenceFrequency): Date | null {
     // Last day of month
     if (frequency.type === RecurrenceFrequencyType.lastDayOfMonth) {
       return DateService.getLastDayOfGivenMonth(basisDate);
@@ -67,11 +64,7 @@ export default class DashboardTaskRecurrenceService {
         frequency.everyXWeekdayOfMonth.weekOfMonth
       );
       let monthsPassed = 0;
-      while (
-        !newDate ||
-        newDate < basisDate ||
-        newDate.getTime() === basisDate.getTime()
-      ) {
+      while (!newDate || newDate < basisDate || newDate.getTime() === basisDate.getTime()) {
         monthsPassed += 1;
         newDate = DateService.getWeekDayOfXWeekOfMonth(
           DateService.addMonths(basisDate, monthsPassed),
@@ -120,10 +113,8 @@ export default class DashboardTaskRecurrenceService {
       // Validation for moving dates based on their own recurrence
     } else if (
       !task.recurrenceInfo ||
-      (task.recurrenceInfo.recurrenceBasis === RecurrenceBasis.startDate &&
-        !task.startDate) ||
-      (task.recurrenceInfo.recurrenceBasis === RecurrenceBasis.dueDate &&
-        !task.dueDate)
+      (task.recurrenceInfo.recurrenceBasis === RecurrenceBasis.startDate && !task.startDate) ||
+      (task.recurrenceInfo.recurrenceBasis === RecurrenceBasis.dueDate && !task.dueDate)
     ) {
       return;
     }
@@ -142,18 +133,10 @@ export default class DashboardTaskRecurrenceService {
           task.recurrenceInfo.frequency
         );
       }
-    } else if (
-      task.recurrenceInfo.recurrenceBasis === RecurrenceBasis.startDate
-    ) {
-      diff = this.getDiffForDateUpdate(
-        task.startDate,
-        task.recurrenceInfo.frequency
-      );
+    } else if (task.recurrenceInfo.recurrenceBasis === RecurrenceBasis.startDate) {
+      diff = this.getDiffForDateUpdate(task.startDate, task.recurrenceInfo.frequency);
     } else {
-      diff = this.getDiffForDateUpdate(
-        task.dueDate,
-        task.recurrenceInfo.frequency
-      );
+      diff = this.getDiffForDateUpdate(task.dueDate, task.recurrenceInfo.frequency);
     }
 
     if (task.startDate) {
@@ -171,10 +154,7 @@ export default class DashboardTaskRecurrenceService {
    * @param frequency - The recurrence frequency details.
    * @returns The difference in time in milliseconds.
    */
-  private static getDiffForDateUpdate(
-    basisDate: Date | undefined,
-    frequency: RecurrenceFrequency
-  ) {
+  private static getDiffForDateUpdate(basisDate: Date | undefined, frequency: RecurrenceFrequency) {
     if (!basisDate) {
       return 0;
     }

@@ -1,11 +1,6 @@
 import { DashboardUserConfig, User } from '@aneuhold/core-ts-db-lib';
 import { ObjectId } from 'bson';
-import {
-  AnyBulkWriteOperation,
-  BulkWriteResult,
-  UpdateFilter,
-  UpdateResult
-} from 'mongodb';
+import { AnyBulkWriteOperation, BulkWriteResult, UpdateFilter, UpdateResult } from 'mongodb';
 import { RepoListeners } from '../../services/RepoSubscriptionService.js';
 import CleanDocument from '../../util/DocumentCleaner.js';
 import DashboardUserConfigValidator from '../../validators/dashboard/UserConfigValidator.js';
@@ -21,11 +16,7 @@ export default class DashboardUserConfigRepository extends DashboardBaseReposito
    * Private constructor to enforce singleton pattern.
    */
   private constructor() {
-    super(
-      DashboardUserConfig.docType,
-      new DashboardUserConfigValidator(),
-      CleanDocument.userId
-    );
+    super(DashboardUserConfig.docType, new DashboardUserConfigValidator(), CleanDocument.userId);
   }
 
   /**
@@ -59,9 +50,7 @@ export default class DashboardUserConfigRepository extends DashboardBaseReposito
         }
       },
       insertMany: async (users) => {
-        const usersThatNeedConfig = users.filter(
-          (user) => user.projectAccess.dashboard
-        );
+        const usersThatNeedConfig = users.filter((user) => user.projectAccess.dashboard);
         await userConfigRepo.insertMany(
           usersThatNeedConfig.map((user) => new DashboardUserConfig(user._id))
         );
@@ -78,8 +67,7 @@ export default class DashboardUserConfigRepository extends DashboardBaseReposito
    */
   public static getRepo(): DashboardUserConfigRepository {
     if (!DashboardUserConfigRepository.singletonInstance) {
-      DashboardUserConfigRepository.singletonInstance =
-        new DashboardUserConfigRepository();
+      DashboardUserConfigRepository.singletonInstance = new DashboardUserConfigRepository();
     }
     return DashboardUserConfigRepository.singletonInstance;
   }
@@ -91,9 +79,7 @@ export default class DashboardUserConfigRepository extends DashboardBaseReposito
    * @param newDoc The new {@link DashboardUserConfig} document to insert.
    * @returns The inserted document or null if insertion failed.
    */
-  override async insertNew(
-    newDoc: DashboardUserConfig
-  ): Promise<DashboardUserConfig | null> {
+  override async insertNew(newDoc: DashboardUserConfig): Promise<DashboardUserConfig | null> {
     const result = await super.insertNew(newDoc);
     if (newDoc.collaborators.length > 0) {
       await this.updateCollaboratorsIfNeeded([
@@ -114,9 +100,7 @@ export default class DashboardUserConfigRepository extends DashboardBaseReposito
    * @param newDocs The list of new {@link DashboardUserConfig} documents to insert.
    * @returns The list of inserted documents.
    */
-  override async insertMany(
-    newDocs: DashboardUserConfig[]
-  ): Promise<DashboardUserConfig[]> {
+  override async insertMany(newDocs: DashboardUserConfig[]): Promise<DashboardUserConfig[]> {
     const result = await super.insertMany(newDocs);
     // Simulate having no collaborators originally.
     await this.updateCollaboratorsIfNeeded(
@@ -156,9 +140,7 @@ export default class DashboardUserConfigRepository extends DashboardBaseReposito
    * @param updatedDocs The list of updated {@link DashboardUserConfig} documents.
    * @returns The result of the bulk update operation.
    */
-  override async updateMany(
-    updatedDocs: Partial<DashboardUserConfig>[]
-  ): Promise<BulkWriteResult> {
+  override async updateMany(updatedDocs: Partial<DashboardUserConfig>[]): Promise<BulkWriteResult> {
     const docIds: ObjectId[] = [];
     updatedDocs.forEach((doc) => {
       if (doc._id) {
@@ -213,10 +195,7 @@ export default class DashboardUserConfigRepository extends DashboardBaseReposito
       const updatedCollaborators = docSet.updatedDoc.collaborators;
       if (
         updatedCollaborators &&
-        !this.objectIdArraysAreEqual(
-          originalCollaborators,
-          updatedCollaborators
-        )
+        !this.objectIdArraysAreEqual(originalCollaborators, updatedCollaborators)
       ) {
         // For each original collaborator, if they are not in the updated list,
         // remove the user from their collaborators list

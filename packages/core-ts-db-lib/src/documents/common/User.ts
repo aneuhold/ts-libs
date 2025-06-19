@@ -30,10 +30,7 @@ export const validateUser: DocumentValidator<User> = (user) => {
   validate.optionalString('auth.password');
   validate.optionalString('auth.googleId');
   validate.object('projectAccess', exampleUser.projectAccess);
-  validate.boolean(
-    'projectAccess.dashboard',
-    exampleUser.projectAccess.dashboard
-  );
+  validate.boolean('projectAccess.dashboard', exampleUser.projectAccess.dashboard);
 
   return { updatedDoc: user, errors };
 };

@@ -26,9 +26,7 @@ export default class DashboardTaskValidator extends IValidator<DashboardTask> {
     }
   }
 
-  async validateUpdateObject(
-    updatedTask: Partial<DashboardTask>
-  ): Promise<void> {
+  async validateUpdateObject(updatedTask: Partial<DashboardTask>): Promise<void> {
     const errors: string[] = [];
     // Check if an id is defined
     if (!updatedTask._id) {
@@ -39,9 +37,7 @@ export default class DashboardTaskValidator extends IValidator<DashboardTask> {
         _id: updatedTask.parentTaskId
       });
       if (!parentTask) {
-        errors.push(
-          `Parent task with ID: ${updatedTask.parentTaskId.toString()} does not exist.`
-        );
+        errors.push(`Parent task with ID: ${updatedTask.parentTaskId.toString()} does not exist.`);
       }
     }
     if (errors.length > 0) {
@@ -78,9 +74,7 @@ export default class DashboardTaskValidator extends IValidator<DashboardTask> {
               `User with ID: ${userId.toString()} does not exist in sharedWith property of task with ID: ${task._id.toString()}.`
             );
 
-            task.sharedWith = task.sharedWith.filter(
-              (id) => id.toString() !== userId.toString()
-            );
+            task.sharedWith = task.sharedWith.filter((id) => id.toString() !== userId.toString());
           }
         });
 

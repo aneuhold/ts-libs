@@ -5,9 +5,7 @@
  * @returns True if the value is undefined or an object, false otherwise.
  */
 export function isOptionalObject(value: unknown): value is undefined | object {
-  return (
-    value === undefined || (typeof value === 'object' && !Array.isArray(value))
-  );
+  return value === undefined || (typeof value === 'object' && !Array.isArray(value));
 }
 
 /**
@@ -16,9 +14,7 @@ export function isOptionalObject(value: unknown): value is undefined | object {
  * @param value - The value to check.
  * @returns True if the value is undefined, null, or an array, false otherwise.
  */
-export function isOptionalArray(
-  value: unknown
-): value is undefined | Array<unknown> | null {
+export function isOptionalArray(value: unknown): value is undefined | Array<unknown> | null {
   return value === undefined || value === null || Array.isArray(value);
 }
 
@@ -28,9 +24,7 @@ export function isOptionalArray(
  * @param value - The value to check.
  * @returns True if the value is undefined, null, or a string, false otherwise.
  */
-export function isOptionalString(
-  value: unknown
-): value is undefined | string | null {
+export function isOptionalString(value: unknown): value is undefined | string | null {
   return value === undefined || value === null || typeof value === 'string';
 }
 
@@ -40,9 +34,7 @@ export function isOptionalString(
  * @param value - The value to check.
  * @returns True if the value is undefined, null, or a number, false otherwise.
  */
-export function isOptionalNumber(
-  value: unknown
-): value is undefined | null | number {
+export function isOptionalNumber(value: unknown): value is undefined | null | number {
   return value === undefined || value === null || typeof value === 'number';
 }
 
@@ -52,8 +44,6 @@ export function isOptionalNumber(
  * @param value - The value to check.
  * @returns True if the value is undefined, null, or a boolean, false otherwise.
  */
-export function isOptionalBoolean(
-  value: unknown
-): value is undefined | null | boolean {
+export function isOptionalBoolean(value: unknown): value is undefined | null | boolean {
   return value === undefined || value === null || typeof value === 'boolean';
 }

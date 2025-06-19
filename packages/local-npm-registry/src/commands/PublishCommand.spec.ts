@@ -2,16 +2,7 @@ import { DR } from '@aneuhold/core-ts-lib';
 import { randomUUID } from 'crypto';
 import fs from 'fs-extra';
 import path from 'path';
-import {
-  afterAll,
-  afterEach,
-  beforeAll,
-  beforeEach,
-  describe,
-  expect,
-  it,
-  vi
-} from 'vitest';
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TestProjectUtils } from '../../test-utils/TestProjectUtils.js';
 import { LocalPackageStoreService } from '../services/LocalPackageStoreService.js';
 import { MutexService } from '../services/MutexService.js';
@@ -88,9 +79,7 @@ describe('Integration Tests', () => {
     await PublishCommand.execute();
 
     // Verify the package entry was created in the local store
-    const packageEntry = await TestProjectUtils.getPackageEntry(
-      `@test-${testId}/my-package`
-    );
+    const packageEntry = await TestProjectUtils.getPackageEntry(`@test-${testId}/my-package`);
     expect(packageEntry).toBeTruthy();
     expect(packageEntry?.originalVersion).toBe('1.0.0');
     expect(packageEntry?.currentVersion).toMatch(/^1\.0\.0-\d{17}$/);
@@ -98,16 +87,13 @@ describe('Integration Tests', () => {
     expect(packageEntry?.packageRootPath).toBe(packagePath);
 
     // Verify the package.json was restored to original version
-    const finalPackageJson =
-      await TestProjectUtils.readPackageJson(packagePath);
+    const finalPackageJson = await TestProjectUtils.readPackageJson(packagePath);
     expect(finalPackageJson.version).toBe('1.0.0');
 
     // Verify success was logged
     expect(DR.logger.info).toHaveBeenCalledWith(
       expect.stringMatching(
-        new RegExp(
-          `Successfully published @test-${testId}/my-package@1\\.0\\.0-\\d{17}`
-        )
+        new RegExp(`Successfully published @test-${testId}/my-package@1\\.0\\.0-\\d{17}`)
       )
     );
   });
@@ -142,10 +128,7 @@ describe('Integration Tests', () => {
 
   it('should handle package.json with missing required fields', async () => {
     // Create directory with invalid package.json
-    const invalidDir = path.join(
-      TestProjectUtils.getTestInstanceDir(),
-      'invalid'
-    );
+    const invalidDir = path.join(TestProjectUtils.getTestInstanceDir(), 'invalid');
     await fs.ensureDir(invalidDir);
     await fs.writeJson(path.join(invalidDir, 'package.json'), {
       description: 'Missing name and version'
@@ -178,37 +161,26 @@ describe('Integration Tests', () => {
     TestProjectUtils.changeToProject(subscriberPath);
     // Note: We would need to import SubscribeCommand here for a complete test
     // For now, we manually add the subscriber to test republishing functionality
-    await LocalPackageStoreService.updatePackageEntry(
-      `@test-${testId}/republish-test`,
-      {
-        originalVersion: '1.0.0',
-        currentVersion: '1.0.0-000000000000000001', // Mock timestamp version
-        subscribers: [{ subscriberPath, originalSpecifier: '1.0.0' }],
-        packageRootPath: publisherPath
-      }
-    );
+    await LocalPackageStoreService.updatePackageEntry(`@test-${testId}/republish-test`, {
+      originalVersion: '1.0.0',
+      currentVersion: '1.0.0-000000000000000001', // Mock timestamp version
+      subscribers: [{ subscriberPath, originalSpecifier: '1.0.0' }],
+      packageRootPath: publisherPath
+    });
 
     TestProjectUtils.changeToProject(publisherPath);
     await PublishCommand.execute();
 
     // Verify subscriber was added
-    let packageEntry = await TestProjectUtils.getPackageEntry(
-      `@test-${testId}/republish-test`
-    );
-    expect(
-      packageEntry?.subscribers.some((s) => s.subscriberPath === subscriberPath)
-    ).toBe(true);
+    let packageEntry = await TestProjectUtils.getPackageEntry(`@test-${testId}/republish-test`);
+    expect(packageEntry?.subscribers.some((s) => s.subscriberPath === subscriberPath)).toBe(true);
 
     // Publish again
     await PublishCommand.execute();
 
     // Verify subscriber is still there
-    packageEntry = await TestProjectUtils.getPackageEntry(
-      `@test-${testId}/republish-test`
-    );
-    expect(
-      packageEntry?.subscribers.some((s) => s.subscriberPath === subscriberPath)
-    ).toBe(true);
+    packageEntry = await TestProjectUtils.getPackageEntry(`@test-${testId}/republish-test`);
+    expect(packageEntry?.subscribers.some((s) => s.subscriberPath === subscriberPath)).toBe(true);
     expect(packageEntry?.subscribers).toHaveLength(1);
   });
 
@@ -220,42 +192,30 @@ describe('Integration Tests', () => {
     );
 
     // Create a "subscriber" directory that will cause errors
-    const badSubscriberPath = path.join(
-      TestProjectUtils.getTestInstanceDir(),
-      'bad-subscriber'
-    );
+    const badSubscriberPath = path.join(TestProjectUtils.getTestInstanceDir(), 'bad-subscriber');
     await fs.ensureDir(badSubscriberPath);
     // Don't create a package.json - this will cause read errors
 
     // Manually add the bad subscriber to the package entry
-    await LocalPackageStoreService.updatePackageEntry(
-      `@test-${testId}/error-test`,
-      {
-        originalVersion: '1.0.0',
-        currentVersion: '1.0.0',
-        subscribers: [
-          { subscriberPath: badSubscriberPath, originalSpecifier: '1.0.0' }
-        ],
-        packageRootPath: publisherPath
-      }
-    );
+    await LocalPackageStoreService.updatePackageEntry(`@test-${testId}/error-test`, {
+      originalVersion: '1.0.0',
+      currentVersion: '1.0.0',
+      subscribers: [{ subscriberPath: badSubscriberPath, originalSpecifier: '1.0.0' }],
+      packageRootPath: publisherPath
+    });
 
     TestProjectUtils.changeToProject(publisherPath);
     await PublishCommand.execute();
 
     // Verify error was logged but publish continued
     expect(DR.logger.error).toHaveBeenCalledWith(
-      expect.stringContaining(
-        `Failed to update subscriber ${badSubscriberPath}`
-      )
+      expect.stringContaining(`Failed to update subscriber ${badSubscriberPath}`)
     );
 
     // Verify main publish still completed
     expect(DR.logger.info).toHaveBeenCalledWith(
       expect.stringMatching(
-        new RegExp(
-          `Successfully published @test-${testId}/error-test@1\\.0\\.0-\\d{17}`
-        )
+        new RegExp(`Successfully published @test-${testId}/error-test@1\\.0\\.0-\\d{17}`)
       )
     );
   });
@@ -294,27 +254,20 @@ describe('Integration Tests', () => {
     expect(finalNpmrcContent).toBe(npmrcContent);
 
     // Verify the package.json was restored to original version
-    const finalPackageJson =
-      await TestProjectUtils.readPackageJson(packagePath);
+    const finalPackageJson = await TestProjectUtils.readPackageJson(packagePath);
     expect(finalPackageJson.version).toBe('1.0.0');
 
     // Verify success was logged
     expect(DR.logger.info).toHaveBeenCalledWith(
       expect.stringMatching(
-        new RegExp(
-          `Successfully published @test-${testId}/npmrc-override-test@1\\.0\\.0-\\d{17}`
-        )
+        new RegExp(`Successfully published @test-${testId}/npmrc-override-test@1\\.0\\.0-\\d{17}`)
       )
     );
 
     // Verify the publish was done to local registry, not npm
     // We can check this by verifying that the command used the correct registry arguments
-    expect(DR.logger.info).toHaveBeenCalledWith(
-      expect.stringContaining('Publishing package from')
-    );
-    expect(DR.logger.info).toHaveBeenCalledWith(
-      expect.stringContaining('http://localhost:4873')
-    );
+    expect(DR.logger.info).toHaveBeenCalledWith(expect.stringContaining('Publishing package from'));
+    expect(DR.logger.info).toHaveBeenCalledWith(expect.stringContaining('http://localhost:4873'));
   });
 
   /**
@@ -323,10 +276,7 @@ describe('Integration Tests', () => {
    * @param packageManager The package manager to test with
    * @param version The version to use for the test packages
    */
-  const testPublishWithSubscribers = async (
-    packageManager: PackageManager,
-    version: string
-  ) => {
+  const testPublishWithSubscribers = async (packageManager: PackageManager, version: string) => {
     // Create publisher package
     const publisherPath = await TestProjectUtils.createTestPackage(
       `@test-${testId}/${packageManager}-publisher`,

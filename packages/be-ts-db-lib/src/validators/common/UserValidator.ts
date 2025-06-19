@@ -24,10 +24,7 @@ export default class UserValidator extends IValidator<User> {
   async validateUpdateObject(userToUpdate: Partial<User>): Promise<void> {
     // Check if an id is defined
     if (!userToUpdate._id) {
-      ErrorUtils.throwError(
-        `No _id defined for ${User.name} to update.`,
-        userToUpdate
-      );
+      ErrorUtils.throwError(`No _id defined for ${User.name} to update.`, userToUpdate);
     }
 
     // Check to see if the user exists
@@ -35,9 +32,7 @@ export default class UserValidator extends IValidator<User> {
     const userInDb = await userRepo.get({ _id: userToUpdate._id });
     if (!userInDb) {
       ErrorUtils.throwError(
-        `${
-          User.name
-        } with ID: ${userToUpdate._id?.toString()} does not exist in the database.`,
+        `${User.name} with ID: ${userToUpdate._id?.toString()} does not exist in the database.`,
         userToUpdate
       );
       return;
@@ -84,10 +79,7 @@ export default class UserValidator extends IValidator<User> {
    * @param userName - The username to check
    * @throws An error if the username already exists
    */
-  private async checkIfUserNameExists(
-    userRepo: UserRepository,
-    userName: string
-  ) {
+  private async checkIfUserNameExists(userRepo: UserRepository, userName: string) {
     const userNameSearchResult = await userRepo.get({
       userName
     });

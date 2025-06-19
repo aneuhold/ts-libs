@@ -92,9 +92,7 @@ afterAll(async () => {
  * @returns The new user
  */
 async function createNewTestUser(): Promise<User> {
-  const newUser = new User(
-    getTestUserName(`${crypto.randomUUID()}dashboardTaskTest`)
-  );
+  const newUser = new User(getTestUserName(`${crypto.randomUUID()}dashboardTaskTest`));
   const insertResult = await userRepo.insertNew(newUser);
   expect(insertResult).toBeTruthy();
   return newUser;

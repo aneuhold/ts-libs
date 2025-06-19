@@ -23,10 +23,7 @@ describe('DashboardTaskService', () => {
       const frequency: RecurrenceFrequency = {
         type: RecurrenceFrequencyType.lastDayOfMonth
       };
-      const result = DashboardTaskService.getNextFrequencyDate(
-        basisDate,
-        frequency
-      );
+      const result = DashboardTaskService.getNextFrequencyDate(basisDate, frequency);
       expect(result).toEqual(new Date(2024, 0, 31));
     });
 
@@ -40,10 +37,7 @@ describe('DashboardTaskService', () => {
             x: 2
           }
         };
-        const result = DashboardTaskService.getNextFrequencyDate(
-          basisDate,
-          frequency
-        );
+        const result = DashboardTaskService.getNextFrequencyDate(basisDate, frequency);
         expect(result).toEqual(new Date(2024, 0, 3));
       });
 
@@ -56,10 +50,7 @@ describe('DashboardTaskService', () => {
             x: 2
           }
         };
-        const result = DashboardTaskService.getNextFrequencyDate(
-          basisDate,
-          frequency
-        );
+        const result = DashboardTaskService.getNextFrequencyDate(basisDate, frequency);
         expect(result).toEqual(new Date(2024, 0, 15));
       });
 
@@ -72,10 +63,7 @@ describe('DashboardTaskService', () => {
             x: 2
           }
         };
-        const result = DashboardTaskService.getNextFrequencyDate(
-          basisDate,
-          frequency
-        );
+        const result = DashboardTaskService.getNextFrequencyDate(basisDate, frequency);
         expect(result).toEqual(new Date(2024, 2, 1));
       });
     });
@@ -86,10 +74,7 @@ describe('DashboardTaskService', () => {
         type: RecurrenceFrequencyType.weekDaySet,
         weekDaySet: [0, 6]
       };
-      const result = DashboardTaskService.getNextFrequencyDate(
-        basisDate,
-        frequency
-      );
+      const result = DashboardTaskService.getNextFrequencyDate(basisDate, frequency);
       expect(result).toEqual(new Date(2024, 0, 6));
     });
 
@@ -104,10 +89,7 @@ describe('DashboardTaskService', () => {
             weekOfMonth: 2
           }
         };
-        const result = DashboardTaskService.getNextFrequencyDate(
-          basisDate,
-          frequency
-        );
+        const result = DashboardTaskService.getNextFrequencyDate(basisDate, frequency);
         expect(result).toEqual(new Date(2024, 0, 14));
       });
 
@@ -121,10 +103,7 @@ describe('DashboardTaskService', () => {
             weekOfMonth: 1
           }
         };
-        const result = DashboardTaskService.getNextFrequencyDate(
-          basisDate,
-          frequency
-        );
+        const result = DashboardTaskService.getNextFrequencyDate(basisDate, frequency);
         expect(result).toEqual(new Date(2024, 0, 6));
       });
 
@@ -138,10 +117,7 @@ describe('DashboardTaskService', () => {
             weekOfMonth: 2
           }
         };
-        const result = DashboardTaskService.getNextFrequencyDate(
-          basisDate,
-          frequency
-        );
+        const result = DashboardTaskService.getNextFrequencyDate(basisDate, frequency);
         expect(result).toEqual(new Date(2024, 1, 11));
       });
     });
@@ -256,14 +232,13 @@ describe('DashboardTaskService', () => {
       tasksList[0].category = 'somethingelse';
 
       // Call
-      const { filteredAndSortedIds: result } =
-        DashboardTaskService.getFilteredAndSortedTaskIds(
-          taskMap,
-          'default',
-          filterSettings,
-          sortSettings,
-          tagSettings
-        );
+      const { filteredAndSortedIds: result } = DashboardTaskService.getFilteredAndSortedTaskIds(
+        taskMap,
+        'default',
+        filterSettings,
+        sortSettings,
+        tagSettings
+      );
 
       // Assert
       expect(result.length).toBe(4);
@@ -286,25 +261,18 @@ describe('DashboardTaskService', () => {
       tasksList[1].startDate = startDate2;
       tasksList[2].startDate = startDate3;
 
-      const { filteredAndSortedIds: result } =
-        DashboardTaskService.getFilteredAndSortedTaskIds(
-          taskMap,
-          'default',
-          filterSettings,
-          sortSettings,
-          tagSettings
-        );
+      const { filteredAndSortedIds: result } = DashboardTaskService.getFilteredAndSortedTaskIds(
+        taskMap,
+        'default',
+        filterSettings,
+        sortSettings,
+        tagSettings
+      );
 
       expect(result.length).toBe(5);
-      expect(taskMap[result[0]].startDate?.getTime()).toBe(
-        startDate1.getTime()
-      );
-      expect(taskMap[result[1]].startDate?.getTime()).toBe(
-        startDate2.getTime()
-      );
-      expect(taskMap[result[2]].startDate?.getTime()).toBe(
-        startDate3.getTime()
-      );
+      expect(taskMap[result[0]].startDate?.getTime()).toBe(startDate1.getTime());
+      expect(taskMap[result[1]].startDate?.getTime()).toBe(startDate2.getTime());
+      expect(taskMap[result[2]].startDate?.getTime()).toBe(startDate3.getTime());
     });
 
     it('should return a sorted list of tasks by tags, when settings are provided', () => {
@@ -336,24 +304,17 @@ describe('DashboardTaskService', () => {
         [sortSettings.userId]: ['tag1']
       };
 
-      const { filteredAndSortedIds: result } =
-        DashboardTaskService.getFilteredAndSortedTaskIds(
-          taskMap,
-          'default',
-          filterSettings,
-          sortSettings,
-          tagSettings
-        );
+      const { filteredAndSortedIds: result } = DashboardTaskService.getFilteredAndSortedTaskIds(
+        taskMap,
+        'default',
+        filterSettings,
+        sortSettings,
+        tagSettings
+      );
 
       expect(result.length).toBe(5);
-      expect(taskMap[result[0]].tags[sortSettings.userId]).toEqual([
-        'tag1',
-        'tag3'
-      ]);
-      expect(taskMap[result[1]].tags[sortSettings.userId]).toEqual([
-        'tag1',
-        'tag2'
-      ]);
+      expect(taskMap[result[0]].tags[sortSettings.userId]).toEqual(['tag1', 'tag3']);
+      expect(taskMap[result[1]].tags[sortSettings.userId]).toEqual(['tag1', 'tag2']);
       expect(taskMap[result[2]].tags[sortSettings.userId]).toEqual(['tag1']);
     });
 
@@ -575,14 +536,13 @@ describe('DashboardTaskService', () => {
       task5.title = 'b';
       task6.title = 'c';
 
-      const { filteredAndSortedIds: result } =
-        DashboardTaskService.getFilteredAndSortedTaskIds(
-          taskMap,
-          'default',
-          filterSettings,
-          sortSettings,
-          tagSettings
-        );
+      const { filteredAndSortedIds: result } = DashboardTaskService.getFilteredAndSortedTaskIds(
+        taskMap,
+        'default',
+        filterSettings,
+        sortSettings,
+        tagSettings
+      );
 
       expect(result.length).toBe(10);
       expect(result[0]).toBe(task1._id.toString());

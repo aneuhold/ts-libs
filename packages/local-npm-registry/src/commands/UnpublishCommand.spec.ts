@@ -2,16 +2,7 @@ import { DR } from '@aneuhold/core-ts-lib';
 import { randomUUID } from 'crypto';
 import fs from 'fs-extra';
 import path from 'path';
-import {
-  afterAll,
-  afterEach,
-  beforeAll,
-  beforeEach,
-  describe,
-  expect,
-  it,
-  vi
-} from 'vitest';
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TestProjectUtils } from '../../test-utils/TestProjectUtils.js';
 import { LocalPackageStoreService } from '../services/LocalPackageStoreService.js';
 import { MutexService } from '../services/MutexService.js';
@@ -109,18 +100,13 @@ describe('Integration Tests', () => {
   });
 
   it('should handle unpublishing non-existent package', async () => {
-    await expect(
-      UnpublishCommand.execute(`@test-${testId}/non-existent`)
-    ).rejects.toThrow(
+    await expect(UnpublishCommand.execute(`@test-${testId}/non-existent`)).rejects.toThrow(
       `Package '@test-${testId}/non-existent' not found in local registry`
     );
   });
 
   it('should handle unpublishing from directory without package.json', async () => {
-    const emptyDir = path.join(
-      TestProjectUtils.getTestInstanceDir(),
-      'empty-unpublish'
-    );
+    const emptyDir = path.join(TestProjectUtils.getTestInstanceDir(), 'empty-unpublish');
     await fs.ensureDir(emptyDir);
     TestProjectUtils.changeToProject(emptyDir);
 
@@ -135,27 +121,18 @@ describe('Integration Tests', () => {
    * @param packageManager The package manager to test with
    * @param version The version to use for the test package
    */
-  const testUnpublishWithSubscribers = async (
-    packageManager: PackageManager,
-    version: string
-  ) => {
+  const testUnpublishWithSubscribers = async (packageManager: PackageManager, version: string) => {
     // Create and setup publisher and subscriber
-    const { publisherPath, subscriberPath, packageName } =
-      await setupPublisherAndSubscriber(
-        packageManager,
-        version,
-        'unpublish-current'
-      );
+    const { publisherPath, subscriberPath, packageName } = await setupPublisherAndSubscriber(
+      packageManager,
+      version,
+      'unpublish-current'
+    );
 
     // Verify subscription is active before unpublishing
-    let subscriberPackageJson =
-      await TestProjectUtils.readPackageJson(subscriberPath);
-    const timestampPattern = new RegExp(
-      `^${version.replace(/\./g, '\\.')}-\\d{17}$`
-    );
-    expect(subscriberPackageJson.dependencies?.[packageName]).toMatch(
-      timestampPattern
-    );
+    let subscriberPackageJson = await TestProjectUtils.readPackageJson(subscriberPath);
+    const timestampPattern = new RegExp(`^${version.replace(/\./g, '\\.')}-\\d{17}$`);
+    expect(subscriberPackageJson.dependencies?.[packageName]).toMatch(timestampPattern);
 
     // Unpublish from publisher directory (current directory)
     TestProjectUtils.changeToProject(publisherPath);
@@ -166,13 +143,11 @@ describe('Integration Tests', () => {
     expect(packageEntry).toBeNull();
 
     // Verify subscriber was reset to original version
-    subscriberPackageJson =
-      await TestProjectUtils.readPackageJson(subscriberPath);
+    subscriberPackageJson = await TestProjectUtils.readPackageJson(subscriberPath);
     expect(subscriberPackageJson.dependencies?.[packageName]).toBe(version);
 
     // Verify publisher's package.json was reset to original version
-    const publisherPackageJson =
-      await TestProjectUtils.readPackageJson(publisherPath);
+    const publisherPackageJson = await TestProjectUtils.readPackageJson(publisherPath);
     expect(publisherPackageJson.version).toBe(version);
 
     // Verify success message was logged
@@ -187,23 +162,16 @@ describe('Integration Tests', () => {
    * @param packageManager The package manager to test with
    * @param version The version to use for the test package
    */
-  const testUnpublishByName = async (
-    packageManager: PackageManager,
-    version: string
-  ) => {
+  const testUnpublishByName = async (packageManager: PackageManager, version: string) => {
     // Create and setup publisher and subscriber
-    const { publisherPath, subscriberPath, packageName } =
-      await setupPublisherAndSubscriber(
-        packageManager,
-        version,
-        'unpublish-by-name'
-      );
+    const { publisherPath, subscriberPath, packageName } = await setupPublisherAndSubscriber(
+      packageManager,
+      version,
+      'unpublish-by-name'
+    );
 
     // Change to a different directory (not the publisher directory)
-    const otherDir = path.join(
-      TestProjectUtils.getTestInstanceDir(),
-      'other-dir'
-    );
+    const otherDir = path.join(TestProjectUtils.getTestInstanceDir(), 'other-dir');
     await fs.ensureDir(otherDir);
     TestProjectUtils.changeToProject(otherDir);
 
@@ -215,13 +183,11 @@ describe('Integration Tests', () => {
     expect(packageEntry).toBeNull();
 
     // Verify subscriber was reset to original version
-    const subscriberPackageJson =
-      await TestProjectUtils.readPackageJson(subscriberPath);
+    const subscriberPackageJson = await TestProjectUtils.readPackageJson(subscriberPath);
     expect(subscriberPackageJson.dependencies?.[packageName]).toBe(version);
 
     // Verify publisher's package.json was NOT modified (since we weren't in that directory)
-    const publisherPackageJson =
-      await TestProjectUtils.readPackageJson(publisherPath);
+    const publisherPackageJson = await TestProjectUtils.readPackageJson(publisherPath);
     expect(publisherPackageJson.version).toMatch(version);
 
     // Verify success message was logged

@@ -22,16 +22,10 @@ export default class UserRepository extends BaseRepository<User> {
 
   protected setupSubscribers(): void {
     this.subscribeToChanges(ApiKeyRepository.getListenersForUserRepo());
-    this.subscribeToChanges(
-      DashboardUserConfigRepository.getListenersForUserRepo()
-    );
+    this.subscribeToChanges(DashboardUserConfigRepository.getListenersForUserRepo());
     this.subscribeToChanges(DashboardTaskRepository.getListenersForUserRepo());
-    this.subscribeToChanges(
-      DashboardNonogramKatanaItemRepository.getListenersForUserRepo()
-    );
-    this.subscribeToChanges(
-      DashboardNonogramKatanaUpgradeRepository.getListenersForUserRepo()
-    );
+    this.subscribeToChanges(DashboardNonogramKatanaItemRepository.getListenersForUserRepo());
+    this.subscribeToChanges(DashboardNonogramKatanaUpgradeRepository.getListenersForUserRepo());
   }
 
   /**

@@ -19,9 +19,7 @@ export type RepoListeners<TDocType extends BaseDocument> = {
   deleteList?: DeleteListSubscriber;
 };
 
-export type InsertNewSubscriber<TDocType extends BaseDocument> = (
-  doc: TDocType
-) => Promise<void>;
+export type InsertNewSubscriber<TDocType extends BaseDocument> = (doc: TDocType) => Promise<void>;
 
 export type InsertManySubscriber<TDocType extends BaseDocument> = (
   docs: TDocType[]
@@ -48,9 +46,7 @@ export default class RepoSubscriptionService {
    * A utility method to get a default empty set of subscribers for a
    * repository.
    */
-  static getDefaultSubscribers<
-    TDocType extends BaseDocument
-  >(): RepoSubscribers<TDocType> {
+  static getDefaultSubscribers<TDocType extends BaseDocument>(): RepoSubscribers<TDocType> {
     return {
       insertNew: [],
       insertMany: [],

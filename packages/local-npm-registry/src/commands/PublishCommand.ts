@@ -19,11 +19,9 @@ export class PublishCommand {
       throw new Error('No package.json found in current directory');
     }
 
-    const { name: packageName, version: currentPackageJsonVersion } =
-      packageInfo;
+    const { name: packageName, version: currentPackageJsonVersion } = packageInfo;
 
-    const existingEntry =
-      await LocalPackageStoreService.getPackageEntry(packageName);
+    const existingEntry = await LocalPackageStoreService.getPackageEntry(packageName);
 
     // Prefer to use existing entry's original version if it exists. This helps
     // prevent a bug where the current package.json version has a timestamp.

@@ -18,9 +18,7 @@ import BaseDocumentWithType from '../BaseDocumentWithType.js';
  * @param task - The {@link DashboardTask} object to validate.
  * @returns An object containing the updated document and any validation errors.
  */
-export const validateDashboardTask: DocumentValidator<DashboardTask> = (
-  task: DashboardTask
-) => {
+export const validateDashboardTask: DocumentValidator<DashboardTask> = (task: DashboardTask) => {
   const errors: string[] = [];
   const validate = new Validate(task, errors);
   const exampleTask = new DashboardTask(new ObjectId());
@@ -70,10 +68,7 @@ export type DashboardTaskMap = DocumentMap<DashboardTask>;
  * - The user sets a task as recurring with a frequency? Only that task is marked, because when the recurrence comes up, the frontend will update that task and all sub tasks.
  * - The date + time for the recurrence happens? If the users browser is open, the frontend will trigger the update ideally. This needs to be checked if this can be done in a performant way.
  */
-export default class DashboardTask
-  extends BaseDocumentWithType
-  implements RequiredUserId
-{
+export default class DashboardTask extends BaseDocumentWithType implements RequiredUserId {
   static docType = 'task';
 
   docType = DashboardTask.docType;

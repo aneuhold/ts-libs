@@ -192,7 +192,7 @@ This tool solves these issues by using a real npm registry (Verdaccio) locally, 
 
 <p align="center">
     <a href="https://mermaid.live/edit#pako:eNqNlF1v2jAYhf-K5ZvdQEYCoSSaOrX0a_2gtLSVtmUXJnkhaRM7cpxBR_nve21GEoY2lSuMnnNsn_OaFQ1FBNSns1QswphJRR5OAk7wc_Q9oKkIWdrmeUbycpomRUxgCWGpIAroD9JuH5JjpO6BRSRn4Qubg_VcCE4STsJSSuCKRImEUAn5ioqN8bERDlcBHW80ZCZKHn0O6HoDDDXwNhJv5ATdT6UU0icjsbuF0VSeG8lXKN7IqdYslWSh2ioIZxkQxiPyE2SRCF7pTs1ZzlAyUfryTyAjFoaJIAVIhCvwzIDnCJ4DB8kUEJVkUCiW5Xuu5wa-QPgxjzS6c_JFouJ98aep_HgI1txqEdtyrG7b6Thux3X6ttPtuf3K-8J4f0Hv4zJJq9xJMiMcIII6ky-GvERy_Kc8JRoXlDBPCtXo5dLwV9tCTffkcnI7IgX2BxV3ZbjrvdsRrFu-6u4Nby5k7sph8Z-wro3djUlWEZampCinRSiTKYJYsyQqTortJpXsxshGOEWTBg5LvFM9SaNqkm51xXGJ8ygW_N81j-o5GqPiDHcHFsaNI5Fcimec6EoyNge5q-Oo2Q_FTvPvTeTOON7rIkr9lpDCVEKRZXqEdb57pzHW-p1uaTx43lhX3vfGe4Kx3WBHzajr1CaNEJq_6Bwf3pfjrdnmEeGhyPIUMJa2fsLNanEaS5NYpXowqqdd1dFfE7HR6DGnLTqXSUR9JUto0QxkxvSSrrRdQFUMGZr7-DVi8iWgAV-jJmf8mxDZViZFOY-pP2NpgauN-0nC5pLVCPAI5BD_cRT1DxzPeFB_RZfUtz3X8gau17W9vuN2vX6vRV-p7_Ut2-0NvL7nem5n4LrrFv1ldnWsg27nYODYrt0fdHuevf4NM5DE4A" target="_blank">
-        <picture><img src="./docs/images/publish-mermaid.png"  alt="publish Command Mermaid Diagram" /></picture> 
+        <picture><img src="https://i.imgur.com/V3HYQxM.png"  alt="publish Command Mermaid Diagram" /></picture> 
     </a>
 </p>
 
@@ -204,7 +204,7 @@ This tool solves these issues by using a real npm registry (Verdaccio) locally, 
 
 <p align="center">
     <a href="https://mermaid.live/edit#pako:eNp1k19T2kAUxb_KnX2wL0IRhYTYsaPgPxR0atuZtunDkl3IanY3s7sRW-S792ZjAnWUJxLO_Z27Zw8rkmjGSUTmmV4mKTUOvo5iBfg5_hWTTCc0a6lcgi1mNjFixmEnc4c5TR7ogrcUlXxn4Q6BP_GkcJzF5De0WkdwgsNfOGXgCTC-u5mCddpwFFT4E68brmJyW8GQIayzIFSl_ByTdSUdltLnqX6GEWKvUQX0kYqMzjIOL6tYmBstX3mMvMcpDp0ao00EtZXSDua6UKyRVh4_uH2GM9TfuTKK79wwmiRCg-XmkZtGfebB5yg8565eAVBhhVZvbXLuBy58Kq28mGXCps2c0xunTzPz8WgpXFoBGDghuXVU5jW-YV545iUyjxmDpDCGK1zG6HueuBLa3JmxgIbOszHed-_k0hPHL8eiWfYfYq4NuFTYeu9mbOzHrnDsDCWcJunWXL3Qi3mSFUyoBSi-BK02jCvPuEbGt5xRx7cIHxrH9r3VapPQ-9Fce9qkjLtQ2ChU4WESLSVVzDfs7f3KptdqPEq-9dywJ549xeJOMLvthDaNnW7adLX9puzwTVmvtHDA9FK9X7Ebb3OL4qGWecYxkhYcv7qSwmdVtpjskoURjETOFHyXSG4kLR_JqsTFxKVcYtoRfmXUPMQkVmucyan6qbWsx4wuFimJ5jSz-FTRR4IuDJXNW2wZ42aI_x5HoqB_4CEkWpEnEnU7--2wH3YHwd7goLcf7uOvf0i01-m2w14nGHR7QdALO_1wvUv-et9uu9PvdnphGOyFYe-gH4Trf1CQe58" target="_blank">
-        <picture><img src="./docs/images/subscribe-mermaid.png"  alt="subscribe Command Mermaid Diagram" /></picture> 
+        <picture><img src="https://i.imgur.com/oBxT1m6.png"  alt="subscribe Command Mermaid Diagram" /></picture> 
     </a>
 </p>
 
@@ -216,7 +216,7 @@ This tool solves these issues by using a real npm registry (Verdaccio) locally, 
 
 <p align="center">
     <a href="https://mermaid.live/edit#pako:eNqNU01T2zAU_CsaXXpJ0oTEwfZ06JQAKQTCV3to6x4UW8QCS_JIMoSG_Pc-ybXswnSmOUXy7r59-562OJUZxTG-K-RTmhNl0JejRCD4ffqR4EKmpOiLkqNKlNWqYDpHdEPTytAswT9Rv3-ADgF3Q0mGSpI-kDUd3GspEBMorZSiwqCMKZoaqZ6BUUsfOuJsm-CrmoPuZCWyjwne1YCZBbws5Qs6AvVjpaSK0VL-XcJxvGZN-Ub1Czq2nI1RJDUNAwnCqcceu_onjXHXJTq7vVwiDT5b3InDzTs-6YZpo213Dtk6nnvHn1vHDUtIYyl1HUXXoNFJY946PwXunBokFVszAeBHqjSzvSrJX5k7debO_jBIUSBdrXSq2Ao4EI5CJme6CcDTzhxtAT3dduCur7abRWvpHAqcgBglad6pgEol72GsXnfhA7hwuWow1WxAd2wfVur9gZFvWvRC587gEkS-lhkxtFP0nf4vKfTETC4rgwzjVBvCSy--dOKX1mFllxS-QnCp5JyIzI31TYeuin0CDRrCKDtnr33ptK8g2QuYU3cabbBXnWC7Ny63-uLCyVy7ELl8pH6FIUn1XG_CPzf22pFvgDyTvCwoxNf3a-jfMM1cU7bl13uj7OBADvfwWrEMx0ZVtIc5VZzYI97aQgk2ObUPKoa_GVEPCU7EDjglEd-l5A1NyWqd4_iOFBpOlZvnESNrRbi_hQ3JqJrBYzY4DsdjJ4LjLd7geBKEg2A63B-OxqP9cBJGQQ8_43gcDKIwiqZBFE7D0XCyt-vhX67s3mAvGo-CYDQNgmgYTaPJ7jfaNJSB" target="_blank">
-        <picture><img src="./docs/images/unpublish-mermaid.png"  alt="unpublish Command Mermaid Diagram" /></picture> 
+        <picture><img src="https://i.imgur.com/ShUd7vS.png"  alt="unpublish Command Mermaid Diagram" /></picture> 
     </a>
 </p>
 
@@ -226,8 +226,8 @@ This tool solves these issues by using a real npm registry (Verdaccio) locally, 
 <summary><code>local-npm unsubscribe [&lt;package-name&gt;]</code> Command Flow</summary>
 
 <p align="center">
-    <a href="https://mermaid.live/edit#pako:eNq1VFtT4jAU_itnsjP6AiwUAVt23FEQ73jFvXUfYhtotE2YNPWyyH_f06BpFWecnXF5Iu35znc5p5mRQIaMeGQcy7sgokrDRd8XgL_NXz6JZUDjqpgmkIk0u0oDxa8YrHxyG92VWHenNLihE1YVNGErE93FF80usHsWZJqFPvkN1eoGbM18crKohLwSpkre8pCFX30yX3Bt5YWPQ_kIPWQ9YzQEQw3758dDSLVUDLuVa3-w9BH67xb3jIJtrBtwEQKNY3gSncJdxBSDIFOKCZ2LumaB_nKlPm_wFChYv8p265tug5Ifds9TnQIXC97C0cA62kHybaWk8sCmIDWMZYaCnoGWYttQ7CLFpngoNIRWdkGxayn2kGIoC2davpjXWMnEEuwW8e3nsUgFjAbRG1QWMiggBwjpRSy4AT5-HR1gbG-EdmAcHaKj3qv6grIwdWhNHRW5DWW5OLenIyR7rfOw0Dk0m5HI26UBmzTMlJ_gq2XVKcQ4UNtx32g_xmY7TINUfMIFLtotFnIpcIZqScSxgZwgZDQNqV7iX7W6a9epFEYJGlrqfcd1JDMNmics1TSZWoYTw3D6MQ5PTbMznM4RruGLFcJ2AUtLC3dWWp3yk3xa57mcTOBCo1j8ygKZJHSx4G99YfmV8lyah1g6W2lDI-3iX8K_MJDRfwx_ZBguP97tuWn8Lf--ZDKNGYqvwkiU1j4f64sbzGIvDfb7e9giLVIhE8VD4mmVsQpJmEpofiSzvKFPdMQSrPPwb0jVjU98MUfMlIqfUibPMCWzSUS8MY1TPGUm8T6nE0UT-xSzCJnq4WWniec6jmlCvBm5J57TXqs11p2Ws9buNBp4albIA_EarU7NdZtOveXU6-311vq8Qv4Y2kbNxYfNTsd12nW33XY7879j8Dgl" target="_blank">
-        <picture><img src="./docs/images/unsubscribe-mermaid.png"  alt="unsubscribe Command Mermaid Diagram" /></picture> 
+    <a href="https://mermaid.live/edit#pako:eNq1VFlP4zAQ_isjI8FL2yWkV9IVK2gpLEc5y17ZB5O4TSCxI8fh2NL_vhMXnECR0Epsn2prvvmOmXhGfBEw4pJJLO78kEoFFwOPA_62fnkkFj6N6zxNIOdZfpX5MrpisLriWL3VWPVS6t_QKatzmrDVqeqtOHYP2D3zc8UCj_yGen0TtmceOVkUQlEIqRS3UcCCLx6ZL6i2i8LHkXiEPpKeMRqAZob98-MRZEpIht2qtT9Y9giDd4v7WsEO1g0jHgCNY3jSnMFdyCQDP5eScVWIuma--nwlP21GGVAwdqXpNtDdhhU_7D7KVAYRX_CWjobG0S6S70gppAsmBaFgInIU9Aw0FDuaYg8ptvhDqSEwskuKPUPxFSlGonSmxItxTaRIDMFeGd9-EYuQwKgfvkFlIMMScoCQfsj8G4gmr6MDjO2N0A60o0N01H9VX1KWpg6NqaMyt5GoFhf2VIhkr3UeljpHejMScbs0YJ2GnvITfK2qOoMYB2o67mvtx9hslykQMppGHBftFgsjwXGGcknEsYacIGScBlQt8a8Z3Y3rTHCtBA0t9b6LVChyBSpKWKZokhqGE81w-jEOT3WzM5zOEa7hixXCdj7LKgt3Vlmd6k0xrfNCTs5xoVEsfmW-SBK6WPC3vrDiRXkuLUKsnI20kZZ28S_hX2jI-D-GP9YMlx_v9lw3_lZ8XyJJY4bi6zDmlbUvxvriBTPYS439_h62TIvUyFRGAXGVzFmNJEwmtDiSWdHQIypkCda5-Deg8sYjHp8jJqX8pxDJM0yKfBoSd0LjDE-5TnwQ0amkibnFLAIm-_jYKeI6lu5B3Bm5J65lNyyr2Wl2NlrN9ZbT6bRq5AGvu81G13aanXbLWe9adrs9r5E_mtZqOJbVtTsbjt1u2W3H6s7_AllxOBA" target="_blank">
+        <picture><img src="https://i.imgur.com/itaPfBo.png"  alt="unsubscribe Command Mermaid Diagram" /></picture> 
     </a>
 </p>
 

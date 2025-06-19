@@ -7,10 +7,7 @@ import {
 } from '@aneuhold/core-ts-db-lib';
 import { UUID } from 'crypto';
 import { Translations } from '../../../types/Translations.js';
-import DOFunction, {
-  DOFunctionInput,
-  DOFunctionOutput
-} from '../DOFunction.js';
+import DOFunction, { DOFunctionInput, DOFunctionOutput } from '../DOFunction.js';
 
 /**
  * Options for configuring the project dashboard.

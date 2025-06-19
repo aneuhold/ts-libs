@@ -31,10 +31,7 @@ export default class PackageService {
     await PackageService.replaceMonorepoImportsWithNpmSpecifiers();
     const { packageName, version: currentVersion } =
       await PackageService.updateJsrFromPackageJson();
-    const successfulDryRun = await PackageService.publishJsrDryRun(
-      packageName,
-      currentVersion
-    );
+    const successfulDryRun = await PackageService.publishJsrDryRun(packageName, currentVersion);
     await PackageService.revertGitChanges();
 
     if (!successfulDryRun) {
@@ -67,8 +64,7 @@ export default class PackageService {
    * on the npm registry.
    */
   static async validateNpmPublish(): Promise<void> {
-    const { packageName, version: currentVersion } =
-      await PackageService.getPackageInfo();
+    const { packageName, version: currentVersion } = await PackageService.getPackageInfo();
 
     const successfulDryRun = await PackageService.publishNpmDryRun();
     if (!successfulDryRun) {
@@ -101,9 +97,7 @@ export default class PackageService {
 
     try {
       const { packageName, version } = await PackageService.getPackageInfo();
-      const packageJsonData = JSON.parse(
-        await readFile(packageJsonPath, 'utf-8')
-      ) as PackageJson;
+      const packageJsonData = JSON.parse(await readFile(packageJsonPath, 'utf-8')) as PackageJson;
       const jsrJsonData = JSON.parse(
         await readFile(jsrJsonPath, 'utf-8')
       ) as JsonWithVersionProperty;
@@ -112,15 +106,10 @@ export default class PackageService {
       jsrJsonData.version = version;
 
       // Resolve wildcard dependencies in package.json for JSR compatibility
-      await this.resolveWildcardDependenciesInPackageJson(
-        packageJsonData,
-        packageJsonPath
-      );
+      await this.resolveWildcardDependenciesInPackageJson(packageJsonData, packageJsonPath);
 
       await writeFile(jsrJsonPath, JSON.stringify(jsrJsonData, null, 2));
-      DR.logger.info(
-        'Updated jsr.json from package.json to version ' + version
-      );
+      DR.logger.info('Updated jsr.json from package.json to version ' + version);
 
       return {
         packageName,
@@ -128,9 +117,7 @@ export default class PackageService {
       };
     } catch (error) {
       const errorString = ErrorUtils.getErrorString(error);
-      DR.logger.error(
-        `Failed to update jsr.json from package.json: ${errorString}`
-      );
+      DR.logger.error(`Failed to update jsr.json from package.json: ${errorString}`);
       throw error;
     }
   }
@@ -152,16 +139,13 @@ export default class PackageService {
       const childPackages = await DependencyService.getChildPackageJsons('../');
 
       // Helper function to resolve dependencies
-      const resolveDependencies = (
-        deps: Record<string, string> | undefined
-      ): void => {
+      const resolveDependencies = (deps: Record<string, string> | undefined): void => {
         if (!deps) return;
 
         for (const [depName, depVersion] of Object.entries(deps)) {
           if (depVersion === '*' && depName in childPackages) {
             // Replace wildcard with "*" + actual version from the monorepo
-            deps[depName] =
-              `*${childPackages[depName].packageJsonContents.version}`;
+            deps[depName] = `*${childPackages[depName].packageJsonContents.version}`;
           }
         }
       };
@@ -173,19 +157,12 @@ export default class PackageService {
       resolveDependencies(packageJsonData.optionalDependencies);
 
       // Write the updated package.json
-      await writeFile(
-        packageJsonPath,
-        JSON.stringify(packageJsonData, null, 2)
-      );
+      await writeFile(packageJsonPath, JSON.stringify(packageJsonData, null, 2));
 
-      DR.logger.info(
-        'Resolved wildcard dependencies in package.json for JSR compatibility'
-      );
+      DR.logger.info('Resolved wildcard dependencies in package.json for JSR compatibility');
     } catch (error) {
       const errorString = ErrorUtils.getErrorString(error);
-      DR.logger.error(
-        `Failed to resolve wildcard dependencies: ${errorString}`
-      );
+      DR.logger.error(`Failed to resolve wildcard dependencies: ${errorString}`);
       throw error;
     }
   }
@@ -208,17 +185,13 @@ export default class PackageService {
 
     DR.logger.info('Running `jsr publish --dry-run`');
     try {
-      const { stdout, stderr } = await execAsync(
-        'jsr publish --allow-dirty --dry-run'
-      );
+      const { stdout, stderr } = await execAsync('jsr publish --allow-dirty --dry-run');
       if (stderr) {
         DR.logger.info(stderr);
       }
       DR.logger.info(stdout);
     } catch (error) {
-      DR.logger.error(
-        `Failed to run 'jsr publish --dry-run': ${ErrorUtils.getErrorString(error)}`
-      );
+      DR.logger.error(`Failed to run 'jsr publish --dry-run': ${ErrorUtils.getErrorString(error)}`);
       return false;
     }
     return true;
@@ -266,9 +239,7 @@ export default class PackageService {
     }
 
     try {
-      const packageJsonData = JSON.parse(
-        await readFile(packageJsonPath, 'utf-8')
-      ) as PackageJson;
+      const packageJsonData = JSON.parse(await readFile(packageJsonPath, 'utf-8')) as PackageJson;
 
       return {
         packageName: packageJsonData.name,
@@ -309,9 +280,7 @@ export default class PackageService {
     packageName: string,
     currentVersion: string
   ): Promise<void> {
-    DR.logger.info(
-      `Checking npm registry for existing versions of ${packageName}...`
-    );
+    DR.logger.info(`Checking npm registry for existing versions of ${packageName}...`);
 
     try {
       const { stdout } = await execAsync(`npm view ${packageName}`);
@@ -320,28 +289,19 @@ export default class PackageService {
       const latestVersionMatch = stdout.match(/latest:\s*([^\s|]+)/);
       if (latestVersionMatch) {
         const latestVersion = latestVersionMatch[1];
-        PackageService.checkVersionConflict(
-          currentVersion,
-          latestVersion,
-          'npm'
-        );
+        PackageService.checkVersionConflict(currentVersion, latestVersion, 'npm');
       }
     } catch (error) {
       const errorString = ErrorUtils.getErrorString(error);
 
       // If the package doesn't exist on npm, that's fine for first publish
       if (errorString.includes('404') || errorString.includes('not found')) {
-        DR.logger.info(
-          'Package not found on npm - this appears to be a first publish.'
-        );
+        DR.logger.info('Package not found on npm - this appears to be a first publish.');
         return;
       }
 
       // Re-throw version conflict errors
-      if (
-        errorString.includes('already exists') ||
-        errorString.includes('is lower than')
-      ) {
+      if (errorString.includes('already exists') || errorString.includes('is lower than')) {
         throw error;
       }
 
@@ -415,9 +375,7 @@ export default class PackageService {
     // Get all TypeScript files in the src directory
     const allFiles = await FileSystemService.getAllFilePathsRelative(srcDir);
     const tsFiles = allFiles
-      .filter(
-        (filePath) => filePath.endsWith('.ts') && !filePath.endsWith('.spec.ts')
-      )
+      .filter((filePath) => filePath.endsWith('.ts') && !filePath.endsWith('.spec.ts'))
       .map((filePath) => path.join(srcDir, filePath));
 
     DR.logger.info(
@@ -459,9 +417,7 @@ export default class PackageService {
           );
         }
       } catch (error) {
-        DR.logger.error(
-          `Failed to process file ${filePath}: ${ErrorUtils.getErrorString(error)}`
-        );
+        DR.logger.error(`Failed to process file ${filePath}: ${ErrorUtils.getErrorString(error)}`);
       }
     }
 
@@ -471,15 +427,11 @@ export default class PackageService {
   }
 
   private static async revertGitChanges(): Promise<void> {
-    DR.logger.info(
-      'Reverting changes made to jsr.json, package.json, and source files'
-    );
+    DR.logger.info('Reverting changes made to jsr.json, package.json, and source files');
     try {
       await execAsync('git checkout -- jsr.json package.json src/');
     } catch (error) {
-      DR.logger.error(
-        `Failed to revert changes: ${ErrorUtils.getErrorString(error)}`
-      );
+      DR.logger.error(`Failed to revert changes: ${ErrorUtils.getErrorString(error)}`);
     }
   }
 
@@ -505,31 +457,19 @@ export default class PackageService {
       if (latestVersionMatch) {
         const latestVersion = latestVersionMatch[1];
 
-        PackageService.checkVersionConflict(
-          currentVersion,
-          latestVersion,
-          'JSR'
-        );
+        PackageService.checkVersionConflict(currentVersion, latestVersion, 'JSR');
       }
     } catch (error) {
       const errorString = ErrorUtils.getErrorString(error);
 
       // If the package doesn't exist on JSR, that's fine for first publish
-      if (
-        errorString.includes('Package not found') ||
-        errorString.includes('404')
-      ) {
-        DR.logger.info(
-          'Package not found on JSR - this appears to be a first publish.'
-        );
+      if (errorString.includes('Package not found') || errorString.includes('404')) {
+        DR.logger.info('Package not found on JSR - this appears to be a first publish.');
         return;
       }
 
       // Re-throw version conflict errors
-      if (
-        errorString.includes('already exists') ||
-        errorString.includes('is lower than')
-      ) {
+      if (errorString.includes('already exists') || errorString.includes('is lower than')) {
         throw error;
       }
 
@@ -555,10 +495,7 @@ export default class PackageService {
     );
 
     // Compare versions using semver-like comparison
-    const comparison = StringService.compareSemanticVersions(
-      currentVersion,
-      latestVersion
-    );
+    const comparison = StringService.compareSemanticVersions(currentVersion, latestVersion);
 
     if (comparison === 0) {
       throw new Error(

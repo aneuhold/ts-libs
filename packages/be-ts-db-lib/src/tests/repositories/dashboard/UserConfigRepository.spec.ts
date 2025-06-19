@@ -115,19 +115,19 @@ describe('Update operations', () => {
     updateResult3 = await configRepo.update(newConfig3);
     expect(updateResult3).toBeTruthy();
     updatedConfig1 = await configRepo.get({ _id: newConfig1._id });
-    expect(
-      updatedConfig1?.collaborators.map((x) => x.toString())
-    ).toContainEqual(newUser2._id.toString());
-    expect(
-      updatedConfig1?.collaborators.map((x) => x.toString())
-    ).not.toContain(newUser3._id.toString());
+    expect(updatedConfig1?.collaborators.map((x) => x.toString())).toContainEqual(
+      newUser2._id.toString()
+    );
+    expect(updatedConfig1?.collaborators.map((x) => x.toString())).not.toContain(
+      newUser3._id.toString()
+    );
     updatedConfig2 = await configRepo.get({ _id: newConfig2._id });
-    expect(
-      updatedConfig2?.collaborators.map((x) => x.toString())
-    ).toContainEqual(newUser1._id.toString());
-    expect(
-      updatedConfig2?.collaborators.map((x) => x.toString())
-    ).not.toContain(newUser3._id.toString());
+    expect(updatedConfig2?.collaborators.map((x) => x.toString())).toContainEqual(
+      newUser1._id.toString()
+    );
+    expect(updatedConfig2?.collaborators.map((x) => x.toString())).not.toContain(
+      newUser3._id.toString()
+    );
 
     await cleanupDoc(userRepo, newUser1);
     await cleanupDoc(userRepo, newUser2);
@@ -145,9 +145,7 @@ afterAll(async () => {
  * @returns The new user
  */
 async function createNewTestUser() {
-  const newUser = new User(
-    getTestUserName(`${crypto.randomUUID()}userconfigtest`)
-  );
+  const newUser = new User(getTestUserName(`${crypto.randomUUID()}userconfigtest`));
   newUser.projectAccess.dashboard = true;
   const insertResult = await userRepo.insertNew(newUser);
   expect(insertResult).toBeTruthy();

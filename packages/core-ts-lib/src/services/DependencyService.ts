@@ -32,10 +32,7 @@ export default class DependencyService {
     let rootPackageJsonData: PackageJson;
     try {
       await access(rootPackageJsonPath);
-      const rootPackageJsonContent = await readFile(
-        rootPackageJsonPath,
-        'utf-8'
-      );
+      const rootPackageJsonContent = await readFile(rootPackageJsonPath, 'utf-8');
       rootPackageJsonData = JSON.parse(rootPackageJsonContent) as PackageJson;
     } catch (error) {
       const originalError = ErrorUtils.getErrorString(error);
@@ -75,10 +72,7 @@ export default class DependencyService {
         }
 
         // Write the updated package.json file
-        await writeFile(
-          packageJsonPath,
-          JSON.stringify(packageJsonContents, null, 2)
-        );
+        await writeFile(packageJsonPath, JSON.stringify(packageJsonContents, null, 2));
       })
     );
   }
@@ -89,9 +83,7 @@ export default class DependencyService {
    *
    * @param versionType The type of version bump (patch, minor, major).
    */
-  static async bumpVersion(
-    versionType: VersionType = VersionType.Patch
-  ): Promise<void> {
+  static async bumpVersion(versionType: VersionType = VersionType.Patch): Promise<void> {
     const bump = (version: string): string => {
       const [major, minor, patch] = version.split('.').map(Number);
       switch (versionType) {
@@ -109,28 +101,20 @@ export default class DependencyService {
       try {
         await access(filePath);
       } catch {
-        DR.logger.info(
-          `No ${path.basename(filePath)} file found in the current directory.`
-        );
+        DR.logger.info(`No ${path.basename(filePath)} file found in the current directory.`);
         return;
       }
 
       try {
-        const fileData = JSON.parse(
-          await readFile(filePath, 'utf-8')
-        ) as JsonWithVersionProperty;
+        const fileData = JSON.parse(await readFile(filePath, 'utf-8')) as JsonWithVersionProperty;
         const oldVersion = fileData.version;
         const newVersion = bump(oldVersion);
         fileData.version = newVersion;
         await writeFile(filePath, JSON.stringify(fileData, null, 2));
-        DR.logger.info(
-          `Bumped ${path.basename(filePath)} from ${oldVersion} to ${newVersion}`
-        );
+        DR.logger.info(`Bumped ${path.basename(filePath)} from ${oldVersion} to ${newVersion}`);
       } catch (error) {
         const errorString = ErrorUtils.getErrorString(error);
-        DR.logger.error(
-          `Failed to update ${path.basename(filePath)}: ${errorString}`
-        );
+        DR.logger.error(`Failed to update ${path.basename(filePath)}: ${errorString}`);
       }
     };
 
@@ -146,13 +130,9 @@ export default class DependencyService {
    * @param searchDirectory The directory to start searching from. Can be relative
    * (e.g., "../") or absolute. Defaults to current working directory.
    */
-  static async getChildPackageJsons(
-    searchDirectory?: string
-  ): Promise<PackageJsonMap> {
+  static async getChildPackageJsons(searchDirectory?: string): Promise<PackageJsonMap> {
     const childPackages: PackageJsonMap = {};
-    const baseDir = searchDirectory
-      ? path.resolve(process.cwd(), searchDirectory)
-      : process.cwd();
+    const baseDir = searchDirectory ? path.resolve(process.cwd(), searchDirectory) : process.cwd();
     const filePaths = await FileSystemService.getAllFilePathsRelative(baseDir);
 
     // Filter for package.json files in subdirectories
@@ -183,9 +163,7 @@ export default class DependencyService {
           }
         } catch (error) {
           const errorString = ErrorUtils.getErrorString(error);
-          DR.logger.error(
-            `Failed to read or parse package.json at ${fullPath}: ${errorString}`
-          );
+          DR.logger.error(`Failed to read or parse package.json at ${fullPath}: ${errorString}`);
         }
       })
     );

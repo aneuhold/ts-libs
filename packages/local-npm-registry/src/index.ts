@@ -8,9 +8,7 @@ import { LocalPackageStoreService } from './services/LocalPackageStoreService.js
 
 program
   .name('local-npm')
-  .description(
-    'CLI to manage local npm package installations as if they were published.'
-  )
+  .description('CLI to manage local npm package installations as if they were published.')
   .option('-v, --verbose', 'Enable verbose logging and debug mode');
 
 // Main commands as described in README.md
@@ -28,15 +26,12 @@ program
       // Get the raw arguments from process.argv
       // Find where 'publish' appears and take everything after it
       const publishIndex = process.argv.indexOf('publish');
-      const additionalArgs =
-        publishIndex >= 0 ? process.argv.slice(publishIndex + 1) : [];
+      const additionalArgs = publishIndex >= 0 ? process.argv.slice(publishIndex + 1) : [];
 
       // Filter out any non-string arguments and options that are handled by the main program
       const validAdditionalArgs = additionalArgs.filter(
         (arg): arg is string =>
-          typeof arg === 'string' &&
-          !arg.startsWith('-v') &&
-          !arg.startsWith('--verbose')
+          typeof arg === 'string' && !arg.startsWith('-v') && !arg.startsWith('--verbose')
       );
 
       await CommandService.publish(validAdditionalArgs);
@@ -48,9 +43,7 @@ program
 
 program
   .command('subscribe')
-  .description(
-    'Subscribe to a package and install its latest timestamp version'
-  )
+  .description('Subscribe to a package and install its latest timestamp version')
   .argument('<package-name>', 'The name of the package to subscribe to')
   .action(async (packageName: string) => {
     try {
@@ -64,9 +57,7 @@ program
 
 program
   .command('unpublish')
-  .description(
-    'Unpublish a package and reset all subscribers to original versions'
-  )
+  .description('Unpublish a package and reset all subscribers to original versions')
   .argument(
     '[package-name]',
     'The name of the package to unpublish (defaults to current directory package)'
@@ -98,9 +89,7 @@ program
 
 program
   .command('clear-store')
-  .description(
-    'Clear all packages from the local registry and reset all subscribers'
-  )
+  .description('Clear all packages from the local registry and reset all subscribers')
   .action(async () => {
     try {
       await CommandService.clearStore();
@@ -175,9 +164,7 @@ program
       DR.logger.info('Current Configuration:');
       DR.logger.info(JSON.stringify(config, null, 2));
       DR.logger.info('Configuration file location:');
-      DR.logger.info(
-        configPath || 'No configuration file found (using defaults)'
-      );
+      DR.logger.info(configPath || 'No configuration file found (using defaults)');
     } catch (error) {
       DR.logger.error(`Failed to get config: ${String(error)}`);
       process.exit(1);

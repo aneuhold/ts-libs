@@ -23,19 +23,12 @@ export default class TranslationService {
    * @param source - The source of the translations.
    * @returns The translations for the provided source.
    */
-  static async getTranslations(
-    source: TranslationSource
-  ): Promise<Translations> {
+  static async getTranslations(source: TranslationSource): Promise<Translations> {
     try {
-      const jsonString = await GitHubService.getContentFromRepo(
-        'translations',
-        `${source}.jsonc`
-      );
+      const jsonString = await GitHubService.getContentFromRepo('translations', `${source}.jsonc`);
       return parse(jsonString) as Translations;
     } catch (error) {
-      DR.logger.error(
-        `Failed to load ${source}.json, error: ${error as string}`
-      );
+      DR.logger.error(`Failed to load ${source}.json, error: ${error as string}`);
       throw error;
     }
   }

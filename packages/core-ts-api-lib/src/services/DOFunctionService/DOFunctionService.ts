@@ -45,24 +45,15 @@ export default class DOFunctionService {
    * @param handler - The handler function to process the input.
    * @returns The raw output of the function call.
    */
-  static async handleApiRequest<
-    TInput extends DOFunctionInput,
-    TOutput extends DOFunctionOutput
-  >(
+  static async handleApiRequest<TInput extends DOFunctionInput, TOutput extends DOFunctionOutput>(
     functionName: string,
     rawInputFromDO: DOFunctionRawInput | TInput,
     handler: (input: TInput) => Promise<DOFunctionCallOutput<TOutput>>
   ): Promise<DOFunctionRawOutput> {
-    DR.logger.info(
-      `[DOFunctionService] handleApiRequest called for "${functionName}".`
-    ); // Log entry
-    DR.logger.info(
-      `[DOFunctionService] Calling DR.tracer.startSpan for "${functionName}"...`
-    ); // Log before startSpan
+    DR.logger.info(`[DOFunctionService] handleApiRequest called for "${functionName}".`); // Log entry
+    DR.logger.info(`[DOFunctionService] Calling DR.tracer.startSpan for "${functionName}"...`); // Log before startSpan
     return DR.tracer.startSpan(functionName, async (span) => {
-      DR.logger.info(
-        `[DOFunctionService] Tracer span callback started for "${functionName}".`
-      ); // Log span callback start
+      DR.logger.info(`[DOFunctionService] Tracer span callback started for "${functionName}".`); // Log span callback start
       const rawOutput: DOFunctionRawOutput = {
         body: '',
         statusCode: 200,
@@ -77,20 +68,12 @@ export default class DOFunctionService {
       };
 
       try {
-        DR.logger.info(
-          `[DOFunctionService] Deserializing input for "${functionName}"...`
-        ); // Log before deserialize
+        DR.logger.info(`[DOFunctionService] Deserializing input for "${functionName}"...`); // Log before deserialize
         const input: TInput = this.deserializeInput(rawInputFromDO);
-        DR.logger.info(
-          `[DOFunctionService] Calling handler function for "${functionName}"...`
-        ); // Log before handler
+        DR.logger.info(`[DOFunctionService] Calling handler function for "${functionName}"...`); // Log before handler
         const output = await handler(input);
-        DR.logger.info(
-          `[DOFunctionService] Handler function finished for "${functionName}".`
-        ); // Log after handler
-        DR.logger.info(
-          `[DOFunctionService] Serializing output for "${functionName}"...`
-        ); // Log before serialize
+        DR.logger.info(`[DOFunctionService] Handler function finished for "${functionName}".`); // Log after handler
+        DR.logger.info(`[DOFunctionService] Serializing output for "${functionName}"...`); // Log before serialize
         rawOutput.body = this.serializeOutput(output);
 
         if (!output.success) {
@@ -135,9 +118,7 @@ export default class DOFunctionService {
   private static deserializeInput<TInput extends DOFunctionInput>(
     inputFromDO: DOFunctionRawInput | TInput
   ): TInput {
-    DR.logger.info(
-      `[DOFunctionService] deserializeInput received: ${JSON.stringify(inputFromDO)}`
-    );
+    DR.logger.info(`[DOFunctionService] deserializeInput received: ${JSON.stringify(inputFromDO)}`);
 
     // 1. Check if it's the standard DOFunctionRawInput (from web: raw)
     if (isDOFunctionRawInput(inputFromDO)) {
@@ -149,14 +130,10 @@ export default class DOFunctionService {
 
       let decodedBody: Buffer;
       if (isBase64Encoded) {
-        DR.logger.info(
-          '[DOFunctionService] Body is base64 encoded, decoding...'
-        );
+        DR.logger.info('[DOFunctionService] Body is base64 encoded, decoding...');
         decodedBody = Buffer.from(body, 'base64');
       } else {
-        DR.logger.info(
-          '[DOFunctionService] Body is not base64 encoded, using utf8.'
-        );
+        DR.logger.info('[DOFunctionService] Body is not base64 encoded, using utf8.');
         decodedBody = Buffer.from(body, 'utf8');
       }
 
@@ -174,24 +151,16 @@ export default class DOFunctionService {
           try {
             requestData = JSON.parse(decodedBody.toString('utf8')) as TInput;
           } catch (jsonError) {
-            DR.logger.error(
-              `[DOFunctionService] JSON fallback parse failed: ${String(jsonError)}`
-            );
-            throw new Error(
-              'Failed to deserialize input body as BSON or JSON.'
-            );
+            DR.logger.error(`[DOFunctionService] JSON fallback parse failed: ${String(jsonError)}`);
+            throw new Error('Failed to deserialize input body as BSON or JSON.');
           }
         }
       } else {
-        DR.logger.info(
-          '[DOFunctionService] Deserializing non-BSON body (assuming JSON).'
-        );
+        DR.logger.info('[DOFunctionService] Deserializing non-BSON body (assuming JSON).');
         try {
           requestData = JSON.parse(decodedBody.toString('utf8')) as TInput;
         } catch (jsonError) {
-          DR.logger.error(
-            `[DOFunctionService] JSON parse failed: ${String(jsonError)}`
-          );
+          DR.logger.error(`[DOFunctionService] JSON parse failed: ${String(jsonError)}`);
           throw new Error('Failed to deserialize input body as JSON.');
         }
       }

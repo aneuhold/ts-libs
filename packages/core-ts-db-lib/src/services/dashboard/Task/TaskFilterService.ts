@@ -77,11 +77,7 @@ export default class DashboardTaskFilterService {
       }
 
       // Start date
-      if (
-        !settings.startDate.showFutureTasks &&
-        task.startDate &&
-        task.startDate > new Date()
-      ) {
+      if (!settings.startDate.showFutureTasks && task.startDate && task.startDate > new Date()) {
         removedIds.push(taskId);
         return false;
       }

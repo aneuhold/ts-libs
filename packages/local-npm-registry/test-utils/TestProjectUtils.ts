@@ -8,10 +8,7 @@ import {
   LocalPackageStoreService,
   type PackageEntry
 } from '../src/services/LocalPackageStoreService.js';
-import {
-  PACKAGE_MANAGER_INFO,
-  PackageManager
-} from '../src/types/PackageManager.js';
+import { PACKAGE_MANAGER_INFO, PackageManager } from '../src/types/PackageManager.js';
 
 /**
  * Test utilities for creating temporary test projects with isolated configurations.
@@ -70,8 +67,9 @@ export class TestProjectUtils {
     ConfigService.clearCache();
 
     // Create test configuration file in the tmp directory
-    TestProjectUtils.testConfigFilePath =
-      await ConfigService.createDefaultConfig(TestProjectUtils.globalTempDir);
+    TestProjectUtils.testConfigFilePath = await ConfigService.createDefaultConfig(
+      TestProjectUtils.globalTempDir
+    );
 
     // Change working directory to the tmp directory so the config is found
     process.chdir(TestProjectUtils.globalTempDir);
@@ -120,9 +118,7 @@ export class TestProjectUtils {
    */
   static async setupTestInstance(): Promise<string> {
     if (!TestProjectUtils.globalTempDir) {
-      throw new Error(
-        'Global temp directory not initialized. Call setupGlobalTempDir() first.'
-      );
+      throw new Error('Global temp directory not initialized. Call setupGlobalTempDir() first.');
     }
 
     // Clear configuration cache to ensure test isolation
@@ -130,10 +126,7 @@ export class TestProjectUtils {
 
     // Create a unique directory for this test instance using a GUID
     const testId = randomUUID();
-    TestProjectUtils.testInstanceDir = path.join(
-      TestProjectUtils.globalTempDir,
-      testId
-    );
+    TestProjectUtils.testInstanceDir = path.join(TestProjectUtils.globalTempDir, testId);
     await fs.ensureDir(TestProjectUtils.testInstanceDir);
 
     return TestProjectUtils.testInstanceDir;
@@ -172,9 +165,7 @@ export class TestProjectUtils {
     dependencies: Record<string, string> = {}
   ): Promise<string> {
     if (!TestProjectUtils.testInstanceDir) {
-      throw new Error(
-        'Test instance directory not initialized. Call setupTestInstance() first.'
-      );
+      throw new Error('Test instance directory not initialized. Call setupTestInstance() first.');
     }
 
     const packageDir = path.join(
@@ -288,9 +279,7 @@ export class TestProjectUtils {
    * @param projectPath - Path to the project directory
    */
   static async readPackageJson(projectPath: string): Promise<PackageJson> {
-    return (await fs.readJson(
-      path.join(projectPath, 'package.json')
-    )) as PackageJson;
+    return (await fs.readJson(path.join(projectPath, 'package.json'))) as PackageJson;
   }
 
   /**
@@ -298,9 +287,7 @@ export class TestProjectUtils {
    *
    * @param packageName - Name of the package to retrieve
    */
-  static async getPackageEntry(
-    packageName: string
-  ): Promise<PackageEntry | null> {
+  static async getPackageEntry(packageName: string): Promise<PackageEntry | null> {
     return LocalPackageStoreService.getPackageEntry(packageName);
   }
 
@@ -309,9 +296,7 @@ export class TestProjectUtils {
    */
   static getTestInstanceDir(): string {
     if (!TestProjectUtils.testInstanceDir) {
-      throw new Error(
-        'Test instance directory not initialized. Call setupTestInstance() first.'
-      );
+      throw new Error('Test instance directory not initialized. Call setupTestInstance() first.');
     }
     return TestProjectUtils.testInstanceDir;
   }
@@ -322,10 +307,7 @@ export class TestProjectUtils {
    * @param projectPath - Path to the project directory
    * @param packageManager - Package manager to get lock file for
    */
-  static getLockFilePath(
-    projectPath: string,
-    packageManager: PackageManager
-  ): string {
+  static getLockFilePath(projectPath: string, packageManager: PackageManager): string {
     const lockFileName = PACKAGE_MANAGER_INFO[packageManager].lockFile;
     return path.join(projectPath, lockFileName);
   }
@@ -340,10 +322,7 @@ export class TestProjectUtils {
     projectPath: string,
     packageManager: PackageManager
   ): Promise<boolean> {
-    const lockFilePath = TestProjectUtils.getLockFilePath(
-      projectPath,
-      packageManager
-    );
+    const lockFilePath = TestProjectUtils.getLockFilePath(projectPath, packageManager);
 
     try {
       const stats = await fs.stat(lockFilePath);
@@ -397,10 +376,7 @@ export class TestProjectUtils {
    * @param directoryPath - Path to the directory where .npmrc should be created
    * @param npmrcContent - Content to write to the .npmrc file
    */
-  static async createNpmrcFile(
-    directoryPath: string,
-    npmrcContent: string
-  ): Promise<string> {
+  static async createNpmrcFile(directoryPath: string, npmrcContent: string): Promise<string> {
     await fs.ensureDir(directoryPath);
     const npmrcPath = path.join(directoryPath, '.npmrc');
     await fs.writeFile(npmrcPath, npmrcContent);
@@ -432,10 +408,7 @@ export class TestProjectUtils {
       directories.push(currentPath);
 
       await fs.ensureDir(currentPath);
-      const npmrcPath = await this.createNpmrcFile(
-        currentPath,
-        layer.npmrcContent
-      );
+      const npmrcPath = await this.createNpmrcFile(currentPath, layer.npmrcContent);
       npmrcFiles.push(npmrcPath);
     }
 
@@ -498,10 +471,7 @@ project-specific-setting=project-specific-value
       }
     ];
 
-    const structure = await this.createMultiLayerNpmrcStructure(
-      testInstanceDir,
-      layers
-    );
+    const structure = await this.createMultiLayerNpmrcStructure(testInstanceDir, layers);
 
     // Expected configurations with closest files taking precedence
     const expectedConfigs = new Map<string, string>([

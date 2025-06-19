@@ -1,7 +1,4 @@
-import {
-  DashboardUserConfig,
-  validateDashboardUserConfig
-} from '@aneuhold/core-ts-db-lib';
+import { DashboardUserConfig, validateDashboardUserConfig } from '@aneuhold/core-ts-db-lib';
 import { DR, ErrorUtils } from '@aneuhold/core-ts-lib';
 import { ObjectId } from 'bson';
 import UserRepository from '../../repositories/common/UserRepository.js';
@@ -16,9 +13,7 @@ export default class DashboardUserConfigValidator extends IValidator<DashboardUs
       userId: newUserConfig.userId
     });
     if (existingConfig) {
-      DR.logger.error(
-        `Config already exists for user: ${newUserConfig.userId.toString()}`
-      );
+      DR.logger.error(`Config already exists for user: ${newUserConfig.userId.toString()}`);
       ErrorUtils.throwError(
         `Config already exists for user: ${newUserConfig.userId.toString()}`,
         newUserConfig
@@ -27,9 +22,7 @@ export default class DashboardUserConfigValidator extends IValidator<DashboardUs
     const userRepo = UserRepository.getRepo();
     const user = await userRepo.get({ _id: newUserConfig.userId });
     if (!user) {
-      DR.logger.error(
-        `User does not exist: ${newUserConfig.userId.toString()}`
-      );
+      DR.logger.error(`User does not exist: ${newUserConfig.userId.toString()}`);
       ErrorUtils.throwError(
         `User does not exist: ${newUserConfig.userId.toString()}`,
         newUserConfig
@@ -49,25 +42,15 @@ export default class DashboardUserConfigValidator extends IValidator<DashboardUs
     }
   }
 
-  async validateUpdateObject(
-    updatedUserConfig: Partial<DashboardUserConfig>
-  ): Promise<void> {
+  async validateUpdateObject(updatedUserConfig: Partial<DashboardUserConfig>): Promise<void> {
     // Check if an id is defined
     if (!updatedUserConfig._id) {
       DR.logger.error(`No _id defined for DashboardUserConfig update.`);
-      ErrorUtils.throwError(
-        `No _id defined for DashboardUserConfig update.`,
-        updatedUserConfig
-      );
+      ErrorUtils.throwError(`No _id defined for DashboardUserConfig update.`, updatedUserConfig);
     }
-    if (
-      updatedUserConfig.collaborators &&
-      updatedUserConfig.collaborators.length > 0
-    ) {
+    if (updatedUserConfig.collaborators && updatedUserConfig.collaborators.length > 0) {
       const userRepo = UserRepository.getRepo();
-      const collaborators = await userRepo.getList(
-        updatedUserConfig.collaborators
-      );
+      const collaborators = await userRepo.getList(updatedUserConfig.collaborators);
       if (collaborators.length !== updatedUserConfig.collaborators.length) {
         DR.logger.error(
           `Some collaborators not found. Expected ${updatedUserConfig.collaborators.length}, found ${collaborators.length}`

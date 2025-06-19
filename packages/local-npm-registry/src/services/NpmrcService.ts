@@ -17,9 +17,7 @@ export class NpmrcService {
    *
    * @param startDir - Directory to start searching from (defaults to current working directory)
    */
-  static async getAllNpmrcConfigs(
-    startDir: string = process.cwd()
-  ): Promise<Map<string, string>> {
+  static async getAllNpmrcConfigs(startDir: string = process.cwd()): Promise<Map<string, string>> {
     // Return cached result if available for this directory
     const cached = this.npmrcCache.get(startDir);
     if (cached) {
@@ -30,10 +28,7 @@ export class NpmrcService {
 
     try {
       // Find all .npmrc files up the directory tree
-      const npmrcPaths = await FileSystemService.findAllFilesUpTree(
-        startDir,
-        '.npmrc'
-      );
+      const npmrcPaths = await FileSystemService.findAllFilesUpTree(startDir, '.npmrc');
 
       // Process files in order (furthest first, closest last) so closer files override further files
       for (let i = npmrcPaths.length - 1; i >= 0; i--) {
@@ -42,9 +37,7 @@ export class NpmrcService {
           const content = await fs.readFile(npmrcPath, 'utf8');
           this.parseNpmrcContent(content, configMap);
         } catch (error) {
-          DR.logger.warn(
-            `Failed to read .npmrc file at ${npmrcPath}: ${String(error)}`
-          );
+          DR.logger.warn(`Failed to read .npmrc file at ${npmrcPath}: ${String(error)}`);
         }
       }
 
@@ -52,9 +45,7 @@ export class NpmrcService {
       this.npmrcCache.set(startDir, configMap);
       return configMap;
     } catch (error) {
-      DR.logger.error(
-        `Error retrieving .npmrc configurations: ${String(error)}`
-      );
+      DR.logger.error(`Error retrieving .npmrc configurations: ${String(error)}`);
       return new Map();
     }
   }
@@ -73,10 +64,7 @@ export class NpmrcService {
    * @param content - The .npmrc file content to parse
    * @param configMap - The map to store key-value pairs
    */
-  private static parseNpmrcContent(
-    content: string,
-    configMap: Map<string, string>
-  ): void {
+  private static parseNpmrcContent(content: string, configMap: Map<string, string>): void {
     // Use the enhanced parseKeyValueLines with preserveLines=false to get key-value pairs directly
     this.parseKeyValueLines(content, configMap, false);
   }
@@ -98,11 +86,7 @@ export class NpmrcService {
     for (const line of lines) {
       const trimmedLine = line.trim();
 
-      if (
-        !trimmedLine ||
-        trimmedLine.startsWith('#') ||
-        trimmedLine.startsWith(';')
-      ) {
+      if (!trimmedLine || trimmedLine.startsWith('#') || trimmedLine.startsWith(';')) {
         if (preserveLines) {
           // Preserve comments and empty lines with original content
           configMap.set(trimmedLine || line, line);

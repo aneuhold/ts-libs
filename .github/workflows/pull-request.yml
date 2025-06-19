@@ -69,3 +69,36 @@ jobs:
           package-name: ${{ matrix.package }}
           npm-token: ${{ secrets.NPM_TOKEN }}
           github-token: ${{ secrets.CONFIG_GITHUB_TOKEN }}
+
+  status-check:
+    name: 'PR Status'
+    runs-on: ubuntu-latest
+    needs: [detect-changes, version-check, test]
+    if: always()
+    steps:
+      - name: Check overall status
+        run: |
+          # Check if detect-changes succeeded
+          if [[ "${{ needs.detect-changes.result }}" != "success" ]]; then
+            echo "❌ detect-changes job failed"
+            exit 1
+          fi
+
+          # If there are no changes, we're done - success
+          if [[ "${{ needs.detect-changes.outputs.has-changes }}" != "true" ]]; then
+            echo "✅ No package changes detected - all checks passed"
+            exit 0
+          fi
+
+          # If there are changes, check version-check and test results
+          if [[ "${{ needs.version-check.result }}" != "success" ]]; then
+            echo "❌ version-check job failed"
+            exit 1
+          fi
+
+          if [[ "${{ needs.test.result }}" != "success" ]]; then
+            echo "❌ test job failed"
+            exit 1
+          fi
+
+          echo "✅ All checks passed successfully"

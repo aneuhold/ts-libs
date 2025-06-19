@@ -20,9 +20,7 @@ export default abstract class IValidator<TBaseType extends BaseDocument> {
    *
    * At this point, the fields that do not change should already be stripped.
    */
-  abstract validateUpdateObject(
-    partialObject: Partial<TBaseType>
-  ): Promise<void>;
+  abstract validateUpdateObject(partialObject: Partial<TBaseType>): Promise<void>;
 
   /**
    * Validates the entire DB for the repository, and corrects where needed.
@@ -88,9 +86,7 @@ export default abstract class IValidator<TBaseType extends BaseDocument> {
     docsToValidate.forEach((doc) => {
       const { updatedDoc, errors } = documentValidator(doc);
       if (errors.length !== 0) {
-        DR.logger.error(
-          `${docName} with ID: ${doc._id.toString()} is invalid. Errors:`
-        );
+        DR.logger.error(`${docName} with ID: ${doc._id.toString()} is invalid. Errors:`);
         numInvalidDocs += 1;
         errors.forEach((error) => {
           DR.logger.error(error);
@@ -102,33 +98,25 @@ export default abstract class IValidator<TBaseType extends BaseDocument> {
       if (numInvalidDocs === 0) {
         DR.logger.success(`No invalid ${docName}s found.`);
       } else {
-        DR.logger.info(
-          `Would update ${numInvalidDocs} ${docName}s in the database.`
-        );
+        DR.logger.info(`Would update ${numInvalidDocs} ${docName}s in the database.`);
       }
       if (docIdsToDelete.length === 0) {
         DR.logger.success(`No ${docName}s to delete found.`);
       } else {
-        DR.logger.info(
-          `Would delete ${docIdsToDelete.length} ${docName}s in the database.`
-        );
+        DR.logger.info(`Would delete ${docIdsToDelete.length} ${docName}s in the database.`);
       }
       return;
     }
     // Delete all invalid
     if (docIdsToDelete.length !== 0) {
-      DR.logger.info(
-        `Deleting ${docIdsToDelete.length} ${docName}s from the database.`
-      );
+      DR.logger.info(`Deleting ${docIdsToDelete.length} ${docName}s from the database.`);
       await deletionFunction(docIdsToDelete);
     } else {
       DR.logger.success(`No ${docName}s to delete found.`);
     }
     // Update all that need to be updated
     if (docsToUpdate.length !== 0) {
-      DR.logger.info(
-        `Updating ${docsToUpdate.length} ${docName}s in the database.`
-      );
+      DR.logger.info(`Updating ${docsToUpdate.length} ${docName}s in the database.`);
       await updateFunction(docsToUpdate);
     } else {
       DR.logger.success(`No ${docName}s to update found.`);
@@ -141,10 +129,7 @@ export default abstract class IValidator<TBaseType extends BaseDocument> {
    * @param array1
    * @param array2
    */
-  protected checkAllElementsExistInArr(
-    array1: Array<unknown>,
-    array2: Array<unknown>
-  ): boolean {
+  protected checkAllElementsExistInArr(array1: Array<unknown>, array2: Array<unknown>): boolean {
     return array1.every((value) => array2.includes(value));
   }
 }

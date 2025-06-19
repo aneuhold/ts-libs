@@ -23,10 +23,7 @@ export class ConfigService {
     }
 
     // Search for config file starting from current directory
-    configFilePath = await FileSystemService.findFileUpTree(
-      process.cwd(),
-      CONFIG_FILE_NAME
-    );
+    configFilePath = await FileSystemService.findFileUpTree(process.cwd(), CONFIG_FILE_NAME);
 
     let config: LocalNpmConfig = {};
 

@@ -1,9 +1,6 @@
 import { ApiKey, User } from '@aneuhold/core-ts-db-lib';
 import { DashboardConfig } from '../../../types/DashboardConfig.js';
-import DOFunction, {
-  DOFunctionInput,
-  DOFunctionOutput
-} from '../DOFunction.js';
+import DOFunction, { DOFunctionInput, DOFunctionOutput } from '../DOFunction.js';
 
 /**
  * Interface representing the input to the {@link AuthValidateUser} function.

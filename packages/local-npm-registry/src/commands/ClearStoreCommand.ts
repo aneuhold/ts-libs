@@ -20,9 +20,7 @@ export class ClearStoreCommand {
       return;
     }
 
-    DR.logger.info(
-      `Clearing ${packageNames.length} package(s) from local registry`
-    );
+    DR.logger.info(`Clearing ${packageNames.length} package(s) from local registry`);
 
     // Collect all subscriber reset operations across all packages
     const resetOperations: Array<{
@@ -42,9 +40,7 @@ export class ClearStoreCommand {
 
       // Collect subscriber reset operations
       if (entry.subscribers.length > 0) {
-        DR.logger.info(
-          `  Adding ${entry.subscribers.length} subscriber reset operation(s)`
-        );
+        DR.logger.info(`  Adding ${entry.subscribers.length} subscriber reset operation(s)`);
 
         for (const subscriber of entry.subscribers) {
           resetOperations.push({
@@ -58,9 +54,7 @@ export class ClearStoreCommand {
 
     // Execute all reset operations in parallel
     if (resetOperations.length > 0) {
-      DR.logger.info(
-        `Executing ${resetOperations.length} subscriber reset operations in parallel`
-      );
+      DR.logger.info(`Executing ${resetOperations.length} subscriber reset operations in parallel`);
 
       const resetPromises = resetOperations.map(async (operation) => {
         try {
@@ -70,9 +64,7 @@ export class ClearStoreCommand {
             operation.originalVersion
           );
           await PackageManagerService.runInstall(operation.subscriberPath);
-          DR.logger.info(
-            `✓ Reset ${operation.packageName} in ${operation.subscriberPath}`
-          );
+          DR.logger.info(`✓ Reset ${operation.packageName} in ${operation.subscriberPath}`);
           return { success: true, operation };
         } catch (error) {
           DR.logger.error(
@@ -107,9 +99,7 @@ export class ClearStoreCommand {
     } else {
       // No subscribers to reset, just clear the store
       await LocalPackageStoreService.clearStore();
-      DR.logger.info(
-        `Successfully cleared all ${packageNames.length} package(s)`
-      );
+      DR.logger.info(`Successfully cleared all ${packageNames.length} package(s)`);
     }
   }
 }
