@@ -1,5 +1,7 @@
 # local-npm-registry
 
+<!--JSR is specifically using an escape character for @ in the URL because only 1 package is published to JSR, where NPM is published to two locations-->
+
 [![JSR](https://img.shields.io/jsr/v/%40aneuhold/local-npm-registry?logo=jsr&label=JSR)](https://jsr.io/%40aneuhold/local-npm-registry)
 [![NPM](https://img.shields.io/npm/v/%40aneuhold%2Flocal-npm-registry?logo=npm&label=NPM)](https://www.npmjs.com/package/@aneuhold/local-npm-registry)
 [![License](https://img.shields.io/github/license/aneuhold/ts-libs)](https://github.com/aneuhold/ts-libs/blob/main/LICENSE)
