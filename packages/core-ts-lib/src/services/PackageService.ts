@@ -5,6 +5,7 @@ import { promisify } from 'util';
 import { JsonWithVersionProperty } from '../types/JsonWithVersionProperty.js';
 import { PackageJson } from '../types/PackageJson.js';
 import ErrorUtils from '../utils/ErrorUtils.js';
+import ChangelogService from './ChangelogService.js';
 import { DR } from './DependencyRegistry.js';
 import DependencyService from './DependencyService.js';
 import FileSystemService from './FileSystemService/FileSystemService.js';
@@ -34,7 +35,12 @@ export default class PackageService {
       process.exit(1);
     }
 
-    const { packageName: originalPackageName } = await PackageService.getPackageInfo();
+    const { packageName: originalPackageName, version: currentVersion } =
+      await PackageService.getPackageInfo();
+
+    // Validate changelog for the current version before proceeding
+    await ChangelogService.validateChangelogForVersion(currentVersion);
+
     const packageNamesToValidate = [originalPackageName, ...(alternativePackageNames || [])];
 
     for (const packageName of packageNamesToValidate) {
@@ -47,8 +53,8 @@ export default class PackageService {
       }
 
       await PackageService.replaceMonorepoImportsWithNpmSpecifiers();
-      const { version: currentVersion } = await PackageService.updateJsrFromPackageJson();
-      const successfulDryRun = await PackageService.publishJsrDryRun(packageName, currentVersion);
+      const { version } = await PackageService.updateJsrFromPackageJson();
+      const successfulDryRun = await PackageService.publishJsrDryRun(packageName, version);
 
       await PackageService.resetGitChanges();
 
@@ -118,6 +124,10 @@ export default class PackageService {
 
     const { packageName: originalPackageName, version: currentVersion } =
       await PackageService.getPackageInfo();
+
+    // Validate changelog for the current version before proceeding
+    await ChangelogService.validateChangelogForVersion(currentVersion);
+
     const packageNamesToValidate = [originalPackageName, ...(alternativePackageNames || [])];
 
     for (const packageName of packageNamesToValidate) {
@@ -693,5 +703,16 @@ export default class PackageService {
         }
       });
     });
+  }
+
+  /**
+   * Initializes a changelog for the current project if one doesn't exist.
+   * This operation is idempotent - it won't modify existing content.
+   *
+   * @param packagePath Optional path to the package directory (defaults to current working directory)
+   */
+  static async initializeChangelog(packagePath?: string): Promise<void> {
+    const { packageName, version } = await PackageService.getPackageInfo();
+    await ChangelogService.initializeChangelog(version, packageName, packagePath);
   }
 }

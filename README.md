@@ -49,13 +49,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 1. **Individual Package Changelogs**: Each package maintains its own `CHANGELOG.md` file in the package root directory
 
-2. **Validation Integration**: Changelog validation is automatically triggered during:
+1. **Validation Integration**: Changelog validation is automatically triggered during:
 
    - `npm:validate` commands (via `tb pkg validateNpm`)
    - `jsr:validate` commands (via `tb pkg validateJsr`)
    - Both commands utilize the `PackageService` from `core-ts-lib`
 
-3. **Version Validation**: The system validates that:
+1. **Version Validation**: The system validates that:
 
    - The changelog contains an entry for the current package version
    - The version entry includes at least one of the required section types:
@@ -65,33 +65,42 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
      - `### Removed` - for removed features
    - Each required section contains meaningful content (not just the header)
 
-4. **Content Requirements**:
+1. **Content Requirements**:
 
    - Sections must have content beyond the header (e.g., bullet points, descriptions)
    - Empty sections or placeholder text will fail validation
    - Breaking changes should be prefixed with `*Breaking*:` within the appropriate section
 
-5. **Parsing Strategy**:
+1. **Version Links**:
+
+   - Each version heading is automatically linked to GitHub when repository information is available
+   - First version links to the release tag: `[1.0.0]: https://github.com/owner/repo/releases/tag/package-name-v1.0.0`
+   - Subsequent versions link to GitHub compare URLs: `[1.0.1]: https://github.com/owner/repo/compare/package-name-v1.0.0...package-name-v1.0.1`
+   - Package-specific tags use the format `{package-name}-v{version}` (scope removed from package name)
+   - Links are automatically maintained in a `<!-- Link References -->` section at the bottom of the changelog
+   - For monorepos, this enables package-specific release tracking and easy diff viewing
+
+1. **Parsing Strategy**:
 
    - Changelogs are parsed by splitting on `##` markers to identify version sections
    - Within each version section, content is parsed by splitting on `###` to identify change type sections
    - This approach maintains strict format compliance
 
-6. **Initialization Support**:
+1. **Initialization Support**:
 
    - `ChangelogService` provides methods to initialize a new changelog for packages that don't have one
    - New changelogs are created with the standard header and an initial version entry
    - Initialization is idempotent - calling it multiple times will not duplicate content
    - If a changelog already exists with content for the current version, no changes are made
 
-7. **Service Implementation**:
+1. **Service Implementation**:
 
    - New `ChangelogService` class in `core-ts-lib` handles all changelog operations
    - Integrates with existing `PackageService` validation workflows
    - Provides both validation and initialization capabilities
    - If shared logic is needed between `ChangelogService` and `PackageService`, create a separate service with an appropriate name to avoid circular dependencies
 
-8. **Architecture Principles**:
+1. **Architecture Principles**:
    - Services maintain single responsibility and avoid circular dependencies
    - Shared functionality is extracted to appropriately named utility services
    - All operations are designed to be idempotent and safe to run multiple times
