@@ -216,7 +216,7 @@ This tool solves these issues by using a real npm registry (Verdaccio) locally, 
 
 <p align="center">
     <a href="https://mermaid.live/edit#pako:eNqNU01T2zAU_CsaXXpJ0oTEwfZ06JQAKQTCV3to6x4UW8QCS_JIMoSG_Pc-ybXswnSmOUXy7r59-562OJUZxTG-K-RTmhNl0JejRCD4ffqR4EKmpOiLkqNKlNWqYDpHdEPTytAswT9Rv3-ADgF3Q0mGSpI-kDUd3GspEBMorZSiwqCMKZoaqZ6BUUsfOuJsm-CrmoPuZCWyjwne1YCZBbws5Qs6AvVjpaSK0VL-XcJxvGZN-Ub1Czq2nI1RJDUNAwnCqcceu_onjXHXJTq7vVwiDT5b3InDzTs-6YZpo213Dtk6nnvHn1vHDUtIYyl1HUXXoNFJY946PwXunBokFVszAeBHqjSzvSrJX5k7debO_jBIUSBdrXSq2Ao4EI5CJme6CcDTzhxtAT3dduCur7abRWvpHAqcgBglad6pgEol72GsXnfhA7hwuWow1WxAd2wfVur9gZFvWvRC587gEkS-lhkxtFP0nf4vKfTETC4rgwzjVBvCSy--dOKX1mFllxS-QnCp5JyIzI31TYeuin0CDRrCKDtnr33ptK8g2QuYU3cabbBXnWC7Ny63-uLCyVy7ELl8pH6FIUn1XG_CPzf22pFvgDyTvCwoxNf3a-jfMM1cU7bl13uj7OBADvfwWrEMx0ZVtIc5VZzYI97aQgk2ObUPKoa_GVEPCU7EDjglEd-l5A1NyWqd4_iOFBpOlZvnESNrRbi_hQ3JqJrBYzY4DsdjJ4LjLd7geBKEg2A63B-OxqP9cBJGQQ8_43gcDKIwiqZBFE7D0XCyt-vhX67s3mAvGo-CYDQNgmgYTaPJ7jfaNJSB" target="_blank">
-        <picture><img src="https://i.imgur.com/ShUd7vS.png"  alt="unpublish Command Mermaid Diagram" /></picture> 
+        <img src="https://i.imgur.com/ShUd7vS.png"  alt="unpublish Command Mermaid Diagram" />
     </a>
 </p>
 
