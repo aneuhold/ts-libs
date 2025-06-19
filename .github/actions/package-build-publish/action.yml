@@ -39,3 +39,26 @@ runs:
       shell: bash
       working-directory: packages/${{ inputs.package-name }}
       run: pnpm npm:publish
+
+    - name: Create and push git tag for ${{ inputs.package-name }}
+      shell: bash
+      working-directory: packages/${{ inputs.package-name }}
+      run: |
+        # Get the package version from package.json
+        PACKAGE_VERSION=$(node -p "require('./package.json').version")
+
+        # Get the actual package name from package.json and remove scope if present
+        PACKAGE_NAME=$(node -p "require('./package.json').name.replace(/^@[\\w-]+\//, '')")
+
+        # Create the git tag in the format: {package-name}-v{version}
+        GIT_TAG="${PACKAGE_NAME}-v${PACKAGE_VERSION}"
+
+        echo "Creating git tag: $GIT_TAG"
+
+        # Create the tag locally
+        git tag "$GIT_TAG"
+
+        # Push the tag to origin
+        git push origin "$GIT_TAG"
+
+        echo "Successfully created and pushed git tag: $GIT_TAG"
