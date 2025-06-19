@@ -15,11 +15,11 @@
     "lint": "eslint",
     "test": "vitest run",
     "upgrade:core": "pnpm update '@aneuhold/main-scripts' --latest",
-    "jsr:validate": "tb pkg validateJsr --alternative-names local-npm-registry",
+    "jsr:validate": "tb pkg validateJsr",
     "npm:validate": "tb pkg validateNpm --alternative-names local-npm-registry",
     "test:packageNameReplace": "tb pkg testStringReplacement @aneuhold/local-npm-registry local-npm-registry",
     "checkAll": "pnpm build && pnpm lint && pnpm test && pnpm jsr:validate",
-    "jsr:publish": "tb pkg publishJsr --alternative-names local-npm-registry",
+    "jsr:publish": "tb pkg publishJsr",
     "npm:publish": "tb pkg publishNpm --alternative-names local-npm-registry"
   },
   "main": "lib/index.js",
