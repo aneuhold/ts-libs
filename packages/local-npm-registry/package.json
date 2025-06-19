@@ -4,10 +4,9 @@
   "license": "MIT",
   "version": "0.2.4",
   "description": "Manages local npm package installations and updates across your machine.",
-  "packageManager": "pnpm@10.11.1",
+  "packageManager": "pnpm@10.12.1",
   "type": "module",
   "scripts": {
-    "cli:test": "node lib/index.js",
     "refresh": "pnpm build && npm uninstall -g @aneuhold/local-npm-registry && npm install -g .",
     "reset:global": "npm uninstall -g @aneuhold/local-npm-registry && npm install -g @aneuhold/local-npm-registry",
     "build": "rimraf lib && tsc -p tsconfig.build.json && tsx scripts/copyTsFiles.ts",
@@ -28,8 +27,7 @@
     "local-npm": "lib/index.js"
   },
   "files": [
-    "lib",
-    "src"
+    "lib"
   ],
   "repository": {
     "type": "git",
