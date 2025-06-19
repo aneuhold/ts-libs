@@ -4,7 +4,7 @@ import path from 'path';
 import { promisify } from 'util';
 import { PackageJson } from '../../types/PackageJson.js';
 import ErrorUtils from '../../utils/ErrorUtils.js';
-import ChangelogService from '../ChangelogService.js';
+import ChangelogService from '../ChangelogService/index.js';
 import { DR } from '../DependencyRegistry.js';
 import DependencyService from '../DependencyService.js';
 import FileSystemService from '../FileSystemService/FileSystemService.js';
