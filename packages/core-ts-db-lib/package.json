@@ -15,7 +15,7 @@
     "npm:validate": "tb pkg validateNpm",
     "checkAll": "pnpm build && pnpm lint && pnpm test && pnpm jsr:validate",
     "jsr:publish": "tb pkg publishJsr",
-    "npm:publish": "npm publish --access public",
+    "npm:publish": "tb pkg publishNpm",
     "upgrade:core": "pnpm update '@aneuhold/main-scripts' --latest",
     "upgrade:all": "pnpm up"
   },
@@ -51,7 +51,7 @@
   },
   "devDependencies": {
     "@aneuhold/local-npm-registry": "*",
-    "@aneuhold/main-scripts": "^2.3.0",
+    "@aneuhold/main-scripts": "^2.4.0",
     "@types/node": "^22.15.3",
     "eslint": "^9.26.0",
     "jsr": "^0.13.4",
