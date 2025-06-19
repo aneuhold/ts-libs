@@ -111,28 +111,6 @@ export default class FileSystemService {
     );
   }
 
-  /**
-   * Checks if a file should be ignored based on the provided extensions.
-   * Supports both simple extensions (e.g., '.ts') and multi-part extensions (e.g., '.spec.ts').
-   *
-   * @param filePath the path to the file to check
-   * @param ignoreExtensions array of extensions to ignore
-   */
-  private static shouldIgnoreFile(filePath: string, ignoreExtensions: string[]): boolean {
-    const fileName = path.basename(filePath);
-
-    return ignoreExtensions.some((extension) => {
-      // Handle multi-part extensions like '.spec.ts'
-      if (extension.includes('.', 1)) {
-        return fileName.endsWith(extension);
-      }
-
-      // Handle simple extensions like '.ts'
-      const fileExtension = StringService.getFileNameExtension(filePath);
-      return fileExtension === extension;
-    });
-  }
-
   static async checkOrCreateFolder(folderPath: string): Promise<void> {
     try {
       await access(folderPath);
@@ -264,57 +242,6 @@ export default class FileSystemService {
   }
 
   /**
-   * Internal helper method that traverses up the directory tree looking for files.
-   *
-   * @param startDir - The directory to start searching from
-   * @param fileName - The name of the file to search for
-   * @param stopAt - Optional directory path to stop searching at (defaults to root)
-   * @param findFirst - If true, stops after finding the first file
-   */
-  private static async traverseDirectoryTree(
-    startDir: string,
-    fileName: string,
-    stopAt?: string,
-    findFirst = false
-  ): Promise<string[]> {
-    const results: string[] = [];
-    let currentDir = path.resolve(startDir);
-    const rootDir = stopAt ? path.resolve(stopAt) : path.parse(currentDir).root;
-
-    while (currentDir !== rootDir) {
-      const filePath = path.join(currentDir, fileName);
-
-      try {
-        await access(filePath);
-        results.push(filePath);
-        if (findFirst) {
-          return results;
-        }
-      } catch {
-        // File doesn't exist, continue searching
-      }
-
-      const parentDir = path.dirname(currentDir);
-      if (parentDir === currentDir) {
-        // Reached the root directory
-        break;
-      }
-      currentDir = parentDir;
-    }
-
-    // Check the root/stop directory as well
-    const filePath = path.join(currentDir, fileName);
-    try {
-      await access(filePath);
-      results.push(filePath);
-    } catch {
-      // File not found
-    }
-
-    return results;
-  }
-
-  /**
    * Replaces all occurrences of a string in files within a directory.
    * Supports glob patterns for including/excluding files and handles URL encoding.
    *
@@ -393,5 +320,78 @@ export default class FileSystemService {
     DR.logger.info(
       `${dryRun ? 'Would process' : 'Processed'} ${processedCount} files, ${dryRun ? 'would modify' : 'modified'} ${modifiedCount} files`
     );
+  }
+
+  /**
+   * Internal helper method that traverses up the directory tree looking for files.
+   *
+   * @param startDir - The directory to start searching from
+   * @param fileName - The name of the file to search for
+   * @param stopAt - Optional directory path to stop searching at (defaults to root)
+   * @param findFirst - If true, stops after finding the first file
+   */
+  private static async traverseDirectoryTree(
+    startDir: string,
+    fileName: string,
+    stopAt?: string,
+    findFirst = false
+  ): Promise<string[]> {
+    const results: string[] = [];
+    let currentDir = path.resolve(startDir);
+    const rootDir = stopAt ? path.resolve(stopAt) : path.parse(currentDir).root;
+
+    while (currentDir !== rootDir) {
+      const filePath = path.join(currentDir, fileName);
+
+      try {
+        await access(filePath);
+        results.push(filePath);
+        if (findFirst) {
+          return results;
+        }
+      } catch {
+        // File doesn't exist, continue searching
+      }
+
+      const parentDir = path.dirname(currentDir);
+      if (parentDir === currentDir) {
+        // Reached the root directory
+        break;
+      }
+      currentDir = parentDir;
+    }
+
+    // Check the root/stop directory as well
+    const filePath = path.join(currentDir, fileName);
+    try {
+      await access(filePath);
+      results.push(filePath);
+    } catch {
+      // File not found
+    }
+
+    return results;
+  }
+
+  /**
+   * Checks if a file should be ignored based on the provided extensions.
+   * Supports both simple extensions (e.g., '.ts') and multi-part extensions (e.g., '.spec.ts').
+   *
+   * @param filePath the path to the file to check
+   * @param ignoreExtensions array of extensions to ignore
+   */
+  private static shouldIgnoreFile(filePath: string, ignoreExtensions: string[]): boolean {
+    const fileName = path.basename(filePath);
+
+    return ignoreExtensions.some((extension) => {
+      // Handle multi-part extensions like '.spec.ts'
+      if (extension.includes('.', 1)) {
+        return fileName.endsWith(extension);
+      }
+
+      // Handle simple extensions like '.ts'
+      const fileExtension = StringService.getFileNameExtension(filePath);
+      return fileExtension === extension;
+    });
   }
 }
