@@ -2,7 +2,7 @@
   "name": "@aneuhold/local-npm-registry",
   "author": "Anton G. Neuhold Jr.",
   "license": "MIT",
-  "version": "0.2.4",
+  "version": "0.2.5",
   "description": "Manages local npm package installations and updates across your machine.",
   "packageManager": "pnpm@10.12.1",
   "type": "module",
@@ -13,6 +13,7 @@
     "watch": "nodemon --ignore lib/ -e ts --exec \"tsc --project tsconfig.build.json && tsx ./scripts/copyTsFiles.ts\"",
     "lint": "eslint",
     "test": "vitest run",
+    "prepare": "tb pkg prepare",
     "upgrade:core": "pnpm update '@aneuhold/main-scripts' --latest",
     "jsr:validate": "tb pkg validateJsr",
     "npm:validate": "tb pkg validateNpm --alternative-names local-npm-registry",
@@ -47,26 +48,26 @@
   ],
   "dependencies": {
     "@aneuhold/core-ts-lib": "*",
-    "commander": "^12.1.0",
-    "execa": "^9.5.2",
-    "fs-extra": "^11.2.0",
+    "commander": "^14.0.0",
+    "execa": "^9.6.0",
+    "fs-extra": "^11.3.0",
     "js-yaml": "^4.1.0",
     "proper-lockfile": "^4.1.2",
-    "verdaccio": "^6.1.2"
+    "verdaccio": "^6.1.4"
   },
   "devDependencies": {
-    "@aneuhold/main-scripts": "^2.4.0",
+    "@aneuhold/main-scripts": "^2.5.0",
     "@types/fs-extra": "^11.0.4",
     "@types/js-yaml": "^4.0.9",
-    "@types/node": "^22.15.3",
+    "@types/node": "^22.15.32",
     "@types/proper-lockfile": "^4.1.4",
     "@verdaccio/types": "^10.8.0",
-    "eslint": "^9.26.0",
+    "eslint": "^9.29.0",
     "jsr": "*",
     "prettier": "^3.5.3",
     "rimraf": "^6.0.1",
-    "tsx": "^4.19.4",
+    "tsx": "^4.20.3",
     "typescript": "~5.8.3",
-    "vitest": "^3.2.3"
+    "vitest": "^3.2.4"
   }
 }

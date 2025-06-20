@@ -3,18 +3,10 @@ import path from 'path';
 import { JsonWithVersionProperty } from '../types/JsonWithVersionProperty.js';
 import { PackageJson } from '../types/PackageJson.js';
 import { PackageJsonMap } from '../types/PackageJsonMap.js';
+import { VersionType } from '../types/VersionType.js';
 import ErrorUtils from '../utils/ErrorUtils.js';
 import { DR } from './DependencyRegistry.js';
 import FileSystemService from './FileSystemService/FileSystemService.js';
-
-/**
- * Standard Semantic Versioning bump types.
- */
-export enum VersionType {
-  Patch = 'patch',
-  Minor = 'minor',
-  Major = 'major'
-}
 
 /**
  * A service which can be used to manage dependencies in the current project
@@ -78,7 +70,7 @@ export default class DependencyService {
   }
 
   /**
-   * Bumps the version of the package.json and jsr.json files in the current
+   * Bumps the version of the package.json file in the current
    * working directory.
    *
    * @param versionType The type of version bump (patch, minor, major).
@@ -120,7 +112,6 @@ export default class DependencyService {
 
     const rootDir = process.cwd();
     await updateVersion(path.join(rootDir, 'package.json'));
-    await updateVersion(path.join(rootDir, 'jsr.json'));
   }
 
   /**

@@ -2,7 +2,7 @@
   "name": "@aneuhold/be-ts-lib",
   "author": "Anton G. Neuhold Jr.",
   "license": "MIT",
-  "version": "2.0.80",
+  "version": "2.0.81",
   "description": "A backend TypeScript library used for common functionality in personal backend projects.",
   "packageManager": "pnpm@10.12.1",
   "type": "module",
@@ -11,6 +11,7 @@
     "watch": "nodemon --ignore lib/ -e ts --exec \"tsc --project tsconfig.build.json && tsx ./scripts/copyTsFiles.ts && local-npm publish\"",
     "lint": "eslint",
     "test": "vitest run",
+    "prepare": "tb pkg prepare",
     "jsr:validate": "tb pkg validateJsr",
     "npm:validate": "tb pkg validateNpm",
     "checkAll": "pnpm build && pnpm lint && pnpm test && pnpm jsr:validate",
@@ -47,22 +48,22 @@
   "dependencies": {
     "@aneuhold/core-ts-api-lib": "*",
     "@aneuhold/core-ts-lib": "*",
-    "dotenv": "^16.4.7",
+    "dotenv": "^16.5.0",
     "jsonc-parser": "^3.3.1",
     "node-fetch": "^2",
     "octokit": "^3.1.2"
   },
   "devDependencies": {
     "@aneuhold/local-npm-registry": "*",
-    "@aneuhold/main-scripts": "^2.4.0",
-    "@types/node": "^22.15.3",
+    "@aneuhold/main-scripts": "^2.5.0",
+    "@types/node": "^22.15.32",
     "@types/node-fetch": "^2.6.12",
-    "eslint": "^9.26.0",
+    "eslint": "^9.29.0",
     "jsr": "^0.13.4",
     "prettier": "^3.5.3",
     "rimraf": "^6.0.1",
-    "tsx": "^4.19.4",
+    "tsx": "^4.20.3",
     "typescript": "^5.8.3",
-    "vitest": "^3.1.2"
+    "vitest": "^3.2.4"
   }
 }
