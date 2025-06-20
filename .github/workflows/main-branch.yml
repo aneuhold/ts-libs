@@ -35,7 +35,7 @@ jobs:
       matrix:
         package: ${{ fromJson(needs.detect-version-bumps.outputs.packages-to-publish) }}
     permissions:
-      contents: read
+      contents: write
       id-token: write
 
     steps:
@@ -50,6 +50,7 @@ jobs:
         with:
           package-name: ${{ matrix.package }}
           npm-token: ${{ secrets.NPM_TOKEN }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
 
   summary:
     name: 'Publish Summary'

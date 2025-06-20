@@ -1,6 +1,6 @@
 ---
 mode: 'agent'
-tools: ['changes', 'codebase', 'editFiles', 'fetch', 'findTestFiles', 'githubRepo', 'new', 'problems', 'runCommands', 'runTasks', 'search', 'searchResults', 'terminalLastCommand', 'terminalSelection', 'testFailure', 'usages', 'vscodeAPI', 'github', 'get_commit', 'get_file_contents', 'get_pull_request', 'get_pull_request_diff', 'get_pull_request_files', 'get_tag', 'list_branches', 'list_commits', 'list_pull_requests', 'list_tags']
+tools: ['changes', 'codebase', 'editFiles', 'fetch', 'findTestFiles', 'githubRepo', 'new', 'problems', 'runCommands', 'runTasks', 'search', 'searchResults', 'terminalLastCommand', 'terminalSelection', 'testFailure', 'usages', 'vscodeAPI', 'github', 'get_commit', 'get_file_contents', 'get_me', 'get_pull_request', 'get_pull_request_comments', 'get_pull_request_diff', 'get_pull_request_files', 'get_pull_request_status', 'get_tag', 'list_branches', 'list_commits', 'list_pull_requests', 'list_tags']
 description: 'Updates changelogs in the mono-repo'
 ---
 

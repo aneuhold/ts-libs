@@ -9,7 +9,7 @@
     "watch": "tsx scripts/watchAll.ts",
     "lint": "pnpm -r --stream lint",
     "test": "pnpm -r --stream test",
-    "prepare": "pnpm -r --stream --parallel prepare",
+    "preparePkg": "pnpm -r --stream --parallel preparePkg",
     "upgrade:core": "pnpm update '@aneuhold/*' --latest && pnpm -r --stream upgrade:core"
   },
   "devDependencies": {

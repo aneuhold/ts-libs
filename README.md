@@ -27,10 +27,10 @@ Follow this general flow when making updates to any package in the monorepo:
 
 2. **Make your changes** to the relevant package(s)
 
-3. **Run the prepare script** to bump versions and initialize changelog updates:
+3. **Run the preparePkg script** to bump versions and initialize changelog updates:
 
    ```bash
-   pnpm prepare
+   pnpm preparePkg
    ```
 
 4. **Commit your changes** if there are any remaining uncommitted changes:

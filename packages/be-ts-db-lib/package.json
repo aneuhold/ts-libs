@@ -11,7 +11,7 @@
     "watch": "nodemon --ignore lib/ -e ts --exec \"tsc --project tsconfig.build.json && tsx ./scripts/copyTsFiles.ts && local-npm publish\"",
     "lint": "eslint",
     "test": "vitest run && pnpm validate:dry",
-    "prepare": "tb pkg prepare",
+    "preparePkg": "tb pkg prepare",
     "validate": "tsx ./scripts/validateSchema.ts",
     "validate:dry": "tsx ./scripts/validateSchemaDryRun.ts",
     "jsr:validate": "tb pkg validateJsr",
