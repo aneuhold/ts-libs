@@ -16,6 +16,8 @@ For each package in the mono-repo (`packages/*/CHANGELOG.md`) that has had a ver
 ### 🔥 Removed
 ```
 
-If a header doesn't need to be used, remove it. For each set of bullets, try to keep them concise and easy to read. At most, there should be 7 bullets per section (Added, Changed, etc.)
+- If a header doesn't need to be used, remove it. 
+- For each set of bullets, try to keep them concise and easy to read. At most, there should be 7 bullets per section (Added, Changed, etc.).
+- For any breaking changes, prefix it with `*Breaking Change:*`.
 
-In order to do this efficiently, use the `get_changed_files` tool. Avoid requesting terminal commands to be ran. Try to only use the tools you have available that don't need approval.
+If you need terminal commands to be ran in order to do this, try to request all the commands you will need at once.
