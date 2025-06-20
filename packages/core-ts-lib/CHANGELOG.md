@@ -9,11 +9,22 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### ✅ Added
 
+- New `ChangelogService` with comprehensive changelog management functionality
+- Added `ChangelogFileService` for file operations and validation
+- Added `ChangelogGenerator` for generating changelog entries
+- Added `ChangelogParser` for parsing existing changelogs
+- Added `ChangelogValidator` for validating changelog structure
+- Added `GitTagService` for Git tag operations
+- Added `RepositoryInfoService` for repository information
+- New `DependencyService` for dependency management operations
+- New `StringService` with utility string functions
+- New `VersionType` enum for semantic version types
+- Added `bumpVersionAndInitializeChangelog.ts` script for automated version management
+
 ### 🏗️ Changed
 
-### 🩹 Fixed
-
-### 🔥 Removed
+- Refactored `PackageService` with improved utilities and structure
+- Updated dependencies: `@types/node` to ^22.15.32, `eslint` to ^9.29.0, `tsx` to ^4.20.3, `vitest` to ^3.2.4
 
 
 <!-- Link References -->
