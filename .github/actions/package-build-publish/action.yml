@@ -8,6 +8,9 @@ inputs:
   npm-token:
     description: 'NPM token for authentication'
     required: true
+  github-token:
+    description: 'GitHub token for creating git tags'
+    required: true
   skip-jsr:
     description: 'Skip JSR publishing'
     required: false
@@ -43,7 +46,12 @@ runs:
     - name: Create and push git tag for ${{ inputs.package-name }}
       shell: bash
       working-directory: packages/${{ inputs.package-name }}
+      env:
+        GITHUB_TOKEN: ${{ inputs.github-token }}
       run: |
+        # Configure git to use the GitHub token for authentication
+        git config --global url."https://x-access-token:${GITHUB_TOKEN}@github.com/".insteadOf "https://github.com/"
+
         # Get the package version from package.json
         PACKAGE_VERSION=$(node -p "require('./package.json').version")
 
