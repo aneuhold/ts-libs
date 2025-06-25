@@ -28,7 +28,8 @@
     "local-npm": "lib/index.js"
   },
   "files": [
-    "lib"
+    "lib",
+    "CHANGELOG.md"
   ],
   "repository": {
     "type": "git",
