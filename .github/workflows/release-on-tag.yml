@@ -1,0 +1,116 @@
+name: 'Create Release on Tag'
+
+on:
+  push:
+    tags:
+      - '*-v*' # Match tags like 'package-name-v1.0.0'
+
+jobs:
+  create-release:
+    name: 'Create GitHub Release'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js and pnpm
+        uses: ./.github/actions/setup-node-pnpm
+
+      - name: Extract package info from tag
+        id: package-info
+        run: |
+          TAG_NAME="${GITHUB_REF#refs/tags/}"
+          echo "Tag name: $TAG_NAME"
+
+          # Extract package name and version from tag (format: package-name-v1.0.0)
+          if [[ $TAG_NAME =~ ^(.+)-v([0-9]+\.[0-9]+\.[0-9]+.*)$ ]]; then
+            PACKAGE_NAME="${BASH_REMATCH[1]}"
+            VERSION="${BASH_REMATCH[2]}"
+            
+            echo "Package name: $PACKAGE_NAME"
+            echo "Version: $VERSION"
+            
+            # Set outputs for next steps
+            echo "package-name=$PACKAGE_NAME" >> $GITHUB_OUTPUT
+            echo "version=$VERSION" >> $GITHUB_OUTPUT
+            echo "tag-name=$TAG_NAME" >> $GITHUB_OUTPUT
+          else
+            echo "Error: Tag format does not match expected pattern (package-name-v1.0.0)"
+            exit 1
+          fi
+
+      - name: Check if package exists
+        id: package-check
+        run: |
+          PACKAGE_NAME="${{ steps.package-info.outputs.package-name }}"
+          PACKAGE_DIR="packages/$PACKAGE_NAME"
+
+          if [ -d "$PACKAGE_DIR" ]; then
+            echo "Package directory exists: $PACKAGE_DIR"
+            echo "package-exists=true" >> $GITHUB_OUTPUT
+            echo "package-path=$PACKAGE_DIR" >> $GITHUB_OUTPUT
+          else
+            echo "Error: Package directory does not exist: $PACKAGE_DIR"
+            exit 1
+          fi
+
+      - name: Extract changelog content
+        id: changelog
+        run: |
+          PACKAGE_NAME="${{ steps.package-info.outputs.package-name }}"
+          VERSION="${{ steps.package-info.outputs.version }}"
+
+          echo "Extracting changelog content for $PACKAGE_NAME version $VERSION"
+
+          # Use our TypeScript script to extract changelog content
+          CHANGELOG_FILE="changelog-content.txt"
+
+          # Run the TypeScript script in quiet mode and capture output, handling errors gracefully
+          if npx tsx scripts/extractChangelogForRelease.ts "$PACKAGE_NAME" "$VERSION" --quiet > "$CHANGELOG_FILE" 2>&1; then
+            echo "✅ Successfully extracted changelog content"
+          else
+            echo "⚠️  Failed to extract changelog content, using fallback message"
+            echo "Release notes for $VERSION - See CHANGELOG.md for details." > "$CHANGELOG_FILE"
+          fi
+
+          # Save to environment variable for the release step
+          # Use a delimiter to handle multiline content safely
+          echo "CHANGELOG_CONTENT<<EOF" >> $GITHUB_ENV
+          cat "$CHANGELOG_FILE" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+
+          echo "Extracted changelog content for $PACKAGE_NAME version $VERSION"
+
+          # Clean up
+          rm "$CHANGELOG_FILE"
+
+      - name: Create GitHub Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG_NAME="${{ steps.package-info.outputs.tag-name }}"
+          PACKAGE_NAME="${{ steps.package-info.outputs.package-name }}"
+          VERSION="${{ steps.package-info.outputs.version }}"
+          RELEASE_NAME="${PACKAGE_NAME} v${VERSION}"
+
+          echo "Creating release for $RELEASE_NAME with tag $TAG_NAME"
+
+          # Check if release already exists
+          if gh release view "$TAG_NAME" &>/dev/null; then
+            echo "Release already exists for tag $TAG_NAME, skipping creation"
+            exit 0
+          fi
+
+          # Create the release using GitHub CLI
+          if ! gh release create "$TAG_NAME" \
+            --title "$RELEASE_NAME" \
+            --notes "$CHANGELOG_CONTENT" \
+            --verify-tag; then
+            echo "Failed to create release, but continuing..."
+            exit 0
+          fi
+
+          echo "Successfully created release: $RELEASE_NAME"

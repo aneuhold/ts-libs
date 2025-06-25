@@ -2,7 +2,7 @@
   "name": "@aneuhold/core-ts-lib",
   "author": "Anton G. Neuhold Jr.",
   "license": "MIT",
-  "version": "2.2.12",
+  "version": "2.2.13",
   "description": "A core library for all of my TypeScript projects",
   "packageManager": "pnpm@10.12.1",
   "type": "module",
@@ -23,7 +23,8 @@
   "module": "lib/index.js",
   "types": "lib/index.d.ts",
   "files": [
-    "lib"
+    "lib",
+    "CHANGELOG.md"
   ],
   "exports": {
     ".": {

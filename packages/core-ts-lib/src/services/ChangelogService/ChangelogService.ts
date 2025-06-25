@@ -290,4 +290,66 @@ export default class ChangelogService {
 
     await ChangelogFileService.writeChangelog(newContent, packagePath);
   }
+
+  /**
+   * Extracts changelog content for a specific version to use in release notes.
+   *
+   * @param version The version to extract changelog content for
+   * @param packagePath Optional path to the package directory (defaults to current working directory)
+   * @returns Formatted release notes content for the version
+   * @throws Error if changelog doesn't exist or version entry is not found
+   */
+  static async getChangelogContentForVersion(
+    version: string,
+    packagePath?: string
+  ): Promise<string> {
+    const workingDir = packagePath || process.cwd();
+
+    DR.logger.info(`Extracting changelog content for version ${version}...`);
+
+    const changelogExists = await ChangelogFileService.changelogExists(packagePath);
+    if (!changelogExists) {
+      throw new Error(
+        `No ${CHANGELOG_FILENAME} file found in ${workingDir}. ` +
+          `Cannot extract changelog content for version ${version}.`
+      );
+    }
+
+    try {
+      const changelogContent = await ChangelogFileService.readChangelog(packagePath);
+      const versionEntries = ChangelogParser.parseChangelog(changelogContent);
+
+      const versionEntry = versionEntries.find((entry) => entry.version === version);
+
+      if (!versionEntry) {
+        throw new Error(
+          `No changelog entry found for version ${version}. ` +
+            `Available versions: ${versionEntries.map((entry) => entry.version).join(', ')}`
+        );
+      }
+
+      // Build the release notes content
+      const releaseNotesSections: string[] = [];
+
+      for (const section of versionEntry.sections) {
+        if (section.content && section.content.trim()) {
+          releaseNotesSections.push(`## ${section.type}\n\n${section.content.trim()}`);
+        }
+      }
+
+      if (releaseNotesSections.length === 0) {
+        return `Release notes for ${version} - See CHANGELOG.md for details.`;
+      }
+
+      const releaseNotesContent = releaseNotesSections.join('\n\n');
+
+      DR.logger.success(`Successfully extracted changelog content for version ${version}`);
+
+      return releaseNotesContent;
+    } catch (error) {
+      const errorString = ErrorUtils.getErrorString(error);
+      DR.logger.error(`Failed to extract changelog content: ${errorString}`);
+      throw error;
+    }
+  }
 }
