@@ -9,11 +9,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### ✅ Added
 
-### 🏗️ Changed
-
-### 🩹 Fixed
-
-### 🔥 Removed
+- CHANGELOG.md file now included in published package
+- New `getChangelogContentForVersion` method in ChangelogService for extracting changelog content for releases
 
 ## 🔖 [2.2.12] (2025-06-19)
 
@@ -43,5 +40,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Updated workflow permissions to allow repository write access
 
 <!-- Link References -->
+
 [2.2.13]: https://github.com/aneuhold/ts-libs/compare/core-ts-lib-v2.2.12...core-ts-lib-v2.2.13
 [2.2.12]: https://github.com/aneuhold/ts-libs/releases/tag/core-ts-lib-v2.2.12
