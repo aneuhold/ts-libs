@@ -39,7 +39,8 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/aneuhold/ts-libs.git"
+    "url": "git+https://github.com/aneuhold/ts-libs.git",
+    "directory": "packages/be-ts-db-lib"
   },
   "bugs": {
     "url": "https://github.com/aneuhold/ts-libs/issues"

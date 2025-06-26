@@ -33,7 +33,8 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/aneuhold/ts-libs.git"
+    "url": "git+https://github.com/aneuhold/ts-libs.git",
+    "directory": "packages/local-npm-registry"
   },
   "bugs": {
     "url": "https://github.com/aneuhold/ts-libs/issues"
