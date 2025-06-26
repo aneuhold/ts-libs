@@ -19,6 +19,10 @@ inputs:
     description: 'Skip NPM publishing'
     required: false
     default: 'false'
+  create-release:
+    description: 'Create GitHub release after tagging'
+    required: false
+    default: 'true'
 
 runs:
   using: 'composite'
@@ -70,3 +74,48 @@ runs:
         git push origin "$GIT_TAG"
 
         echo "Successfully created and pushed git tag: $GIT_TAG"
+
+        # Export variables for the next step
+        echo "PACKAGE_VERSION=$PACKAGE_VERSION" >> $GITHUB_ENV
+        echo "PACKAGE_NAME=$PACKAGE_NAME" >> $GITHUB_ENV
+        echo "GIT_TAG=$GIT_TAG" >> $GITHUB_ENV
+        echo "RELEASE_NAME=${PACKAGE_NAME} v${PACKAGE_VERSION}" >> $GITHUB_ENV
+
+    - name: Create GitHub Release for ${{ inputs.package-name }}
+      if: inputs.create-release == 'true'
+      shell: bash
+      working-directory: packages/${{ inputs.package-name }}
+      env:
+        GITHUB_TOKEN: ${{ inputs.github-token }}
+      run: |
+        echo "Creating GitHub release for $RELEASE_NAME with tag $GIT_TAG"
+
+        # Check if release already exists
+        if gh release view "$GIT_TAG" &>/dev/null; then
+          echo "Release already exists for tag $GIT_TAG, skipping creation"
+          exit 0
+        fi
+
+        # Extract changelog content
+        CHANGELOG_FILE="changelog-content.txt"
+        if npx tsx ../../scripts/extractChangelogForRelease.ts "$PACKAGE_NAME" "$PACKAGE_VERSION" --quiet > "$CHANGELOG_FILE" 2>&1; then
+          echo "✅ Successfully extracted changelog content"
+          CHANGELOG_CONTENT=$(cat "$CHANGELOG_FILE")
+        else
+          echo "⚠️  Failed to extract changelog content, using fallback message"
+          CHANGELOG_CONTENT="Release notes for $PACKAGE_VERSION - See CHANGELOG.md for details."
+        fi
+
+        # Create the release using GitHub CLI
+        if ! gh release create "$GIT_TAG" \
+          --title "$RELEASE_NAME" \
+          --notes "$CHANGELOG_CONTENT" \
+          --verify-tag; then
+          echo "Failed to create release, but continuing..."
+          exit 0
+        fi
+
+        echo "Successfully created release: $RELEASE_NAME"
+
+        # Clean up changelog file if it exists
+        [ -f "$CHANGELOG_FILE" ] && rm "$CHANGELOG_FILE"
