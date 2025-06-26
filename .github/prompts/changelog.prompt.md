@@ -19,4 +19,4 @@ For each package in the mono-repo (`packages/*/CHANGELOG.md`) that has had a ver
 - If a header doesn't need to be used, remove it. 
 - For each set of bullets, try to keep them concise and easy to read. At most, there should be 7 bullets per section (Added, Changed, etc.).
 - For any breaking changes, prefix it with `*Breaking Change:*`.
-- If you have the GitHub MCP Server available, prefer to use that to see the diff in the associated pull request for the current branch. If not, you can use terminal commands.
+- Just use the command `gh pr diff | cat` in order to get the changes made on the current branch compared to main. Try to use just this information as well as the current codebase to update the changelogs.
