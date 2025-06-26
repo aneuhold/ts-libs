@@ -7,13 +7,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## 🔖 [2.1.24] (2025-06-26)
 
-### ✅ Added
-
 ### 🏗️ Changed
 
-### 🩹 Fixed
-
-### 🔥 Removed
+- Added directory field to repository configuration in package.json
 
 ## 🔖 [2.1.23] (2025-06-25)
 
@@ -35,6 +31,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Updated workflow permissions to allow repository write access
 
 <!-- Link References -->
+
 [2.1.24]: https://github.com/aneuhold/ts-libs/compare/core-ts-api-lib-v2.1.23...core-ts-api-lib-v2.1.24
 [2.1.23]: https://github.com/aneuhold/ts-libs/compare/core-ts-api-lib-v2.1.22...core-ts-api-lib-v2.1.23
 [2.1.22]: https://github.com/aneuhold/ts-libs/releases/tag/core-ts-api-lib-v2.1.22

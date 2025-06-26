@@ -7,13 +7,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## 🔖 [2.0.77] (2025-06-26)
 
-### ✅ Added
-
 ### 🏗️ Changed
 
-### 🩹 Fixed
-
-### 🔥 Removed
+- Added directory field to repository configuration in package.json
 
 ## 🔖 [2.0.76] (2025-06-25)
 
@@ -35,6 +31,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Updated workflow permissions to allow repository write access
 
 <!-- Link References -->
+
 [2.0.77]: https://github.com/aneuhold/ts-libs/compare/be-ts-db-lib-v2.0.76...be-ts-db-lib-v2.0.77
 [2.0.76]: https://github.com/aneuhold/ts-libs/compare/be-ts-db-lib-v2.0.75...be-ts-db-lib-v2.0.76
 [2.0.75]: https://github.com/aneuhold/ts-libs/releases/tag/be-ts-db-lib-v2.0.75
