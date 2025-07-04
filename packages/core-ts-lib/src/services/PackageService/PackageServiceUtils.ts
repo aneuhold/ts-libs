@@ -153,6 +153,9 @@ export default class PackageServiceUtils {
    * This operation is idempotent - it will only bump if the current version conflicts with
    * the registry, and changelog initialization won't modify existing content.
    *
+   * First checks if there are changes compared to the main branch. If no changes are detected,
+   * the method will exit early with success.
+   *
    * @param versionType The type of version bump (patch, minor, major). Defaults to patch.
    * @param packagePath Optional path to the package directory (defaults to current working directory)
    */
@@ -165,6 +168,18 @@ export default class PackageServiceUtils {
     DR.logger.info(
       `Checking if version bump is needed for ${packageName} (current: ${currentVersion})`
     );
+
+    // First, check if there are changes compared to the main branch
+    const hasChanges = await FileSystemService.hasChangesComparedToMain(packagePath);
+
+    if (!hasChanges) {
+      DR.logger.success(
+        `No changes detected compared to main branch for ${packageName} - skipping version bump and changelog initialization`
+      );
+      return;
+    }
+
+    DR.logger.info(`Changes detected compared to main branch - proceeding with version check`);
 
     // Check if version bump is needed by comparing with npm registry
     const needsBump = await PackageServiceUtils.checkIfVersionBumpNeeded(

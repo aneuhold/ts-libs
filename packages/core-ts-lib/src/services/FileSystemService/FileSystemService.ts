@@ -242,6 +242,51 @@ export default class FileSystemService {
   }
 
   /**
+   * Checks if there are any changes in the current working directory compared to the main branch.
+   * This method is useful for determining if the current branch has diverged from main.
+   *
+   * @param packagePath Optional path to check for changes in a specific package directory
+   * @returns true if there are changes compared to main, false otherwise
+   */
+  static async hasChangesComparedToMain(packagePath?: string): Promise<boolean> {
+    try {
+      // First check if we can access the main branch
+      let gitCommand = 'git diff --name-only origin/main...HEAD';
+
+      try {
+        await execAsync('git show-ref --verify --quiet refs/remotes/origin/main');
+      } catch {
+        // If origin/main doesn't exist, fall back to HEAD~1
+        DR.logger.verbose.info('origin/main not found, comparing to HEAD~1');
+        gitCommand = 'git diff --name-only HEAD~1 HEAD';
+      }
+
+      const { stdout } = await execAsync(gitCommand);
+      const changedFiles = stdout
+        .trim()
+        .split('\n')
+        .filter((line) => line.length > 0);
+
+      // If no specific package path is provided, return true if any files changed
+      if (!packagePath) {
+        return changedFiles.length > 0;
+      }
+
+      // Check if any of the changed files are in the specified package directory
+      const normalizedPackagePath = path.normalize(packagePath);
+      return changedFiles.some((file) => {
+        const normalizedFile = path.normalize(file);
+        return normalizedFile.startsWith(normalizedPackagePath);
+      });
+    } catch (error) {
+      DR.logger.error(
+        `Failed to check for changes compared to main: ${ErrorUtils.getErrorString(error)}`
+      );
+      return false;
+    }
+  }
+
+  /**
    * Replaces all occurrences of a string in files within a directory.
    * Supports glob patterns for including/excluding files and handles URL encoding.
    *
