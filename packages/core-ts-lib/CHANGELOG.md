@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## 🔖 [2.3.1] (2025-07-04)
+
+### ✅ Added
+
+- New `hasChangesComparedToMain` method in `FileSystemService` to check if directory has changes compared to main branch
+- New `getGitDiffCommand` private method in `FileSystemService` to determine appropriate git diff command
+
+### 🏗️ Changed
+
+- Updated `PackageServiceUtils.bumpVersionAndInitializeChangelog` to check for changes before version bumping
+- Package version bump now skips if no changes are detected compared to main branch
+
 ## 🔖 [2.2.14] (2025-06-26)
 
 ### 🏗️ Changed
@@ -47,6 +59,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 <!-- Link References -->
 
+[2.3.2]: https://github.com/aneuhold/ts-libs/compare/core-ts-lib-v2.2.14...core-ts-lib-v2.3.2
 [2.2.14]: https://github.com/aneuhold/ts-libs/compare/core-ts-lib-v2.2.13...core-ts-lib-v2.2.14
 [2.2.13]: https://github.com/aneuhold/ts-libs/compare/core-ts-lib-v2.2.12...core-ts-lib-v2.2.13
 [2.2.12]: https://github.com/aneuhold/ts-libs/releases/tag/core-ts-lib-v2.2.12
