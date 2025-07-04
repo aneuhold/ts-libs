@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## 🔖 [0.2.10] (2025-07-04)
+
+### 🩹 Fixed
+
+- Fixed missing option for execa to address the original `PackageManagerService.install()` problem in version 0.2.9.
+
 ## 🔖 [0.2.9] (2025-07-04)
 
 ### 🩹 Fixed
@@ -39,6 +45,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 <!-- Link References -->
 
+[0.2.10]: https://github.com/aneuhold/ts-libs/compare/local-npm-registry-v0.2.9...local-npm-registry-v0.2.10
 [0.2.9]: https://github.com/aneuhold/ts-libs/compare/local-npm-registry-v0.2.8...local-npm-registry-v0.2.9
 [0.2.8]: https://github.com/aneuhold/ts-libs/compare/local-npm-registry-v0.2.7...local-npm-registry-v0.2.8
 [0.2.7]: https://github.com/aneuhold/ts-libs/compare/local-npm-registry-v0.2.6...local-npm-registry-v0.2.7
