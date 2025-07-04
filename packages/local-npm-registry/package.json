@@ -58,7 +58,7 @@
     "verdaccio": "^6.1.4"
   },
   "devDependencies": {
-    "@aneuhold/main-scripts": "^2.5.0",
+    "@aneuhold/main-scripts": "^2.5.2",
     "@types/fs-extra": "^11.0.4",
     "@types/js-yaml": "^4.0.9",
     "@types/node": "^22.15.32",

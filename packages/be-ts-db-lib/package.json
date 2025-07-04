@@ -61,7 +61,7 @@
   },
   "devDependencies": {
     "@aneuhold/local-npm-registry": "*",
-    "@aneuhold/main-scripts": "^2.5.0",
+    "@aneuhold/main-scripts": "^2.5.2",
     "@types/node": "^22.15.32",
     "@types/node-fetch": "^2.6.12",
     "dotenv": "^16.5.0",

@@ -55,7 +55,7 @@
   },
   "devDependencies": {
     "@aneuhold/local-npm-registry": "*",
-    "@aneuhold/main-scripts": "^2.5.0",
+    "@aneuhold/main-scripts": "^2.5.2",
     "@types/node": "^22.15.32",
     "eslint": "^9.29.0",
     "jsr": "^0.13.4",
