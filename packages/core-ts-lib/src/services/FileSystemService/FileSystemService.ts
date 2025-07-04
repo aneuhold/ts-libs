@@ -242,47 +242,50 @@ export default class FileSystemService {
   }
 
   /**
-   * Checks if there are any changes in the current working directory compared to the main branch.
-   * This method is useful for determining if the current branch has diverged from main.
+   * Checks if there are any changes in a directory compared to the main branch.
    *
-   * @param packagePath Optional path to check for changes in a specific package directory
+   * @param absolutePath Optional absolute path to check for changes. If not provided, uses current working directory.
    * @returns true if there are changes compared to main, false otherwise
+   * @throws Error if not in a git repository
    */
-  static async hasChangesComparedToMain(packagePath?: string): Promise<boolean> {
+  static async hasChangesComparedToMain(absolutePath?: string): Promise<boolean> {
+    const targetDir = absolutePath ?? process.cwd();
+
     try {
-      // First check if we can access the main branch
-      let gitCommand = 'git diff --name-only origin/main...HEAD';
+      // Get git repository root
+      const { stdout: gitRoot } = await execAsync('git rev-parse --show-toplevel', {
+        cwd: targetDir
+      });
+      const repoRoot = gitRoot.trim();
 
-      try {
-        await execAsync('git show-ref --verify --quiet refs/remotes/origin/main');
-      } catch {
-        // If origin/main doesn't exist, fall back to HEAD~1
-        DR.logger.verbose.info('origin/main not found, comparing to HEAD~1');
-        gitCommand = 'git diff --name-only HEAD~1 HEAD';
-      }
+      // Determine git diff command - prefer origin/main, fallback to HEAD~1
+      const gitCommand = await this.getGitDiffCommand(repoRoot);
 
-      const { stdout } = await execAsync(gitCommand);
-      const changedFiles = stdout
-        .trim()
-        .split('\n')
-        .filter((line) => line.length > 0);
+      // Get changed files
+      const { stdout } = await execAsync(gitCommand, { cwd: repoRoot });
+      const changedFiles = stdout.trim().split('\n').filter(Boolean);
 
-      // If no specific package path is provided, return true if any files changed
-      if (!packagePath) {
+      // Get relative path from git root to target directory
+      const relativePath = path.relative(repoRoot, targetDir).replace(/\\/g, '/');
+
+      // If at git root, check for any changes
+      if (!relativePath || relativePath === '.') {
         return changedFiles.length > 0;
       }
 
-      // Check if any of the changed files are in the specified package directory
-      const normalizedPackagePath = path.normalize(packagePath);
-      return changedFiles.some((file) => {
-        const normalizedFile = path.normalize(file);
-        return normalizedFile.startsWith(normalizedPackagePath);
-      });
-    } catch (error) {
-      DR.logger.error(
-        `Failed to check for changes compared to main: ${ErrorUtils.getErrorString(error)}`
+      // Check if any changed files are within the target directory
+      return changedFiles.some(
+        (file) => file.startsWith(`${relativePath}/`) || file === relativePath
       );
-      return false;
+    } catch (error) {
+      const errorMessage = ErrorUtils.getErrorString(error);
+
+      if (errorMessage.includes('not a git repository')) {
+        throw new Error(`Not in a git repository: ${targetDir}`);
+      }
+
+      DR.logger.error(`Failed to check for changes compared to main: ${errorMessage}`);
+      throw error;
     }
   }
 
@@ -365,6 +368,24 @@ export default class FileSystemService {
     DR.logger.info(
       `${dryRun ? 'Would process' : 'Processed'} ${processedCount} files, ${dryRun ? 'would modify' : 'modified'} ${modifiedCount} files`
     );
+  }
+
+  /**
+   * Determines the appropriate git diff command to use.
+   *
+   * @param repoRoot The git repository root directory
+   * @returns The git diff command to use
+   */
+  private static async getGitDiffCommand(repoRoot: string): Promise<string> {
+    try {
+      await execAsync('git show-ref --verify --quiet refs/remotes/origin/main', {
+        cwd: repoRoot
+      });
+      return 'git diff --name-only origin/main...HEAD';
+    } catch {
+      DR.logger.verbose.info('origin/main not found, comparing to HEAD~1');
+      return 'git diff --name-only HEAD~1 HEAD';
+    }
   }
 
   /**

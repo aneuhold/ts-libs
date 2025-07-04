@@ -170,6 +170,7 @@ export default class PackageServiceUtils {
     );
 
     // First, check if there are changes compared to the main branch
+    // The method will auto-detect the current package directory if packagePath is not provided
     const hasChanges = await FileSystemService.hasChangesComparedToMain(packagePath);
 
     if (!hasChanges) {
