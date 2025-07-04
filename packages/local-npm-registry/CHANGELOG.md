@@ -16,7 +16,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### 🩹 Fixed
 
 - Fixed environment variable interference in `PackageManagerService.install()` by cleaning npm*config* variables
-- Removed problematic npm config environment variables from vitest configuration that interfered with local registry tests
 
 ## 🔖 [0.2.8] (2025-06-26)
 
