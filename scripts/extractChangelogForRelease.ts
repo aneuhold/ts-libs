@@ -9,8 +9,15 @@
  * Example: tsx extractChangelogForRelease.ts core-ts-api-lib 2.1.22 --quiet
  */
 
-import { join } from 'path';
-import ChangelogService from '../packages/core-ts-lib/src/services/ChangelogService/ChangelogService.js';
+import { dirname, join, resolve } from 'path';
+import { fileURLToPath } from 'url';
+
+// Get the directory of this script
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+// Import ChangelogService using absolute path from script location
+const ChangelogService = (await import(resolve(__dirname, '../packages/core-ts-lib/src/services/ChangelogService/ChangelogService.js'))).default;
 
 async function extractChangelogForVersion(): Promise<void> {
   const packageName = process.argv[2];
@@ -24,6 +31,16 @@ async function extractChangelogForVersion(): Promise<void> {
   }
   
   const packagePath = join('packages', packageName);
+  
+  // Determine the correct package path based on current working directory
+  let resolvedPackagePath: string;
+  if (process.cwd().endsWith(`packages/${packageName}`)) {
+    // We're already in the package directory (GitHub Actions scenario)
+    resolvedPackagePath = '.';
+  } else {
+    // We're in the root directory
+    resolvedPackagePath = packagePath;
+  }
   
   try {
     if (!isQuiet) {
@@ -49,7 +66,7 @@ async function extractChangelogForVersion(): Promise<void> {
     
     try {
       // Use the ChangelogService to extract changelog content
-      const releaseNotesContent = await ChangelogService.getChangelogContentForVersion(version, packagePath);
+      const releaseNotesContent = await ChangelogService.getChangelogContentForVersion(version, resolvedPackagePath);
       
       // Restore console functions
       if (isQuiet && originalConsoleLog && originalConsoleInfo && originalConsoleError) {
