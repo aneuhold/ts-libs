@@ -242,6 +242,54 @@ export default class FileSystemService {
   }
 
   /**
+   * Checks if there are any changes in a directory compared to the main branch.
+   *
+   * @param absolutePath Optional absolute path to check for changes. If not provided, uses current working directory.
+   * @returns true if there are changes compared to main, false otherwise
+   * @throws Error if not in a git repository
+   */
+  static async hasChangesComparedToMain(absolutePath?: string): Promise<boolean> {
+    const targetDir = absolutePath ?? process.cwd();
+
+    try {
+      // Get git repository root
+      const { stdout: gitRoot } = await execAsync('git rev-parse --show-toplevel', {
+        cwd: targetDir
+      });
+      const repoRoot = gitRoot.trim();
+
+      // Determine git diff command - prefer origin/main, fallback to HEAD~1
+      const gitCommand = await this.getGitDiffCommand(repoRoot);
+
+      // Get changed files
+      const { stdout } = await execAsync(gitCommand, { cwd: repoRoot });
+      const changedFiles = stdout.trim().split('\n').filter(Boolean);
+
+      // Get relative path from git root to target directory
+      const relativePath = path.relative(repoRoot, targetDir).replace(/\\/g, '/');
+
+      // If at git root, check for any changes
+      if (!relativePath || relativePath === '.') {
+        return changedFiles.length > 0;
+      }
+
+      // Check if any changed files are within the target directory
+      return changedFiles.some(
+        (file) => file.startsWith(`${relativePath}/`) || file === relativePath
+      );
+    } catch (error) {
+      const errorMessage = ErrorUtils.getErrorString(error);
+
+      if (errorMessage.includes('not a git repository')) {
+        throw new Error(`Not in a git repository: ${targetDir}`);
+      }
+
+      DR.logger.error(`Failed to check for changes compared to main: ${errorMessage}`);
+      throw error;
+    }
+  }
+
+  /**
    * Replaces all occurrences of a string in files within a directory.
    * Supports glob patterns for including/excluding files and handles URL encoding.
    *
@@ -320,6 +368,24 @@ export default class FileSystemService {
     DR.logger.info(
       `${dryRun ? 'Would process' : 'Processed'} ${processedCount} files, ${dryRun ? 'would modify' : 'modified'} ${modifiedCount} files`
     );
+  }
+
+  /**
+   * Determines the appropriate git diff command to use.
+   *
+   * @param repoRoot The git repository root directory
+   * @returns The git diff command to use
+   */
+  private static async getGitDiffCommand(repoRoot: string): Promise<string> {
+    try {
+      await execAsync('git show-ref --verify --quiet refs/remotes/origin/main', {
+        cwd: repoRoot
+      });
+      return 'git diff --name-only origin/main...HEAD';
+    } catch {
+      DR.logger.verbose.info('origin/main not found, comparing to HEAD~1');
+      return 'git diff --name-only HEAD~1 HEAD';
+    }
   }
 
   /**

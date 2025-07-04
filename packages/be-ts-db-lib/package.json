@@ -2,7 +2,7 @@
   "name": "@aneuhold/be-ts-db-lib",
   "author": "Anton G. Neuhold Jr.",
   "license": "MIT",
-  "version": "2.0.77",
+  "version": "2.0.78",
   "description": "A backend database library meant to actually interact with various databases in personal projects",
   "packageManager": "pnpm@10.12.1",
   "type": "module",
@@ -61,7 +61,7 @@
   },
   "devDependencies": {
     "@aneuhold/local-npm-registry": "*",
-    "@aneuhold/main-scripts": "^2.5.0",
+    "@aneuhold/main-scripts": "^2.5.2",
     "@types/node": "^22.15.32",
     "@types/node-fetch": "^2.6.12",
     "dotenv": "^16.5.0",

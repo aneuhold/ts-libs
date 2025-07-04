@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## 🔖 [2.0.85] (2025-07-04)
+
+### 🏗️ Changed
+
+- Updated dependencies including @aneuhold/core-ts-lib and @aneuhold/main-scripts
+
 ## 🔖 [2.0.84] (2025-06-26)
 
 ### 🏗️ Changed
@@ -32,6 +38,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 <!-- Link References -->
 
+[2.0.85]: https://github.com/aneuhold/ts-libs/compare/be-ts-lib-v2.0.84...be-ts-lib-v2.0.85
 [2.0.84]: https://github.com/aneuhold/ts-libs/compare/be-ts-lib-v2.0.83...be-ts-lib-v2.0.84
 [2.0.83]: https://github.com/aneuhold/ts-libs/compare/be-ts-lib-v2.0.82...be-ts-lib-v2.0.83
 [2.0.82]: https://github.com/aneuhold/ts-libs/releases/tag/be-ts-lib-v2.0.82

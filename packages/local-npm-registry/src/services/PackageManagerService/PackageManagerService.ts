@@ -77,8 +77,22 @@ export class PackageManagerService {
 
     try {
       DR.logger.info(`Running ${packageManagerInfo.displayName} install in ${projectPath}`);
+
+      // Create clean environment by removing npm_config_ variables that interfere with local registry.
+      // This is required because sometimes (like pnpm) the package manager will inject environment
+      // variables that point to the global npm registry, which we want to avoid
+      // when using a local registry.
+      const cleanEnv = { ...process.env };
+      Object.keys(cleanEnv).forEach((key) => {
+        if (key.startsWith('npm_config_')) {
+          // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+          delete cleanEnv[key];
+        }
+      });
+
       await execa(packageManagerInfo.command, ['install'], {
-        cwd: projectPath
+        cwd: projectPath,
+        env: cleanEnv
       });
       DR.logger.info(`${packageManagerInfo.displayName} install completed in ${projectPath}`);
     } catch (error) {
