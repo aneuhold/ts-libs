@@ -89,11 +89,12 @@ export class PackageManagerService {
           delete cleanEnv[key];
         }
       });
-
       await execa(packageManagerInfo.command, ['install'], {
         cwd: projectPath,
-        env: cleanEnv
+        env: cleanEnv,
+        extendEnv: false
       });
+
       DR.logger.info(`${packageManagerInfo.displayName} install completed in ${projectPath}`);
     } catch (error) {
       DR.logger.error(`Error running install in ${projectPath}: ${String(error)}`);
