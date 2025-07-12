@@ -9,11 +9,18 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### ✅ Added
 
+- Added comment header "# Created by local-npm-registry" to generated configuration files
+- Added `isConfigGenerated()` method to detect files created by local-npm-registry
+
 ### 🏗️ Changed
+
+- Enhanced registry configuration restoration to properly handle generated files
+- Improved test coverage for generated configuration file handling
 
 ### 🩹 Fixed
 
-### 🔥 Removed
+- Fixed bug where generated configuration files were not properly identified during restoration
+- Fixed restoration process to correctly remove generated files when original didn't exist
 
 ## 🔖 [0.2.10] (2025-07-04)
 
@@ -53,6 +60,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Updated workflow permissions to allow repository write access
 
 <!-- Link References -->
+
 [0.2.11]: https://github.com/aneuhold/ts-libs/compare/local-npm-registry-v0.2.10...local-npm-registry-v0.2.11
 [0.2.10]: https://github.com/aneuhold/ts-libs/compare/local-npm-registry-v0.2.9...local-npm-registry-v0.2.10
 [0.2.9]: https://github.com/aneuhold/ts-libs/compare/local-npm-registry-v0.2.8...local-npm-registry-v0.2.9

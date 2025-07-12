@@ -9,11 +9,20 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### ✅ Added
 
+- Added new `APIResponse<T>` generic type for standardized API responses
+- Added `GCloudAPIService` for interacting with Google Cloud API endpoints
+- Added `gcloudBackendUrl` field to `DashboardConfig` type
+
 ### 🏗️ Changed
 
-### 🩹 Fixed
+- _Breaking Change:_ Replaced `DOFunctionCallOutput<T>` with `APIResponse<T>` throughout the codebase
+- Updated `APIService.callDashboardAPI()` to use `GCloudAPIService` instead of `DOFunctionService`
+- Updated `APIService.setDashboardAPIUrl()` to set URL on `GCloudAPIService`
+- Enhanced JSDoc comment for `setDashboardAPIUrl()` to clarify URL format requirements
 
 ### 🔥 Removed
+
+- _Breaking Change:_ Removed `DOFunctionCallOutput` type from public exports
 
 ## 🔖 [2.1.25] (2025-07-04)
 
@@ -47,6 +56,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Updated workflow permissions to allow repository write access
 
 <!-- Link References -->
+
 [2.2.0]: https://github.com/aneuhold/ts-libs/compare/core-ts-api-lib-v2.1.25...core-ts-api-lib-v2.2.0
 [2.1.25]: https://github.com/aneuhold/ts-libs/compare/core-ts-api-lib-v2.1.24...core-ts-api-lib-v2.1.25
 [2.1.24]: https://github.com/aneuhold/ts-libs/compare/core-ts-api-lib-v2.1.23...core-ts-api-lib-v2.1.24
