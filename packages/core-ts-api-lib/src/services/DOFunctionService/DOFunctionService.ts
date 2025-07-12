@@ -1,7 +1,7 @@
 import { DR } from '@aneuhold/core-ts-lib';
 import { BSON } from 'bson';
+import { APIResponse } from '../../types/APIResponse.js';
 import {
-  DOFunctionCallOutput,
   DOFunctionInput,
   DOFunctionOutput,
   DOFunctionRawInput,
@@ -48,7 +48,7 @@ export default class DOFunctionService {
   static async handleApiRequest<TInput extends DOFunctionInput, TOutput extends DOFunctionOutput>(
     functionName: string,
     rawInputFromDO: DOFunctionRawInput | TInput,
-    handler: (input: TInput) => Promise<DOFunctionCallOutput<TOutput>>
+    handler: (input: TInput) => Promise<APIResponse<TOutput>>
   ): Promise<DOFunctionRawOutput> {
     DR.logger.info(`[DOFunctionService] handleApiRequest called for "${functionName}".`); // Log entry
     DR.logger.info(`[DOFunctionService] Calling DR.tracer.startSpan for "${functionName}"...`); // Log before startSpan
@@ -61,7 +61,7 @@ export default class DOFunctionService {
           'Content-Type': 'application/octet-stream'
         }
       };
-      const defaultOutput: DOFunctionCallOutput<TOutput> = {
+      const defaultOutput: APIResponse<TOutput> = {
         success: false,
         errors: [],
         data: {} as TOutput
@@ -183,7 +183,7 @@ export default class DOFunctionService {
    * @returns The serialized output as a base64 string.
    */
   private static serializeOutput<TOutput extends DOFunctionOutput>(
-    output: DOFunctionCallOutput<TOutput>
+    output: APIResponse<TOutput>
   ): string {
     const bsonBuffer = BSON.serialize(output);
     return Buffer.from(bsonBuffer).toString('base64');

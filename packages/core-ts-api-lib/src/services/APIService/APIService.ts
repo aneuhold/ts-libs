@@ -1,4 +1,4 @@
-import { DOFunctionCallOutput } from '../DOFunctionService/DOFunction.js';
+import { APIResponse } from '../../types/APIResponse.js';
 import DOFunctionService from '../DOFunctionService/DOFunctionService.js';
 import {
   AuthValidateUserInput,
@@ -23,7 +23,7 @@ export default class APIService {
    */
   static async validateUser(
     input: AuthValidateUserInput
-  ): Promise<DOFunctionCallOutput<AuthValidateUserOutput>> {
+  ): Promise<APIResponse<AuthValidateUserOutput>> {
     const result = await DOFunctionService.authValidateUser.call(input);
     return result;
   }
@@ -46,7 +46,7 @@ export default class APIService {
    */
   static async callDashboardAPI(
     input: ProjectDashboardInput
-  ): Promise<DOFunctionCallOutput<ProjectDashboardOutput>> {
+  ): Promise<APIResponse<ProjectDashboardOutput>> {
     const result = await DOFunctionService.projectDashboard.call(input);
     return result;
   }

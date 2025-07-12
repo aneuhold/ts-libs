@@ -4,6 +4,7 @@
  */
 export type DashboardConfig = {
   projectDashboardFunctionUrl: string;
+  gcloudBackendUrl: string;
   automationUrls: {
     sunLight: string;
     zoomLighting: string;
