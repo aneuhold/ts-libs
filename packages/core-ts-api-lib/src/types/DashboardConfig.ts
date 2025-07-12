@@ -4,6 +4,9 @@
  */
 export type DashboardConfig = {
   projectDashboardFunctionUrl: string;
+  /**
+   * The URL for the GCloud backend API. This should contain the trailing slash.
+   */
   gcloudBackendUrl: string;
   automationUrls: {
     sunLight: string;
