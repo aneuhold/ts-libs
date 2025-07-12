@@ -1,6 +1,5 @@
 import APIService from './services/APIService/APIService.js';
 import {
-  DOFunctionCallOutput,
   DOFunctionRawInput,
   DOFunctionRawOutput
 } from './services/DOFunctionService/DOFunction.js';
@@ -18,6 +17,7 @@ import {
   ProjectDashboardOptions,
   ProjectDashboardOutput
 } from './services/DOFunctionService/functions/projectDashboard.js';
+import { APIResponse } from './types/APIResponse.js';
 import { DashboardConfig } from './types/DashboardConfig.js';
 import { Translation, Translations } from './types/Translations.js';
 
@@ -26,12 +26,12 @@ export { APIService, DOFunctionService };
 
 // Export TypeScript types where needed
 export type {
+  APIResponse,
   AuthCheckPasswordInput,
   AuthCheckPasswordOutput,
   AuthValidateUserInput,
   AuthValidateUserOutput,
   DashboardConfig,
-  DOFunctionCallOutput,
   DOFunctionRawInput,
   DOFunctionRawOutput,
   ProjectDashboardInput,

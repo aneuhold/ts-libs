@@ -1,4 +1,4 @@
-import { DOFunctionCallOutput } from '../DOFunctionService/DOFunction.js';
+import { APIResponse } from '../../types/APIResponse.js';
 import DOFunctionService from '../DOFunctionService/DOFunctionService.js';
 import {
   AuthValidateUserInput,
@@ -8,6 +8,7 @@ import {
   ProjectDashboardInput,
   ProjectDashboardOutput
 } from '../DOFunctionService/functions/projectDashboard.js';
+import GCloudAPIService from '../GCloudAPIService/GCloudAPIService.js';
 
 /**
  * A service for making calls to the backend API for personal projects. This is
@@ -23,7 +24,7 @@ export default class APIService {
    */
   static async validateUser(
     input: AuthValidateUserInput
-  ): Promise<DOFunctionCallOutput<AuthValidateUserOutput>> {
+  ): Promise<APIResponse<AuthValidateUserOutput>> {
     const result = await DOFunctionService.authValidateUser.call(input);
     return result;
   }
@@ -31,10 +32,10 @@ export default class APIService {
   /**
    * Sets the URL for the dashboard API.
    *
-   * @param url - The URL to be set for the dashboard API.
+   * @param url - The URL to be set for the dashboard API. This should include a trailing slash.
    */
   static setDashboardAPIUrl(url: string) {
-    DOFunctionService.projectDashboard.setUrl(url);
+    GCloudAPIService.setUrl(url);
   }
 
   /**
@@ -46,8 +47,7 @@ export default class APIService {
    */
   static async callDashboardAPI(
     input: ProjectDashboardInput
-  ): Promise<DOFunctionCallOutput<ProjectDashboardOutput>> {
-    const result = await DOFunctionService.projectDashboard.call(input);
-    return result;
+  ): Promise<APIResponse<ProjectDashboardOutput>> {
+    return GCloudAPIService.projectDashboard(input);
   }
 }

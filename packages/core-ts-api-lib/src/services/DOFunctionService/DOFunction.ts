@@ -1,4 +1,5 @@
 import { BSON } from 'bson';
+import { APIResponse } from '../../types/APIResponse.js';
 
 /**
  * The input to a Digital Ocean function must always be an object.
@@ -68,15 +69,6 @@ export interface DOFunctionRawOutput {
 }
 
 /**
- * A generic interface representing the output of a Digital Ocean function call.
- */
-export interface DOFunctionCallOutput<TOutput extends DOFunctionOutput> {
-  success: boolean;
-  errors: string[];
-  data: TOutput;
-}
-
-/**
  * Type guard to check if an input object conforms to the DOFunctionRawInput structure.
  *
  * @param input - The input object to check.
@@ -132,7 +124,7 @@ export default abstract class DOFunction<
    * @returns A promise that resolves to the output of the function call, wrapped in {@link DOFunctionCallOutput}.
    * @throws Will throw an error if the URL is not set.
    */
-  async call(input: TInput): Promise<DOFunctionCallOutput<TOutput>> {
+  async call(input: TInput): Promise<APIResponse<TOutput>> {
     if (!this.url) {
       throw new Error(`${this.functionName} URL is not set`);
     }
@@ -154,12 +146,12 @@ export default abstract class DOFunction<
    * @param response - The response to decode.
    * @returns The decoded output.
    */
-  private async decodeResponse(response: Response): Promise<DOFunctionCallOutput<TOutput>> {
+  private async decodeResponse(response: Response): Promise<APIResponse<TOutput>> {
     const isBson = response.headers.get('Content-Type') === 'application/octet-stream';
     if (isBson) {
       const buffer = await response.arrayBuffer();
       const uint8Array = new Uint8Array(buffer);
-      return BSON.deserialize(uint8Array) as DOFunctionCallOutput<TOutput>;
+      return BSON.deserialize(uint8Array) as APIResponse<TOutput>;
     } else {
       // This normally only happens if there is an error
       const result = (await response.json()) as unknown;

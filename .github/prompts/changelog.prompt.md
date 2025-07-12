@@ -1,6 +1,5 @@
 ---
 mode: 'agent'
-tools: ['changes', 'codebase', 'editFiles', 'fetch', 'findTestFiles', 'githubRepo', 'new', 'problems', 'runCommands', 'runTasks', 'search', 'searchResults', 'terminalLastCommand', 'terminalSelection', 'testFailure', 'usages', 'vscodeAPI', 'github', 'get_commit', 'get_file_contents', 'get_me', 'get_pull_request', 'get_pull_request_comments', 'get_pull_request_diff', 'get_pull_request_files', 'get_pull_request_status', 'get_tag', 'list_branches', 'list_commits', 'list_pull_requests', 'list_tags']
 description: 'Updates changelogs in the mono-repo'
 ---
 
@@ -19,4 +18,4 @@ For each package in the mono-repo (`packages/*/CHANGELOG.md`) that has had a ver
 - If a header doesn't need to be used, remove it. 
 - For each set of bullets, try to keep them concise and easy to read. At most, there should be 7 bullets per section (Added, Changed, etc.).
 - For any breaking changes, prefix it with `*Breaking Change:*`.
-- Just use the command `gh pr diff | cat` in order to get the changes made on the current branch compared to main. Try to use just this information as well as the current codebase to update the changelogs.
+- In order to see the differences, use the GitHub Pull Request VS Code Extension.

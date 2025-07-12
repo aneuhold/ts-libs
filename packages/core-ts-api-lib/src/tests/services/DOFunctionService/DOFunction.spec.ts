@@ -1,6 +1,6 @@
 import { BSON } from 'bson';
 import { describe, expect, it } from 'vitest';
-import { DOFunctionCallOutput } from '../../../services/DOFunctionService/DOFunction.js';
+import { APIResponse } from '../../../types/APIResponse.js';
 import {
   EXAMPLE_FUNCTION_URL,
   ExampleFunction,
@@ -14,7 +14,7 @@ describe('DOFunction', () => {
     const exampleFunction = ExampleFunction.getFunction();
 
     const input: ExampleInput = { name: 'John' };
-    const expectedOutput: DOFunctionCallOutput<ExampleOutput> = {
+    const expectedOutput: APIResponse<ExampleOutput> = {
       success: true,
       errors: [],
       data: { greeting: 'Hello, John!' }
