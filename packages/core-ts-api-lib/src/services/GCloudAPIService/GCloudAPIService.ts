@@ -1,4 +1,8 @@
 import { APIResponse } from '../../types/APIResponse.js';
+import {
+  ProjectDashboardInput,
+  ProjectDashboardOutput
+} from '../DOFunctionService/functions/projectDashboard.js';
 
 /**
  * A service for interacting with the Google Cloud API service for personal projects.
@@ -8,26 +12,37 @@ export default class GCloudAPIService {
    * The base URL of the Google Cloud API. For example, `something.com/api/`. It will include
    * the trailing slash.
    */
-  #baseUrl?: string;
+  static #baseUrl?: string;
 
   /**
    * Sets the URL of the Google Cloud API.
    *
    * @param url - The URL to set.
    */
-  setUrl(url: string): void {
+  static setUrl(url: string): void {
     this.#baseUrl = url;
+  }
+
+  /**
+   * Calls the project dashboard endpoint to get, insert, update, or delete dashboard data.
+   *
+   * @param input - The input for the project dashboard function.
+   */
+  static async projectDashboard(
+    input: ProjectDashboardInput
+  ): Promise<APIResponse<ProjectDashboardOutput>> {
+    return this.call<ProjectDashboardInput, ProjectDashboardOutput>('project/dashboard', input);
   }
 
   /**
    * Makes a call to the Google Cloud API.
    *
-   * @param urlPath
+   * @param urlPath - The path to the endpoint.
    * @param input - The input to the endpoint.
    * @returns A promise that resolves to the output of the function call, wrapped in {@link APIResponse}.
    * @throws Will throw an error if the URL is not set.
    */
-  private async call<TInput, TOutput>(
+  private static async call<TInput, TOutput>(
     urlPath: string,
     input: TInput
   ): Promise<APIResponse<TOutput>> {
