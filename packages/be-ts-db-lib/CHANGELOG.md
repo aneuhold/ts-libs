@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## 🔖 [2.0.79] (2025-08-18)
+
+### ✅ Added
+
+- Added `DemoAccountsService` and `DashboardDemoAccountsService` for seeding demo accounts and demo data for dashboard users
+- Utilities to create, reset, and seed demo users with example tasks, collaborators, and user configs
+- Shared and non-shared demo task creation logic for onboarding/testing
+
 ## 🔖 [2.0.78] (2025-07-04)
 
 ### 🏗️ Changed
@@ -38,6 +46,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 <!-- Link References -->
 
+[2.0.79]: https://github.com/aneuhold/ts-libs/compare/be-ts-db-lib-v2.0.78...be-ts-db-lib-v2.0.79
 [2.0.78]: https://github.com/aneuhold/ts-libs/compare/be-ts-db-lib-v2.0.77...be-ts-db-lib-v2.0.78
 [2.0.77]: https://github.com/aneuhold/ts-libs/compare/be-ts-db-lib-v2.0.76...be-ts-db-lib-v2.0.77
 [2.0.76]: https://github.com/aneuhold/ts-libs/compare/be-ts-db-lib-v2.0.75...be-ts-db-lib-v2.0.76
