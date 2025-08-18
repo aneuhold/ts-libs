@@ -8,6 +8,22 @@ import DashboardUserConfigRepository from '../../repositories/dashboard/Dashboar
  */
 export default class DashboardDemoAccountsService {
   /**
+   * Default priorities for known demo tags. If a tag is not listed here,
+   * a fallback priority will be used.
+   */
+  private static readonly TAG_PRIORITY: Record<string, number> = {
+    planning: 9,
+    fun: 8,
+    booking: 7,
+    food: 6,
+    home: 5,
+    bbq: 4,
+    admin: 3,
+    paint: 2,
+    electric: 1
+  };
+
+  /**
    * Seeds the dashboard demo data for two users. This will:
    * - Ensure both users have configs and are collaborators of each other
    * - Reset select config flags (enableDevMode, useConfettiForTasks, catImageOnHomePage)
@@ -25,8 +41,10 @@ export default class DashboardDemoAccountsService {
 
     await this.wipeTasksForUsers([demoUser1Id, demoUser2Id]);
 
+    // Create shared tasks (visible to both users) exactly once
     await this.createExampleTasks(demoUser1Id, demoUser2Id);
-    await this.createExampleTasks(demoUser2Id, demoUser1Id);
+    // Create non-shared tasks for each user
+    await this.createNonSharedTasks(demoUser1Id, demoUser2Id);
   }
 
   /**
@@ -51,6 +69,11 @@ export default class DashboardDemoAccountsService {
     cfg.enableDevMode = true;
     cfg.enabledFeatures.useConfettiForTasks = true;
     cfg.enabledFeatures.catImageOnHomePage = false;
+    // Reset tag settings and seed priorities for demo tags
+    cfg.tagSettings = {};
+    for (const [tag, priority] of Object.entries(this.TAG_PRIORITY)) {
+      cfg.tagSettings[tag] = { priority };
+    }
     if (isNew) {
       await cfgRepo.insertNew(cfg);
     } else {
@@ -77,7 +100,9 @@ export default class DashboardDemoAccountsService {
   }
 
   /**
-   * Creates a task if it doesn't exist (userId + title + optional parent used as key).
+   * Creates a task owned by the specified user. Because we wipe all tasks
+   * for the demo users prior to creation, we don't need to check for
+   * existing tasks and can always insert.
    *
    * @param ownerId The owning user ID
    * @param title The task title
@@ -88,9 +113,11 @@ export default class DashboardDemoAccountsService {
    * @param opts.sharedWith Users the task is shared with
    * @param opts.assignedTo The assigned user
    * @param opts.tags Tags for the owning user
+   * @param opts.startDate Optional start date
+   * @param opts.dueDate Optional due date
    * @param opts.category System category
    */
-  private static async ensureTask(
+  private static async createTask(
     ownerId: ObjectId,
     title: string,
     opts?: {
@@ -100,17 +127,12 @@ export default class DashboardDemoAccountsService {
       sharedWith?: ObjectId[];
       assignedTo?: ObjectId;
       tags?: string[];
+      startDate?: Date;
+      dueDate?: Date;
       category?: string;
     }
   ): Promise<DashboardTask> {
     const taskRepo = DashboardTaskRepository.getRepo();
-    const filter: Partial<DashboardTask> = { userId: ownerId, title };
-    if (opts?.parentTaskId) {
-      filter.parentTaskId = opts.parentTaskId;
-    }
-    const existing = await taskRepo.get(filter);
-    if (existing) return existing;
-
     const task = new DashboardTask(ownerId);
     task.title = title;
     if (opts?.description) task.description = opts.description;
@@ -119,6 +141,8 @@ export default class DashboardDemoAccountsService {
     if (opts?.sharedWith) task.sharedWith = opts.sharedWith;
     if (opts?.assignedTo) task.assignedTo = opts.assignedTo;
     if (opts?.category) task.category = opts.category;
+    if (opts?.startDate) task.startDate = opts.startDate;
+    if (opts?.dueDate) task.dueDate = opts.dueDate;
     task.tags[ownerId.toString()] = opts?.tags ?? [];
 
     const inserted = await taskRepo.insertNew(task);
@@ -126,44 +150,108 @@ export default class DashboardDemoAccountsService {
   }
 
   /**
-   * Example data for each user.
+   * Creates shared demo tasks visible to both users exactly once to avoid duplicates.
    *
-   * @param ownerId The owner of the example tasks
-   * @param collaboratorId The collaborator to share tasks with
+   * @param user1Id The primary owner of some shared tasks
+   * @param user2Id The collaborator for shared tasks
    */
-  private static async createExampleTasks(ownerId: ObjectId, collaboratorId: ObjectId) {
-    // Shared parent task with nested children
-    const parent = await this.ensureTask(ownerId, 'Plan weekend trip', {
+  private static async createExampleTasks(user1Id: ObjectId, user2Id: ObjectId) {
+    // Shared parent task (owned by user1, shared with user2)
+    const parent = await this.createTask(user1Id, 'Plan weekend trip', {
       description: 'Decide destination and plan activities for the weekend.',
-      sharedWith: [collaboratorId],
+      sharedWith: [user2Id],
       tags: ['planning', 'fun']
     });
-    const child1 = await this.ensureTask(ownerId, 'Book hotel', {
+    const child1 = await this.createTask(user1Id, 'Book hotel', {
       parentTaskId: parent._id,
       tags: ['booking']
     });
-    await this.ensureTask(ownerId, 'Create itinerary', {
+    await this.createTask(user1Id, 'Create itinerary', {
       parentTaskId: parent._id,
       tags: ['planning']
     });
-    await this.ensureTask(ownerId, 'Pack bags', { parentTaskId: parent._id });
-    await this.ensureTask(ownerId, 'Buy snacks', {
+    await this.createTask(user1Id, 'Pack bags', { parentTaskId: parent._id });
+    await this.createTask(user1Id, 'Buy snacks', {
       parentTaskId: child1._id,
       completed: true,
       tags: ['food']
     });
 
-    // Completed solo task
-    await this.ensureTask(ownerId, 'Renew car registration', {
+    // Shared task assigned to user2 (owned by user1)
+    await this.createTask(user1Id, 'Buy groceries for BBQ', {
+      sharedWith: [user2Id],
+      assignedTo: user2Id,
+      tags: ['home', 'bbq']
+    });
+
+    // A shared planning task owned by user2
+    await this.createTask(user2Id, 'Plan potluck dinner', {
+      sharedWith: [user1Id],
+      assignedTo: user1Id,
+      tags: ['food', 'planning']
+    });
+  }
+
+  /**
+   * Creates non-shared demo tasks for each user.
+   *
+   * @param user1Id The first user
+   * @param user2Id The second user
+   */
+  private static async createNonSharedTasks(user1Id: ObjectId, user2Id: ObjectId) {
+    const now = new Date();
+    const futureDue = new Date(now.getTime());
+    futureDue.setMonth(futureDue.getMonth() + 4);
+    const pastDue = new Date(now.getTime());
+    const pastDueStart = new Date(now.getTime());
+    pastDue.setDate(pastDue.getDate() - 7);
+    pastDueStart.setDate(pastDueStart.getDate() - 14);
+
+    // User 1: A completed solo task
+    await this.createTask(user1Id, 'Renew car registration', {
       completed: true,
       tags: ['admin']
     });
 
-    // Shared task assigned to collaborator
-    await this.ensureTask(ownerId, 'Buy groceries for BBQ', {
-      sharedWith: [collaboratorId],
-      assignedTo: collaboratorId,
-      tags: ['home', 'bbq']
+    // User 2: Own parent task with subtasks (not shared)
+    const u2Parent = await this.createTask(user2Id, 'Home improvement project', {
+      description: 'Small updates around the house.',
+      tags: ['home']
+    });
+    await this.createTask(user2Id, 'Paint living room walls', {
+      parentTaskId: u2Parent._id,
+      completed: true,
+      tags: ['paint']
+    });
+    await this.createTask(user2Id, 'Replace light fixtures', {
+      parentTaskId: u2Parent._id,
+      tags: ['electric']
+    });
+
+    // Root task with a future due date (>= 4 months out)
+    await this.createTask(user1Id, 'Schedule annual physical', {
+      description: 'Book an appointment and add to calendar.',
+      dueDate: futureDue,
+      tags: ['admin']
+    });
+    await this.createTask(user2Id, 'Schedule annual physical', {
+      description: 'Book an appointment and add to calendar.',
+      dueDate: futureDue,
+      tags: ['admin']
+    });
+
+    // Past-due task
+    await this.createTask(user1Id, 'Submit expense report', {
+      description: 'Collect receipts and submit to finance.',
+      startDate: pastDueStart,
+      dueDate: pastDue,
+      tags: ['admin']
+    });
+    await this.createTask(user2Id, 'Submit expense report', {
+      description: 'Collect receipts and submit to finance.',
+      startDate: pastDueStart,
+      dueDate: pastDue,
+      tags: ['admin']
     });
   }
 }
