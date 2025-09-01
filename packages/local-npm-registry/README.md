@@ -8,7 +8,7 @@
 
 <div align="center">
   <picture>
-    <img alt="Next.js logo" src="./docs/images/local-npm-registry-cropped.png" height="200">
+    <img alt="local-npm-registry logo" src="https://i.imgur.com/94XsnCg.png" height="200">
   </picture>
 </div>
 
