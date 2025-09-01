@@ -6,6 +6,12 @@
 [![NPM](https://img.shields.io/npm/v/%40aneuhold%2Flocal-npm-registry?logo=npm&label=NPM)](https://www.npmjs.com/package/@aneuhold/local-npm-registry)
 [![License](https://img.shields.io/github/license/aneuhold/ts-libs)](https://github.com/aneuhold/ts-libs/blob/main/LICENSE)
 
+<div align="center">
+  <picture>
+    <img alt="local-npm-registry logo" src="https://i.imgur.com/94XsnCg.png" height="200">
+  </picture>
+</div>
+
 🚀 **Supercharge your local development workflow!** This CLI tool manages local npm package installations as if they were published, making it effortless to test changes across multiple projects without the hassle of publishing to npm or linking packages manually.
 
 ## 📦 Installation
