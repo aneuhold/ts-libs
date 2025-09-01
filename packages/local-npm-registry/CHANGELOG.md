@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## 🔖 [0.2.12] (2025-09-01)
+
+### ✅ Added
+
+- Added a project image to the README for improved documentation and visual identity.
+
 ## 🔖 [0.2.11] (2025-07-12)
 
 ### ✅ Added
@@ -61,6 +67,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 <!-- Link References -->
 
+[0.2.12]: https://github.com/aneuhold/ts-libs/compare/local-npm-registry-v0.2.11...local-npm-registry-v0.2.12
 [0.2.11]: https://github.com/aneuhold/ts-libs/compare/local-npm-registry-v0.2.10...local-npm-registry-v0.2.11
 [0.2.10]: https://github.com/aneuhold/ts-libs/compare/local-npm-registry-v0.2.9...local-npm-registry-v0.2.10
 [0.2.9]: https://github.com/aneuhold/ts-libs/compare/local-npm-registry-v0.2.8...local-npm-registry-v0.2.9
