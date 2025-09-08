@@ -11,6 +11,7 @@ export type DashboardConfig = {
   automationUrls: {
     sunLight: string;
     zoomLighting: string;
+    lowLightsUpstairs: string;
     bedTimeButStillWatchingShows: string;
     bedTime: string;
     sunrise: string;
