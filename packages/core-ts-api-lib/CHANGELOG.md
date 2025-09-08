@@ -9,11 +9,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### ✅ Added
 
-### 🏗️ Changed
-
-### 🩹 Fixed
-
-### 🔥 Removed
+- Added new automation URL `lowLightsUpstairs` to `DashboardConfig.automationUrls` type.
 
 ## 🔖 [2.2.0] (2025-07-12)
 
@@ -66,6 +62,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Updated workflow permissions to allow repository write access
 
 <!-- Link References -->
+
 [2.2.1]: https://github.com/aneuhold/ts-libs/compare/core-ts-api-lib-v2.2.0...core-ts-api-lib-v2.2.1
 [2.2.0]: https://github.com/aneuhold/ts-libs/compare/core-ts-api-lib-v2.1.25...core-ts-api-lib-v2.2.0
 [2.1.25]: https://github.com/aneuhold/ts-libs/compare/core-ts-api-lib-v2.1.24...core-ts-api-lib-v2.1.25
