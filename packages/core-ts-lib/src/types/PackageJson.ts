@@ -1,5 +1,9 @@
 import { JsonWithVersionProperty } from './JsonWithVersionProperty.js';
 
+/**
+ * Represents the contents of a `package.json` file, including dependencies and metadata.
+ * Extends JsonWithVersionProperty for version tracking.
+ */
 export interface PackageJson extends JsonWithVersionProperty {
   name: string;
   packageManager?: string;
