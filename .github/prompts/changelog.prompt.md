@@ -1,6 +1,6 @@
 ---
 mode: 'agent'
-tools: ['codebase', 'usages', 'vscodeAPI', 'problems', 'searchResults', 'editFiles', 'search', 'runTasks', 'activePullRequest']
+tools: ['get_commit', 'get_file_contents', 'list_branches', 'list_commits', 'list_pull_requests', 'search_pull_requests', 'editFiles', 'search', 'runTasks', 'usages', 'vscodeAPI', 'problems', 'pull_request_read']
 description: 'Updates changelogs in the mono-repo'
 model: GPT-4.1
 ---
