@@ -67,7 +67,6 @@ jobs:
         uses: ./.github/actions/package-test-validate
         with:
           package-name: ${{ matrix.package }}
-          npm-token: ${{ secrets.NPM_TOKEN }}
           github-token: ${{ secrets.CONFIG_GITHUB_TOKEN }}
 
   status-check:

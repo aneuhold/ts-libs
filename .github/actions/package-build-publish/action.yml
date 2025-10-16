@@ -5,9 +5,6 @@ inputs:
   package-name:
     description: 'Name of the package to build and publish'
     required: true
-  npm-token:
-    description: 'NPM token for authentication'
-    required: true
   github-token:
     description: 'GitHub token for creating git tags'
     required: true
@@ -35,11 +32,6 @@ runs:
       if: inputs.skip-jsr != 'true'
       shell: bash
       run: pnpm --filter ${{ inputs.package-name }} jsr:publish
-
-    - name: Add Auth Token for npm
-      if: inputs.skip-npm != 'true'
-      shell: bash
-      run: echo "//registry.npmjs.org/:_authToken=${{ inputs.npm-token }}" > ~/.npmrc
 
     - name: Publish ${{ inputs.package-name }} to NPM
       if: inputs.skip-npm != 'true'

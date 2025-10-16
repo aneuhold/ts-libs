@@ -36,6 +36,7 @@ jobs:
         package: ${{ fromJson(needs.detect-version-bumps.outputs.packages-to-publish) }}
     permissions:
       contents: write
+      # Required for actions that use OIDC to access other resources (like npm publish)
       id-token: write
 
     steps:
@@ -49,7 +50,6 @@ jobs:
         uses: ./.github/actions/package-build-publish
         with:
           package-name: ${{ matrix.package }}
-          npm-token: ${{ secrets.NPM_TOKEN }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
   summary:
