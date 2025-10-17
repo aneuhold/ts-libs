@@ -1,12 +1,6 @@
 name: 'Setup Node.js and pnpm'
 description: 'Setup Node.js, pnpm, and install dependencies with caching'
 
-inputs:
-  node-version:
-    description: 'Node.js version to use'
-    required: false
-    default: '20'
-
 runs:
   using: 'composite'
   steps:
@@ -16,8 +10,16 @@ runs:
     - name: Setup Node.js
       uses: actions/setup-node@v4
       with:
-        node-version: ${{ inputs.node-version }}
+        node-version: 'lts/*'
+        # It seems this may be required for OIDC to work properly, because it pulls in something
+        # related to auth according to the documentation: https://github.com/actions/setup-node
+        registry-url: 'https://registry.npmjs.org'
         cache: 'pnpm'
+
+    - name: Update NPM to latest
+      # This needs to be 11.5.1 or later for OIDC support
+      shell: bash
+      run: npm install -g npm@latest
 
     - name: Setup yarn classic and yarn berry
       shell: bash
