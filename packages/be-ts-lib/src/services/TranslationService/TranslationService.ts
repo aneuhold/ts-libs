@@ -12,7 +12,7 @@ import GitHubService from '../GitHubService.js';
  */
 export enum TranslationSource {
   /** Translations for the dashboard project */
-  dashboard = 'dashboard'
+  Dashboard = 'dashboard'
 }
 
 /**

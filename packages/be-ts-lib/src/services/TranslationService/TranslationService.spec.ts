@@ -9,7 +9,7 @@ describe('TranslationService', () => {
      * set.
      */
     it('should load translations from GitHub', async () => {
-      const translations = await TranslationService.getTranslations(TranslationSource.dashboard);
+      const translations = await TranslationService.getTranslations(TranslationSource.Dashboard);
       expect(translations['test-translation'].value).toEqual('something');
     });
   });
