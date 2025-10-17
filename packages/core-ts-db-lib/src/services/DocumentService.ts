@@ -18,7 +18,6 @@ export default class DocumentService {
    * Creates a deep copy of an object using EJSON serialization.
    *
    * @param obj - The object to copy.
-   * @returns A deep copy of the provided object.
    */
   static deepCopy<T extends object>(obj: T): T {
     return EJSON.parse(EJSON.stringify(obj, { relaxed: false })) as T;

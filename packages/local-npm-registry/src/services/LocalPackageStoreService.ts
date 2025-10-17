@@ -52,7 +52,7 @@ export type LocalPackageStore = {
  * Regular expression pattern for matching timestamp suffixes on package versions.
  *
  * Matches versions ending with a hyphen followed by exactly 17 digits,
- * which represents the millisecond timestamp format used by this tool.
+ * which represents the timestamp format used by this tool.
  */
 export const timestampPattern = /-\d{17}$/;
 
