@@ -90,7 +90,8 @@ runs:
 
         # Extract changelog content
         CHANGELOG_FILE="changelog-content.txt"
-        if npx tsx ../../scripts/extractChangelogForRelease.ts "$PACKAGE_NAME" "$PACKAGE_VERSION" --quiet > "$CHANGELOG_FILE" 2>&1; then
+        # Only redirect stdout to avoid capturing npm warnings from stderr
+        if npx tsx ../../scripts/extractChangelogForRelease.ts "$PACKAGE_NAME" "$PACKAGE_VERSION" --quiet > "$CHANGELOG_FILE"; then
           echo "✅ Successfully extracted changelog content"
           CHANGELOG_CONTENT=$(cat "$CHANGELOG_FILE")
         else
