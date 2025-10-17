@@ -1,9 +1,12 @@
 import { Document, ObjectId } from 'bson';
 
 /**
- * A base document which other types that will be stored in a document DB can
- * inherit from.
+ * Base class for all document types stored in a document database.
+ *
+ * Provides the common `_id` field required by MongoDB and other
+ * document databases. All document types should extend this class.
  */
 export default abstract class BaseDocument implements Document {
+  /** The unique identifier for this document */
   _id: ObjectId = new ObjectId();
 }

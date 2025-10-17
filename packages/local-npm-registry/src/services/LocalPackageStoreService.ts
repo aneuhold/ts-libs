@@ -4,7 +4,10 @@ import path from 'path';
 import { ConfigService } from './ConfigService.js';
 
 /**
- * Defines the structure for a subscriber to a package.
+ * Represents a project that subscribes to a local package.
+ *
+ * Tracks the subscriber's location and their original version requirement
+ * for the package, enabling proper restoration when unsubscribing.
  */
 export type PackageSubscriber = {
   /** The absolute path to the project directory that subscribes to this package */
@@ -14,7 +17,10 @@ export type PackageSubscriber = {
 };
 
 /**
- * Defines the structure for a package entry in the local store.
+ * Represents a package entry in the local package store.
+ *
+ * Contains all metadata needed to manage a locally published package,
+ * including version information, subscribers, and publish configuration.
  */
 export type PackageEntry = {
   /** The original version from package.json before timestamp modifications */
@@ -30,14 +36,24 @@ export type PackageEntry = {
 };
 
 /**
- * Defines the structure for the local package store.
+ * The structure of the local package store file.
+ *
+ * Maintains a registry of all locally published packages and their
+ * associated metadata in a JSON file stored in the user's home directory.
  */
 export type LocalPackageStore = {
+  /** Map of package names to their package entries */
   packages: {
     [packageName: string]: PackageEntry | undefined;
   };
 };
 
+/**
+ * Regular expression pattern for matching timestamp suffixes on package versions.
+ *
+ * Matches versions ending with a hyphen followed by exactly 17 digits,
+ * which represents the timestamp format used by this tool.
+ */
 export const timestampPattern = /-\d{17}$/;
 
 const STORE_FILE_NAME = 'local-package-store.json';

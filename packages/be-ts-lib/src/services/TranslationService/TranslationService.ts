@@ -5,10 +5,14 @@ import { parse } from 'jsonc-parser';
 import GitHubService from '../GitHubService.js';
 
 /**
- * An enum which defines the sources of translations which can be loaded.
+ * Defines the available sources for translation files.
+ *
+ * Each source corresponds to a specific project or module that has
+ * its own translation file stored in the translations repository.
  */
 export enum TranslationSource {
-  dashboard = 'dashboard'
+  /** Translations for the dashboard project */
+  Dashboard = 'dashboard'
 }
 
 /**
