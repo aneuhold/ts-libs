@@ -2,7 +2,9 @@ import { EJSON } from 'bson';
 import BaseDocument from '../documents/BaseDocument.js';
 
 /**
- * A utility type for a map of documents.
+ * Utility type for mapping document IDs to their corresponding documents.
+ *
+ * @template T - The type of document being mapped, must extend BaseDocument.
  */
 export type DocumentMap<T extends BaseDocument> = {
   [docId: string]: T | undefined;
@@ -12,6 +14,12 @@ export type DocumentMap<T extends BaseDocument> = {
  * A service for low-level utilities related to documents.
  */
 export default class DocumentService {
+  /**
+   * Creates a deep copy of an object using EJSON serialization.
+   *
+   * @param obj - The object to copy.
+   * @returns A deep copy of the provided object.
+   */
   static deepCopy<T extends object>(obj: T): T {
     return EJSON.parse(EJSON.stringify(obj, { relaxed: false })) as T;
   }
