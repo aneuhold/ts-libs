@@ -7,13 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## 🔖 [2.3.3] (2025-10-16)
 
-### ✅ Added
-
 ### 🏗️ Changed
 
-### 🩹 Fixed
-
-### 🔥 Removed
+- Added JSDoc comments to all public types in `src/types` for improved documentation and clarity
+- Updated `JsonWithVersionProperty`, `PackageJson`, `PackageJsonInfo`, and `PackageJsonMap` interfaces with detailed descriptions
 
 ## 🔖 [2.3.2] (2025-07-04)
 
@@ -68,6 +65,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Updated workflow permissions to allow repository write access
 
 <!-- Link References -->
+
 [2.3.3]: https://github.com/aneuhold/ts-libs/compare/core-ts-lib-v2.3.2...core-ts-lib-v2.3.3
 [2.3.2]: https://github.com/aneuhold/ts-libs/compare/core-ts-lib-v2.2.14...core-ts-lib-v2.3.2
 [2.2.14]: https://github.com/aneuhold/ts-libs/compare/core-ts-lib-v2.2.13...core-ts-lib-v2.2.14

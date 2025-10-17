@@ -1,6 +1,6 @@
 ---
 mode: 'agent'
-tools: ['get_commit', 'get_file_contents', 'list_branches', 'list_commits', 'list_pull_requests', 'search_pull_requests', 'editFiles', 'search', 'runTasks', 'usages', 'vscodeAPI', 'problems', 'pull_request_read']
+tools: ['get_commit', 'get_file_contents', 'list_branches', 'list_commits', 'list_pull_requests', 'search_pull_requests', 'editFiles', 'search', 'runCommands', 'runTasks', 'usages', 'vscodeAPI', 'problems', 'pull_request_read']
 description: 'Updates changelogs in the mono-repo'
 model: GPT-4.1
 ---
@@ -20,4 +20,5 @@ For each package in the mono-repo (`packages/*/CHANGELOG.md`) that has had a ver
 - If a header doesn't need to be used, remove it. 
 - For each set of bullets, try to keep them concise and easy to read. At most, there should be 7 bullets per section (Added, Changed, etc.).
 - For any breaking changes, prefix it with `*Breaking Change:*`.
-- In order to see the differences, use the GitHub Pull Request VS Code Extension.
+
+In order to see the differences, use the command `git fetch origin main && git diff origin/main...HEAD`.
