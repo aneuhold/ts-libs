@@ -21,9 +21,6 @@ inputs:
     description: 'Skip NPM dry run'
     required: false
     default: 'false'
-  npm-token:
-    description: 'NPM token for authentication'
-    required: false
   github-token:
     description: 'GitHub token for config'
     required: false
@@ -51,11 +48,6 @@ runs:
       if: inputs.skip-jsr-validate != 'true'
       shell: bash
       run: pnpm --filter ${{ inputs.package-name }} jsr:validate
-
-    - name: Add Auth Token for npm
-      if: inputs.skip-npm-dry-run != 'true' && inputs.npm-token != ''
-      shell: bash
-      run: echo "//registry.npmjs.org/:_authToken=${{ inputs.npm-token }}" > ~/.npmrc
 
     - name: Dry run NPM publish for ${{ inputs.package-name }}
       if: inputs.skip-npm-dry-run != 'true'

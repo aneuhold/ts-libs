@@ -25,28 +25,28 @@ Follow this general flow when making updates to any package in the monorepo:
    git checkout -b your-feature-name
    ```
 
-2. **Make your changes** to the relevant package(s)
+1. **Make your changes** to the relevant package(s)
 
-3. **Run the preparePkg script** to bump versions and initialize changelog updates:
+1. **Run the preparePkg script** to bump versions and initialize changelog updates:
 
    ```bash
    pnpm preparePkg
    ```
 
-4. **Commit your changes** if there are any remaining uncommitted changes:
+1. **Commit your changes** if there are any remaining uncommitted changes:
 
    ```bash
    git add .
    git commit -m "Your commit message"
    ```
 
-5. **Push your branch** and create a pull request (it helps to do this first for Copilot):
+1. **Push your branch** and create a pull request (it helps to do this first for Copilot):
 
    ```bash
    git push
    ```
 
-6. **Generate changelogs** using the Copilot prompt:
+1. **Generate changelogs** using the Copilot prompt:
 
    ```
    /changelog
@@ -54,6 +54,6 @@ Follow this general flow when making updates to any package in the monorepo:
 
    This will automatically populate the changelog entries for all modified packages.
 
-7. **Merge the PR** once all checks pass. Updated packages will automatically publish to NPM and JSR registries.
+1. **Merge the PR** once all checks pass. Updated packages will automatically publish to NPM and JSR registries.
 
 </details>
