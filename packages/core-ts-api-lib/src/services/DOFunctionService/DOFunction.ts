@@ -122,7 +122,7 @@ export default abstract class DOFunction<
    *
    * @param input - The input to the function.
    * @returns A promise that resolves to the output of the function call, wrapped in {@link DOFunctionCallOutput}.
-   * @throws Will throw an error if the URL is not set.
+   * @throws {Error} Will throw an error if the URL is not set.
    */
   async call(input: TInput): Promise<APIResponse<TOutput>> {
     if (!this.url) {
