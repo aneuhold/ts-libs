@@ -8,7 +8,7 @@ runs:
       uses: pnpm/action-setup@v4
 
     - name: Setup Node.js
-      uses: actions/setup-node@v4
+      uses: actions/setup-node@v6
       with:
         node-version: 'lts/*'
         # It seems this may be required for OIDC to work properly, because it pulls in something
