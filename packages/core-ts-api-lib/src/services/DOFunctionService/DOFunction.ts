@@ -135,7 +135,7 @@ export default abstract class DOFunction<
         'Content-Type': 'application/octet-stream',
         Accept: 'application/octet-stream'
       },
-      body: BSON.serialize(input)
+      body: Buffer.from(BSON.serialize(input))
     });
     return await this.decodeResponse(response);
   }
