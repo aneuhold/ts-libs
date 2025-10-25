@@ -46,14 +46,14 @@
     "Node.js"
   ],
   "devDependencies": {
-    "@types/node": "^22.15.32",
-    "eslint": "^9.29.0",
-    "jsr": "*",
+    "@types/node": "^24.9.1",
+    "eslint": "^9.38.0",
+    "jsr": "^0.13.5",
     "nodemon": "^3.1.10",
-    "prettier": "^3.5.3",
+    "prettier": "^3.6.2",
     "rimraf": "^6.0.1",
-    "tsx": "^4.20.3",
-    "typescript": "~5.8.3",
-    "vitest": "^3.2.4"
+    "tsx": "^4.20.6",
+    "typescript": "~5.9.3",
+    "vitest": "^4.0.3"
   }
 }

@@ -50,18 +50,18 @@
   ],
   "dependencies": {
     "@aneuhold/core-ts-lib": "*",
-    "bson": "^6.2.0"
+    "bson": "^6.10.4"
   },
   "devDependencies": {
     "@aneuhold/local-npm-registry": "*",
-    "@aneuhold/main-scripts": "^2.5.2",
-    "@types/node": "^22.15.32",
-    "eslint": "^9.29.0",
-    "jsr": "^0.13.4",
-    "prettier": "^3.5.3",
+    "@aneuhold/main-scripts": "^2.6.1",
+    "@types/node": "^24.9.1",
+    "eslint": "^9.38.0",
+    "jsr": "^0.13.5",
+    "prettier": "^3.6.2",
     "rimraf": "^6.0.1",
-    "tsx": "^4.20.3",
-    "typescript": "^5.8.3",
-    "vitest": "^3.2.4"
+    "tsx": "^4.20.6",
+    "typescript": "^5.9.3",
+    "vitest": "^4.0.3"
   }
 }
