@@ -366,7 +366,7 @@ export class VerdaccioService {
       storage: verdaccioDirectory,
       uplinks: baseUplinks,
       packages: basePackages,
-      logs: {
+      log: {
         type: 'stdout',
         format: 'pretty',
         level: isVerbose ? 'info' : 'fatal'

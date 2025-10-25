@@ -5,11 +5,9 @@ export default defineProject({
     exclude: ['lib/**/*', 'node_modules/**/*', 'tmp/**/*'],
     testTimeout: 10000, // 10 seconds per test for integration tests
     globalSetup: ['./test-utils/globalSetup.ts'],
-    poolOptions: {
-      forks: {
-        singleFork: true // Use a single fork for tests to avoid issues with local registry
-      }
-    },
+    // A lot of the tests in local-npm-registry depend on the entire system and configuration
+    // there, so we run them serially to avoid conflicts.
+    fileParallelism: false,
     env: {
       // Resolve yarn issues when running in CI
       YARN_ENABLE_HARDENED_MODE: '0',

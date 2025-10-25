@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## 🔖 [2.0.85] (2025-10-25)
+
+### 🏗️ Changed
+
+- Updated dependencies in package.json for compatibility and security improvements
+
 ## 🔖 [2.0.84] (2025-10-17)
 
 ### 🏗️ Changed
@@ -44,6 +50,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 <!-- Link References -->
 
+[2.0.85]: https://github.com/aneuhold/ts-libs/compare/core-ts-db-lib-v2.0.84...core-ts-db-lib-v2.0.85
 [2.0.84]: https://github.com/aneuhold/ts-libs/compare/core-ts-db-lib-v2.0.83...core-ts-db-lib-v2.0.84
 [2.0.83]: https://github.com/aneuhold/ts-libs/compare/core-ts-db-lib-v2.0.82...core-ts-db-lib-v2.0.83
 [2.0.82]: https://github.com/aneuhold/ts-libs/compare/core-ts-db-lib-v2.0.81...core-ts-db-lib-v2.0.82

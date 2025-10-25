@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## 🔖 [2.2.3] (2025-10-25)
+
+### 🏗️ Changed
+
+- Updated dependencies in package.json for compatibility and security improvements
+
 ## 🔖 [2.2.2] (2025-10-17)
 
 ### 🏗️ Changed
@@ -69,6 +75,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 <!-- Link References -->
 
+[2.2.3]: https://github.com/aneuhold/ts-libs/compare/core-ts-api-lib-v2.2.2...core-ts-api-lib-v2.2.3
 [2.2.2]: https://github.com/aneuhold/ts-libs/compare/core-ts-api-lib-v2.2.1...core-ts-api-lib-v2.2.2
 [2.2.1]: https://github.com/aneuhold/ts-libs/compare/core-ts-api-lib-v2.2.0...core-ts-api-lib-v2.2.1
 [2.2.0]: https://github.com/aneuhold/ts-libs/compare/core-ts-api-lib-v2.1.25...core-ts-api-lib-v2.2.0

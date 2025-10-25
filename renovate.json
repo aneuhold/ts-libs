@@ -1,4 +1,6 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": ["github>aneuhold/renovate-config:tslib"]
+  "extends": ["github>aneuhold/renovate-config:tslib"],
+  // Disabled for now unless I can find some way to completely automate change logs
+  "enabled": false
 }
