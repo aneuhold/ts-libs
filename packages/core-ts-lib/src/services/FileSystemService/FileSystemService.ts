@@ -1,5 +1,5 @@
 import { exec } from 'child_process';
-import { access, appendFile, cp, mkdir, readFile, readdir, rm, stat, writeFile } from 'fs/promises';
+import { access, appendFile, cp, mkdir, readFile, readdir, rm, writeFile } from 'fs/promises';
 import path from 'path';
 import { promisify } from 'util';
 import ErrorUtils from '../../utils/ErrorUtils.js';
@@ -140,21 +140,21 @@ export default class FileSystemService {
    * @param dirPath the directory path to search for files in
    */
   static async getAllFilePaths(dirPath: string): Promise<string[]> {
+    const entries = await readdir(dirPath, { recursive: true, withFileTypes: true });
     const filePaths: string[] = [];
-    const fileOrFolderNames = await readdir(dirPath);
 
-    await Promise.all(
-      fileOrFolderNames.map(async (fileOrFolder) => {
-        const absolutePath = path.join(dirPath, fileOrFolder);
-        const fileStat = await stat(absolutePath);
+    for (const entry of entries) {
+      // Skip symlinks to avoid potential infinite loops
+      if (entry.isSymbolicLink()) {
+        continue;
+      }
 
-        if (fileStat.isDirectory()) {
-          filePaths.push(...(await this.getAllFilePaths(absolutePath)));
-        } else {
-          filePaths.push(absolutePath);
-        }
-      })
-    );
+      // Only include files, not directories
+      if (entry.isFile()) {
+        const fullPath = path.join(entry.parentPath, entry.name);
+        filePaths.push(fullPath);
+      }
+    }
 
     return filePaths;
   }
@@ -246,7 +246,7 @@ export default class FileSystemService {
    *
    * @param absolutePath Optional absolute path to check for changes. If not provided, uses current working directory.
    * @returns true if there are changes compared to main, false otherwise
-   * @throws Error if not in a git repository
+   * @throws {Error} if not in a git repository
    */
   static async hasChangesComparedToMain(absolutePath?: string): Promise<boolean> {
     const targetDir = absolutePath ?? process.cwd();

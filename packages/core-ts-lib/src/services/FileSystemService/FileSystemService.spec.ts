@@ -1,4 +1,4 @@
-import { readFile, writeFile } from 'fs/promises';
+import { readFile, symlink, writeFile } from 'fs/promises';
 import path from 'path';
 import { afterAll, describe, expect, it } from 'vitest';
 import FileSystemService from './FileSystemService.js';
@@ -170,6 +170,84 @@ describe('FileSystemService', () => {
       const content = await readFile(path.join(testFolderPath, 'test.txt'), 'utf8');
 
       expect(content).toBe('Original OLD_TEXT content'); // Should not change in dry run
+    });
+  });
+
+  describe('getAllFilePaths', () => {
+    it('should handle circular symlinks without infinite loop', async () => {
+      const testName = 'getAllFilePaths-circular-symlink';
+      const testFolderPath = await createTestFolder(testName);
+
+      // Create a directory structure with some files
+      await createTestFiles(testFolderPath, {
+        'file1.txt': 'content1',
+        'file2.txt': 'content2',
+        subfolder: {
+          'nested.txt': 'nested content'
+        }
+      });
+
+      // Create a circular symlink: subfolder/link-to-parent -> testFolderPath
+      const symlinkPath = path.join(testFolderPath, 'subfolder', 'link-to-parent');
+      try {
+        await symlink(testFolderPath, symlinkPath, 'dir');
+      } catch {
+        // Skip test on systems that don't support symlinks (e.g., Windows without admin)
+        console.warn('Skipping circular symlink test - symlinks not supported');
+        return;
+      }
+
+      // This should complete without hanging in an infinite loop
+      const startTime = Date.now();
+      const files = await FileSystemService.getAllFilePaths(testFolderPath);
+      const duration = Date.now() - startTime;
+
+      // Verify it completed quickly (should be under 5 seconds even on slow systems)
+      expect(duration).toBeLessThan(5000);
+
+      // Verify we got the expected files (symlinks should be skipped)
+      const relativeFiles = files.map((f) => path.relative(testFolderPath, f)).sort();
+
+      expect(relativeFiles).toEqual([
+        'file1.txt',
+        'file2.txt',
+        path.join('subfolder', 'nested.txt')
+      ]);
+    });
+
+    it('should handle getAllFilePathsRelative with circular symlinks', async () => {
+      const testName = 'getAllFilePathsRelative-circular-symlink';
+      const testFolderPath = await createTestFolder(testName);
+
+      // Create files and a circular symlink
+      await createTestFiles(testFolderPath, {
+        'root.txt': 'root content',
+        deep: {
+          level1: {
+            level2: {
+              'deep.txt': 'deep content'
+            }
+          }
+        }
+      });
+
+      // Create circular symlink at deep level pointing back to root
+      const deepPath = path.join(testFolderPath, 'deep', 'level1', 'level2');
+      const symlinkPath = path.join(deepPath, 'link-to-root');
+      try {
+        await symlink(testFolderPath, symlinkPath, 'dir');
+      } catch {
+        // Skip test on systems that don't support symlinks
+        console.warn('Skipping circular symlink test - symlinks not supported');
+        return;
+      }
+
+      // Should complete without infinite loop
+      const files = await FileSystemService.getAllFilePathsRelative(testFolderPath);
+      const sortedFiles = files.sort();
+
+      // Should get files but not traverse through the symlink
+      expect(sortedFiles).toEqual([path.join('deep', 'level1', 'level2', 'deep.txt'), 'root.txt']);
     });
   });
 });
