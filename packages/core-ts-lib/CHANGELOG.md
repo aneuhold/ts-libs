@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## 🔖 [2.3.5] (2025-11-02)
+
+### ✅ Added
+
+- New tests for `FileSystemService.getAllFilePaths` and `getAllFilePathsRelative` to verify handling of circular symlinks
+
+### 🏗️ Changed
+
+- Refactored `getAllFilePaths` to use `readdir` with `recursive` and `withFileTypes` for improved performance and reliability
+- Updated logic to skip symlinks and prevent infinite loops when traversing directories
+
+### 🩹 Fixed
+
+- Fixed infinite loop issue when traversing directories with circular symlinks in `FileSystemService`
+
 ## 🔖 [2.3.4] (2025-10-25)
 
 ### 🏗️ Changed
@@ -72,6 +87,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 <!-- Link References -->
 
+[2.3.5]: https://github.com/aneuhold/ts-libs/compare/core-ts-lib-v2.3.4...core-ts-lib-v2.3.5
 [2.3.4]: https://github.com/aneuhold/ts-libs/compare/core-ts-lib-v2.3.3...core-ts-lib-v2.3.4
 [2.3.3]: https://github.com/aneuhold/ts-libs/compare/core-ts-lib-v2.3.2...core-ts-lib-v2.3.3
 [2.3.2]: https://github.com/aneuhold/ts-libs/compare/core-ts-lib-v2.2.14...core-ts-lib-v2.3.2
