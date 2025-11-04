@@ -2,7 +2,7 @@
   "name": "@aneuhold/core-ts-api-lib",
   "author": "Anton G. Neuhold Jr.",
   "license": "MIT",
-  "version": "2.2.3",
+  "version": "2.2.4",
   "description": "A library for interacting with the backend and defining the backend API for personal projects.",
   "packageManager": "pnpm@10.12.1",
   "type": "module",
