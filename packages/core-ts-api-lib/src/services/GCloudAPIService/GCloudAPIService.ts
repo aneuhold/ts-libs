@@ -1,3 +1,4 @@
+import { BSON } from 'bson';
 import { APIResponse } from '../../types/APIResponse.js';
 import {
   ProjectDashboardInput,
@@ -39,10 +40,9 @@ export default class GCloudAPIService {
    *
    * @param urlPath - The path to the endpoint.
    * @param input - The input to the endpoint.
-   * @returns A promise that resolves to the output of the function call, wrapped in {@link APIResponse}.
-   * @throws Will throw an error if the URL is not set.
+   * @throws {Error} Will throw an error if the URL is not set.
    */
-  private static async call<TInput, TOutput>(
+  private static async call<TInput extends object, TOutput>(
     urlPath: string,
     input: TInput
   ): Promise<APIResponse<TOutput>> {
@@ -53,27 +53,35 @@ export default class GCloudAPIService {
     const response = await fetch(this.#baseUrl + urlPath, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
-        Accept: 'application/json'
+        Connection: 'keep-alive',
+        'Content-Type': 'application/octet-stream',
+        Accept: 'application/octet-stream'
       },
-      body: JSON.stringify(input)
+      body: Buffer.from(BSON.serialize(input))
     });
+    const decodedResponse = await this.decodeResponse<TOutput>(response);
+    return decodedResponse;
+  }
 
-    if (!response.ok) {
+  /**
+   * Decodes the response from the Google Cloud API.
+   *
+   * @param response - The response to decode.
+   * @returns The decoded output.
+   */
+  private static async decodeResponse<TOutput>(response: Response): Promise<APIResponse<TOutput>> {
+    const contentType = response.headers.get('Content-Type');
+    const isBson = contentType?.includes('application/octet-stream');
+    if (isBson) {
+      const buffer = await response.arrayBuffer();
+      const uint8Array = new Uint8Array(buffer);
+      return BSON.deserialize(uint8Array) as APIResponse<TOutput>;
+    } else {
+      // This normally only happens if there is an error
+      const result = (await response.json()) as unknown;
       return {
         success: false,
-        errors: [`HTTP ${response.status}: ${response.statusText}`],
-        data: {} as TOutput
-      };
-    }
-
-    try {
-      const result = (await response.json()) as APIResponse<TOutput>;
-      return result;
-    } catch (error) {
-      return {
-        success: false,
-        errors: [`Failed to parse response: ${String(error)}`],
+        errors: [JSON.stringify(result, null, 2)],
         data: {} as TOutput
       };
     }
