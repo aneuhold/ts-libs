@@ -7,13 +7,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## 🔖 [2.2.4] (2025-11-04)
 
-### ✅ Added
-
 ### 🏗️ Changed
 
-### 🩹 Fixed
-
-### 🔥 Removed
+- Switched `GCloudAPIService` to use BSON serialization for requests and responses
+- Updated request and response `Content-Type` headers to `application/octet-stream`
+- Added private `decodeResponse` helper for decoding API responses
+- Improved error handling for non-BSON responses in `GCloudAPIService`
 
 ## 🔖 [2.2.3] (2025-10-25)
 
@@ -84,6 +83,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Updated workflow permissions to allow repository write access
 
 <!-- Link References -->
+
 [2.2.4]: https://github.com/aneuhold/ts-libs/compare/core-ts-api-lib-v2.2.3...core-ts-api-lib-v2.2.4
 [2.2.3]: https://github.com/aneuhold/ts-libs/compare/core-ts-api-lib-v2.2.2...core-ts-api-lib-v2.2.3
 [2.2.2]: https://github.com/aneuhold/ts-libs/compare/core-ts-api-lib-v2.2.1...core-ts-api-lib-v2.2.2
