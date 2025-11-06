@@ -9,11 +9,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### ✅ Added
 
+- New browser-safe bundle: added src/browser.ts and updated exports for browser/node compatibility.
+
 ### 🏗️ Changed
 
-### 🩹 Fixed
-
-### 🔥 Removed
+- Refactored exports in package.json for browser/node/default support.
+- Marked package as side-effect free in package.json ("sideEffects": false).
+- Refactored src/index.ts to re-export from browser.ts and separate Node-specific exports.
 
 ## 🔖 [2.3.5] (2025-11-02)
 
@@ -96,6 +98,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Updated workflow permissions to allow repository write access
 
 <!-- Link References -->
+
 [2.3.6]: https://github.com/aneuhold/ts-libs/compare/core-ts-lib-v2.3.5...core-ts-lib-v2.3.6
 [2.3.5]: https://github.com/aneuhold/ts-libs/compare/core-ts-lib-v2.3.4...core-ts-lib-v2.3.5
 [2.3.4]: https://github.com/aneuhold/ts-libs/compare/core-ts-lib-v2.3.3...core-ts-lib-v2.3.4

@@ -7,13 +7,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## 🔖 [2.0.88] (2025-11-06)
 
-### ✅ Added
-
 ### 🏗️ Changed
 
-### 🩹 Fixed
-
-### 🔥 Removed
+- Marked package as having side effects in package.json ("sideEffects": true) and added explanatory comment.
 
 ## 🔖 [2.0.87] (2025-10-25)
 
@@ -59,6 +55,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Updated workflow permissions to allow repository write access
 
 <!-- Link References -->
+
 [2.0.88]: https://github.com/aneuhold/ts-libs/compare/be-ts-lib-v2.0.87...be-ts-lib-v2.0.88
 [2.0.87]: https://github.com/aneuhold/ts-libs/compare/be-ts-lib-v2.0.86...be-ts-lib-v2.0.87
 [2.0.86]: https://github.com/aneuhold/ts-libs/compare/be-ts-lib-v2.0.85...be-ts-lib-v2.0.86
