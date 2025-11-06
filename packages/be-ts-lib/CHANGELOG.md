@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## 🔖 [2.0.88] (2025-11-06)
+
+### 🏗️ Changed
+
+- Marked package as having side effects in package.json ("sideEffects": true) and added explanatory comment.
+
 ## 🔖 [2.0.87] (2025-10-25)
 
 ### 🏗️ Changed
@@ -50,6 +56,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 <!-- Link References -->
 
+[2.0.88]: https://github.com/aneuhold/ts-libs/compare/be-ts-lib-v2.0.87...be-ts-lib-v2.0.88
 [2.0.87]: https://github.com/aneuhold/ts-libs/compare/be-ts-lib-v2.0.86...be-ts-lib-v2.0.87
 [2.0.86]: https://github.com/aneuhold/ts-libs/compare/be-ts-lib-v2.0.85...be-ts-lib-v2.0.86
 [2.0.85]: https://github.com/aneuhold/ts-libs/compare/be-ts-lib-v2.0.84...be-ts-lib-v2.0.85

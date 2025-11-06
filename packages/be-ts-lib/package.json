@@ -2,7 +2,7 @@
   "name": "@aneuhold/be-ts-lib",
   "author": "Anton G. Neuhold Jr.",
   "license": "MIT",
-  "version": "2.0.87",
+  "version": "2.0.88",
   "description": "A backend TypeScript library used for common functionality in personal backend projects.",
   "packageManager": "pnpm@10.12.1",
   "type": "module",
@@ -33,6 +33,8 @@
       "import": "./lib/index.js"
     }
   },
+  "sideEffects": true,
+  "sideEffectsComment": "This package has side effects in that it uses dotenv/config in a couple places",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/aneuhold/ts-libs.git",

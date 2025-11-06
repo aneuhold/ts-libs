@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## 🔖 [2.2.4] (2025-11-04)
+## 🔖 [2.2.5] (2025-11-04)
 
 ### 🏗️ Changed
 
@@ -14,17 +14,17 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Added private `decodeResponse` helper for decoding API responses
 - Improved error handling for non-BSON responses in `GCloudAPIService`
 
-## 🔖 [2.2.3] (2025-10-25)
+## 🔖 [2.2.5] (2025-11-04)
+
+### ✅ Added
+
+- New browser-safe bundle: added src/browser.ts and updated exports for browser/node compatibility.
 
 ### 🏗️ Changed
 
-- Updated dependencies in package.json for compatibility and security improvements
-
-## 🔖 [2.2.2] (2025-10-17)
-
-### 🏗️ Changed
-
-- Improved and expanded JSDoc comments and documentation for public types and methods throughout the package
+- Refactored exports in package.json for browser/node/default support.
+- Marked package as side-effect free in package.json ("sideEffects": false).
+- Refactored src/index.ts to re-export from browser.ts.
 
 ## 🔖 [2.2.1] (2025-09-08)
 
@@ -84,7 +84,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 <!-- Link References -->
 
-[2.2.4]: https://github.com/aneuhold/ts-libs/compare/core-ts-api-lib-v2.2.3...core-ts-api-lib-v2.2.4
+[2.2.5]: https://github.com/aneuhold/ts-libs/compare/core-ts-api-lib-v2.2.3...core-ts-api-lib-v2.2.5
 [2.2.3]: https://github.com/aneuhold/ts-libs/compare/core-ts-api-lib-v2.2.2...core-ts-api-lib-v2.2.3
 [2.2.2]: https://github.com/aneuhold/ts-libs/compare/core-ts-api-lib-v2.2.1...core-ts-api-lib-v2.2.2
 [2.2.1]: https://github.com/aneuhold/ts-libs/compare/core-ts-api-lib-v2.2.0...core-ts-api-lib-v2.2.1

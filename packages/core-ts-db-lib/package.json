@@ -2,7 +2,7 @@
   "name": "@aneuhold/core-ts-db-lib",
   "author": "Anton G. Neuhold Jr.",
   "license": "MIT",
-  "version": "2.0.85",
+  "version": "2.0.86",
   "description": "A core database library used for personal projects",
   "packageManager": "pnpm@10.12.1",
   "type": "module",
@@ -29,10 +29,29 @@
   ],
   "exports": {
     ".": {
+      "browser": {
+        "types": "./lib/browser.d.ts",
+        "import": "./lib/browser.js"
+      },
+      "node": {
+        "types": "./lib/index.d.ts",
+        "import": "./lib/index.js"
+      },
+      "default": {
+        "types": "./lib/browser.d.ts",
+        "import": "./lib/browser.js"
+      }
+    },
+    "./browser": {
+      "types": "./lib/browser.d.ts",
+      "import": "./lib/browser.js"
+    },
+    "./node": {
       "types": "./lib/index.d.ts",
       "import": "./lib/index.js"
     }
   },
+  "sideEffects": false,
   "repository": {
     "type": "git",
     "url": "git+https://github.com/aneuhold/ts-libs.git",
