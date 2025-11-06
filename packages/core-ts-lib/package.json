@@ -28,10 +28,29 @@
   ],
   "exports": {
     ".": {
+      "browser": {
+        "types": "./lib/browser.d.ts",
+        "import": "./lib/browser.js"
+      },
+      "node": {
+        "types": "./lib/index.d.ts",
+        "import": "./lib/index.js"
+      },
+      "default": {
+        "types": "./lib/browser.d.ts",
+        "import": "./lib/browser.js"
+      }
+    },
+    "./browser": {
+      "types": "./lib/browser.d.ts",
+      "import": "./lib/browser.js"
+    },
+    "./node": {
       "types": "./lib/index.d.ts",
       "import": "./lib/index.js"
     }
   },
+  "sideEffects": false,
   "repository": {
     "type": "git",
     "url": "git+https://github.com/aneuhold/ts-libs.git",

@@ -21,7 +21,7 @@ import { APIResponse } from './types/APIResponse.js';
 import { DashboardConfig } from './types/DashboardConfig.js';
 import { Translation, Translations } from './types/Translations.js';
 
-// Export all the functions and classes from this library that are browser safe (no Node.js dependencies)
+// Export all browser-safe functions and classes from this library
 export { APIService, DOFunctionService };
 
 // Export TypeScript types where needed
