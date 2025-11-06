@@ -37,6 +37,7 @@
       "import": "./lib/index.js"
     }
   },
+  "sideEffects": false,
   "repository": {
     "type": "git",
     "url": "git+https://github.com/aneuhold/ts-libs.git",

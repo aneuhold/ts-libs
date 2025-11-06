@@ -33,6 +33,8 @@
       "import": "./lib/index.js"
     }
   },
+  "sideEffects": true,
+  "sideEffectsComment": "This package has side effects in that it uses dotenv/config in a couple places",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/aneuhold/ts-libs.git",
