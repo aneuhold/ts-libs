@@ -18,5 +18,9 @@
   "eslint.useFlatConfig": true,
   "eslint.run": "onSave",
   "eslint.format.enable": true,
-  "vitest.rootConfig": "vitest.config.ts"
+  "vitest.rootConfig": "vitest.config.ts",
+  // Only using relative imports because these are packages/libraries, and it can break consumers
+  // otherwise. Unless I learn something new in the future on how to handle that.
+  "javascript.preferences.importModuleSpecifier": "project-relative",
+  "typescript.preferences.importModuleSpecifier": "project-relative"
 }
