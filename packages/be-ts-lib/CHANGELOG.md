@@ -7,13 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## 🔖 [2.0.89] (2025-11-07)
 
-### ✅ Added
-
 ### 🏗️ Changed
 
-### 🩹 Fixed
-
-### 🔥 Removed
+- Updated package.json: added `unpub:local` script for local unpublishing
+- Removed unused `module` field from package.json
 
 ## 🔖 [2.0.88] (2025-11-06)
 
@@ -65,6 +62,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Updated workflow permissions to allow repository write access
 
 <!-- Link References -->
+
 [2.0.89]: https://github.com/aneuhold/ts-libs/compare/be-ts-lib-v2.0.88...be-ts-lib-v2.0.89
 [2.0.88]: https://github.com/aneuhold/ts-libs/compare/be-ts-lib-v2.0.87...be-ts-lib-v2.0.88
 [2.0.87]: https://github.com/aneuhold/ts-libs/compare/be-ts-lib-v2.0.86...be-ts-lib-v2.0.87

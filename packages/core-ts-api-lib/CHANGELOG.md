@@ -7,13 +7,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## 🔖 [2.2.6] (2025-11-07)
 
-### ✅ Added
-
 ### 🏗️ Changed
 
-### 🩹 Fixed
-
-### 🔥 Removed
+- Updated package.json: added `unpub:local` script for local unpublishing
+- Changed `main` and `types` fields to use browser entry points
+- Removed unused `module` field from package.json
 
 ## 🔖 [2.2.5] (2025-11-04)
 
@@ -93,6 +91,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Updated workflow permissions to allow repository write access
 
 <!-- Link References -->
+
 [2.2.6]: https://github.com/aneuhold/ts-libs/compare/core-ts-api-lib-v2.2.5...core-ts-api-lib-v2.2.6
 [2.2.5]: https://github.com/aneuhold/ts-libs/compare/core-ts-api-lib-v2.2.5...core-ts-api-lib-v2.2.5
 [2.2.5]: https://github.com/aneuhold/ts-libs/compare/core-ts-api-lib-v2.2.1...core-ts-api-lib-v2.2.5
