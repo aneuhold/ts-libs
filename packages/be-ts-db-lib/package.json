@@ -9,6 +9,7 @@
   "scripts": {
     "build": "rimraf lib && tsc --project tsconfig.build.json && tsx ./scripts/copyTsFiles.ts",
     "watch": "nodemon --ignore lib/ -e ts --exec \"tsc --project tsconfig.build.json && tsx ./scripts/copyTsFiles.ts && local-npm publish\"",
+    "unpub:local": "local-npm unpublish || true",
     "lint": "eslint",
     "test": "vitest run && pnpm validate:dry",
     "preparePkg": "tb pkg prepare",
@@ -25,7 +26,6 @@
     "migrate:dry": "tsx ./scripts/migrateDry.ts"
   },
   "main": "lib/index.js",
-  "module": "lib/index.js",
   "types": "lib/index.d.ts",
   "files": [
     "lib",

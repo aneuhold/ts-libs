@@ -19,9 +19,8 @@
     "npm:publish": "npm publish --access public",
     "upgrade:all": "pnpm up"
   },
-  "main": "lib/index.js",
-  "module": "lib/index.js",
-  "types": "lib/index.d.ts",
+  "main": "lib/browser.js",
+  "types": "lib/browser.d.ts",
   "files": [
     "lib",
     "CHANGELOG.md"
