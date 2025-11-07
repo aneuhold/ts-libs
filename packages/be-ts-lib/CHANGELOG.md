@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## 🔖 [2.0.89] (2025-11-07)
+
+### 🏗️ Changed
+
+- Updated package.json: added `unpub:local` script for local unpublishing
+- Removed unused `module` field from package.json
+
 ## 🔖 [2.0.88] (2025-11-06)
 
 ### 🏗️ Changed
@@ -56,6 +63,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 <!-- Link References -->
 
+[2.0.89]: https://github.com/aneuhold/ts-libs/compare/be-ts-lib-v2.0.88...be-ts-lib-v2.0.89
 [2.0.88]: https://github.com/aneuhold/ts-libs/compare/be-ts-lib-v2.0.87...be-ts-lib-v2.0.88
 [2.0.87]: https://github.com/aneuhold/ts-libs/compare/be-ts-lib-v2.0.86...be-ts-lib-v2.0.87
 [2.0.86]: https://github.com/aneuhold/ts-libs/compare/be-ts-lib-v2.0.85...be-ts-lib-v2.0.86

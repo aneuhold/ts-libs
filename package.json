@@ -7,6 +7,7 @@
   "scripts": {
     "build": "pnpm -r --stream build",
     "watch": "tsx scripts/watchAll.ts",
+    "unpub": "pnpm -r --stream unpub:local",
     "lint": "pnpm -r --stream lint",
     "test": "pnpm -r --stream test",
     "preparePkg": "pnpm -r --stream --parallel preparePkg",

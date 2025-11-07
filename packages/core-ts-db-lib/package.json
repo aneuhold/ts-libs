@@ -2,13 +2,14 @@
   "name": "@aneuhold/core-ts-db-lib",
   "author": "Anton G. Neuhold Jr.",
   "license": "MIT",
-  "version": "2.0.86",
+  "version": "2.0.87",
   "description": "A core database library used for personal projects",
   "packageManager": "pnpm@10.12.1",
   "type": "module",
   "scripts": {
     "build": "rimraf lib && tsc --project tsconfig.build.json && tsx ./scripts/copyTsFiles.ts",
     "watch": "nodemon --ignore lib/ -e ts --exec \"tsc --project tsconfig.build.json && tsx ./scripts/copyTsFiles.ts && local-npm publish\"",
+    "unpub:local": "local-npm unpublish || true",
     "lint": "eslint",
     "test": "vitest run",
     "preparePkg": "tb pkg prepare",
@@ -20,9 +21,8 @@
     "upgrade:core": "pnpm update '@aneuhold/main-scripts' --latest",
     "upgrade:all": "pnpm up"
   },
-  "main": "lib/index.js",
-  "module": "lib/index.js",
-  "types": "lib/index.d.ts",
+  "main": "lib/browser.js",
+  "types": "lib/browser.d.ts",
   "files": [
     "lib",
     "CHANGELOG.md"

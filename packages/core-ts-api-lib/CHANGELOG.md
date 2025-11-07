@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## 🔖 [2.2.6] (2025-11-07)
+
+### 🏗️ Changed
+
+- Updated package.json: added `unpub:local` script for local unpublishing
+- Changed `main` and `types` fields to use browser entry points
+- Removed unused `module` field from package.json
+
 ## 🔖 [2.2.5] (2025-11-04)
 
 ### 🏗️ Changed
@@ -84,9 +92,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 <!-- Link References -->
 
-[2.2.5]: https://github.com/aneuhold/ts-libs/compare/core-ts-api-lib-v2.2.3...core-ts-api-lib-v2.2.5
-[2.2.3]: https://github.com/aneuhold/ts-libs/compare/core-ts-api-lib-v2.2.2...core-ts-api-lib-v2.2.3
-[2.2.2]: https://github.com/aneuhold/ts-libs/compare/core-ts-api-lib-v2.2.1...core-ts-api-lib-v2.2.2
+[2.2.6]: https://github.com/aneuhold/ts-libs/compare/core-ts-api-lib-v2.2.5...core-ts-api-lib-v2.2.6
+[2.2.5]: https://github.com/aneuhold/ts-libs/compare/core-ts-api-lib-v2.2.5...core-ts-api-lib-v2.2.5
+[2.2.5]: https://github.com/aneuhold/ts-libs/compare/core-ts-api-lib-v2.2.1...core-ts-api-lib-v2.2.5
 [2.2.1]: https://github.com/aneuhold/ts-libs/compare/core-ts-api-lib-v2.2.0...core-ts-api-lib-v2.2.1
 [2.2.0]: https://github.com/aneuhold/ts-libs/compare/core-ts-api-lib-v2.1.25...core-ts-api-lib-v2.2.0
 [2.1.25]: https://github.com/aneuhold/ts-libs/compare/core-ts-api-lib-v2.1.24...core-ts-api-lib-v2.1.25

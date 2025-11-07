@@ -2,7 +2,7 @@
   "name": "@aneuhold/core-ts-lib",
   "author": "Anton G. Neuhold Jr.",
   "license": "MIT",
-  "version": "2.3.6",
+  "version": "2.3.7",
   "description": "A core library for all of my TypeScript projects",
   "packageManager": "pnpm@10.12.1",
   "type": "module",
@@ -19,9 +19,8 @@
     "npm:publish": "npm publish --access public",
     "upgrade:all": "pnpm up"
   },
-  "main": "lib/index.js",
-  "module": "lib/index.js",
-  "types": "lib/index.d.ts",
+  "main": "lib/browser.js",
+  "types": "lib/browser.d.ts",
   "files": [
     "lib",
     "CHANGELOG.md"
