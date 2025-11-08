@@ -28,15 +28,6 @@ export default class APIService {
   }
 
   /**
-   * Sets the URL for the dashboard API.
-   *
-   * @param url - The URL to be set for the dashboard API. This should include a trailing slash.
-   */
-  static setDashboardAPIUrl(url: string) {
-    GCloudAPIService.setUrl(url);
-  }
-
-  /**
    * Calls the dashboard API and returns the result. This will fail if the
    * dashboard API URL has not been set. See {@link setDashboardAPIUrl}.
    *
@@ -47,5 +38,14 @@ export default class APIService {
     input: ProjectDashboardInput
   ): Promise<APIResponse<ProjectDashboardOutput>> {
     return GCloudAPIService.projectDashboard(input);
+  }
+
+  /**
+   * Sets the base URL for the API.
+   *
+   * @param url - The URL to be set for the API. This should include a trailing slash.
+   */
+  static setAPIUrl(url: string) {
+    GCloudAPIService.setUrl(url);
   }
 }

@@ -17,7 +17,7 @@ export default class GCloudAPIService {
    * The base URL of the Google Cloud API. For example, `something.com/api/`. It will include
    * the trailing slash.
    */
-  static #baseUrl?: string;
+  static #baseUrl: string = 'https://gcloud-backend-926119935605.us-west1.run.app/';
 
   /**
    * Sets the URL of the Google Cloud API.
@@ -61,10 +61,6 @@ export default class GCloudAPIService {
     urlPath: string,
     input: TInput
   ): Promise<APIResponse<TOutput>> {
-    if (!this.#baseUrl) {
-      throw new Error('GCloudAPI URL is not set');
-    }
-
     const response = await fetch(this.#baseUrl + urlPath, {
       method: 'POST',
       headers: {
