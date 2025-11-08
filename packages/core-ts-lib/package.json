@@ -2,7 +2,7 @@
   "name": "@aneuhold/core-ts-lib",
   "author": "Anton G. Neuhold Jr.",
   "license": "MIT",
-  "version": "2.3.7",
+  "version": "2.3.8",
   "description": "A core library for all of my TypeScript projects",
   "packageManager": "pnpm@10.12.1",
   "type": "module",
@@ -64,14 +64,14 @@
     "Node.js"
   ],
   "devDependencies": {
-    "@types/node": "^24.9.1",
-    "eslint": "^9.38.0",
+    "@types/node": "^24.10.0",
+    "eslint": "^9.39.1",
     "jsr": "^0.13.5",
     "nodemon": "^3.1.10",
     "prettier": "^3.6.2",
-    "rimraf": "^6.0.1",
+    "rimraf": "^6.1.0",
     "tsx": "^4.20.6",
     "typescript": "~5.9.3",
-    "vitest": "^4.0.3"
+    "vitest": "^4.0.8"
   }
 }

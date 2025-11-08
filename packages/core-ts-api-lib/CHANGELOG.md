@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## 🔖 [2.2.7] (2025-11-08)
+
+### 🏗️ Changed
+
+- Refactored `APIService.validateUser` to use `GCloudAPIService` directly (removes dependency on DOFunctionService)
+- Renamed `setDashboardAPIUrl` to `setAPIUrl` for clarity and updated JSDoc
+- Set default base URL for GCloud API in `GCloudAPIService`
+- Moved user validation logic to `GCloudAPIService.authValidateUser`
+
 ## 🔖 [2.2.6] (2025-11-07)
 
 ### 🏗️ Changed
@@ -92,6 +101,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 <!-- Link References -->
 
+[2.2.7]: https://github.com/aneuhold/ts-libs/compare/core-ts-api-lib-v2.2.6...core-ts-api-lib-v2.2.7
 [2.2.6]: https://github.com/aneuhold/ts-libs/compare/core-ts-api-lib-v2.2.5...core-ts-api-lib-v2.2.6
 [2.2.5]: https://github.com/aneuhold/ts-libs/compare/core-ts-api-lib-v2.2.5...core-ts-api-lib-v2.2.5
 [2.2.5]: https://github.com/aneuhold/ts-libs/compare/core-ts-api-lib-v2.2.1...core-ts-api-lib-v2.2.5

@@ -1,5 +1,4 @@
 import { APIResponse } from '../../types/APIResponse.js';
-import DOFunctionService from '../DOFunctionService/DOFunctionService.js';
 import {
   AuthValidateUserInput,
   AuthValidateUserOutput
@@ -25,17 +24,7 @@ export default class APIService {
   static async validateUser(
     input: AuthValidateUserInput
   ): Promise<APIResponse<AuthValidateUserOutput>> {
-    const result = await DOFunctionService.authValidateUser.call(input);
-    return result;
-  }
-
-  /**
-   * Sets the URL for the dashboard API.
-   *
-   * @param url - The URL to be set for the dashboard API. This should include a trailing slash.
-   */
-  static setDashboardAPIUrl(url: string) {
-    GCloudAPIService.setUrl(url);
+    return await GCloudAPIService.authValidateUser(input);
   }
 
   /**
@@ -49,5 +38,14 @@ export default class APIService {
     input: ProjectDashboardInput
   ): Promise<APIResponse<ProjectDashboardOutput>> {
     return GCloudAPIService.projectDashboard(input);
+  }
+
+  /**
+   * Sets the base URL for the API.
+   *
+   * @param url - The URL to be set for the API. This should include a trailing slash.
+   */
+  static setAPIUrl(url: string) {
+    GCloudAPIService.setUrl(url);
   }
 }

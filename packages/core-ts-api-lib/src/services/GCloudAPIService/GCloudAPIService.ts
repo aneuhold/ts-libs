@@ -1,6 +1,10 @@
 import { BSON } from 'bson';
 import { APIResponse } from '../../types/APIResponse.js';
 import {
+  AuthValidateUserInput,
+  AuthValidateUserOutput
+} from '../DOFunctionService/functions/authValidateUser.js';
+import {
   ProjectDashboardInput,
   ProjectDashboardOutput
 } from '../DOFunctionService/functions/projectDashboard.js';
@@ -13,7 +17,7 @@ export default class GCloudAPIService {
    * The base URL of the Google Cloud API. For example, `something.com/api/`. It will include
    * the trailing slash.
    */
-  static #baseUrl?: string;
+  static #baseUrl: string = 'https://gcloud-backend-926119935605.us-west1.run.app/';
 
   /**
    * Sets the URL of the Google Cloud API.
@@ -22,6 +26,17 @@ export default class GCloudAPIService {
    */
   static setUrl(url: string): void {
     this.#baseUrl = url;
+  }
+
+  /**
+   * Calls the project dashboard endpoint to get, insert, update, or delete dashboard data.
+   *
+   * @param input - The input for the project dashboard function.
+   */
+  static async authValidateUser(
+    input: AuthValidateUserInput
+  ): Promise<APIResponse<AuthValidateUserOutput>> {
+    return this.call<AuthValidateUserInput, AuthValidateUserOutput>('auth/validateUser', input);
   }
 
   /**
@@ -46,10 +61,6 @@ export default class GCloudAPIService {
     urlPath: string,
     input: TInput
   ): Promise<APIResponse<TOutput>> {
-    if (!this.#baseUrl) {
-      throw new Error('GCloudAPI URL is not set');
-    }
-
     const response = await fetch(this.#baseUrl + urlPath, {
       method: 'POST',
       headers: {
