@@ -7,13 +7,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## 🔖 [0.2.15] (2025-11-08)
 
-### ✅ Added
-
 ### 🏗️ Changed
 
-### 🩹 Fixed
-
-### 🔥 Removed
+- Updated dependencies for compatibility and security improvements
 
 ## 🔖 [0.2.14] (2025-10-25)
 
@@ -89,6 +85,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Updated workflow permissions to allow repository write access
 
 <!-- Link References -->
+
 [0.2.15]: https://github.com/aneuhold/ts-libs/compare/local-npm-registry-v0.2.14...local-npm-registry-v0.2.15
 [0.2.14]: https://github.com/aneuhold/ts-libs/compare/local-npm-registry-v0.2.13...local-npm-registry-v0.2.14
 [0.2.13]: https://github.com/aneuhold/ts-libs/compare/local-npm-registry-v0.2.12...local-npm-registry-v0.2.13
