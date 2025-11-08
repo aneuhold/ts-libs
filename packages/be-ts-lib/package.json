@@ -55,19 +55,19 @@
     "dotenv": "^17.2.3",
     "jsonc-parser": "^3.3.1",
     "node-fetch": "^3.3.2",
-    "octokit": "^5.0.4"
+    "octokit": "^5.0.5"
   },
   "devDependencies": {
     "@aneuhold/local-npm-registry": "*",
-    "@aneuhold/main-scripts": "^2.6.1",
-    "@types/node": "^24.9.1",
+    "@aneuhold/main-scripts": "^2.7.2",
+    "@types/node": "^24.10.0",
     "@types/node-fetch": "^2.6.13",
-    "eslint": "^9.38.0",
+    "eslint": "^9.39.1",
     "jsr": "^0.13.5",
     "prettier": "^3.6.2",
-    "rimraf": "^6.0.1",
+    "rimraf": "^6.1.0",
     "tsx": "^4.20.6",
     "typescript": "^5.9.3",
-    "vitest": "^4.0.3"
+    "vitest": "^4.0.8"
   }
 }

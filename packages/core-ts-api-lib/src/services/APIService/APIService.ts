@@ -1,5 +1,4 @@
 import { APIResponse } from '../../types/APIResponse.js';
-import DOFunctionService from '../DOFunctionService/DOFunctionService.js';
 import {
   AuthValidateUserInput,
   AuthValidateUserOutput
@@ -25,8 +24,7 @@ export default class APIService {
   static async validateUser(
     input: AuthValidateUserInput
   ): Promise<APIResponse<AuthValidateUserOutput>> {
-    const result = await DOFunctionService.authValidateUser.call(input);
-    return result;
+    return await GCloudAPIService.authValidateUser(input);
   }
 
   /**

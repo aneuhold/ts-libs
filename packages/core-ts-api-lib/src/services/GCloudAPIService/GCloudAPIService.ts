@@ -1,6 +1,10 @@
 import { BSON } from 'bson';
 import { APIResponse } from '../../types/APIResponse.js';
 import {
+  AuthValidateUserInput,
+  AuthValidateUserOutput
+} from '../DOFunctionService/functions/authValidateUser.js';
+import {
   ProjectDashboardInput,
   ProjectDashboardOutput
 } from '../DOFunctionService/functions/projectDashboard.js';
@@ -22,6 +26,17 @@ export default class GCloudAPIService {
    */
   static setUrl(url: string): void {
     this.#baseUrl = url;
+  }
+
+  /**
+   * Calls the project dashboard endpoint to get, insert, update, or delete dashboard data.
+   *
+   * @param input - The input for the project dashboard function.
+   */
+  static async authValidateUser(
+    input: AuthValidateUserInput
+  ): Promise<APIResponse<AuthValidateUserOutput>> {
+    return this.call<AuthValidateUserInput, AuthValidateUserOutput>('auth/validateUser', input);
   }
 
   /**
