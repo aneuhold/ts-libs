@@ -7,13 +7,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## 🔖 [2.3.9] (2025-11-09)
 
-### ✅ Added
-
 ### 🏗️ Changed
 
-### 🩹 Fixed
-
-### 🔥 Removed
+- Refactored all service, type, and utility files to use `import type` for type-only imports, improving build performance and clarity.
+- Updated internal imports to separate type and value imports from dependencies and internal modules.
+- No breaking changes; all updates are internal refactors for TypeScript best practices.
 
 ## 🔖 [2.3.8] (2025-11-08)
 
@@ -121,6 +119,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Updated workflow permissions to allow repository write access
 
 <!-- Link References -->
+
 [2.3.9]: https://github.com/aneuhold/ts-libs/compare/core-ts-lib-v2.3.8...core-ts-lib-v2.3.9
 [2.3.8]: https://github.com/aneuhold/ts-libs/compare/core-ts-lib-v2.3.7...core-ts-lib-v2.3.8
 [2.3.7]: https://github.com/aneuhold/ts-libs/compare/core-ts-lib-v2.3.6...core-ts-lib-v2.3.7
