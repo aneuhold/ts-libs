@@ -1,7 +1,8 @@
 import { ObjectId } from 'bson';
-import crypto, { UUID } from 'crypto';
+import type { UUID } from 'crypto';
+import crypto from 'crypto';
 import RequiredUserId from '../../schemas/required-refs/RequiredUserId.js';
-import { DocumentValidator } from '../../schemas/validators/DocumentValidator.js';
+import type { DocumentValidator } from '../../schemas/validators/DocumentValidator.js';
 import Validate from '../../schemas/validators/ValidateUtil.js';
 import BaseDocument from '../BaseDocument.js';
 

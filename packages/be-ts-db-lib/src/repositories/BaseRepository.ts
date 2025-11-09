@@ -1,6 +1,7 @@
 import { BaseDocument } from '@aneuhold/core-ts-db-lib';
-import { Document, ObjectId } from 'bson';
-import {
+import type { Document } from 'bson';
+import { ObjectId } from 'bson';
+import type {
   AnyBulkWriteOperation,
   BulkWriteResult,
   Collection,
@@ -9,10 +10,8 @@ import {
   OptionalUnlessRequiredId,
   UpdateResult
 } from 'mongodb';
-import RepoSubscriptionService, {
-  RepoListeners,
-  RepoSubscribers
-} from '../services/RepoSubscriptionService.js';
+import type { RepoListeners, RepoSubscribers } from '../services/RepoSubscriptionService.js';
+import RepoSubscriptionService from '../services/RepoSubscriptionService.js';
 import DocumentCleaner from '../util/DocumentCleaner.js';
 import DocumentDb from '../util/DocumentDb.js';
 import IValidator from '../validators/BaseValidator.js';

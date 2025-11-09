@@ -2,7 +2,7 @@ import { DR } from '@aneuhold/core-ts-lib';
 import 'dotenv/config';
 import { parse } from 'jsonc-parser';
 import GitHubService from '../GitHubService.js';
-import Config from './ConfigDefinition.js';
+import type Config from './ConfigDefinition.js';
 
 export type ConfigEnv = 'local' | 'dev' | 'prod';
 

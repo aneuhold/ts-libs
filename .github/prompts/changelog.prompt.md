@@ -21,4 +21,4 @@ For each package in the mono-repo (`packages/*/CHANGELOG.md`) that has had a ver
 - For each set of bullets, try to keep them concise and easy to read. At most, there should be 7 bullets per section (Added, Changed, etc.).
 - For any breaking changes, prefix it with `*Breaking Change:*`.
 
-In order to see the differences, use the command `git fetch origin main && git diff origin/main...HEAD`.
+In order to see the differences, use the command `git fetch origin main && git diff origin/main...HEAD`. If you prefer to see the diffs in a file, then make all files in the root directory of the repo, then delete them when you are done.

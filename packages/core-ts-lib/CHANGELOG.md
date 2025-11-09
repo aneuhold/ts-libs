@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## 🔖 [2.3.9] (2025-11-09)
+
+### 🏗️ Changed
+
+- Refactored all service, type, and utility files to use `import type` for type-only imports, improving build performance and clarity.
+- Updated internal imports to separate type and value imports from dependencies and internal modules.
+- No breaking changes; all updates are internal refactors for TypeScript best practices.
+
 ## 🔖 [2.3.8] (2025-11-08)
 
 ### 🏗️ Changed
@@ -112,6 +120,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 <!-- Link References -->
 
+[2.3.9]: https://github.com/aneuhold/ts-libs/compare/core-ts-lib-v2.3.8...core-ts-lib-v2.3.9
 [2.3.8]: https://github.com/aneuhold/ts-libs/compare/core-ts-lib-v2.3.7...core-ts-lib-v2.3.8
 [2.3.7]: https://github.com/aneuhold/ts-libs/compare/core-ts-lib-v2.3.6...core-ts-lib-v2.3.7
 [2.3.6]: https://github.com/aneuhold/ts-libs/compare/core-ts-lib-v2.3.5...core-ts-lib-v2.3.6

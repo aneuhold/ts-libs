@@ -1,7 +1,8 @@
 import { DR, FileSystemService } from '@aneuhold/core-ts-lib';
 import fs from 'fs-extra';
 import path from 'path';
-import { DEFAULT_CONFIG, LocalNpmConfig } from '../types/LocalNpmConfig.js';
+import type { LocalNpmConfig } from '../types/LocalNpmConfig.js';
+import { DEFAULT_CONFIG } from '../types/LocalNpmConfig.js';
 
 const CONFIG_FILE_NAME = '.local-npm-registry.json';
 export const DATA_DIRECTORY_NAME = '.local-npm-registry';

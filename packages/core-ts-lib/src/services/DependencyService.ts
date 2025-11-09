@@ -1,8 +1,8 @@
 import { access, readFile, writeFile } from 'fs/promises';
 import path from 'path';
-import { JsonWithVersionProperty } from '../types/JsonWithVersionProperty.js';
-import { PackageJson } from '../types/PackageJson.js';
-import { PackageJsonMap } from '../types/PackageJsonMap.js';
+import type { JsonWithVersionProperty } from '../types/JsonWithVersionProperty.js';
+import type { PackageJson } from '../types/PackageJson.js';
+import type { PackageJsonMap } from '../types/PackageJsonMap.js';
 import { VersionType } from '../types/VersionType.js';
 import ErrorUtils from '../utils/ErrorUtils.js';
 import { DR } from './DependencyRegistry.js';

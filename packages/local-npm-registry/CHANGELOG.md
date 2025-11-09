@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## 🔖 [0.2.16] (2025-11-09)
+
+### 🏗️ Changed
+
+- Refactored all service and utility files to use `import type` for type-only imports, improving build performance and clarity.
+- Updated internal imports to separate type and value imports from dependencies and internal modules.
+- No breaking changes; all updates are internal refactors for TypeScript best practices.
+
 ## 🔖 [0.2.15] (2025-11-08)
 
 ### 🏗️ Changed
@@ -86,6 +94,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 <!-- Link References -->
 
+[0.2.16]: https://github.com/aneuhold/ts-libs/compare/local-npm-registry-v0.2.15...local-npm-registry-v0.2.16
 [0.2.15]: https://github.com/aneuhold/ts-libs/compare/local-npm-registry-v0.2.14...local-npm-registry-v0.2.15
 [0.2.14]: https://github.com/aneuhold/ts-libs/compare/local-npm-registry-v0.2.13...local-npm-registry-v0.2.14
 [0.2.13]: https://github.com/aneuhold/ts-libs/compare/local-npm-registry-v0.2.12...local-npm-registry-v0.2.13

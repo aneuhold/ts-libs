@@ -1,4 +1,4 @@
-import { ILogger } from '../interfaces/ILogger.js';
+import type { ILogger } from '../interfaces/ILogger.js';
 
 /**
  * A standard logger that logs messages to the console.

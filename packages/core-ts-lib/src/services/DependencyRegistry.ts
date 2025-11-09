@@ -1,5 +1,6 @@
-import { ILogger } from '../interfaces/ILogger.js';
-import { ITracer, NoopTracer } from '../interfaces/ITracer.js';
+import type { ILogger } from '../interfaces/ILogger.js';
+import type { ITracer } from '../interfaces/ITracer.js';
+import { NoopTracer } from '../interfaces/ITracer.js';
 import ConsoleLogger from '../utils/ConsoleLogger.js';
 
 /**

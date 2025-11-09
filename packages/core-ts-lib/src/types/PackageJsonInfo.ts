@@ -1,4 +1,4 @@
-import { PackageJson } from './PackageJson.js';
+import type { PackageJson } from './PackageJson.js';
 
 /**
  * Contains the parsed contents and file path of a package.json file.

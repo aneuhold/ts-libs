@@ -1,7 +1,7 @@
 import { DashboardTask, DashboardTaskService, User } from '@aneuhold/core-ts-db-lib';
 import { ObjectId } from 'bson';
-import { DeleteResult } from 'mongodb';
-import { RepoListeners } from '../../services/RepoSubscriptionService.js';
+import type { DeleteResult } from 'mongodb';
+import type { RepoListeners } from '../../services/RepoSubscriptionService.js';
 import CleanDocument from '../../util/DocumentCleaner.js';
 import DashboardTaskValidator from '../../validators/dashboard/TaskValidator.js';
 import DashboardBaseRepository from './DashboardBaseRepository.js';

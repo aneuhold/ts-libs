@@ -1,5 +1,5 @@
 import { ObjectId } from 'bson';
-import { DocumentValidator } from '../../schemas/validators/DocumentValidator.js';
+import type { DocumentValidator } from '../../schemas/validators/DocumentValidator.js';
 import Validate from '../../schemas/validators/ValidateUtil.js';
 import BaseDocument from '../BaseDocument.js';
 

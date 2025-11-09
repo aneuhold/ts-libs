@@ -1,4 +1,4 @@
-import { PackageJsonInfo } from './PackageJsonInfo.js';
+import type { PackageJsonInfo } from './PackageJsonInfo.js';
 
 /**
  * Maps package names to their corresponding PackageJsonInfo objects.

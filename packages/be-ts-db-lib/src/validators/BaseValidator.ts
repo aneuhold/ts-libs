@@ -1,4 +1,5 @@
-import { BaseDocument, DocumentValidator } from '@aneuhold/core-ts-db-lib';
+import type { DocumentValidator } from '@aneuhold/core-ts-db-lib';
+import { BaseDocument } from '@aneuhold/core-ts-db-lib';
 import { DR } from '@aneuhold/core-ts-lib';
 import { ObjectId } from 'bson';
 

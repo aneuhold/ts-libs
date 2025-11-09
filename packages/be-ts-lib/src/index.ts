@@ -1,4 +1,4 @@
-import Config from './services/ConfigService/ConfigDefinition.js';
+import type Config from './services/ConfigService/ConfigDefinition.js';
 import ConfigService from './services/ConfigService/ConfigService.js';
 import TranslationService, {
   TranslationSource

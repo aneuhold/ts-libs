@@ -1,10 +1,11 @@
-import DashboardTask, { DashboardTaskMap } from '../../../documents/dashboard/Task.js';
+import type { DashboardTaskMap } from '../../../documents/dashboard/Task.js';
+import DashboardTask from '../../../documents/dashboard/Task.js';
+import type { DashboardTaskListSortSettings } from '../../../embedded-types/dashboard/task/SortSettings.js';
 import {
-  DashboardTaskListSortSettings,
   DashboardTaskSortBy,
   DashboardTaskSortDirection
 } from '../../../embedded-types/dashboard/task/SortSettings.js';
-import { DashboardTagSettings } from '../../../embedded-types/dashboard/userConfig/Tags.js';
+import type { DashboardTagSettings } from '../../../embedded-types/dashboard/userConfig/Tags.js';
 
 /**
  * A service for sorting tasks.

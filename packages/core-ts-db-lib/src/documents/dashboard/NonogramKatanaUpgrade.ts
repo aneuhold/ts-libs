@@ -2,7 +2,7 @@ import { ObjectId } from 'bson';
 import NonogramKatanaItemName from '../../embedded-types/dashboard/nonogramKatanaItem/ItemName.js';
 import NonogramKatanaUpgradeName from '../../embedded-types/dashboard/nonogramKatanaUpgrade/UpgradeName.js';
 import RequiredUserId from '../../schemas/required-refs/RequiredUserId.js';
-import { DocumentValidator } from '../../schemas/validators/DocumentValidator.js';
+import type { DocumentValidator } from '../../schemas/validators/DocumentValidator.js';
 import BaseDocumentWithType from '../BaseDocumentWithType.js';
 
 /**

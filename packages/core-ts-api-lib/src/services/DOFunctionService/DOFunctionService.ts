@@ -1,13 +1,13 @@
 import { DR } from '@aneuhold/core-ts-lib';
 import { BSON } from 'bson';
-import { APIResponse } from '../../types/APIResponse.js';
-import {
+import type { APIResponse } from '../../types/APIResponse.js';
+import type {
   DOFunctionInput,
   DOFunctionOutput,
   DOFunctionRawInput,
-  DOFunctionRawOutput,
-  isDOFunctionRawInput
+  DOFunctionRawOutput
 } from './DOFunction.js';
+import { isDOFunctionRawInput } from './DOFunction.js';
 import AuthCheckPassword from './functions/authCheckPassword.js';
 import AuthValidateUser from './functions/authValidateUser.js';
 import ProjectDashboard from './functions/projectDashboard.js';

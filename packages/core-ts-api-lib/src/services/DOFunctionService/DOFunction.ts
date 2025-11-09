@@ -1,5 +1,5 @@
 import { BSON } from 'bson';
-import { APIResponse } from '../../types/APIResponse.js';
+import type { APIResponse } from '../../types/APIResponse.js';
 
 /**
  * The input to a Digital Ocean function must always be an object.
