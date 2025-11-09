@@ -24,11 +24,13 @@ import type {
 import { getDefaultTaskListFilterSettings } from './embedded-types/dashboard/task/FilterSettings.js';
 import type {
   ParentRecurringTaskInfo,
+  RecurrenceFrequency,
+  RecurrenceInfo
+} from './embedded-types/dashboard/task/RecurrenceInfo.js';
+import {
   RecurrenceBasis,
   RecurrenceEffect,
-  RecurrenceFrequency,
-  RecurrenceFrequencyType,
-  RecurrenceInfo
+  RecurrenceFrequencyType
 } from './embedded-types/dashboard/task/RecurrenceInfo.js';
 import type {
   DashboardTaskListGlobalSortSettings,
@@ -69,7 +71,9 @@ export {
   NonogramKatanaItemName,
   NonogramKatanaUpgrade,
   NonogramKatanaUpgradeName,
-  // ...existing code...
+  RecurrenceBasis,
+  RecurrenceEffect,
+  RecurrenceFrequencyType,
   RequiredUserId,
   User,
   validateApiKey,
@@ -96,10 +100,7 @@ export type {
   DocumentMap,
   DocumentValidator,
   ParentRecurringTaskInfo,
-  RecurrenceBasis,
-  RecurrenceEffect,
   RecurrenceFrequency,
-  RecurrenceFrequencyType,
   RecurrenceInfo,
   UserCTO
 };

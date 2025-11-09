@@ -23,8 +23,9 @@ export {
   NoopTracer,
   sleep,
   StringService,
-  TestUtils
+  TestUtils,
+  VersionType
 };
 
 // Export TypeScript types where needed
-export type { ILogger, ISpan, ITracer, PackageJson, VersionType };
+export type { ILogger, ISpan, ITracer, PackageJson };
