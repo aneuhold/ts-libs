@@ -1,4 +1,5 @@
-import DOFunction, { DOFunctionInput, DOFunctionOutput } from '../DOFunction.js';
+import type { DOFunctionInput, DOFunctionOutput } from '../DOFunction.js';
+import DOFunction from '../DOFunction.js';
 
 /**
  * Input interface for {@link AuthCheckPassword}.

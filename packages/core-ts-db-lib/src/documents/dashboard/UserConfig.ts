@@ -1,15 +1,11 @@
 import { ObjectId } from 'bson';
-import {
-  DashboardTaskListGlobalFilterSettings,
-  validateFilterSettings
-} from '../../embedded-types/dashboard/task/FilterSettings.js';
-import {
-  DashboardTaskListGlobalSortSettings,
-  validateSortSettings
-} from '../../embedded-types/dashboard/task/SortSettings.js';
-import { DashboardTagSettings } from '../../embedded-types/dashboard/userConfig/Tags.js';
+import type { DashboardTaskListGlobalFilterSettings } from '../../embedded-types/dashboard/task/FilterSettings.js';
+import { validateFilterSettings } from '../../embedded-types/dashboard/task/FilterSettings.js';
+import type { DashboardTaskListGlobalSortSettings } from '../../embedded-types/dashboard/task/SortSettings.js';
+import { validateSortSettings } from '../../embedded-types/dashboard/task/SortSettings.js';
+import type { DashboardTagSettings } from '../../embedded-types/dashboard/userConfig/Tags.js';
 import RequiredUserId from '../../schemas/required-refs/RequiredUserId.js';
-import { DocumentValidator } from '../../schemas/validators/DocumentValidator.js';
+import type { DocumentValidator } from '../../schemas/validators/DocumentValidator.js';
 import Validate from '../../schemas/validators/ValidateUtil.js';
 import BaseDocumentWithType from '../BaseDocumentWithType.js';
 

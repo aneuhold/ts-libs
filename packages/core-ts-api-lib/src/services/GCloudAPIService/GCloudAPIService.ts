@@ -1,10 +1,10 @@
 import { BSON } from 'bson';
-import { APIResponse } from '../../types/APIResponse.js';
-import {
+import type { APIResponse } from '../../types/APIResponse.js';
+import type {
   AuthValidateUserInput,
   AuthValidateUserOutput
 } from '../DOFunctionService/functions/authValidateUser.js';
-import {
+import type {
   ProjectDashboardInput,
   ProjectDashboardOutput
 } from '../DOFunctionService/functions/projectDashboard.js';

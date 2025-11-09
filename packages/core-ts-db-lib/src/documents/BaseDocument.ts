@@ -1,4 +1,5 @@
-import { Document, ObjectId } from 'bson';
+import type { Document } from 'bson';
+import { ObjectId } from 'bson';
 
 /**
  * Base class for all document types stored in a document database.

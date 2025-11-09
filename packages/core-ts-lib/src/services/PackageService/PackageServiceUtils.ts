@@ -2,7 +2,7 @@ import { exec } from 'child_process';
 import { access, readFile } from 'fs/promises';
 import path from 'path';
 import { promisify } from 'util';
-import { PackageJson } from '../../types/PackageJson.js';
+import type { PackageJson } from '../../types/PackageJson.js';
 import { VersionType } from '../../types/VersionType.js';
 import ErrorUtils from '../../utils/ErrorUtils.js';
 import ChangelogService from '../ChangelogService/index.js';

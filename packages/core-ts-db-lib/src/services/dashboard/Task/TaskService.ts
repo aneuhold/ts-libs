@@ -1,13 +1,13 @@
 import { ObjectId } from 'bson';
-import DashboardTask, { DashboardTaskMap } from '../../../documents/dashboard/Task.js';
-import { DashboardTaskListFilterSettings } from '../../../embedded-types/dashboard/task/FilterSettings.js';
-import { RecurrenceFrequency } from '../../../embedded-types/dashboard/task/RecurrenceInfo.js';
-import {
-  DashboardTaskListSortSettings,
-  DashboardTaskSortDirection
-} from '../../../embedded-types/dashboard/task/SortSettings.js';
-import { DashboardTagSettings } from '../../../embedded-types/dashboard/userConfig/Tags.js';
-import DashboardTaskFilterService, { DashboardTaskFilterResult } from './TaskFilterService.js';
+import type { DashboardTaskMap } from '../../../documents/dashboard/Task.js';
+import DashboardTask from '../../../documents/dashboard/Task.js';
+import type { DashboardTaskListFilterSettings } from '../../../embedded-types/dashboard/task/FilterSettings.js';
+import type { RecurrenceFrequency } from '../../../embedded-types/dashboard/task/RecurrenceInfo.js';
+import type { DashboardTaskListSortSettings } from '../../../embedded-types/dashboard/task/SortSettings.js';
+import { DashboardTaskSortDirection } from '../../../embedded-types/dashboard/task/SortSettings.js';
+import type { DashboardTagSettings } from '../../../embedded-types/dashboard/userConfig/Tags.js';
+import type { DashboardTaskFilterResult } from './TaskFilterService.js';
+import DashboardTaskFilterService from './TaskFilterService.js';
 import DashboardTaskRecurrenceService from './TaskRecurrenceService.js';
 import DashboardTaskSortService from './TaskSortService.js';
 

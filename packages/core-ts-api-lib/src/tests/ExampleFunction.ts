@@ -1,7 +1,8 @@
-import DOFunction, {
+import type {
   DOFunctionInput,
   DOFunctionOutput
 } from '../services/DOFunctionService/DOFunction.js';
+import DOFunction from '../services/DOFunctionService/DOFunction.js';
 
 export const EXAMPLE_FUNCTION_URL = 'https://example.com/function';
 

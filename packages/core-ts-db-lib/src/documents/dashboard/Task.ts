@@ -1,15 +1,15 @@
 import { ObjectId } from 'bson';
-import { DashboardTaskFilterSettings } from '../../embedded-types/dashboard/task/FilterSettings.js';
-import {
+import type { DashboardTaskFilterSettings } from '../../embedded-types/dashboard/task/FilterSettings.js';
+import type {
   ParentRecurringTaskInfo,
-  RecurrenceInfo,
-  validateRecurrenceInfo
+  RecurrenceInfo
 } from '../../embedded-types/dashboard/task/RecurrenceInfo.js';
-import { DashboardTaskSortSettings } from '../../embedded-types/dashboard/task/SortSettings.js';
+import { validateRecurrenceInfo } from '../../embedded-types/dashboard/task/RecurrenceInfo.js';
+import type { DashboardTaskSortSettings } from '../../embedded-types/dashboard/task/SortSettings.js';
 import RequiredUserId from '../../schemas/required-refs/RequiredUserId.js';
-import { DocumentValidator } from '../../schemas/validators/DocumentValidator.js';
+import type { DocumentValidator } from '../../schemas/validators/DocumentValidator.js';
 import Validate from '../../schemas/validators/ValidateUtil.js';
-import { DocumentMap } from '../../services/DocumentService.js';
+import type { DocumentMap } from '../../services/DocumentService.js';
 import BaseDocumentWithType from '../BaseDocumentWithType.js';
 
 /**

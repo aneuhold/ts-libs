@@ -1,13 +1,14 @@
+import type { UserCTO } from '@aneuhold/core-ts-db-lib';
 import {
   DashboardTask,
   DashboardUserConfig,
   NonogramKatanaItem,
-  NonogramKatanaUpgrade,
-  UserCTO
+  NonogramKatanaUpgrade
 } from '@aneuhold/core-ts-db-lib';
-import { UUID } from 'crypto';
-import { Translations } from '../../../types/Translations.js';
-import DOFunction, { DOFunctionInput, DOFunctionOutput } from '../DOFunction.js';
+import type { UUID } from 'crypto';
+import type { Translations } from '../../../types/Translations.js';
+import type { DOFunctionInput, DOFunctionOutput } from '../DOFunction.js';
+import DOFunction from '../DOFunction.js';
 
 /**
  * Options for configuring the project dashboard.

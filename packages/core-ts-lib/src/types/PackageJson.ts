@@ -1,4 +1,4 @@
-import { JsonWithVersionProperty } from './JsonWithVersionProperty.js';
+import type { JsonWithVersionProperty } from './JsonWithVersionProperty.js';
 
 /**
  * Represents the contents of a `package.json` file, including dependencies and metadata.

@@ -1,6 +1,6 @@
 import { NonogramKatanaUpgrade, User } from '@aneuhold/core-ts-db-lib';
 import { ObjectId } from 'bson';
-import { RepoListeners } from '../../services/RepoSubscriptionService.js';
+import type { RepoListeners } from '../../services/RepoSubscriptionService.js';
 import CleanDocument from '../../util/DocumentCleaner.js';
 import DashboardNonogramKatanaUpgradeValidator from '../../validators/dashboard/NonogramKatanaUpgradeValidator.js';
 import DashboardBaseRepository from './DashboardBaseRepository.js';

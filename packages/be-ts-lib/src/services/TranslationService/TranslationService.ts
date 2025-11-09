@@ -1,4 +1,4 @@
-import { Translations } from '@aneuhold/core-ts-api-lib';
+import type { Translations } from '@aneuhold/core-ts-api-lib';
 import { DR } from '@aneuhold/core-ts-lib';
 import 'dotenv/config';
 import { parse } from 'jsonc-parser';

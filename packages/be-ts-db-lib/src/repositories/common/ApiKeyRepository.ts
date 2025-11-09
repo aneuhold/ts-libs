@@ -1,5 +1,5 @@
 import { ApiKey, User } from '@aneuhold/core-ts-db-lib';
-import { RepoListeners } from '../../services/RepoSubscriptionService.js';
+import type { RepoListeners } from '../../services/RepoSubscriptionService.js';
 import ApiKeyValidator from '../../validators/common/ApiKeyValidator.js';
 import BaseRepository from '../BaseRepository.js';
 

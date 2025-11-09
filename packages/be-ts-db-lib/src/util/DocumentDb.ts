@@ -1,5 +1,5 @@
 import { ConfigService } from '@aneuhold/be-ts-lib';
-import { Document } from 'bson';
+import type { Document } from 'bson';
 import { Collection, Db, MongoClient } from 'mongodb';
 
 /**
