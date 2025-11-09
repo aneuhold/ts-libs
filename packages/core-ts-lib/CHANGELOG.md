@@ -7,13 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## 🔖 [2.3.10] (2025-11-09)
 
-### ✅ Added
-
 ### 🏗️ Changed
 
-### 🩹 Fixed
-
-### 🔥 Removed
+- Refactored type-only imports in `src/browser.ts` to use proper `import type` and value imports, improving clarity and build performance.
+- Updated exports in `src/browser.ts` to move `VersionType` from type to value export, ensuring correct usage in browser builds.
 
 ## 🔖 [2.3.9] (2025-11-09)
 
@@ -129,6 +126,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Updated workflow permissions to allow repository write access
 
 <!-- Link References -->
+
 [2.3.10]: https://github.com/aneuhold/ts-libs/compare/core-ts-lib-v2.3.9...core-ts-lib-v2.3.10
 [2.3.9]: https://github.com/aneuhold/ts-libs/compare/core-ts-lib-v2.3.8...core-ts-lib-v2.3.9
 [2.3.8]: https://github.com/aneuhold/ts-libs/compare/core-ts-lib-v2.3.7...core-ts-lib-v2.3.8
