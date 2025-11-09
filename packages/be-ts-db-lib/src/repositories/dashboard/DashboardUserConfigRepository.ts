@@ -1,7 +1,6 @@
 import { DashboardUserConfig, User } from '@aneuhold/core-ts-db-lib';
 import { ObjectId } from 'bson';
-import type { AnyBulkWriteOperation, UpdateFilter, UpdateResult } from 'mongodb';
-import { BulkWriteResult } from 'mongodb';
+import type { AnyBulkWriteOperation, BulkWriteResult, UpdateFilter, UpdateResult } from 'mongodb';
 import type { RepoListeners } from '../../services/RepoSubscriptionService.js';
 import CleanDocument from '../../util/DocumentCleaner.js';
 import DashboardUserConfigValidator from '../../validators/dashboard/UserConfigValidator.js';

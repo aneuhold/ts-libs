@@ -77,7 +77,7 @@ export default class UserValidator extends IValidator<User> {
    *
    * @param userRepo - The user repository
    * @param userName - The username to check
-   * @throws An error if the username already exists
+   * @throws {Error} An error if the username already exists
    */
   private async checkIfUserNameExists(userRepo: UserRepository, userName: string) {
     const userNameSearchResult = await userRepo.get({
