@@ -1,7 +1,7 @@
 import type { DocumentValidator } from '@aneuhold/core-ts-db-lib';
 import { BaseDocument } from '@aneuhold/core-ts-db-lib';
 import { DR } from '@aneuhold/core-ts-lib';
-import { ObjectId } from 'bson';
+import type { UUID } from 'crypto';
 
 export enum ObjectSchemaState {
   Valid,
@@ -58,7 +58,7 @@ export default abstract class IValidator<TBaseType extends BaseDocument> {
     allDocs: Array<TBaseType>;
     shouldDelete: (doc: TBaseType) => boolean;
     documentValidator: DocumentValidator<TBaseType>;
-    deletionFunction: (docIdsToDelete: ObjectId[]) => Promise<void>;
+    deletionFunction: (docIdsToDelete: UUID[]) => Promise<void>;
     updateFunction: (docsToUpdate: TBaseType[]) => Promise<void>;
   }) {
     const {
@@ -70,7 +70,7 @@ export default abstract class IValidator<TBaseType extends BaseDocument> {
       deletionFunction,
       updateFunction
     } = input;
-    const docIdsToDelete: Array<ObjectId> = [];
+    const docIdsToDelete: Array<UUID> = [];
     const docsToValidate: Array<TBaseType> = [];
     const docsToUpdate: Array<TBaseType> = [];
     let numInvalidDocs = 0;
@@ -87,7 +87,7 @@ export default abstract class IValidator<TBaseType extends BaseDocument> {
     docsToValidate.forEach((doc) => {
       const { updatedDoc, errors } = documentValidator(doc);
       if (errors.length !== 0) {
-        DR.logger.error(`${docName} with ID: ${doc._id.toString()} is invalid. Errors:`);
+        DR.logger.error(`${docName} with ID: ${doc._id} is invalid. Errors:`);
         numInvalidDocs += 1;
         errors.forEach((error) => {
           DR.logger.error(error);

@@ -1,6 +1,5 @@
 import { BaseDocument } from '@aneuhold/core-ts-db-lib';
-import type { Document } from 'bson';
-import { ObjectId } from 'bson';
+import type { UUID } from 'crypto';
 import type {
   AnyBulkWriteOperation,
   BulkWriteResult,
@@ -18,6 +17,9 @@ import IValidator from '../validators/BaseValidator.js';
 
 /**
  * Base repository class for handling common database operations.
+ *
+ * Implementation note: I have tried to do the types correctly here, but kept struggling with
+ * MongoDB's types around Filter<T> and _id fields.
  *
  * @template TBasetype - The type of the documents in the collection.
  */
@@ -130,7 +132,7 @@ export default abstract class BaseRepository<TBasetype extends BaseDocument> {
    */
   async get(filter: Partial<TBasetype>): Promise<TBasetype | null> {
     const collection = await this.getCollection();
-    const result = await collection.findOne(this.getFilterWithDefault(filter));
+    const result = await collection.findOne(this.getFilterWithDefault(filter as Filter<TBasetype>));
     return result as TBasetype | null;
   }
 
@@ -154,7 +156,7 @@ export default abstract class BaseRepository<TBasetype extends BaseDocument> {
   async getAllIdsAsHash(): Promise<{ [id: string]: boolean }> {
     const allDocs = await this.getAll();
     return allDocs.reduce<{ [id: string]: boolean }>((acc, doc) => {
-      acc[doc._id.toString()] = true;
+      acc[doc._id] = true;
       return acc;
     }, {});
   }
@@ -165,10 +167,10 @@ export default abstract class BaseRepository<TBasetype extends BaseDocument> {
    * @param docIds - The IDs of the documents to retrieve.
    * @returns An array of matching documents.
    */
-  async getList(docIds: ObjectId[]): Promise<TBasetype[]> {
+  async getList(docIds: UUID[]): Promise<TBasetype[]> {
     const collection = await this.getCollection();
     const result = await collection
-      .find(this.getFilterWithDefault({ _id: { $in: docIds } }))
+      .find(this.getFilterWithDefault({ _id: { $in: docIds } } as Filter<TBasetype>))
       .toArray();
     return result as TBasetype[];
   }
@@ -179,7 +181,7 @@ export default abstract class BaseRepository<TBasetype extends BaseDocument> {
    * @param docId - The ID of the document to delete.
    * @returns The result of the delete operation.
    */
-  async delete(docId: ObjectId): Promise<DeleteResult> {
+  async delete(docId: UUID): Promise<DeleteResult> {
     const collection = await this.getCollection();
     await Promise.all(this.subscribers.deleteOne.map((subscriber) => subscriber(docId)));
     return collection.deleteOne({ _id: docId } as Filter<TBasetype>);
@@ -191,7 +193,7 @@ export default abstract class BaseRepository<TBasetype extends BaseDocument> {
    * @param docIds - The IDs of the documents to delete.
    * @returns The result of the delete operation.
    */
-  async deleteList(docIds: ObjectId[]): Promise<DeleteResult> {
+  async deleteList(docIds: UUID[]): Promise<DeleteResult> {
     const collection = await this.getCollection();
     const deleteResult = collection.deleteMany({
       _id: { $in: docIds }
@@ -264,13 +266,10 @@ export default abstract class BaseRepository<TBasetype extends BaseDocument> {
   /**
    * Gets the filter with the default filter applied if there is one.
    *
-   * This is purposefully changing the type because of some weird restrictions
-   * with the `mongodb` package types.
-   *
    * @param filter - The filter to apply.
    * @returns The filter with the default filter applied.
    */
-  protected getFilterWithDefault(filter: Filter<Document> = {}): Filter<Document> {
+  protected getFilterWithDefault(filter: Filter<TBasetype> = {}): Filter<TBasetype> {
     if (!this.defaultFilter) {
       return filter;
     }
@@ -278,13 +277,13 @@ export default abstract class BaseRepository<TBasetype extends BaseDocument> {
   }
 
   /**
-   * Checks if two arrays of {@link ObjectId} are equal.
+   * Checks if two arrays of {@link UUID} are equal.
    *
    * @param array1 - The first array.
    * @param array2 - The second array.
    * @returns True if the arrays are equal, false otherwise.
    */
-  protected objectIdArraysAreEqual(array1: ObjectId[], array2: ObjectId[]): boolean {
+  protected uuidArraysAreEqual(array1: UUID[], array2: UUID[]): boolean {
     if (array1.length !== array2.length) {
       return false;
     }

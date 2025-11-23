@@ -160,4 +160,123 @@ export default class DependencyService {
     );
     return childPackages;
   }
+
+  /**
+   * Propagates the version of a specific package to all other packages in the workspace
+   * that depend on it.
+   *
+   * @param packageName The name of the package whose version should be propagated
+   * @param version The version to propagate
+   * @param workspaceRoot Optional workspace root path. Defaults to finding pnpm-workspace.yaml up the tree.
+   */
+  static async propagatePackageVersion(
+    packageName: string,
+    version: string,
+    workspaceRoot?: string
+  ): Promise<void> {
+    await this.processPackageDependents(packageName, version, 'update', workspaceRoot);
+  }
+
+  /**
+   * Validates that all other packages in the workspace that depend on the specified package
+   * are using the correct version.
+   *
+   * @param packageName The name of the package to validate dependents for
+   * @param version The expected version
+   * @param workspaceRoot Optional workspace root path. Defaults to finding pnpm-workspace.yaml up the tree.
+   */
+  static async validatePackageDependents(
+    packageName: string,
+    version: string,
+    workspaceRoot?: string
+  ): Promise<void> {
+    await this.processPackageDependents(packageName, version, 'validate', workspaceRoot);
+  }
+
+  /**
+   * Internal helper to process dependents of a package, either updating them or validating them.
+   *
+   * @param packageName The name of the package to process dependents for
+   * @param version The version to use for update or validation
+   * @param mode Whether to update the dependents or just validate them
+   * @param workspaceRoot Optional workspace root path
+   */
+  private static async processPackageDependents(
+    packageName: string,
+    version: string,
+    mode: 'update' | 'validate',
+    workspaceRoot?: string
+  ): Promise<void> {
+    const actionName = mode === 'update' ? 'Propagating' : 'Validating';
+    DR.logger.info(`${actionName} version ${version} for ${packageName}...`);
+
+    const pnpmWorkspacePath = await FileSystemService.findFileUpTree(
+      workspaceRoot || process.cwd(),
+      'pnpm-workspace.yaml'
+    );
+
+    if (!pnpmWorkspacePath) {
+      throw new Error('Could not find pnpm-workspace.yaml');
+    }
+
+    const rootDir = path.dirname(pnpmWorkspacePath);
+    const childPackages = await this.getChildPackageJsons(rootDir);
+    let updatedCount = 0;
+    let errorCount = 0;
+
+    await Promise.all(
+      Object.values(childPackages).map(async (childPackageInfo) => {
+        const { packageJsonContents, packageJsonPath } = childPackageInfo;
+        let modified = false;
+
+        const processDeps = (type: string, deps: Record<string, string> | undefined) => {
+          if (!deps) return;
+          if (deps[packageName]) {
+            const currentDep = deps[packageName];
+            const newDep = `^${version}`;
+            if (currentDep !== newDep) {
+              if (mode === 'update') {
+                DR.logger.info(
+                  `   Updating ${packageJsonContents.name}: ${packageName} ${currentDep} -> ${newDep}`
+                );
+                deps[packageName] = newDep;
+                modified = true;
+              } else {
+                DR.logger.error(
+                  `${packageJsonContents.name} has invalid ${type} for ${packageName}: found "${currentDep}", expected "${newDep}"`
+                );
+                errorCount++;
+              }
+            }
+          }
+        };
+
+        processDeps('dependencies', packageJsonContents.dependencies);
+        processDeps('devDependencies', packageJsonContents.devDependencies);
+        processDeps('peerDependencies', packageJsonContents.peerDependencies);
+        processDeps('optionalDependencies', packageJsonContents.optionalDependencies);
+
+        // TBH, I don't know why ESLint is saying `modified` is only true. That isn't the case.
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+        if (modified && mode === 'update') {
+          await writeFile(packageJsonPath, JSON.stringify(packageJsonContents, null, 2));
+          updatedCount++;
+        }
+      })
+    );
+
+    if (mode === 'update') {
+      if (updatedCount > 0) {
+        DR.logger.success(`Updated ${updatedCount} packages.`);
+      } else {
+        DR.logger.info(`No packages needed updating.`);
+      }
+    } else {
+      if (errorCount > 0) {
+        throw new Error(`Found ${errorCount} dependency version mismatches for ${packageName}.`);
+      } else {
+        DR.logger.success(`All dependents of ${packageName} are using the correct version.`);
+      }
+    }
+  }
 }

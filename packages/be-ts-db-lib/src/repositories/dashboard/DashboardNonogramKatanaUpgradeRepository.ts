@@ -1,5 +1,5 @@
 import { NonogramKatanaUpgrade, User } from '@aneuhold/core-ts-db-lib';
-import { ObjectId } from 'bson';
+import type { UUID } from 'crypto';
 import type { RepoListeners } from '../../services/RepoSubscriptionService.js';
 import CleanDocument from '../../util/DocumentCleaner.js';
 import DashboardNonogramKatanaUpgradeValidator from '../../validators/dashboard/NonogramKatanaUpgradeValidator.js';
@@ -53,7 +53,7 @@ export default class DashboardNonogramKatanaUpgradeRepository extends DashboardB
    *
    * @param userId The ID of the user to get upgrades for.
    */
-  async getAllForUser(userId: ObjectId): Promise<NonogramKatanaUpgrade[]> {
+  async getAllForUser(userId: UUID): Promise<NonogramKatanaUpgrade[]> {
     const collection = await this.getCollection();
     const filter = {
       $and: [this.getFilterWithDefault(), { userId }]

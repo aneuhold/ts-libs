@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## 🔖 [2.3.11] (2025-11-23)
+
+### ✅ Added
+
+- Added `propagatePackageVersion` and `validatePackageDependents` utilities to `DependencyService` for automated version propagation and validation across workspace packages.
+- Updated type definitions for `PackageJson` to include `scripts` property.
+
 ## 🔖 [2.3.10] (2025-11-09)
 
 ### 🏗️ Changed
@@ -127,6 +134,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 <!-- Link References -->
 
+[2.3.11]: https://github.com/aneuhold/ts-libs/compare/core-ts-lib-v2.3.10...core-ts-lib-v2.3.11
 [2.3.10]: https://github.com/aneuhold/ts-libs/compare/core-ts-lib-v2.3.9...core-ts-lib-v2.3.10
 [2.3.9]: https://github.com/aneuhold/ts-libs/compare/core-ts-lib-v2.3.8...core-ts-lib-v2.3.9
 [2.3.8]: https://github.com/aneuhold/ts-libs/compare/core-ts-lib-v2.3.7...core-ts-lib-v2.3.8

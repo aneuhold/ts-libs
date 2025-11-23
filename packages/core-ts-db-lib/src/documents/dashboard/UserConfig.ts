@@ -1,4 +1,4 @@
-import { ObjectId } from 'bson';
+import type { UUID } from 'crypto';
 import type { DashboardTaskListGlobalFilterSettings } from '../../embedded-types/dashboard/task/FilterSettings.js';
 import { validateFilterSettings } from '../../embedded-types/dashboard/task/FilterSettings.js';
 import type { DashboardTaskListGlobalSortSettings } from '../../embedded-types/dashboard/task/SortSettings.js';
@@ -7,6 +7,7 @@ import type { DashboardTagSettings } from '../../embedded-types/dashboard/userCo
 import RequiredUserId from '../../schemas/required-refs/RequiredUserId.js';
 import type { DocumentValidator } from '../../schemas/validators/DocumentValidator.js';
 import Validate from '../../schemas/validators/ValidateUtil.js';
+import DocumentService from '../../services/DocumentService.js';
 import BaseDocumentWithType from '../BaseDocumentWithType.js';
 
 /**
@@ -20,7 +21,7 @@ export const validateDashboardUserConfig: DocumentValidator<DashboardUserConfig>
 ) => {
   const errors: string[] = [];
   const validate = new Validate(config, errors);
-  const exampleConfig = new DashboardUserConfig(new ObjectId());
+  const exampleConfig = new DashboardUserConfig(DocumentService.generateID());
 
   validate.boolean('enableDevMode', exampleConfig.enableDevMode);
   validate.array('collaborators', exampleConfig.collaborators);
@@ -52,13 +53,13 @@ export default class DashboardUserConfig extends BaseDocumentWithType implements
   /**
    * The owner of this config.
    */
-  userId: ObjectId;
+  userId: UUID;
 
   /**
    * The different users that the owner of this config is collaborating with
    * on the dashboard.
    */
-  collaborators: ObjectId[] = [];
+  collaborators: UUID[] = [];
 
   /**
    * Whether or not to enable dev mode for the user.
@@ -114,9 +115,9 @@ export default class DashboardUserConfig extends BaseDocumentWithType implements
   /**
    * Creates an instance of {@link DashboardUserConfig}.
    *
-   * @param ownerId - The {@link ObjectId} of the owner of this config.
+   * @param ownerId - The {@link UUID} of the owner of this config.
    */
-  constructor(ownerId: ObjectId) {
+  constructor(ownerId: UUID) {
     super();
     this.userId = ownerId;
   }

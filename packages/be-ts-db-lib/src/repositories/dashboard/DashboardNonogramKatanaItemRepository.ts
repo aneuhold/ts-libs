@@ -1,5 +1,5 @@
 import { NonogramKatanaItem, User } from '@aneuhold/core-ts-db-lib';
-import { ObjectId } from 'bson';
+import type { UUID } from 'crypto';
 import type { RepoListeners } from '../../services/RepoSubscriptionService.js';
 import CleanDocument from '../../util/DocumentCleaner.js';
 import DashboardNonogramKatanaItemValidator from '../../validators/dashboard/NonogramKatanaItemValidator.js';
@@ -53,7 +53,7 @@ export default class DashboardNonogramKatanaItemRepository extends DashboardBase
    *
    * @param userId The ID of the user to get items for.
    */
-  async getAllForUser(userId: ObjectId): Promise<NonogramKatanaItem[]> {
+  async getAllForUser(userId: UUID): Promise<NonogramKatanaItem[]> {
     const collection = await this.getCollection();
     const filter = {
       $and: [this.getFilterWithDefault(), { userId }]

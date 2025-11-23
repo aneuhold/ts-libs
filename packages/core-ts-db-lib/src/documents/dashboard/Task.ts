@@ -1,4 +1,4 @@
-import { ObjectId } from 'bson';
+import type { UUID } from 'crypto';
 import type { DashboardTaskFilterSettings } from '../../embedded-types/dashboard/task/FilterSettings.js';
 import type {
   ParentRecurringTaskInfo,
@@ -9,7 +9,7 @@ import type { DashboardTaskSortSettings } from '../../embedded-types/dashboard/t
 import RequiredUserId from '../../schemas/required-refs/RequiredUserId.js';
 import type { DocumentValidator } from '../../schemas/validators/DocumentValidator.js';
 import Validate from '../../schemas/validators/ValidateUtil.js';
-import type { DocumentMap } from '../../services/DocumentService.js';
+import DocumentService, { type DocumentMap } from '../../services/DocumentService.js';
 import BaseDocumentWithType from '../BaseDocumentWithType.js';
 
 /**
@@ -21,7 +21,7 @@ import BaseDocumentWithType from '../BaseDocumentWithType.js';
 export const validateDashboardTask: DocumentValidator<DashboardTask> = (task: DashboardTask) => {
   const errors: string[] = [];
   const validate = new Validate(task, errors);
-  const exampleTask = new DashboardTask(new ObjectId());
+  const exampleTask = new DashboardTask(DocumentService.generateID());
 
   validate.string('title', exampleTask.title);
   validate.boolean('completed', exampleTask.completed);
@@ -76,7 +76,7 @@ export default class DashboardTask extends BaseDocumentWithType implements Requi
   /**
    * The owner of this task.
    */
-  userId: ObjectId;
+  userId: UUID;
 
   /**
    * What happens when:
@@ -90,12 +90,12 @@ export default class DashboardTask extends BaseDocumentWithType implements Requi
    * collaborator back it will return to normal. But the frontend needs to
    * double check for this when displaying things.
    */
-  sharedWith: ObjectId[] = [];
+  sharedWith: UUID[] = [];
 
   /**
    * The user ID that this task is assigned to.
    */
-  assignedTo?: ObjectId;
+  assignedTo?: UUID;
 
   /**
    * The recurrence info for this task if there is any.
@@ -120,7 +120,7 @@ export default class DashboardTask extends BaseDocumentWithType implements Requi
   /**
    * The ID of the parent task if there is one.
    */
-  parentTaskId?: ObjectId;
+  parentTaskId?: UUID;
 
   /**
    * The description of the task. This is purposefully optional in case the
@@ -167,11 +167,11 @@ export default class DashboardTask extends BaseDocumentWithType implements Requi
    */
   sortSettings: DashboardTaskSortSettings = {};
 
-  constructor(ownerId: ObjectId) {
+  constructor(ownerId: UUID) {
     super();
     this.userId = ownerId;
     this.tags = {
-      [ownerId.toString()]: []
+      [ownerId]: []
     };
   }
 }

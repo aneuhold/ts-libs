@@ -1,4 +1,4 @@
-import { ObjectId } from 'bson';
+import type { UUID } from 'crypto';
 import DashboardDemoAccountsService from './DashboardDemoAccountsService.js';
 
 /**
@@ -14,10 +14,7 @@ export default class DemoAccountsService {
    * @param demoUser1Id The first demo user ID
    * @param demoUser2Id The second demo user ID
    */
-  static async seedDashboardDemoAccounts(
-    demoUser1Id: ObjectId,
-    demoUser2Id: ObjectId
-  ): Promise<void> {
+  static async seedDashboardDemoAccounts(demoUser1Id: UUID, demoUser2Id: UUID): Promise<void> {
     await DashboardDemoAccountsService.seedDemoAccounts(demoUser1Id, demoUser2Id);
   }
 }

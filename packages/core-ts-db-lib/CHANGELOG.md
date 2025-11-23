@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## 🔖 [3.0.0] (2025-11-23)
+
+### 🏗️ Changed
+
+_Breaking Change:_ Migrated all document, type, and service code from using `ObjectId` (from `bson`) to native `UUID` (from `crypto`), including all type signatures, constructors, and internal logic.
+_Breaking Change:_ Updated all references, tests, and utility functions to use `UUID` instead of `ObjectId`.
+Added `uuid` and `zod` as dependencies.
+Updated build scripts and exports for compatibility.
+Updated dependency: now requires `@aneuhold/core-ts-lib@^2.3.11`.
+
 ## 🔖 [2.0.90] (2025-11-09)
 
 ### 🏗️ Changed
@@ -91,6 +101,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 <!-- Link References -->
 
+[3.0.0]: https://github.com/aneuhold/ts-libs/compare/core-ts-db-lib-v2.0.90...core-ts-db-lib-v3.0.0
 [2.0.90]: https://github.com/aneuhold/ts-libs/compare/core-ts-db-lib-v2.0.89...core-ts-db-lib-v2.0.90
 [2.0.89]: https://github.com/aneuhold/ts-libs/compare/core-ts-db-lib-v2.0.88...core-ts-db-lib-v2.0.89
 [2.0.88]: https://github.com/aneuhold/ts-libs/compare/core-ts-db-lib-v2.0.87...core-ts-db-lib-v2.0.88

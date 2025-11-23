@@ -32,6 +32,10 @@ runs:
       shell: bash
       run: pnpm --filter ${{ inputs.package-name }}... build
 
+    - name: Validate version propagation for ${{ inputs.package-name }}
+      shell: bash
+      run: pnpm --filter ${{ inputs.package-name }} versionPropagation:validate
+
     - name: Run tests for ${{ inputs.package-name }}
       if: inputs.skip-tests != 'true'
       shell: bash

@@ -1,4 +1,4 @@
-import { ObjectId } from 'bson';
+import type { UUID } from 'crypto';
 import type { DocumentValidator } from '../../schemas/validators/DocumentValidator.js';
 import Validate from '../../schemas/validators/ValidateUtil.js';
 import BaseDocument from '../BaseDocument.js';
@@ -8,7 +8,7 @@ import BaseDocument from '../BaseDocument.js';
  * information.
  */
 export type UserCTO = {
-  _id: ObjectId;
+  _id: UUID;
   userName: string;
 };
 

@@ -1,19 +1,20 @@
-import { ObjectId } from 'bson';
+import type { UUID } from 'crypto';
 import { describe, expect, it } from 'vitest';
 import DashboardTask from '../../../documents/dashboard/Task.js';
-import { DashboardTaskListFilterSettings } from '../../../embedded-types/dashboard/task/FilterSettings.js';
+import type { DashboardTaskListFilterSettings } from '../../../embedded-types/dashboard/task/FilterSettings.js';
 import {
   RecurrenceBasis,
   RecurrenceEffect,
-  RecurrenceFrequency,
+  type RecurrenceFrequency,
   RecurrenceFrequencyType
 } from '../../../embedded-types/dashboard/task/RecurrenceInfo.js';
 import {
-  DashboardTaskListSortSettings,
+  type DashboardTaskListSortSettings,
   DashboardTaskSortBy,
   DashboardTaskSortDirection
 } from '../../../embedded-types/dashboard/task/SortSettings.js';
-import { DashboardTagSettings } from '../../../embedded-types/dashboard/userConfig/Tags.js';
+import type { DashboardTagSettings } from '../../../embedded-types/dashboard/userConfig/Tags.js';
+import DocumentService from '../../DocumentService.js';
 import DashboardTaskService from './TaskService.js';
 
 describe('DashboardTaskService', () => {
@@ -126,7 +127,7 @@ describe('DashboardTaskService', () => {
   describe('updateDatesForRecurrence', () => {
     describe('Start date basis', () => {
       it('should update the start date correctly for a daily recurrence', () => {
-        const task = new DashboardTask(new ObjectId());
+        const task = new DashboardTask(DocumentService.generateID());
         task.startDate = new Date(2024, 0, 1);
         task.recurrenceInfo = {
           frequency: {
@@ -144,7 +145,7 @@ describe('DashboardTaskService', () => {
       });
 
       it('should update the start date correctly for daily recurrence on subtask', () => {
-        const task = new DashboardTask(new ObjectId());
+        const task = new DashboardTask(DocumentService.generateID());
         task.startDate = new Date(2024, 0, 8);
         task.dueDate = new Date(2024, 0, 13);
         task.recurrenceInfo = {
@@ -159,7 +160,7 @@ describe('DashboardTaskService', () => {
           recurrenceEffect: RecurrenceEffect.rollOnBasis
         };
         task.parentRecurringTaskInfo = {
-          taskId: new ObjectId(),
+          taskId: DocumentService.generateID(),
           startDate: new Date(2024, 0, 1)
         };
         DashboardTaskService.updateDatesForRecurrence(task);
@@ -168,7 +169,7 @@ describe('DashboardTaskService', () => {
       });
 
       it('should update the start date correctly for a weekly recurrence', () => {
-        const task = new DashboardTask(new ObjectId());
+        const task = new DashboardTask(DocumentService.generateID());
         task.startDate = new Date(2024, 0, 1);
         task.recurrenceInfo = {
           frequency: {
@@ -186,7 +187,7 @@ describe('DashboardTaskService', () => {
       });
 
       it('should update the start and due date correctly for a weekDaySet reccurence', () => {
-        const task = new DashboardTask(new ObjectId());
+        const task = new DashboardTask(DocumentService.generateID());
         task.startDate = new Date(2024, 0, 1, 11);
         task.dueDate = new Date(2024, 0, 4, 23, 59);
         task.recurrenceInfo = {
@@ -203,7 +204,7 @@ describe('DashboardTaskService', () => {
       });
 
       it('should update the start and due date correctly for a everyXWeekdayOfMonth reccurence', () => {
-        const task = new DashboardTask(new ObjectId());
+        const task = new DashboardTask(DocumentService.generateID());
         task.startDate = new Date(2024, 0, 1, 11);
         task.dueDate = new Date(2024, 0, 4, 23, 59);
         task.recurrenceInfo = {
@@ -329,13 +330,13 @@ describe('DashboardTaskService', () => {
         sortBy: DashboardTaskSortBy.title,
         sortDirection: DashboardTaskSortDirection.ascending
       });
-      tagSettings.tag1 = {
+      tagSettings['tag1'] = {
         priority: 1
       };
-      tagSettings.tag2 = {
+      tagSettings['tag2'] = {
         priority: 2
       };
-      tagSettings.tag3 = {
+      tagSettings['tag3'] = {
         priority: 3
       };
       const task1 = tasksList[4];
@@ -375,11 +376,11 @@ describe('DashboardTaskService', () => {
         );
 
       expect(sortedTaskIds.length).toBe(10);
-      expect(sortedTaskIds[0]).toBe(task1._id.toString());
-      expect(sortedTaskIds[1]).toBe(task2._id.toString());
-      expect(sortedTaskIds[2]).toBe(task3._id.toString());
-      expect(sortedTaskIds[3]).toBe(task4._id.toString());
-      expect(sortedTaskIds[4]).toBe(task5._id.toString());
+      expect(sortedTaskIds[0]).toBe(task1._id);
+      expect(sortedTaskIds[1]).toBe(task2._id);
+      expect(sortedTaskIds[2]).toBe(task3._id);
+      expect(sortedTaskIds[3]).toBe(task4._id);
+      expect(sortedTaskIds[4]).toBe(task5._id);
 
       const result = DashboardTaskService.getTagHeaderMap(
         taskMap,
@@ -391,10 +392,10 @@ describe('DashboardTaskService', () => {
       );
 
       expect(Object.keys(result).length).toBe(4);
-      expect(result[task1._id.toString()]).toBe('tag3');
-      expect(result[task3._id.toString()]).toBe('tag2');
-      expect(result[task4._id.toString()]).toBe('tag1');
-      expect(result[task5._id.toString()]).toBe('No Priority');
+      expect(result[task1._id]).toBe('tag3');
+      expect(result[task3._id]).toBe('tag2');
+      expect(result[task4._id]).toBe('tag1');
+      expect(result[task5._id]).toBe('No Priority');
     });
 
     it('should return a correct tag header map when sorting tags ascending', () => {
@@ -404,16 +405,16 @@ describe('DashboardTaskService', () => {
         sortBy: DashboardTaskSortBy.tags,
         sortDirection: DashboardTaskSortDirection.ascending
       });
-      tagSettings.tag1 = {
+      tagSettings['tag1'] = {
         priority: 1
       };
-      tagSettings.tag2 = {
+      tagSettings['tag2'] = {
         priority: 2
       };
-      tagSettings.tag3 = {
+      tagSettings['tag3'] = {
         priority: 3
       };
-      tagSettings.tag4 = {
+      tagSettings['tag4'] = {
         priority: 4
       };
       const task1 = tasksList[4];
@@ -447,11 +448,11 @@ describe('DashboardTaskService', () => {
         );
 
       expect(sortedTaskIds.length).toBe(5);
-      expect(sortedTaskIds[0]).toBe(task1._id.toString());
-      expect(sortedTaskIds[1]).toBe(task2._id.toString());
-      expect(sortedTaskIds[2]).toBe(task3._id.toString());
-      expect(sortedTaskIds[3]).toBe(task4._id.toString());
-      expect(sortedTaskIds[4]).toBe(task5._id.toString());
+      expect(sortedTaskIds[0]).toBe(task1._id);
+      expect(sortedTaskIds[1]).toBe(task2._id);
+      expect(sortedTaskIds[2]).toBe(task3._id);
+      expect(sortedTaskIds[3]).toBe(task4._id);
+      expect(sortedTaskIds[4]).toBe(task5._id);
 
       const result = DashboardTaskService.getTagHeaderMap(
         taskMap,
@@ -463,11 +464,11 @@ describe('DashboardTaskService', () => {
       );
 
       expect(Object.keys(result).length).toBe(5);
-      expect(result[task1._id.toString()]).toBe('No Priority');
-      expect(result[task2._id.toString()]).toBe('tag1');
-      expect(result[task3._id.toString()]).toBe('tag2');
-      expect(result[task4._id.toString()]).toBe('tag3');
-      expect(result[task5._id.toString()]).toBe('tag4');
+      expect(result[task1._id]).toBe('No Priority');
+      expect(result[task2._id]).toBe('tag1');
+      expect(result[task3._id]).toBe('tag2');
+      expect(result[task4._id]).toBe('tag3');
+      expect(result[task5._id]).toBe('tag4');
     });
 
     it('should return a sorted list of tasks by tags, start date, and title', () => {
@@ -487,10 +488,10 @@ describe('DashboardTaskService', () => {
           sortDirection: DashboardTaskSortDirection.ascending
         }
       );
-      tagSettings.tag1 = {
+      tagSettings['tag1'] = {
         priority: 1
       };
-      tagSettings.tag2 = {
+      tagSettings['tag2'] = {
         priority: 2
       };
 
@@ -545,12 +546,12 @@ describe('DashboardTaskService', () => {
       );
 
       expect(result.length).toBe(10);
-      expect(result[0]).toBe(task1._id.toString());
-      expect(result[1]).toBe(task2._id.toString());
-      expect(result[2]).toBe(task3._id.toString());
-      expect(result[3]).toBe(task4._id.toString());
-      expect(result[4]).toBe(task5._id.toString());
-      expect(result[5]).toBe(task6._id.toString());
+      expect(result[0]).toBe(task1._id);
+      expect(result[1]).toBe(task2._id);
+      expect(result[2]).toBe(task3._id);
+      expect(result[3]).toBe(task4._id);
+      expect(result[4]).toBe(task5._id);
+      expect(result[5]).toBe(task6._id);
     });
   });
 });
@@ -562,7 +563,7 @@ describe('DashboardTaskService', () => {
  * @returns An object containing tasksList, taskMap, taskIds, filterSettings, sortSettings, and tagSettings.
  */
 function setupSortAndFilterTest(numTasks = 5) {
-  const userId = new ObjectId();
+  const userId = DocumentService.generateID();
   const tasksList = createTasksList(numTasks, userId);
   const taskMap = createTaskMapFromList(tasksList);
   const filterSettings = getFilterSettings(userId);
@@ -586,7 +587,7 @@ function setupSortAndFilterTest(numTasks = 5) {
  * @param userId - The ID of the user for whom the tasks are created.
  * @returns An array of DashboardTask objects.
  */
-function createTasksList(numTasks: number, userId: ObjectId): DashboardTask[] {
+function createTasksList(numTasks: number, userId: UUID): DashboardTask[] {
   const tasks: DashboardTask[] = [];
   for (let i = 0; i < numTasks; i += 1) {
     const task = new DashboardTask(userId);
@@ -603,7 +604,7 @@ function createTasksList(numTasks: number, userId: ObjectId): DashboardTask[] {
  */
 function createTaskMapFromList(tasks: DashboardTask[]) {
   return tasks.reduce<Record<string, DashboardTask>>((acc, task) => {
-    acc[task._id.toString()] = task;
+    acc[task._id] = task;
     return acc;
   }, {});
 }
@@ -614,9 +615,9 @@ function createTaskMapFromList(tasks: DashboardTask[]) {
  * @param userId - The ID of the user for whom the filter settings are retrieved.
  * @returns The filter settings for the user.
  */
-function getFilterSettings(userId: ObjectId): DashboardTaskListFilterSettings {
+function getFilterSettings(userId: UUID): DashboardTaskListFilterSettings {
   return {
-    userId: userId.toString(),
+    userId: userId,
     completed: {
       show: true
     },
@@ -636,9 +637,9 @@ function getFilterSettings(userId: ObjectId): DashboardTaskListFilterSettings {
  * @param userId - The ID of the user for whom the sort settings are retrieved.
  * @returns The sort settings for the user.
  */
-function getSortSettings(userId: ObjectId): DashboardTaskListSortSettings {
+function getSortSettings(userId: UUID): DashboardTaskListSortSettings {
   return {
-    userId: userId.toString(),
+    userId: userId,
     sortList: []
   };
 }

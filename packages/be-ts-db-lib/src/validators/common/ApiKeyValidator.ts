@@ -1,6 +1,6 @@
 import { ApiKey, validateApiKey } from '@aneuhold/core-ts-db-lib';
 import { DR, ErrorUtils } from '@aneuhold/core-ts-lib';
-import { ObjectId } from 'bson';
+import type { UUID } from 'crypto';
 import ApiKeyRepository from '../../repositories/common/ApiKeyRepository.js';
 import UserRepository from '../../repositories/common/UserRepository.js';
 import IValidator from '../BaseValidator.js';
@@ -11,11 +11,9 @@ export default class ApiKeyValidator extends IValidator<ApiKey> {
     const userRepo = UserRepository.getRepo();
     const userInDb = await userRepo.get({ _id: newApiKey.userId });
     if (!userInDb) {
-      DR.logger.error(
-        `User with ID: ${newApiKey.userId.toString()} does not exist in the database.`
-      );
+      DR.logger.error(`User with ID: ${newApiKey.userId} does not exist in the database.`);
       ErrorUtils.throwError(
-        `User with ID: ${newApiKey.userId.toString()} does not exist in the database.`,
+        `User with ID: ${newApiKey.userId} does not exist in the database.`,
         newApiKey
       );
       return;
@@ -24,11 +22,8 @@ export default class ApiKeyValidator extends IValidator<ApiKey> {
     const apiKeyRepo = ApiKeyRepository.getRepo();
     const apiKeyInDb = await apiKeyRepo.get({ userId: newApiKey.userId });
     if (apiKeyInDb) {
-      DR.logger.error(`User with ID: ${newApiKey.userId.toString()} already has an API key.`);
-      ErrorUtils.throwError(
-        `User with ID: ${newApiKey.userId.toString()} already has an API key.`,
-        newApiKey
-      );
+      DR.logger.error(`User with ID: ${newApiKey.userId} already has an API key.`);
+      ErrorUtils.throwError(`User with ID: ${newApiKey.userId} already has an API key.`, newApiKey);
     }
   }
 
@@ -52,16 +47,14 @@ export default class ApiKeyValidator extends IValidator<ApiKey> {
       docName: 'API Key',
       allDocs: allApiKeys,
       shouldDelete: (apiKey: ApiKey) => {
-        if (!allUserIds[apiKey.userId.toString()]) {
-          DR.logger.error(
-            `API Key with ID: ${apiKey._id.toString()} has no valid associated user.`
-          );
+        if (!allUserIds[apiKey.userId]) {
+          DR.logger.error(`API Key with ID: ${apiKey._id} has no valid associated user.`);
           return true;
         }
         return false;
       },
       documentValidator: validateApiKey,
-      deletionFunction: async (docIdsToDelete: ObjectId[]) => {
+      deletionFunction: async (docIdsToDelete: UUID[]) => {
         await apiKeyRepo.deleteList(docIdsToDelete);
       },
       updateFunction: async (docsToUpdate: ApiKey[]) => {

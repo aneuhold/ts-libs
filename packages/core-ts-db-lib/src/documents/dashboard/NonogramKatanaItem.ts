@@ -1,4 +1,4 @@
-import { ObjectId } from 'bson';
+import type { UUID } from 'crypto';
 import NonogramKatanaItemName from '../../embedded-types/dashboard/nonogramKatanaItem/ItemName.js';
 import RequiredUserId from '../../schemas/required-refs/RequiredUserId.js';
 import type { DocumentValidator } from '../../schemas/validators/DocumentValidator.js';
@@ -31,7 +31,7 @@ export default class NonogramKatanaItem extends BaseDocumentWithType implements 
   /**
    * The owner of this Nonogram Katana item.
    */
-  userId: ObjectId;
+  userId: UUID;
 
   itemName: NonogramKatanaItemName;
 
@@ -48,7 +48,7 @@ export default class NonogramKatanaItem extends BaseDocumentWithType implements 
    */
   priority: number = 0;
 
-  constructor(ownerId: ObjectId, itemName: NonogramKatanaItemName) {
+  constructor(ownerId: UUID, itemName: NonogramKatanaItemName) {
     super();
     this.userId = ownerId;
     this.itemName = itemName;

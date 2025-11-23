@@ -1,6 +1,6 @@
 import type { UserCTO } from '@aneuhold/core-ts-db-lib';
 import { User } from '@aneuhold/core-ts-db-lib';
-import { ObjectId } from 'bson';
+import type { UUID } from 'crypto';
 import UserValidator from '../../validators/common/UserValidator.js';
 import BaseRepository from '../BaseRepository.js';
 import DashboardNonogramKatanaItemRepository from '../dashboard/DashboardNonogramKatanaItemRepository.js';
@@ -50,7 +50,7 @@ export default class UserRepository extends BaseRepository<User> {
     return null;
   }
 
-  async getUserCTOsByIds(userIds: ObjectId[]): Promise<UserCTO[]> {
+  async getUserCTOsByIds(userIds: UUID[]): Promise<UserCTO[]> {
     const users = await this.getList(userIds);
     return users.map((user) => ({
       userName: user.userName,

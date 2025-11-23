@@ -58,7 +58,7 @@ export default class DashboardTaskFilterService {
         if (
           !settings.grandChildrenTasks.show &&
           task.parentTaskId &&
-          task.parentTaskId.toString() !== parentTaskId
+          task.parentTaskId !== parentTaskId
         ) {
           return false;
         }
@@ -66,7 +66,7 @@ export default class DashboardTaskFilterService {
       } else if (
         !settings.grandChildrenTasks.show &&
         task.parentTaskId &&
-        taskMap[task.parentTaskId.toString()]
+        taskMap[task.parentTaskId]
       ) {
         return false;
       }

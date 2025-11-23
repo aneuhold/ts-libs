@@ -15,7 +15,7 @@ Monorepo for TypeScript libraries that I work on.
 | [`@aneuhold/local-npm-registry`](packages/local-npm-registry) | Manages local npm package installations and updates across your machine | [![NPM](https://img.shields.io/npm/v/%40aneuhold%2Flocal-npm-registry)](https://www.npmjs.com/package/@aneuhold/local-npm-registry) | [![JSR](https://jsr.io/badges/@aneuhold/local-npm-registry)](https://jsr.io/@aneuhold/local-npm-registry) |
 
 <details>
-<summary>Making Updates to the Monorepo</summary>
+<summary><h2>Making Updates to the Monorepo</h2></summary>
 
 Follow this general flow when making updates to any package in the monorepo:
 
@@ -57,3 +57,8 @@ Follow this general flow when making updates to any package in the monorepo:
 1. **Merge the PR** once all checks pass. Updated packages will automatically publish to NPM and JSR registries.
 
 </details>
+
+## Other Documentation
+
+- 🚜 [CI/CD Process](./docs/ci.md)
+- 🛠️ [Dev Tooling Detailed Info](./docs/dev-tooling.md)

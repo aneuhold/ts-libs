@@ -1,4 +1,3 @@
-import { ObjectId } from 'bson';
 import { describe, expect, it } from 'vitest';
 import DocumentService from './DocumentService.js';
 
@@ -6,7 +5,7 @@ describe('DocumentService', () => {
   describe('deepCopy', () => {
     it('should return a deep copy of the object', () => {
       const obj = {
-        id: new ObjectId(),
+        id: DocumentService.generateID(),
         a: 1,
         b: {
           c: 2
@@ -14,8 +13,8 @@ describe('DocumentService', () => {
       };
       const result = DocumentService.deepCopy(obj);
       expect(result).toEqual(obj);
-      expect(typeof result.id === 'object').toBeTruthy();
-      expect(result.id.toString()).toEqual(obj.id.toString());
+      expect(typeof result.id === 'string').toBeTruthy();
+      expect(result.id).toEqual(obj.id);
       expect(result).not.toBe(obj);
       expect(result.b).toEqual(obj.b);
       expect(result.b).not.toBe(obj.b);

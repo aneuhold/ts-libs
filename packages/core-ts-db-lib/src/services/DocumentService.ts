@@ -1,4 +1,6 @@
 import { EJSON } from 'bson';
+import type { UUID } from 'crypto';
+import { v7 as uuidv7 } from 'uuid';
 import BaseDocument from '../documents/BaseDocument.js';
 
 /**
@@ -21,5 +23,9 @@ export default class DocumentService {
    */
   static deepCopy<T extends object>(obj: T): T {
     return EJSON.parse(EJSON.stringify(obj, { relaxed: false })) as T;
+  }
+
+  static generateID(): UUID {
+    return uuidv7() as UUID;
   }
 }
