@@ -42,13 +42,13 @@ importers:
   packages/be-ts-db-lib:
     dependencies:
       '@aneuhold/be-ts-lib':
-        specifier: '*'
+        specifier: ^2.0.92
         version: link:../be-ts-lib
       '@aneuhold/core-ts-db-lib':
-        specifier: '*'
+        specifier: ^2.0.91
         version: link:../core-ts-db-lib
       '@aneuhold/core-ts-lib':
-        specifier: '*'
+        specifier: ^2.3.11
         version: link:../core-ts-lib
       bson:
         specifier: ^7.0.0
@@ -58,7 +58,7 @@ importers:
         version: 7.0.0
     devDependencies:
       '@aneuhold/local-npm-registry':
-        specifier: '*'
+        specifier: ^0.2.17
         version: link:../local-npm-registry
       '@aneuhold/main-scripts':
         specifier: ^2.7.2
@@ -100,10 +100,10 @@ importers:
   packages/be-ts-lib:
     dependencies:
       '@aneuhold/core-ts-api-lib':
-        specifier: '*'
+        specifier: ^2.2.9
         version: link:../core-ts-api-lib
       '@aneuhold/core-ts-lib':
-        specifier: '*'
+        specifier: ^2.3.11
         version: link:../core-ts-lib
       dotenv:
         specifier: ^17.2.3
@@ -119,7 +119,7 @@ importers:
         version: 5.0.5
     devDependencies:
       '@aneuhold/local-npm-registry':
-        specifier: '*'
+        specifier: ^0.2.17
         version: link:../local-npm-registry
       '@aneuhold/main-scripts':
         specifier: ^2.7.2
@@ -155,17 +155,17 @@ importers:
   packages/core-ts-api-lib:
     dependencies:
       '@aneuhold/core-ts-db-lib':
-        specifier: '*'
+        specifier: ^2.0.91
         version: link:../core-ts-db-lib
       '@aneuhold/core-ts-lib':
-        specifier: '*'
+        specifier: ^2.3.11
         version: link:../core-ts-lib
       bson:
         specifier: ^7.0.0
         version: 7.0.0
     devDependencies:
       '@aneuhold/local-npm-registry':
-        specifier: '*'
+        specifier: ^0.2.17
         version: link:../local-npm-registry
       '@aneuhold/main-scripts':
         specifier: ^2.7.2
@@ -198,7 +198,7 @@ importers:
   packages/core-ts-db-lib:
     dependencies:
       '@aneuhold/core-ts-lib':
-        specifier: '*'
+        specifier: ^2.3.11
         version: link:../core-ts-lib
       bson:
         specifier: ^7.0.0
@@ -211,7 +211,7 @@ importers:
         version: 4.1.12
     devDependencies:
       '@aneuhold/local-npm-registry':
-        specifier: '*'
+        specifier: ^0.2.17
         version: link:../local-npm-registry
       '@aneuhold/main-scripts':
         specifier: ^2.7.2
@@ -274,7 +274,7 @@ importers:
   packages/local-npm-registry:
     dependencies:
       '@aneuhold/core-ts-lib':
-        specifier: '*'
+        specifier: ^2.3.11
         version: link:../core-ts-lib
       commander:
         specifier: ^14.0.2
