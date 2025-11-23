@@ -1,3 +1,4 @@
+import type { UUID } from 'crypto';
 import DocumentService from '../services/DocumentService.js';
 
 /**
@@ -8,5 +9,5 @@ import DocumentService from '../services/DocumentService.js';
  */
 export default abstract class BaseDocument {
   /** The unique identifier for this document */
-  _id = DocumentService.generateID();
+  _id: UUID = DocumentService.generateID();
 }
