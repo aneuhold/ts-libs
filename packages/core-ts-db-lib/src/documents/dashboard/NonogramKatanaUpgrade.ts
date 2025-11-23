@@ -1,4 +1,4 @@
-import { ObjectId } from 'bson';
+import type { UUID } from 'crypto';
 import NonogramKatanaItemName from '../../embedded-types/dashboard/nonogramKatanaItem/ItemName.js';
 import NonogramKatanaUpgradeName from '../../embedded-types/dashboard/nonogramKatanaUpgrade/UpgradeName.js';
 import RequiredUserId from '../../schemas/required-refs/RequiredUserId.js';
@@ -39,7 +39,7 @@ export default class NonogramKatanaUpgrade extends BaseDocumentWithType implemen
   /**
    * The owner of this Nonogram Katana upgrade.
    */
-  userId: ObjectId;
+  userId: UUID;
 
   upgradeName: NonogramKatanaUpgradeName;
 
@@ -58,7 +58,7 @@ export default class NonogramKatanaUpgrade extends BaseDocumentWithType implemen
    * @param ownerId - The ID of the owner of this upgrade.
    * @param upgradeName - The name of the upgrade.
    */
-  constructor(ownerId: ObjectId, upgradeName: NonogramKatanaUpgradeName) {
+  constructor(ownerId: UUID, upgradeName: NonogramKatanaUpgradeName) {
     super();
     this.userId = ownerId;
     this.upgradeName = upgradeName;

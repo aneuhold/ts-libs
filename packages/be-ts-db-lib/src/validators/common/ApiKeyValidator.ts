@@ -1,6 +1,6 @@
 import { ApiKey, validateApiKey } from '@aneuhold/core-ts-db-lib';
 import { DR, ErrorUtils } from '@aneuhold/core-ts-lib';
-import { ObjectId } from 'bson';
+import type { UUID } from 'crypto';
 import ApiKeyRepository from '../../repositories/common/ApiKeyRepository.js';
 import UserRepository from '../../repositories/common/UserRepository.js';
 import IValidator from '../BaseValidator.js';
@@ -53,15 +53,13 @@ export default class ApiKeyValidator extends IValidator<ApiKey> {
       allDocs: allApiKeys,
       shouldDelete: (apiKey: ApiKey) => {
         if (!allUserIds[apiKey.userId.toString()]) {
-          DR.logger.error(
-            `API Key with ID: ${apiKey._id.toString()} has no valid associated user.`
-          );
+          DR.logger.error(`API Key with ID: ${apiKey._id} has no valid associated user.`);
           return true;
         }
         return false;
       },
       documentValidator: validateApiKey,
-      deletionFunction: async (docIdsToDelete: ObjectId[]) => {
+      deletionFunction: async (docIdsToDelete: UUID[]) => {
         await apiKeyRepo.deleteList(docIdsToDelete);
       },
       updateFunction: async (docsToUpdate: ApiKey[]) => {

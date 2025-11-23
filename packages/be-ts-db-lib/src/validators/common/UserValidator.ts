@@ -1,6 +1,6 @@
 import { User, validateUser } from '@aneuhold/core-ts-db-lib';
 import { DR, ErrorUtils } from '@aneuhold/core-ts-lib';
-import { ObjectId } from 'bson';
+import type { UUID } from 'crypto';
 import UserRepository from '../../repositories/common/UserRepository.js';
 import { TEST_USER_NAME_PREFIX } from '../../tests/globalTestVariables.js';
 import IValidator from '../BaseValidator.js';
@@ -55,15 +55,13 @@ export default class UserValidator extends IValidator<User> {
       allDocs: allUsers,
       shouldDelete: (user: User) => {
         if (user.userName.startsWith(TEST_USER_NAME_PREFIX)) {
-          DR.logger.error(
-            `User with ID: ${user._id.toString()} is a test user and should be deleted`
-          );
+          DR.logger.error(`User with ID: ${user._id} is a test user and should be deleted`);
           return true;
         }
         return false;
       },
       documentValidator: validateUser,
-      deletionFunction: async (docIdsToDelete: ObjectId[]) => {
+      deletionFunction: async (docIdsToDelete: UUID[]) => {
         await userRepo.deleteList(docIdsToDelete);
       },
       updateFunction: async (docsToUpdate: User[]) => {

@@ -1,6 +1,7 @@
 import { BaseDocument } from '@aneuhold/core-ts-db-lib';
 import type { Document } from 'bson';
 import { ObjectId } from 'bson';
+import type { UUID } from 'crypto';
 import type {
   AnyBulkWriteOperation,
   BulkWriteResult,
@@ -191,7 +192,7 @@ export default abstract class BaseRepository<TBasetype extends BaseDocument> {
    * @param docIds - The IDs of the documents to delete.
    * @returns The result of the delete operation.
    */
-  async deleteList(docIds: ObjectId[]): Promise<DeleteResult> {
+  async deleteList(docIds: UUID[]): Promise<DeleteResult> {
     const collection = await this.getCollection();
     const deleteResult = collection.deleteMany({
       _id: { $in: docIds }

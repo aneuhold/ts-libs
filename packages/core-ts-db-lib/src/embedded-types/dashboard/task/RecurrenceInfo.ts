@@ -1,4 +1,4 @@
-import { ObjectId } from 'bson';
+import type { UUID } from 'crypto';
 import DashboardTask from '../../../documents/dashboard/Task.js';
 
 /**
@@ -118,7 +118,7 @@ export enum RecurrenceEffect {
  * same as the parent recurring task.
  */
 export type ParentRecurringTaskInfo = {
-  taskId: ObjectId;
+  taskId: UUID;
   startDate?: Date;
   dueDate?: Date;
 };

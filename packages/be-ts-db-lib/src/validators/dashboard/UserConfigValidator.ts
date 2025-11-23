@@ -1,6 +1,6 @@
 import { DashboardUserConfig, validateDashboardUserConfig } from '@aneuhold/core-ts-db-lib';
 import { DR, ErrorUtils } from '@aneuhold/core-ts-lib';
-import { ObjectId } from 'bson';
+import type { UUID } from 'crypto';
 import UserRepository from '../../repositories/common/UserRepository.js';
 import DashboardUserConfigRepository from '../../repositories/dashboard/DashboardUserConfigRepository.js';
 import IValidator from '../BaseValidator.js';
@@ -97,7 +97,7 @@ export default class DashboardUserConfigValidator extends IValidator<DashboardUs
         });
         return { updatedDoc, errors };
       },
-      deletionFunction: async (docIdsToDelete: ObjectId[]) => {
+      deletionFunction: async (docIdsToDelete: UUID[]) => {
         await userConfigRepo.deleteList(docIdsToDelete);
       },
       updateFunction: async (docsToUpdate: DashboardUserConfig[]) => {

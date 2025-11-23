@@ -1,6 +1,6 @@
 import { DashboardTask, validateDashboardTask } from '@aneuhold/core-ts-db-lib';
 import { DR, ErrorUtils } from '@aneuhold/core-ts-lib';
-import { ObjectId } from 'bson';
+import type { UUID } from 'crypto';
 import UserRepository from '../../repositories/common/UserRepository.js';
 import DashboardTaskRepository from '../../repositories/dashboard/DashboardTaskRepository.js';
 import IValidator from '../BaseValidator.js';
@@ -88,7 +88,7 @@ export default class DashboardTaskValidator extends IValidator<DashboardTask> {
 
         return { updatedDoc, errors };
       },
-      deletionFunction: async (docIdsToDelete: ObjectId[]) => {
+      deletionFunction: async (docIdsToDelete: UUID[]) => {
         await taskRepo.deleteList(docIdsToDelete);
       },
       updateFunction: async (docsToUpdate: DashboardTask[]) => {

@@ -1,6 +1,6 @@
 import { NonogramKatanaUpgrade, validateNonogramKatanaUpgrade } from '@aneuhold/core-ts-db-lib';
 import { DR, ErrorUtils } from '@aneuhold/core-ts-lib';
-import { ObjectId } from 'bson';
+import type { UUID } from 'crypto';
 import UserRepository from '../../repositories/common/UserRepository.js';
 import DashboardNonogramKatanaUpgradeRepository from '../../repositories/dashboard/DashboardNonogramKatanaUpgradeRepository.js';
 import IValidator from '../BaseValidator.js';
@@ -46,7 +46,7 @@ export default class DashboardNonogramKatanaUpgradeValidator extends IValidator<
       shouldDelete: (upgrade: NonogramKatanaUpgrade) => {
         if (!allUserIds[upgrade.userId.toString()]) {
           DR.logger.error(
-            `Nonogram Katana Upgrade with ID: ${upgrade._id.toString()} has no valid associated user.`
+            `Nonogram Katana Upgrade with ID: ${upgrade._id} has no valid associated user.`
           );
           return true;
         }
@@ -56,7 +56,7 @@ export default class DashboardNonogramKatanaUpgradeValidator extends IValidator<
         const { updatedDoc, errors } = validateNonogramKatanaUpgrade(upgrade);
         return { updatedDoc, errors };
       },
-      deletionFunction: async (docIdsToDelete: ObjectId[]) => {
+      deletionFunction: async (docIdsToDelete: UUID[]) => {
         await upgradeRepo.deleteList(docIdsToDelete);
       },
       updateFunction: async (docsToUpdate: NonogramKatanaUpgrade[]) => {

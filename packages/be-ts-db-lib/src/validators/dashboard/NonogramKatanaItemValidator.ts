@@ -1,6 +1,6 @@
 import { NonogramKatanaItem, validateNonogramKatanaItem } from '@aneuhold/core-ts-db-lib';
 import { DR, ErrorUtils } from '@aneuhold/core-ts-lib';
-import { ObjectId } from 'bson';
+import type { UUID } from 'crypto';
 import UserRepository from '../../repositories/common/UserRepository.js';
 import DashboardNonogramKatanaItemRepository from '../../repositories/dashboard/DashboardNonogramKatanaItemRepository.js';
 import IValidator from '../BaseValidator.js';
@@ -56,7 +56,7 @@ export default class DashboardNonogramKatanaItemValidator extends IValidator<Non
         const { updatedDoc, errors } = validateNonogramKatanaItem(item);
         return { updatedDoc, errors };
       },
-      deletionFunction: async (docIdsToDelete: ObjectId[]) => {
+      deletionFunction: async (docIdsToDelete: UUID[]) => {
         await itemRepo.deleteList(docIdsToDelete);
       },
       updateFunction: async (docsToUpdate: NonogramKatanaItem[]) => {
