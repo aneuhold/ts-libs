@@ -7,13 +7,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## 🔖 [3.0.0] (2025-11-23)
 
-### ✅ Added
-
 ### 🏗️ Changed
 
-### 🩹 Fixed
-
-### 🔥 Removed
+_Breaking Change:_ Migrated all document, repository, and validator code from using `ObjectId` (from `bson`) to native `UUID` (from `crypto`), including all type signatures, constructors, and internal logic.
+_Breaking Change:_ Updated all references, tests, and utility functions to use `UUID` instead of `ObjectId`.
+Added migration utilities and scripts to support conversion of existing data from `ObjectId` to `UUID v7`.
+Updated dependencies: now requires `@aneuhold/core-ts-db-lib@^3.0.0`, `@aneuhold/core-ts-lib@^2.3.11`, and `@aneuhold/be-ts-lib@^3.0.0`.
 
 ## 🔖 [2.0.85] (2025-11-09)
 
@@ -94,6 +93,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Updated workflow permissions to allow repository write access
 
 <!-- Link References -->
+
 [3.0.0]: https://github.com/aneuhold/ts-libs/compare/be-ts-db-lib-v2.0.85...be-ts-db-lib-v3.0.0
 [2.0.85]: https://github.com/aneuhold/ts-libs/compare/be-ts-db-lib-v2.0.84...be-ts-db-lib-v2.0.85
 [2.0.84]: https://github.com/aneuhold/ts-libs/compare/be-ts-db-lib-v2.0.83...be-ts-db-lib-v2.0.84
