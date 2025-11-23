@@ -61,7 +61,8 @@
     "@aneuhold/core-ts-db-lib": "^3.0.0",
     "@aneuhold/core-ts-lib": "^2.3.11",
     "bson": "^7.0.0",
-    "mongodb": "^7.0.0"
+    "mongodb": "^7.0.0",
+    "uuid": "^13.0.0"
   },
   "devDependencies": {
     "@aneuhold/local-npm-registry": "^0.2.17",
