@@ -24,7 +24,7 @@ export function validateSortSettings(validate: Validate, config: DashboardUserCo
   validate.object('taskListSortSettings', {});
   const categories = Object.keys(config.taskListSortSettings);
   if (categories.length > 0) {
-    const defaultSettings = getDefaultTaskListSortSettings(config.userId.toString());
+    const defaultSettings = getDefaultTaskListSortSettings(config.userId);
     categories.forEach((category) => {
       validate.string(`taskListSortSettings.${category}.userId`, defaultSettings.userId);
       validate.array(`taskListSortSettings.${category}.sortList`, defaultSettings.sortList);

@@ -10,7 +10,7 @@
     "unpub": "pnpm -r --stream unpub:local",
     "lint": "pnpm -r --stream lint",
     "test": "pnpm -r --stream test",
-    "preparePkg": "pnpm -r --stream --parallel preparePkg",
+    "preparePkg": "pnpm -r --stream --parallel preparePkg && pnpm -r --stream propagateVersion",
     "upgrade:core": "pnpm update '@aneuhold/*' --latest && pnpm -r --stream upgrade:core",
     "upgrade:all": "pnpm up --latest && pnpm -r --stream upgrade:all"
   },

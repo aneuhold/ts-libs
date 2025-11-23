@@ -9,8 +9,10 @@
   "scripts": {
     "refresh": "pnpm build && npm uninstall -g @aneuhold/local-npm-registry && npm install -g .",
     "reset:global": "npm uninstall -g @aneuhold/local-npm-registry && npm install -g @aneuhold/local-npm-registry",
-    "build": "rimraf lib && tsc -p tsconfig.build.json && tsx scripts/copyTsFiles.ts",
-    "watch": "nodemon --ignore lib/ -e ts --exec \"tsc --project tsconfig.build.json && tsx ./scripts/copyTsFiles.ts\"",
+    "build": "rimraf lib && pnpm build:withoutClean",
+    "build:withoutClean": "tsc -p tsconfig.build.json && tsx scripts/copyTsFiles.ts && pnpm propagateVersion",
+    "propagateVersion": "tsx ../../scripts/propagateVersion.ts",
+    "watch": "nodemon --ignore lib/ -e ts --exec \"pnpm build:withoutClean\"",
     "lint": "eslint",
     "test": "vitest run",
     "preparePkg": "tb pkg prepare",
@@ -18,6 +20,7 @@
     "upgrade:all": "pnpm up",
     "jsr:validate": "tb pkg validateJsr",
     "npm:validate": "tb pkg validateNpm --alternative-names local-npm-registry",
+    "versionPropagation:validate": "tsx ../../scripts/validatePackageVersions.ts",
     "test:packageNameReplace": "tb pkg testStringReplacement @aneuhold/local-npm-registry local-npm-registry",
     "checkAll": "pnpm build && pnpm lint && pnpm test && pnpm jsr:validate",
     "jsr:publish": "tb pkg publishJsr",
@@ -50,7 +53,7 @@
     "registry"
   ],
   "dependencies": {
-    "@aneuhold/core-ts-lib": "*",
+    "@aneuhold/core-ts-lib": "^2.3.11",
     "commander": "^14.0.2",
     "execa": "^9.6.0",
     "fs-extra": "^11.3.2",

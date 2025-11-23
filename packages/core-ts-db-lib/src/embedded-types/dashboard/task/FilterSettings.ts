@@ -27,7 +27,7 @@ export function validateFilterSettings(validate: Validate, config: DashboardUser
   validate.object('taskListFilterSettings', {});
   const categories = Object.keys(config.taskListFilterSettings);
   if (categories.length > 0) {
-    const defaultSettings = getDefaultTaskListFilterSettings(config.userId.toString());
+    const defaultSettings = getDefaultTaskListFilterSettings(config.userId);
     categories.forEach((category) => {
       validate.string(`taskListFilterSettings.${category}.userId`, defaultSettings.userId);
       validate.object(`taskListFilterSettings.${category}.completed`, defaultSettings.completed);

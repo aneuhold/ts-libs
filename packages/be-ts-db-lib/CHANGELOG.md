@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## 🔖 [2.0.86] (2025-11-23)
+
+### ✅ Added
+
+### 🏗️ Changed
+
+### 🩹 Fixed
+
+### 🔥 Removed
+
 ## 🔖 [2.0.85] (2025-11-09)
 
 ### 🏗️ Changed
@@ -84,7 +94,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Updated workflow permissions to allow repository write access
 
 <!-- Link References -->
-
+[2.0.86]: https://github.com/aneuhold/ts-libs/compare/be-ts-db-lib-v2.0.85...be-ts-db-lib-v2.0.86
 [2.0.85]: https://github.com/aneuhold/ts-libs/compare/be-ts-db-lib-v2.0.84...be-ts-db-lib-v2.0.85
 [2.0.84]: https://github.com/aneuhold/ts-libs/compare/be-ts-db-lib-v2.0.83...be-ts-db-lib-v2.0.84
 [2.0.83]: https://github.com/aneuhold/ts-libs/compare/be-ts-db-lib-v2.0.82...be-ts-db-lib-v2.0.83
