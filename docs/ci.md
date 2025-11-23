@@ -11,7 +11,7 @@ The build process is divided into two main workflows:
 
 ## Workflow Diagram
 
-[Link to Diagram in Mermaid Live](https://mermaid.live/edit#pako:eNqFVV1P2zAU_SuWH9AmtSUNLS15mDTKGELAqrYwaWkf3MQkUfM1fwgY5b_v2k5atw3gB8fXOefYvvc4ecVBEVLs4YiRMkazi3mOoHG5NBNzPJZpiib0r6RcoN8FWz2mxdMcG5xq44m_g_lV0pyGx_dlSAQNF6jd_oYuqKCBGMUkjyj3TYRMGKIxCVYE5hdbzR28UljfFRWer2HFqQwCyrlfPVEbwfvvgUiK_GOZK8K3Og-UcWCMYhqsfN3XU-hcZqWtZEO10CVJUrUT9fRVB3uwyTodCYMEfCAyJhy2MYOsPZA0UfnyVYCOUB1b7O3Iqs4eHH25JYIlz1_tAqlmr6Erci6TNPR1XxdgsUsx7xRWkf2JzPWALw6VNeomyQ1KDZI82sOpWeMF9gKo6-nEhxFSBBijsVymCY_3SBusxbwb326YMG5g0jxsStuGrsXARIIIyf0JLQsmkIkqFa1wcBVuSQLFZSQP4uabIHnsqw6JAimwbX7tqNr679nMgtau18FayzW5XsSQarXeYRr2xZT3K7UKbMziV1HTRWw0XY1_z2w76lu3wfTnhgOQKY9cKovUS8EBIVwcrFNbA4bKFxYcwkN4XfyfiZiRyB8xqu4DRAjCPbjBGPjVhKaUcGoxrmCj1ezn1tsIaLmpzDLCXja7reIPvTcrilRV-ghNA5aUgttJ3_vOdWCN9T3Xn8pVdC-SlPvcsI5Lk_q2VLOd9_3SoGEb3STeAs3OfbFE5SpCpTnVNWeLHYbO_Q7D3aPcldmiMWcW68ezYATOerM5Ea1m9OnTIrosWEXsCOs-4xb845IQe4JJ2sIZZRlRIX5VkDkWMc3oHHswDAlbqfS-Aack-Z-iyGoaK2QUY--RpBwiqf9xFwmBKm0hsBhlo0LmAnt9t6s1sPeKn7HXHji9zknvpHvac5z-cOD2W_gFe11n2HEG3WHfdbuuczZwhm8t_E8v63a6_bNTt9vrD6D1Hff07T_qsmVP)
+[Link to Diagram in Mermaid Live](https://mermaid.live/edit#pako:eNqFVl1P2zAU_SuWH9Am0QINLTQPk0YZQ2hlVVuYtLQPbmKSqGmc-WODAf9913aSOmlheUh8nXOO7etznTzjkEUU-zjmpEjQ_HKRI7iEWtmOBZ6oLENT-ktRIdEPxtcPGfuzwBanr8k0aGC-FzSn0dFdERFJoyXqdD6hSyppKEcJyWMqAhshG0ZoQsI1gf7lVrOB1wovt6zEixcYcabCkAoRlE_UQfD-cyhTlr8vc03EVueecgGMUULDdWDuVRe6UJvCVXKhRuiKpJmeiX4G-gZzcMkmHSmHBLwjMiECpjGHrN2TLNX5CnSADlAVA3vLd3alBUMfxkTy9PGjuzH6crXNTlyoNIsCc68Sv2xS7DuNnXBWkJjIOke1UrVSB9FSaXONoJ5NMFW5aYjl7lQN6luaW5RupHncwuleayr-BKib2TSAFtIEaKOJWmWpSFqkGuswbyfjmgntPUyaR27-a5rNznQmiVQimNKCcYlsVLIdprNrY5KCOzjJw2R_KSmRBPqGJEMa7FaPsWRVO2_51IFWZWOCFyO3r2xkAinW4-0uvy2mi6dUK8HWdUEZuZW817UV7i23NlS3doXu_zsWQHZb1EpbohoKFgbhcmecygrQ1D5w4BDuwqtN_5rKOYmDEae6DCBCELbgFmPh11OaUSKow7iGiZa9b1utJhqZmdpsCH-qZ1nG73ptzlimd_YAzUKeFlK4yW4djF0Y4-VOmLN1Hd_JNBOBsKyjwqa8o3Rv921_7NFwjW0T7oDmF4FcoWIdo8Ku6kbwZYNhct5g9FqU22Kz3Jszh_XlUXICa_1Wr4iWPWb1GYuvGC-J3cahtHuEuWu8r_V-l6diac6yNEVTrDxVGwq9bZLLoSrylgubiw_h65xG2Jdc0UO8oXxDdIifNWSBZUI3dIF9aEaEr_U-vwKnIPlPxjYVjTMVJ9h_IJmASJmv82VKwC5bCAxG-YipXGJ_0B8aDew_40fsd3png25_4J14vdOT8-O-Nzg7xE_Yh3b3fOgNz48HA8_zTofe6yH-a8Y9gRf9095xf9g78byhdwyCNEol42P7z2F-PV7_ASM7so8)
 
 ```mermaid
 graph TD
@@ -24,7 +24,8 @@ graph TD
 
         subgraph "Test & Validate (Matrix)"
             TestValidate --> Build[Build Package]
-            Build --> Test[Run Tests]
+            Build --> PropagationCheck[Validate Version Propagation]
+            PropagationCheck --> Test[Run Tests]
             Test --> Lint[Run Linting]
             Lint --> DryRunJSR[Dry Run JSR Publish]
             DryRunJSR --> DryRunNPM[Dry Run NPM Publish]
@@ -55,6 +56,8 @@ graph TD
         PubJSR -.-> |Uses| TB[tb pkg publishJsr]
         PubNPM -.-> |Uses| TB2[tb pkg publishNpm]
         GHRelease -.-> |Uses| ExtractCL[scripts/extractChangelogForRelease.ts]
+        PropagationCheck -.-> |Uses| PV[scripts/validatePackageVersions.ts]
+        Build -.-> |Uses| PV2[scripts/propagateVersion.ts]
     end
 ```
 

@@ -53,6 +53,7 @@ Command: `pnpm preparePkg` (or `pnpm --filter <package> preparePkg`)
 This command runs `tb pkg prepare` (from `@aneuhold/main-scripts`), which automates several tasks:
 
 1.  **Change Detection**: Checks if there are actual file changes compared to the `main` branch.
-2.  **Version Check**: Checks the NPM registry to see if the current version in `package.json` is already published.
-3.  **Auto-Bump**: If changes are detected and the version conflicts (or if requested), it automatically bumps the version (default is `patch`).
-4.  **Changelog**: It initializes or updates the `CHANGELOG.md` file, ensuring there is a section for the new version.
+1.  **Version Check**: Checks the NPM registry to see if the current version in `package.json` is already published.
+1.  **Auto-Bump**: If changes are detected and the version conflicts (or if requested), it automatically bumps the version (default is `patch`).
+1.  **Changelog**: It initializes or updates the `CHANGELOG.md` file, ensuring there is a section for the new version.
+1.  **Version Propagation**: The version is propagated to consumers of the library within the mono-repo if necessary.
