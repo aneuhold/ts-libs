@@ -32,7 +32,7 @@ export default class UserValidator extends IValidator<User> {
     const userInDb = await userRepo.get({ _id: userToUpdate._id });
     if (!userInDb) {
       ErrorUtils.throwError(
-        `${User.name} with ID: ${userToUpdate._id?.toString()} does not exist in the database.`,
+        `${User.name} with ID: ${userToUpdate._id} does not exist in the database.`,
         userToUpdate
       );
       return;

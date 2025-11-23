@@ -11,11 +11,9 @@ export default class ApiKeyValidator extends IValidator<ApiKey> {
     const userRepo = UserRepository.getRepo();
     const userInDb = await userRepo.get({ _id: newApiKey.userId });
     if (!userInDb) {
-      DR.logger.error(
-        `User with ID: ${newApiKey.userId.toString()} does not exist in the database.`
-      );
+      DR.logger.error(`User with ID: ${newApiKey.userId} does not exist in the database.`);
       ErrorUtils.throwError(
-        `User with ID: ${newApiKey.userId.toString()} does not exist in the database.`,
+        `User with ID: ${newApiKey.userId} does not exist in the database.`,
         newApiKey
       );
       return;
@@ -24,11 +22,8 @@ export default class ApiKeyValidator extends IValidator<ApiKey> {
     const apiKeyRepo = ApiKeyRepository.getRepo();
     const apiKeyInDb = await apiKeyRepo.get({ userId: newApiKey.userId });
     if (apiKeyInDb) {
-      DR.logger.error(`User with ID: ${newApiKey.userId.toString()} already has an API key.`);
-      ErrorUtils.throwError(
-        `User with ID: ${newApiKey.userId.toString()} already has an API key.`,
-        newApiKey
-      );
+      DR.logger.error(`User with ID: ${newApiKey.userId} already has an API key.`);
+      ErrorUtils.throwError(`User with ID: ${newApiKey.userId} already has an API key.`, newApiKey);
     }
   }
 
@@ -52,7 +47,7 @@ export default class ApiKeyValidator extends IValidator<ApiKey> {
       docName: 'API Key',
       allDocs: allApiKeys,
       shouldDelete: (apiKey: ApiKey) => {
-        if (!allUserIds[apiKey.userId.toString()]) {
+        if (!allUserIds[apiKey.userId]) {
           DR.logger.error(`API Key with ID: ${apiKey._id} has no valid associated user.`);
           return true;
         }

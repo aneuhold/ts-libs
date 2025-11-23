@@ -15,14 +15,14 @@ export default class DashboardNonogramKatanaItemValidator extends IValidator<Non
     });
     if (existingItem) {
       ErrorUtils.throwError(
-        `Nonogram Katana item already exists for user: ${newItem.userId.toString()}`,
+        `Nonogram Katana item already exists for user: ${newItem.userId}`,
         newItem
       );
     }
     const userRepo = UserRepository.getRepo();
     const user = await userRepo.get({ _id: newItem.userId });
     if (!user) {
-      ErrorUtils.throwError(`User does not exist: ${newItem.userId.toString()}`, newItem);
+      ErrorUtils.throwError(`User does not exist: ${newItem.userId}`, newItem);
     }
   }
 
@@ -44,9 +44,9 @@ export default class DashboardNonogramKatanaItemValidator extends IValidator<Non
       docName: 'Nonogram Katana Item',
       allDocs: allItems,
       shouldDelete: (item: NonogramKatanaItem) => {
-        if (!allUserIds[item.userId.toString()]) {
+        if (!allUserIds[item.userId]) {
           DR.logger.error(
-            `Nonogram Katana Item with ID: ${item._id.toString()} has no valid associated user.`
+            `Nonogram Katana Item with ID: ${item._id} has no valid associated user.`
           );
           return true;
         }

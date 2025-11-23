@@ -1,5 +1,5 @@
 import { DashboardTask, DashboardUserConfig } from '@aneuhold/core-ts-db-lib';
-import { ObjectId } from 'bson';
+import type { UUID } from 'crypto';
 import DashboardTaskRepository from '../../repositories/dashboard/DashboardTaskRepository.js';
 import DashboardUserConfigRepository from '../../repositories/dashboard/DashboardUserConfigRepository.js';
 
@@ -35,7 +35,7 @@ export default class DashboardDemoAccountsService {
    * @param demoUser1Id The first user
    * @param demoUser2Id The second user
    */
-  static async seedDemoAccounts(demoUser1Id: ObjectId, demoUser2Id: ObjectId): Promise<void> {
+  static async seedDemoAccounts(demoUser1Id: UUID, demoUser2Id: UUID): Promise<void> {
     await this.ensureCollaboratorsAndResetConfig(demoUser1Id, demoUser2Id);
     await this.ensureCollaboratorsAndResetConfig(demoUser2Id, demoUser1Id);
 
@@ -54,8 +54,8 @@ export default class DashboardDemoAccountsService {
    * @param collaboratorId The collaborator to include
    */
   private static async ensureCollaboratorsAndResetConfig(
-    ownerId: ObjectId,
-    collaboratorId: ObjectId
+    ownerId: UUID,
+    collaboratorId: UUID
   ): Promise<void> {
     const cfgRepo = DashboardUserConfigRepository.getRepo();
     let cfg = await cfgRepo.getForUser(ownerId);
@@ -87,12 +87,12 @@ export default class DashboardDemoAccountsService {
    *
    * @param userIds The users to wipe tasks for
    */
-  private static async wipeTasksForUsers(userIds: ObjectId[]): Promise<void> {
+  private static async wipeTasksForUsers(userIds: UUID[]): Promise<void> {
     const taskRepo = DashboardTaskRepository.getRepo();
     // Delete per-user using repo.deleteList to leverage child cleanup logic.
     for (const userId of userIds) {
       const allVisible = await taskRepo.getAllForUser(userId);
-      const owned = allVisible.filter((t) => t.userId.equals(userId));
+      const owned = allVisible.filter((t) => t.userId === userId);
       if (owned.length === 0) continue;
       const ids = owned.map((t) => t._id);
       await taskRepo.deleteList(ids);
@@ -118,14 +118,14 @@ export default class DashboardDemoAccountsService {
    * @param opts.category System category
    */
   private static async createTask(
-    ownerId: ObjectId,
+    ownerId: UUID,
     title: string,
     opts?: {
       description?: string;
       completed?: boolean;
-      parentTaskId?: ObjectId;
-      sharedWith?: ObjectId[];
-      assignedTo?: ObjectId;
+      parentTaskId?: UUID;
+      sharedWith?: UUID[];
+      assignedTo?: UUID;
       tags?: string[];
       startDate?: Date;
       dueDate?: Date;
@@ -143,7 +143,7 @@ export default class DashboardDemoAccountsService {
     if (opts?.category) task.category = opts.category;
     if (opts?.startDate) task.startDate = opts.startDate;
     if (opts?.dueDate) task.dueDate = opts.dueDate;
-    task.tags[ownerId.toString()] = opts?.tags ?? [];
+    task.tags[ownerId] = opts?.tags ?? [];
 
     const inserted = await taskRepo.insertNew(task);
     return inserted ?? task;
@@ -155,7 +155,7 @@ export default class DashboardDemoAccountsService {
    * @param user1Id The primary owner of some shared tasks
    * @param user2Id The collaborator for shared tasks
    */
-  private static async createExampleTasks(user1Id: ObjectId, user2Id: ObjectId) {
+  private static async createExampleTasks(user1Id: UUID, user2Id: UUID) {
     // Shared parent task (owned by user1, shared with user2)
     const parent = await this.createTask(user1Id, 'Plan weekend trip', {
       description: 'Decide destination and plan activities for the weekend.',
@@ -198,7 +198,7 @@ export default class DashboardDemoAccountsService {
    * @param user1Id The first user
    * @param user2Id The second user
    */
-  private static async createNonSharedTasks(user1Id: ObjectId, user2Id: ObjectId) {
+  private static async createNonSharedTasks(user1Id: UUID, user2Id: UUID) {
     const now = new Date();
     const futureDue = new Date(now.getTime());
     futureDue.setMonth(futureDue.getMonth() + 4);

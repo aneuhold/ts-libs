@@ -1,4 +1,4 @@
-import { ObjectId } from 'bson';
+import type { UUID } from 'crypto';
 import type { DashboardTaskMap } from '../../../documents/dashboard/Task.js';
 import DashboardTask from '../../../documents/dashboard/Task.js';
 import type { DashboardTaskListFilterSettings } from '../../../embedded-types/dashboard/task/FilterSettings.js';
@@ -41,33 +41,30 @@ export default class DashboardTaskService {
    *
    * @param allUserTasks - All tasks of the user.
    * @param parentTaskIds - The IDs of the parent tasks.
-   * @returns An array of ObjectId representing the children task IDs.
+   * @returns An array of UUID representing the children task IDs.
    */
-  static getChildrenIds = (
-    allUserTasks: DashboardTask[],
-    parentTaskIds: ObjectId[]
-  ): ObjectId[] => {
+  static getChildrenIds = (allUserTasks: DashboardTask[], parentTaskIds: UUID[]): UUID[] => {
     const parentToTaskIdsDict: Record<string, string[]> = {};
     const taskIdToTaskDict: Record<string, DashboardTask> = {};
     allUserTasks.forEach((task) => {
-      taskIdToTaskDict[task._id.toString()] = task;
+      taskIdToTaskDict[task._id] = task;
       if (task.parentTaskId) {
-        if (!parentToTaskIdsDict[task.parentTaskId.toString()]) {
-          parentToTaskIdsDict[task.parentTaskId.toString()] = [];
+        if (!parentToTaskIdsDict[task.parentTaskId]) {
+          parentToTaskIdsDict[task.parentTaskId] = [];
         }
-        parentToTaskIdsDict[task.parentTaskId.toString()].push(task._id.toString());
+        parentToTaskIdsDict[task.parentTaskId].push(task._id);
       }
     });
-    const childrenIds: ObjectId[] = [];
+    const childrenIds: UUID[] = [];
     parentTaskIds.forEach((taskId) => {
-      const task = taskIdToTaskDict[taskId.toString()];
+      const task = taskIdToTaskDict[taskId];
       if (task) {
         const childrenTaskIds = this.getChildrenTaskIds(
           taskIdToTaskDict,
           parentToTaskIdsDict,
-          taskId.toString()
+          taskId
         );
-        childrenIds.push(...childrenTaskIds.map((id) => new ObjectId(id)));
+        childrenIds.push(...(childrenTaskIds as UUID[]));
       }
     });
     return childrenIds;

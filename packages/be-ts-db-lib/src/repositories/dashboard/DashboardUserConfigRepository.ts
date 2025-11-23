@@ -1,5 +1,5 @@
 import { DashboardUserConfig, User } from '@aneuhold/core-ts-db-lib';
-import { ObjectId } from 'bson';
+import type { UUID } from 'crypto';
 import type { AnyBulkWriteOperation, BulkWriteResult, UpdateFilter, UpdateResult } from 'mongodb';
 import type { RepoListeners } from '../../services/RepoSubscriptionService.js';
 import CleanDocument from '../../util/DocumentCleaner.js';
@@ -141,7 +141,7 @@ export default class DashboardUserConfigRepository extends DashboardBaseReposito
    * @returns The result of the bulk update operation.
    */
   override async updateMany(updatedDocs: Partial<DashboardUserConfig>[]): Promise<BulkWriteResult> {
-    const docIds: ObjectId[] = [];
+    const docIds: UUID[] = [];
     updatedDocs.forEach((doc) => {
       if (doc._id) {
         docIds.push(doc._id);
@@ -164,7 +164,7 @@ export default class DashboardUserConfigRepository extends DashboardBaseReposito
    * @param userId The ID of the user to get the config for.
    * @returns The user config or null if not found.
    */
-  async getForUser(userId: ObjectId): Promise<DashboardUserConfig | null> {
+  async getForUser(userId: UUID): Promise<DashboardUserConfig | null> {
     const collection = await this.getCollection();
     const result = await collection.findOne({ userId });
     return result as DashboardUserConfig | null;
@@ -195,7 +195,7 @@ export default class DashboardUserConfigRepository extends DashboardBaseReposito
       const updatedCollaborators = docSet.updatedDoc.collaborators;
       if (
         updatedCollaborators &&
-        !this.objectIdArraysAreEqual(originalCollaborators, updatedCollaborators)
+        !this.uuidArraysAreEqual(originalCollaborators, updatedCollaborators)
       ) {
         // For each original collaborator, if they are not in the updated list,
         // remove the user from their collaborators list

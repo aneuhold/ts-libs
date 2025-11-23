@@ -37,7 +37,7 @@ export default class DashboardTaskValidator extends IValidator<DashboardTask> {
         _id: updatedTask.parentTaskId
       });
       if (!parentTask) {
-        errors.push(`Parent task with ID: ${updatedTask.parentTaskId.toString()} does not exist.`);
+        errors.push(`Parent task with ID: ${updatedTask.parentTaskId} does not exist.`);
       }
     }
     if (errors.length > 0) {
@@ -55,9 +55,9 @@ export default class DashboardTaskValidator extends IValidator<DashboardTask> {
       docName: 'Dashboard Task',
       allDocs: allTasks,
       shouldDelete: (task: DashboardTask) => {
-        if (!allUserIds[task.userId.toString()]) {
+        if (!allUserIds[task.userId]) {
           DR.logger.error(
-            `Dashboard Task with ID: ${task._id.toString()} has no valid associated owner (user).`
+            `Dashboard Task with ID: ${task._id} has no valid associated owner (user).`
           );
           return true;
         }
@@ -69,19 +69,19 @@ export default class DashboardTaskValidator extends IValidator<DashboardTask> {
         // Check sharedWith
         const sharedWithUserIds = [...task.sharedWith];
         sharedWithUserIds.forEach((userId) => {
-          if (!allUserIds[userId.toString()]) {
+          if (!allUserIds[userId]) {
             errors.push(
-              `User with ID: ${userId.toString()} does not exist in sharedWith property of task with ID: ${task._id.toString()}.`
+              `User with ID: ${userId} does not exist in sharedWith property of task with ID: ${task._id}.`
             );
 
-            task.sharedWith = task.sharedWith.filter((id) => id.toString() !== userId.toString());
+            task.sharedWith = task.sharedWith.filter((id) => id !== userId);
           }
         });
 
         // Check assignedTo
-        if (task.assignedTo && !allUserIds[task.assignedTo.toString()]) {
+        if (task.assignedTo && !allUserIds[task.assignedTo]) {
           errors.push(
-            `User with ID: ${task.assignedTo.toString()} does not exist in assignedTo property of task with ID: ${task._id.toString()}.`
+            `User with ID: ${task.assignedTo} does not exist in assignedTo property of task with ID: ${task._id}.`
           );
           updatedDoc.assignedTo = undefined;
         }

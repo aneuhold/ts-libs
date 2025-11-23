@@ -13,20 +13,17 @@ export default class DashboardUserConfigValidator extends IValidator<DashboardUs
       userId: newUserConfig.userId
     });
     if (existingConfig) {
-      DR.logger.error(`Config already exists for user: ${newUserConfig.userId.toString()}`);
+      DR.logger.error(`Config already exists for user: ${newUserConfig.userId}`);
       ErrorUtils.throwError(
-        `Config already exists for user: ${newUserConfig.userId.toString()}`,
+        `Config already exists for user: ${newUserConfig.userId}`,
         newUserConfig
       );
     }
     const userRepo = UserRepository.getRepo();
     const user = await userRepo.get({ _id: newUserConfig.userId });
     if (!user) {
-      DR.logger.error(`User does not exist: ${newUserConfig.userId.toString()}`);
-      ErrorUtils.throwError(
-        `User does not exist: ${newUserConfig.userId.toString()}`,
-        newUserConfig
-      );
+      DR.logger.error(`User does not exist: ${newUserConfig.userId}`);
+      ErrorUtils.throwError(`User does not exist: ${newUserConfig.userId}`, newUserConfig);
     }
     if (newUserConfig.collaborators.length > 0) {
       const collaborators = await userRepo.getList(newUserConfig.collaborators);
@@ -73,9 +70,9 @@ export default class DashboardUserConfigValidator extends IValidator<DashboardUs
       docName: 'Dashboard User Config',
       allDocs: allUserConfigs,
       shouldDelete: (userConfig: DashboardUserConfig) => {
-        if (!allUserIds[userConfig.userId.toString()]) {
+        if (!allUserIds[userConfig.userId]) {
           DR.logger.error(
-            `Dashboard User Config with ID: ${userConfig._id.toString()} has no valid associated user.`
+            `Dashboard User Config with ID: ${userConfig._id} has no valid associated user.`
           );
           return true;
         }
@@ -85,14 +82,12 @@ export default class DashboardUserConfigValidator extends IValidator<DashboardUs
         const { updatedDoc, errors } = validateDashboardUserConfig(userConfig);
         const collaboratorIds = [...userConfig.collaborators];
         collaboratorIds.forEach((userId) => {
-          if (!allUserIds[userId.toString()]) {
+          if (!allUserIds[userId]) {
             errors.push(
-              `User with ID: ${userId.toString()} does not exist in collaborators property of Dashboard User Config with ID: ${userConfig._id.toString()}.`
+              `User with ID: ${userId} does not exist in collaborators property of Dashboard User Config with ID: ${userConfig._id}.`
             );
 
-            updatedDoc.collaborators = updatedDoc.collaborators.filter(
-              (id) => id.toString() !== userId.toString()
-            );
+            updatedDoc.collaborators = updatedDoc.collaborators.filter((id) => id !== userId);
           }
         });
         return { updatedDoc, errors };

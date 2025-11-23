@@ -1,5 +1,5 @@
 import { DashboardTask, DashboardTaskService, User } from '@aneuhold/core-ts-db-lib';
-import { ObjectId } from 'bson';
+import type { UUID } from 'crypto';
 import type { DeleteResult } from 'mongodb';
 import type { RepoListeners } from '../../services/RepoSubscriptionService.js';
 import CleanDocument from '../../util/DocumentCleaner.js';
@@ -80,7 +80,7 @@ export default class DashboardTaskRepository extends DashboardBaseRepository<Das
    * @param docId The ID of the document to delete.
    * @returns The result of the delete operation.
    */
-  override async delete(docId: ObjectId): Promise<DeleteResult> {
+  override async delete(docId: UUID): Promise<DeleteResult> {
     const docIdsToDelete = await this.getAllTaskIDsToDelete([docId]);
     const deleteResult = await super.deleteList(docIdsToDelete);
     return deleteResult;
@@ -92,7 +92,7 @@ export default class DashboardTaskRepository extends DashboardBaseRepository<Das
    * @param docIds The IDs of the documents to delete.
    * @returns The result of the delete operation.
    */
-  override async deleteList(docIds: ObjectId[]): Promise<DeleteResult> {
+  override async deleteList(docIds: UUID[]): Promise<DeleteResult> {
     const docIdsToDelete = await this.getAllTaskIDsToDelete(docIds);
     const result = await super.deleteList(docIdsToDelete);
     return result;
@@ -106,7 +106,7 @@ export default class DashboardTaskRepository extends DashboardBaseRepository<Das
    * @param userId The ID of the user to get tasks for.
    * @returns The list of tasks for the user.
    */
-  async getAllForUser(userId: ObjectId): Promise<DashboardTask[]> {
+  async getAllForUser(userId: UUID): Promise<DashboardTask[]> {
     const userConfigRepo = DashboardUserConfigRepository.getRepo();
     const userConfig = await userConfigRepo.get({ userId });
     if (!userConfig) {
@@ -138,7 +138,7 @@ export default class DashboardTaskRepository extends DashboardBaseRepository<Das
    * @param taskIds The IDs of the tasks to delete.
    * @returns The list of task IDs to delete.
    */
-  private async getAllTaskIDsToDelete(taskIds: ObjectId[]): Promise<ObjectId[]> {
+  private async getAllTaskIDsToDelete(taskIds: UUID[]): Promise<UUID[]> {
     if (taskIds.length === 0) {
       return taskIds;
     }

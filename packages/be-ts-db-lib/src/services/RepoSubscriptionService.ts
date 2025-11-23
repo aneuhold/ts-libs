@@ -1,5 +1,5 @@
 import { BaseDocument } from '@aneuhold/core-ts-db-lib';
-import { ObjectId } from 'bson';
+import type { UUID } from 'crypto';
 
 export type RepoSubscribers<TDocType extends BaseDocument> = {
   insertNew: InsertNewSubscriber<TDocType>[];
@@ -33,9 +33,9 @@ export type UpdateManySubscriber<TDocType extends BaseDocument> = (
   docs: Partial<TDocType>[]
 ) => Promise<void>;
 
-export type DeleteOneSubscriber = (docId: ObjectId) => Promise<void>;
+export type DeleteOneSubscriber = (docId: UUID) => Promise<void>;
 
-export type DeleteListSubscriber = (docIds: ObjectId[]) => Promise<void>;
+export type DeleteListSubscriber = (docIds: UUID[]) => Promise<void>;
 
 /**
  * A subscription service that allows repositories to subscribe to events

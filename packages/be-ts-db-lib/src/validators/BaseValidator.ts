@@ -87,7 +87,7 @@ export default abstract class IValidator<TBaseType extends BaseDocument> {
     docsToValidate.forEach((doc) => {
       const { updatedDoc, errors } = documentValidator(doc);
       if (errors.length !== 0) {
-        DR.logger.error(`${docName} with ID: ${doc._id.toString()} is invalid. Errors:`);
+        DR.logger.error(`${docName} with ID: ${doc._id} is invalid. Errors:`);
         numInvalidDocs += 1;
         errors.forEach((error) => {
           DR.logger.error(error);
