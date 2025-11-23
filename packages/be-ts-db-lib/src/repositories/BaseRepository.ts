@@ -18,6 +18,9 @@ import IValidator from '../validators/BaseValidator.js';
 /**
  * Base repository class for handling common database operations.
  *
+ * Implementation note: I have tried to do the types correctly here, but kept struggling with
+ * MongoDB's types around Filter<T> and _id fields.
+ *
  * @template TBasetype - The type of the documents in the collection.
  */
 export default abstract class BaseRepository<TBasetype extends BaseDocument> {
@@ -129,7 +132,7 @@ export default abstract class BaseRepository<TBasetype extends BaseDocument> {
    */
   async get(filter: Partial<TBasetype>): Promise<TBasetype | null> {
     const collection = await this.getCollection();
-    const result = await collection.findOne(this.getFilterWithDefault(filter));
+    const result = await collection.findOne(this.getFilterWithDefault(filter as Filter<TBasetype>));
     return result as TBasetype | null;
   }
 
@@ -167,7 +170,7 @@ export default abstract class BaseRepository<TBasetype extends BaseDocument> {
   async getList(docIds: UUID[]): Promise<TBasetype[]> {
     const collection = await this.getCollection();
     const result = await collection
-      .find(this.getFilterWithDefault({ _id: { $in: docIds } }))
+      .find(this.getFilterWithDefault({ _id: { $in: docIds } } as Filter<TBasetype>))
       .toArray();
     return result as TBasetype[];
   }

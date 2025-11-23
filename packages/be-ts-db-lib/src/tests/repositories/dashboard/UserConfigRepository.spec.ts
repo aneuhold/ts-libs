@@ -52,14 +52,12 @@ describe('Update operations', () => {
     newConfig.collaborators.push(newCollaborator._id);
     await configRepo.update(newConfig);
     let updatedConfig = await configRepo.get({ _id: newConfig._id });
-    expect(updatedConfig?.collaborators.map((x) => x.toString())).toContain(newCollaborator._id);
+    expect(updatedConfig?.collaborators).toContain(newCollaborator._id);
 
     await cleanupDoc(userRepo, newCollaborator);
     // Ensure the collaborator is deleted automatically when the user is deleted
     updatedConfig = await configRepo.get({ _id: newConfig._id });
-    expect(updatedConfig?.collaborators.map((x) => x.toString())).not.toContain(
-      newCollaborator._id
-    );
+    expect(updatedConfig?.collaborators).not.toContain(newCollaborator._id);
 
     await cleanupDoc(userRepo, newUser);
   });
@@ -94,24 +92,24 @@ describe('Update operations', () => {
     const updateResult1 = await configRepo.update(newConfig1);
     expect(updateResult1).toBeTruthy();
     let updatedConfig2 = await configRepo.get({ _id: newConfig2._id });
-    expect(updatedConfig2?.collaborators.map((x) => x.toString())).toContain(newUser1._id);
+    expect(updatedConfig2?.collaborators).toContain(newUser1._id);
 
     newConfig3.collaborators.push(newUser1._id, newUser2._id);
     let updateResult3 = await configRepo.update(newConfig3);
     expect(updateResult3).toBeTruthy();
     let updatedConfig1 = await configRepo.get({ _id: newConfig1._id });
-    expect(updatedConfig1?.collaborators.map((x) => x.toString())).toContain(newUser3._id);
-    expect(updatedConfig1?.collaborators.map((x) => x.toString())).toContain(newUser2._id);
+    expect(updatedConfig1?.collaborators).toContain(newUser3._id);
+    expect(updatedConfig1?.collaborators).toContain(newUser2._id);
 
     newConfig3.collaborators = [];
     updateResult3 = await configRepo.update(newConfig3);
     expect(updateResult3).toBeTruthy();
     updatedConfig1 = await configRepo.get({ _id: newConfig1._id });
-    expect(updatedConfig1?.collaborators.map((x) => x.toString())).toContainEqual(newUser2._id);
-    expect(updatedConfig1?.collaborators.map((x) => x.toString())).not.toContain(newUser3._id);
+    expect(updatedConfig1?.collaborators).toContainEqual(newUser2._id);
+    expect(updatedConfig1?.collaborators).not.toContain(newUser3._id);
     updatedConfig2 = await configRepo.get({ _id: newConfig2._id });
-    expect(updatedConfig2?.collaborators.map((x) => x.toString())).toContainEqual(newUser1._id);
-    expect(updatedConfig2?.collaborators.map((x) => x.toString())).not.toContain(newUser3._id);
+    expect(updatedConfig2?.collaborators).toContainEqual(newUser1._id);
+    expect(updatedConfig2?.collaborators).not.toContain(newUser3._id);
 
     await cleanupDoc(userRepo, newUser1);
     await cleanupDoc(userRepo, newUser2);
