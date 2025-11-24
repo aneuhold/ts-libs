@@ -80,16 +80,50 @@ export default class MigrationService {
       `Found ${legacyDocs.length} documents with legacy ObjectId IDs and ${newDocs.length} documents with string IDs.`
     );
 
+    // Delete all existing new docs (with string IDs) to ensure fresh creation
+    if (!dryRun && newDocs.length > 0) {
+      DR.logger.info(`Deleting ${newDocs.length} existing migrated documents...`);
+      const newDocIds = newDocs.map((doc) => doc._id);
+      
+      const userIdsToDelete = users.filter((u) => typeof u._id === 'string').map((u) => u._id);
+      const apiKeyIdsToDelete = apiKeys.filter((k) => typeof k._id === 'string').map((k) => k._id);
+      const taskIdsToDelete = tasks.filter((t) => typeof t._id === 'string').map((t) => t._id);
+      const configIdsToDelete = configs.filter((c) => typeof c._id === 'string').map((c) => c._id);
+      const nonogramItemIdsToDelete = nonogramItems.filter((i) => typeof i._id === 'string').map((i) => i._id);
+      const nonogramUpgradeIdsToDelete = nonogramUpgrades.filter((u) => typeof u._id === 'string').map((u) => u._id);
+
+      if (userIdsToDelete.length > 0) {
+        const result = await (await userRepo.getCollection()).deleteMany({ _id: { $in: userIdsToDelete } });
+        DR.logger.info(`Deleted ${result.deletedCount} users.`);
+      }
+      if (apiKeyIdsToDelete.length > 0) {
+        const result = await (await apiKeyRepo.getCollection()).deleteMany({ _id: { $in: apiKeyIdsToDelete } });
+        DR.logger.info(`Deleted ${result.deletedCount} API keys.`);
+      }
+      if (taskIdsToDelete.length > 0) {
+        const result = await (await taskRepo.getCollection()).deleteMany({ _id: { $in: taskIdsToDelete } });
+        DR.logger.info(`Deleted ${result.deletedCount} tasks.`);
+      }
+      if (configIdsToDelete.length > 0) {
+        const result = await (await configRepo.getCollection()).deleteMany({ _id: { $in: configIdsToDelete } });
+        DR.logger.info(`Deleted ${result.deletedCount} configs.`);
+      }
+      if (nonogramItemIdsToDelete.length > 0) {
+        const result = await (await nonogramItemRepo.getCollection()).deleteMany({ _id: { $in: nonogramItemIdsToDelete } });
+        DR.logger.info(`Deleted ${result.deletedCount} nonogram items.`);
+      }
+      if (nonogramUpgradeIdsToDelete.length > 0) {
+        const result = await (await nonogramUpgradesRepo.getCollection()).deleteMany({ _id: { $in: nonogramUpgradeIdsToDelete } });
+        DR.logger.info(`Deleted ${result.deletedCount} nonogram upgrades.`);
+      }
+      
+      DR.logger.info('Deletion complete. Starting fresh migration...');
+    } else if (dryRun && newDocs.length > 0) {
+      DR.logger.info(`Dry run: Would delete ${newDocs.length} existing migrated documents.`);
+    }
+
     // Now create the actual map
     const mapFromObjectIdToUUID = new Map<string, string>();
-    newDocs.forEach((doc) => {
-      if (!doc.oldOId) {
-        DR.logger.warn(`Document with string ID ${doc._id} is missing oldOId field.`);
-        return;
-      }
-      mapFromObjectIdToUUID.set(doc.oldOId, doc._id);
-    });
-    DR.logger.info(`Created mapping for ${mapFromObjectIdToUUID.size} documents.`);
 
     const newUsersToCreate: User[] = [];
     const newApiKeysToCreate: ApiKey[] = [];
@@ -111,38 +145,35 @@ export default class MigrationService {
       mapFromObjectIdToUUID.set(oldIdStr, newId);
       return newId;
     };
+    
+    function createNewDoc(oldDoc) {
+      if (mapFromObjectIdToUUID.has(oldDoc._id.toString())) return;
+      const newDocId = getUUID(oldDoc._id);
+      const newDoc = DocumentService.deepCopy(oldDoc);
+      newDoc._id = newDocId;
+      newDoc.oldOId = oldDoc._id.toString();
+      return newDoc;
+    }
+
+    // Filter to only legacy users with the chosen usernames
+    const userNames = ['demoUser1', 'demoUser2'];
+    const legacyUsers = users.filter((u) => userNames.includes(u.userName) && typeof u._id === 'object');
+    DR.logger.info(`Found ${legacyUsers.length} legacy users to migrate.`);
+    
+    // First, create all user documents and generate their UUIDs that way relationships between
+    // users in the collaborators field can be mapped correctly.
+    legacyUsers.forEach((oldUserDoc) => {
+      const newUser = createNewDoc(oldUserDoc);
+      if (!newUser) return;
+      newUsersToCreate.push(newUser);
+    });
 
     // Create the function that will flesh out new documents for a given user document
     function createNewDocsForUser(oldUserDoc: User) {
       const oldUserIdStr = oldUserDoc._id.toString();
-      if (mapFromObjectIdToUUID.has(oldUserIdStr)) {
-        DR.logger.warn(
-          `User document with ObjectId ID ${oldUserDoc._id} already has a mapped UUID in the DB. Skipping creation.`
-        );
-        // I might want to create these anyway at some point. Still deciding.
-        return;
-      }
-
-      console.log('did it get here?')
-
-      function createNewDoc(oldDoc) {
-        if (mapFromObjectIdToUUID.has(oldDoc._id.toString())) return;
-        const newDocId = getUUID(oldDoc._id);
-        const newDoc = DocumentService.deepCopy(oldDoc);
-        newDoc._id = newDocId;
-        newDoc.oldOId = oldDoc._id.toString();
-        return newDoc;
-      }
-
-      // 1. Create the new user document
-      const newUser = createNewDoc(oldUserDoc);
-      if (newUser) {
-        newUsersToCreate.push(newUser);
-      }
-
       const newUserId = getUUID(oldUserDoc._id);
 
-      // 2. Create new API keys
+      // 1. Create new API keys
       const userApiKeys = apiKeys.filter((k) => k.userId.toString() === oldUserIdStr);
       userApiKeys.forEach((oldKey) => {
         const newKey = createNewDoc(oldKey);
@@ -151,7 +182,7 @@ export default class MigrationService {
         newApiKeysToCreate.push(newKey);
       });
 
-      // 3. Create new Tasks
+      // 2. Create new Tasks
       const userTasks = tasks.filter(
         (t) => t.userId.toString() === oldUserIdStr
       );
@@ -221,7 +252,7 @@ export default class MigrationService {
         }
       }
 
-      // 4. Create new Configs
+      // 3. Create new Configs
       const userConfigs = configs.filter((c) => c.userId.toString() === oldUserIdStr);
       userConfigs.forEach((oldConfig) => {
         const newConfig = createNewDoc(oldConfig);
@@ -231,7 +262,7 @@ export default class MigrationService {
         newConfigsToCreate.push(newConfig);
       });
 
-      // 5. Nonogram Items
+      // 4. Nonogram Items
       const userNonogramItems = nonogramItems.filter((i) => i.userId.toString() === oldUserIdStr);
       userNonogramItems.forEach((oldItem) => {
         const newItem = createNewDoc(oldItem);
@@ -240,7 +271,7 @@ export default class MigrationService {
         newNonogramItemsToCreate.push(newItem);
       });
 
-      // 6. Nonogram Upgrades
+      // 5. Nonogram Upgrades
       const userNonogramUpgrades = nonogramUpgrades.filter((u) => u.userId.toString() === oldUserIdStr);
       userNonogramUpgrades.forEach((oldUpgrade) => {
         const newUpgrade = createNewDoc(oldUpgrade);
@@ -250,8 +281,7 @@ export default class MigrationService {
       });
     }
 
-    // Run the creation function for a single user to test
-    const legacyUsers = users.filter((u) => u.userName === 'demoUser1' && typeof u._id === 'object');
+    // Now create related documents for each user
     legacyUsers.forEach((u) => createNewDocsForUser(u));
 
     DR.logger.info(`Prepped ${newUsersToCreate.length} new users.`);
