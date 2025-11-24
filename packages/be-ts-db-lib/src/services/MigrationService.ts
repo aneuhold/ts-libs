@@ -123,6 +123,8 @@ export default class MigrationService {
         return;
       }
 
+      console.log('did it get here?')
+
       function createNewDoc(oldDoc) {
         if (mapFromObjectIdToUUID.has(oldDoc._id.toString())) return;
         const newDocId = getUUID(oldDoc._id);
@@ -249,34 +251,52 @@ export default class MigrationService {
     }
 
     // Run the creation function for a single user to test
-    const legacyUsers = users.filter((u) => u.userName === 'demoUser1');
+    const legacyUsers = users.filter((u) => u.userName === 'demoUser1' && typeof u._id === 'object');
     legacyUsers.forEach((u) => createNewDocsForUser(u));
 
-    DR.logger.info(`Created ${newUsersToCreate.length} new users.`);
-    DR.logger.info(`Created ${newApiKeysToCreate.length} new API keys.`);
-    DR.logger.info(`Created ${newTasksToCreate.length} new tasks.`);
-    DR.logger.info(`Created ${newConfigsToCreate.length} new configs.`);
+    DR.logger.info(`Prepped ${newUsersToCreate.length} new users.`);
+    DR.logger.info(`Prepped ${newApiKeysToCreate.length} new API keys.`);
+    DR.logger.info(`Prepped ${newTasksToCreate.length} new tasks.`);
+    DR.logger.info(`Prepped ${newConfigsToCreate.length} new configs.`);
     DR.logger.info(
-      `Created ${newNonogramItemsToCreate.length} new nonogram items.`
+      `Prepped ${newNonogramItemsToCreate.length} new nonogram items.`
     );
     DR.logger.info(
-      `Created ${newNonogramUpgradesToCreate.length} new nonogram upgrades.`
+      `Prepped ${newNonogramUpgradesToCreate.length} new nonogram upgrades.`
     );
+    DR.logger.info(`In total, prepped ${
+      newUsersToCreate.length +
+      newApiKeysToCreate.length +
+      newTasksToCreate.length +
+      newConfigsToCreate.length +
+      newNonogramItemsToCreate.length +
+      newNonogramUpgradesToCreate.length
+    } documents for insertion.`);
 
     if (!dryRun) {
       DR.logger.info('Dry run is false. Inserting documents into DB...');
-      if (newUsersToCreate.length > 0)
-        await userRepo.insertMany(newUsersToCreate);
-      if (newApiKeysToCreate.length > 0)
-        await apiKeyRepo.insertMany(newApiKeysToCreate);
-      if (newTasksToCreate.length > 0)
-        await taskRepo.insertMany(newTasksToCreate);
-      if (newConfigsToCreate.length > 0)
-        await configRepo.insertMany(newConfigsToCreate);
-      if (newNonogramItemsToCreate.length > 0)
-        await nonogramItemRepo.insertMany(newNonogramItemsToCreate);
-      if (newNonogramUpgradesToCreate.length > 0)
-        await nonogramUpgradesRepo.insertMany(newNonogramUpgradesToCreate);
+      if (newUsersToCreate.length > 0) {
+        await (await userRepo.getCollection()).insertMany(newUsersToCreate);
+      }
+      if (newApiKeysToCreate.length > 0) {
+        await (await apiKeyRepo.getCollection()).insertMany(newApiKeysToCreate);
+      }
+      if (newTasksToCreate.length > 0) {
+        await (await taskRepo.getCollection()).insertMany(newTasksToCreate);
+      }
+      if (newConfigsToCreate.length > 0) {
+        await (await configRepo.getCollection()).insertMany(newConfigsToCreate);
+      }
+      if (newNonogramItemsToCreate.length > 0) {
+        await (
+          await nonogramItemRepo.getCollection()
+        ).insertMany(newNonogramItemsToCreate);
+      }
+      if (newNonogramUpgradesToCreate.length > 0) {
+        await (
+          await nonogramUpgradesRepo.getCollection()
+        ).insertMany(newNonogramUpgradesToCreate);
+      }
       DR.logger.info('Insertion complete.');
     } else {
       DR.logger.info('Dry run is true. Skipping DB insertion.');
@@ -284,4 +304,6 @@ export default class MigrationService {
 
     return;
   }
+
+  // We started with 1204 docs
 }
