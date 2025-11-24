@@ -137,57 +137,87 @@ export default class MigrationService {
       if (newUser) {
         newUsersToCreate.push(newUser);
       }
-     
+
+      const newUserId = getUUID(oldUserDoc._id);
+
       // 2. Create new API keys
       const userApiKeys = apiKeys.filter((k) => k.userId.toString() === oldUserIdStr);
       userApiKeys.forEach((oldKey) => {
         const newKey = createNewDoc(oldKey);
         if (!newKey) return;
-        newKey.userId = newUser._id;
+        newKey.userId = newUserId;
         newApiKeysToCreate.push(newKey);
       });
 
       // 3. Create new Tasks
-      const userTasks = tasks.filter((t) => t.userId.toString() === oldUserIdStr);
-      userTasks.forEach((oldTask) => {
-        const newTask = createNewDoc(oldTask);
-        if (!newTask) return;
-        newTask.userId = newUserId;
+      const userTasks = tasks.filter(
+        (t) => t.userId.toString() === oldUserIdStr
+      );
 
-        // Map user IDs in tags keys
-        const newTags: any = {};
-        Object.keys(oldTask.tags).forEach((tagUserId) => {
-          const newTagUserId = getUUID(tagUserId);
-          newTags[newTagUserId] = oldTask.tags[tagUserId];
-        });
-        newTask.tags = newTags;
+      const taskChildrenMap = new Map<string, DashboardTask[]>();
+      const rootTasks: DashboardTask[] = [];
+      const userTaskIds = new Set(userTasks.map((t) => t._id.toString()));
 
-        // Map user IDs in filterSettings keys
-        const newFilterSettings: any = {};
-        Object.keys(oldTask.filterSettings).forEach((fsUserId) => {
-          const newFsUserId = getUUID(fsUserId);
-          newFilterSettings[newFsUserId] = oldTask.filterSettings[fsUserId];
-        });
-        newTask.filterSettings = newFilterSettings;
-
-        // Map user IDs in sortSettings keys
-        const newSortSettings: any = {};
-        Object.keys(oldTask.sortSettings).forEach((ssUserId) => {
-          const newSsUserId = getUUID(ssUserId);
-          newSortSettings[newSsUserId] = oldTask.sortSettings[ssUserId];
-        });
-        newTask.sortSettings = newSortSettings;
-
-        newTask.sharedWith = oldTask.sharedWith.map((id: any) => getUUID(id));
-        if (oldTask.assignedTo) {
-          newTask.assignedTo = getUUID(oldTask.assignedTo);
+      userTasks.forEach((task) => {
+        const pId = task.parentTaskId?.toString();
+        if (pId && userTaskIds.has(pId)) {
+          if (!taskChildrenMap.has(pId)) {
+            taskChildrenMap.set(pId, []);
+          }
+          taskChildrenMap.get(pId)!.push(task);
+        } else {
+          rootTasks.push(task);
         }
-        if (oldTask.parentTaskId) {
-          newTask.parentTaskId = getUUID(oldTask.parentTaskId);
-        }
-
-        newTasksToCreate.push(newTask);
       });
+
+      const queue = [...rootTasks];
+      while (queue.length > 0) {
+        const oldTask = queue.shift()!;
+        const newTask = createNewDoc(oldTask);
+
+        if (newTask) {
+          newTask.userId = newUserId;
+
+          // Map user IDs in tags keys
+          const newTags: any = {};
+          Object.keys(oldTask.tags).forEach((tagUserId) => {
+            const newTagUserId = getUUID(tagUserId);
+            newTags[newTagUserId] = oldTask.tags[tagUserId];
+          });
+          newTask.tags = newTags;
+
+          // Map user IDs in filterSettings keys
+          const newFilterSettings: any = {};
+          Object.keys(oldTask.filterSettings).forEach((fsUserId) => {
+            const newFsUserId = getUUID(fsUserId);
+            newFilterSettings[newFsUserId] = oldTask.filterSettings[fsUserId];
+          });
+          newTask.filterSettings = newFilterSettings;
+
+          // Map user IDs in sortSettings keys
+          const newSortSettings: any = {};
+          Object.keys(oldTask.sortSettings).forEach((ssUserId) => {
+            const newSsUserId = getUUID(ssUserId);
+            newSortSettings[newSsUserId] = oldTask.sortSettings[ssUserId];
+          });
+          newTask.sortSettings = newSortSettings;
+
+          newTask.sharedWith = oldTask.sharedWith.map((id: any) => getUUID(id));
+          if (oldTask.assignedTo) {
+            newTask.assignedTo = getUUID(oldTask.assignedTo);
+          }
+          if (oldTask.parentTaskId) {
+            newTask.parentTaskId = getUUID(oldTask.parentTaskId);
+          }
+
+          newTasksToCreate.push(newTask);
+        }
+
+        const children = taskChildrenMap.get(oldTask._id.toString());
+        if (children) {
+          queue.push(...children);
+        }
+      }
 
       // 4. Create new Configs
       const userConfigs = configs.filter((c) => c.userId.toString() === oldUserIdStr);
@@ -226,8 +256,31 @@ export default class MigrationService {
     DR.logger.info(`Created ${newApiKeysToCreate.length} new API keys.`);
     DR.logger.info(`Created ${newTasksToCreate.length} new tasks.`);
     DR.logger.info(`Created ${newConfigsToCreate.length} new configs.`);
-    DR.logger.info(`Created ${newNonogramItemsToCreate.length} new nonogram items.`);
-    DR.logger.info(`Created ${newNonogramUpgradesToCreate.length} new nonogram upgrades.`);
+    DR.logger.info(
+      `Created ${newNonogramItemsToCreate.length} new nonogram items.`
+    );
+    DR.logger.info(
+      `Created ${newNonogramUpgradesToCreate.length} new nonogram upgrades.`
+    );
+
+    if (!dryRun) {
+      DR.logger.info('Dry run is false. Inserting documents into DB...');
+      if (newUsersToCreate.length > 0)
+        await userRepo.insertMany(newUsersToCreate);
+      if (newApiKeysToCreate.length > 0)
+        await apiKeyRepo.insertMany(newApiKeysToCreate);
+      if (newTasksToCreate.length > 0)
+        await taskRepo.insertMany(newTasksToCreate);
+      if (newConfigsToCreate.length > 0)
+        await configRepo.insertMany(newConfigsToCreate);
+      if (newNonogramItemsToCreate.length > 0)
+        await nonogramItemRepo.insertMany(newNonogramItemsToCreate);
+      if (newNonogramUpgradesToCreate.length > 0)
+        await nonogramUpgradesRepo.insertMany(newNonogramUpgradesToCreate);
+      DR.logger.info('Insertion complete.');
+    } else {
+      DR.logger.info('Dry run is true. Skipping DB insertion.');
+    }
 
     return;
   }
