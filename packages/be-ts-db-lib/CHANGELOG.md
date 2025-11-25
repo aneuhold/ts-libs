@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## 🔖 [3.0.1] (2025-11-25)
+
+### 🏗️ Changed
+
+- All dashboard repositories now require `docType` in delete and update queries for stricter document targeting.
+- Improved internal filtering in `getAllForUser` and similar methods to use repository-level collection access and default filters.
+- Refactored `DashboardUserConfigRepository` to ensure collaborator and userId references always include `docType`.
+- Updated migration logic in `MigrationService` for more robust and complete UUID migration, including all dashboard-related document types.
+- Added `uuid` as a dependency in `package.json`.
+
 ## 🔖 [3.0.0] (2025-11-23)
 
 ### 🏗️ Changed
@@ -94,6 +104,7 @@ Updated dependencies: now requires `@aneuhold/core-ts-db-lib@^3.0.0`, `@aneuhold
 
 <!-- Link References -->
 
+[3.0.1]: https://github.com/aneuhold/ts-libs/compare/be-ts-db-lib-v3.0.0...be-ts-db-lib-v3.0.1
 [3.0.0]: https://github.com/aneuhold/ts-libs/compare/be-ts-db-lib-v2.0.85...be-ts-db-lib-v3.0.0
 [2.0.85]: https://github.com/aneuhold/ts-libs/compare/be-ts-db-lib-v2.0.84...be-ts-db-lib-v2.0.85
 [2.0.84]: https://github.com/aneuhold/ts-libs/compare/be-ts-db-lib-v2.0.83...be-ts-db-lib-v2.0.84

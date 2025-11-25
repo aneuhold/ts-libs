@@ -1,6 +1,6 @@
 import { DashboardUserConfig, User } from '@aneuhold/core-ts-db-lib';
 import type { UUID } from 'crypto';
-import type { AnyBulkWriteOperation, BulkWriteResult, UpdateFilter, UpdateResult } from 'mongodb';
+import type { AnyBulkWriteOperation, BulkWriteResult, UpdateResult } from 'mongodb';
 import type { RepoListeners } from '../../services/RepoSubscriptionService.js';
 import CleanDocument from '../../util/DocumentCleaner.js';
 import DashboardUserConfigValidator from '../../validators/dashboard/UserConfigValidator.js';
@@ -29,20 +29,24 @@ export default class DashboardUserConfigRepository extends DashboardBaseReposito
     return {
       deleteOne: async (userId) => {
         const collection = await userConfigRepo.getCollection();
-        await collection.deleteOne({ userId });
+        await collection.deleteOne({ userId, docType: DashboardUserConfig.docType });
         await collection.updateMany(
-          { collaborators: userId },
+          { collaborators: userId, docType: DashboardUserConfig.docType },
           { $pull: { collaborators: userId } }
         );
       },
       deleteList: async (userIds) => {
         const collection = await userConfigRepo.getCollection();
         await collection.deleteMany({
-          userId: { $in: userIds }
+          userId: { $in: userIds },
+          docType: DashboardUserConfig.docType
         });
-        await collection.updateMany({ collaborators: { $in: userIds } }, {
-          $pull: { collaborators: { $in: userIds } }
-        } as UpdateFilter<DashboardUserConfig>);
+        await collection.updateMany(
+          { collaborators: { $in: userIds }, docType: DashboardUserConfig.docType },
+          {
+            $pull: { collaborators: { $in: userIds } }
+          }
+        );
       },
       insertNew: async (user) => {
         if (user.projectAccess.dashboard) {
@@ -126,9 +130,7 @@ export default class DashboardUserConfigRepository extends DashboardBaseReposito
     const originalDoc = await super.get({ _id: updatedDoc._id });
     const result = await super.update(updatedDoc);
     if (originalDoc) {
-      await this.updateCollaboratorsIfNeeded([
-        { originalDoc, updatedDoc: updatedDoc as DashboardUserConfig }
-      ]);
+      await this.updateCollaboratorsIfNeeded([{ originalDoc, updatedDoc }]);
     }
     return result;
   }
@@ -166,8 +168,8 @@ export default class DashboardUserConfigRepository extends DashboardBaseReposito
    */
   async getForUser(userId: UUID): Promise<DashboardUserConfig | null> {
     const collection = await this.getCollection();
-    const result = await collection.findOne({ userId });
-    return result as DashboardUserConfig | null;
+    const result = await collection.findOne(this.getFilterWithDefault({ userId }));
+    return result;
   }
 
   /**
@@ -203,7 +205,7 @@ export default class DashboardUserConfigRepository extends DashboardBaseReposito
           if (!updatedCollaborators.includes(collaboratorId)) {
             bulkOps.push({
               updateOne: {
-                filter: { userId: collaboratorId },
+                filter: { userId: collaboratorId, docType: DashboardUserConfig.docType },
                 update: { $pull: { collaborators: docSet.originalDoc.userId } }
               }
             });
@@ -215,7 +217,7 @@ export default class DashboardUserConfigRepository extends DashboardBaseReposito
           if (!originalCollaborators.includes(collaboratorId)) {
             bulkOps.push({
               updateOne: {
-                filter: { userId: collaboratorId },
+                filter: { userId: collaboratorId, docType: DashboardUserConfig.docType },
                 update: {
                   $addToSet: { collaborators: docSet.originalDoc.userId }
                 }

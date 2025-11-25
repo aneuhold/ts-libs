@@ -23,13 +23,19 @@ export default class DashboardNonogramKatanaItemRepository extends DashboardBase
     const nonogramKatanaRepo = DashboardNonogramKatanaItemRepository.getRepo();
     return {
       deleteOne: async (userId) => {
-        await (await nonogramKatanaRepo.getCollection()).deleteMany({ userId });
+        await (
+          await nonogramKatanaRepo.getCollection()
+        ).deleteMany({
+          userId,
+          docType: NonogramKatanaItem.docType
+        });
       },
       deleteList: async (userIds) => {
         await (
           await nonogramKatanaRepo.getCollection()
         ).deleteMany({
-          userId: { $in: userIds }
+          userId: { $in: userIds },
+          docType: NonogramKatanaItem.docType
         });
       }
     };
@@ -54,7 +60,7 @@ export default class DashboardNonogramKatanaItemRepository extends DashboardBase
    * @param userId The ID of the user to get items for.
    */
   async getAllForUser(userId: UUID): Promise<NonogramKatanaItem[]> {
-    const collection = await this.getCollection();
+    const collection = await DashboardNonogramKatanaItemRepository.getRepo().getCollection();
     const filter = {
       $and: [this.getFilterWithDefault(), { userId }]
     };
