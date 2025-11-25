@@ -37,10 +37,10 @@ export default class DashboardTaskRepository extends DashboardBaseRepository<Das
       deleteOne: async (userId) => {
         const taskCollection = await taskRepo.getCollection();
         // Remove all tasks for the user
-        await taskCollection.deleteMany({ userId });
+        await taskCollection.deleteMany({ userId, docType: DashboardTask.docType });
         // Remove all assignedTo references for the user
         await taskCollection.updateMany(
-          { assignedTo: userId },
+          { assignedTo: userId, docType: DashboardTask.docType },
           { $set: { assignedTo: undefined } }
         );
       },
@@ -48,11 +48,12 @@ export default class DashboardTaskRepository extends DashboardBaseRepository<Das
         const taskCollection = await taskRepo.getCollection();
         // Remove all tasks for the users
         await taskCollection.deleteMany({
-          userId: { $in: userIds }
+          userId: { $in: userIds },
+          docType: DashboardTask.docType
         });
         // Remove all assignedTo references for the users
         await taskCollection.updateMany(
-          { assignedTo: { $in: userIds } },
+          { assignedTo: { $in: userIds }, docType: DashboardTask.docType },
           { $set: { assignedTo: undefined } }
         );
       }
@@ -113,7 +114,7 @@ export default class DashboardTaskRepository extends DashboardBaseRepository<Das
       return [];
     }
     const { collaborators } = userConfig;
-    const collection = await this.getCollection();
+    const collection = await DashboardTaskRepository.getRepo().getCollection();
     const filter = {
       $and: [
         this.getFilterWithDefault(),
@@ -128,7 +129,7 @@ export default class DashboardTaskRepository extends DashboardBaseRepository<Das
       ]
     };
     const result = await collection.find(filter).toArray();
-    return result as DashboardTask[];
+    return result;
   }
 
   /**

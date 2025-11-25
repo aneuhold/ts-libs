@@ -23,13 +23,19 @@ export default class DashboardNonogramKatanaUpgradeRepository extends DashboardB
     const upgradeRepo = DashboardNonogramKatanaUpgradeRepository.getRepo();
     return {
       deleteOne: async (userId) => {
-        await (await upgradeRepo.getCollection()).deleteMany({ userId });
+        await (
+          await upgradeRepo.getCollection()
+        ).deleteMany({
+          userId,
+          docType: NonogramKatanaUpgrade.docType
+        });
       },
       deleteList: async (userIds) => {
         await (
           await upgradeRepo.getCollection()
         ).deleteMany({
-          userId: { $in: userIds }
+          userId: { $in: userIds },
+          docType: NonogramKatanaUpgrade.docType
         });
       }
     };
@@ -54,11 +60,11 @@ export default class DashboardNonogramKatanaUpgradeRepository extends DashboardB
    * @param userId The ID of the user to get upgrades for.
    */
   async getAllForUser(userId: UUID): Promise<NonogramKatanaUpgrade[]> {
-    const collection = await this.getCollection();
+    const collection = await DashboardNonogramKatanaUpgradeRepository.getRepo().getCollection();
     const filter = {
       $and: [this.getFilterWithDefault(), { userId }]
     };
     const result = await collection.find(filter).toArray();
-    return result as NonogramKatanaUpgrade[];
+    return result;
   }
 }
