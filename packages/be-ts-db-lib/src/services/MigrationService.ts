@@ -145,18 +145,29 @@ export default class MigrationService {
       mapFromObjectIdToUUID.set(oldIdStr, newId);
       return newId;
     };
+
+    // Create a map of UUID to documents
+    const mapFromUUIDToDocument = new Map<string, any>();
     
     function createNewDoc(oldDoc) {
-      if (mapFromObjectIdToUUID.has(oldDoc._id.toString())) return;
+      if (mapFromObjectIdToUUID.has(oldDoc._id.toString()) && mapFromUUIDToDocument.has(mapFromObjectIdToUUID.get(oldDoc._id.toString()))) {
+        console.warn(
+          `Skipping document ${oldDoc._id} as it was already migrated.` +
+          ` The created document is ${JSON.stringify(mapFromUUIDToDocument.get(mapFromObjectIdToUUID.get(oldDoc._id.toString())))}`
+        );
+        return;
+      }
       const newDocId = getUUID(oldDoc._id);
       const newDoc = DocumentService.deepCopy(oldDoc);
       newDoc._id = newDocId;
       newDoc.oldOId = oldDoc._id.toString();
+      mapFromUUIDToDocument.set(newDocId, newDoc);
       return newDoc;
     }
 
     // Filter to only legacy users with the chosen usernames
-    const userNames = ['demoUser1', 'demoUser2'];
+    // const userNames = ['demoUser1', 'demoUser2', "testUser", "testUser2"];
+    const userNames = ["testUser"];
     const legacyUsers = users.filter((u) => userNames.includes(u.userName) && typeof u._id === 'object');
     DR.logger.info(`Found ${legacyUsers.length} legacy users to migrate.`);
     
@@ -197,7 +208,7 @@ export default class MigrationService {
           if (!taskChildrenMap.has(pId)) {
             taskChildrenMap.set(pId, []);
           }
-          taskChildrenMap.get(pId)!.push(task);
+          taskChildrenMap.get(pId).push(task);
         } else {
           rootTasks.push(task);
         }
@@ -256,9 +267,24 @@ export default class MigrationService {
       const userConfigs = configs.filter((c) => c.userId.toString() === oldUserIdStr);
       userConfigs.forEach((oldConfig) => {
         const newConfig = createNewDoc(oldConfig);
+        DR.logger.info(`Old config: ${JSON.stringify(oldConfig, null, 2)}`);
         if (!newConfig) return;
         newConfig.userId = newUserId;
-        newConfig.collaborators = oldConfig.collaborators.map((id: any) => getUUID(id));
+        newConfig.collaborators = (oldConfig.collaborators || []).map((id) =>
+          getUUID(id)
+        );
+        if (newConfig.taskListSortSettings) {
+          Object.entries(newConfig.taskListSortSettings).forEach(
+            ([category, settings]: [string, any]) => {
+              const newSettings = {
+                userId: getUUID(settings.userId),
+                sortList: settings.sortList
+              };
+              newConfig.taskListSortSettings[category] = newSettings;
+            }
+          );
+        }
+        console.log(`New config: ${JSON.stringify(newConfig, null, 2)}`);
         newConfigsToCreate.push(newConfig);
       });
 
@@ -283,6 +309,55 @@ export default class MigrationService {
 
     // Now create related documents for each user
     legacyUsers.forEach((u) => createNewDocsForUser(u));
+
+    const legacyUserIds = new Set(legacyUsers.map((u) => u._id.toString()));
+    const expectedUsers = legacyUsers.length;
+    const expectedApiKeys = apiKeys.filter((k) =>
+      legacyUserIds.has(k.userId.toString())
+    ).length;
+    const expectedTasks = tasks.filter((t) =>
+      legacyUserIds.has(t.userId.toString())
+    ).length;
+    const expectedConfigs = configs.filter((c) =>
+      legacyUserIds.has(c.userId.toString())
+    ).length;
+    const expectedNonogramItems = nonogramItems.filter((i) =>
+      legacyUserIds.has(i.userId.toString())
+    ).length;
+    const expectedNonogramUpgrades = nonogramUpgrades.filter((u) =>
+      legacyUserIds.has(u.userId.toString())
+    ).length;
+
+    if (newUsersToCreate.length !== expectedUsers) {
+      DR.logger.error(
+        `Expected ${expectedUsers} users, but prepped ${newUsersToCreate.length}.`
+      );
+    }
+    if (newApiKeysToCreate.length !== expectedApiKeys) {
+      DR.logger.error(
+        `Expected ${expectedApiKeys} API keys, but prepped ${newApiKeysToCreate.length}.`
+      );
+    }
+    if (newTasksToCreate.length !== expectedTasks) {
+      DR.logger.error(
+        `Expected ${expectedTasks} tasks, but prepped ${newTasksToCreate.length}.`
+      );
+    }
+    if (newConfigsToCreate.length !== expectedConfigs) {
+      DR.logger.error(
+        `Expected ${expectedConfigs} configs, but prepped ${newConfigsToCreate.length}.`
+      );
+    }
+    if (newNonogramItemsToCreate.length !== expectedNonogramItems) {
+      DR.logger.error(
+        `Expected ${expectedNonogramItems} nonogram items, but prepped ${newNonogramItemsToCreate.length}.`
+      );
+    }
+    if (newNonogramUpgradesToCreate.length !== expectedNonogramUpgrades) {
+      DR.logger.error(
+        `Expected ${expectedNonogramUpgrades} nonogram upgrades, but prepped ${newNonogramUpgradesToCreate.length}.`
+      );
+    }
 
     DR.logger.info(`Prepped ${newUsersToCreate.length} new users.`);
     DR.logger.info(`Prepped ${newApiKeysToCreate.length} new API keys.`);
