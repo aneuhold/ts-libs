@@ -148,6 +148,18 @@ export default class MigrationService {
 
     // Create a map of UUID to documents
     const mapFromUUIDToDocument = new Map<string, any>();
+
+    const verifyDoc = (oldDoc: any, newDoc: any) => {
+      const oldJson = JSON.stringify(oldDoc, null, 2);
+      const newJson = JSON.stringify(newDoc, null, 2);
+      const oldLines = oldJson.split('\n').length;
+      const newLines = newJson.split('\n').length;
+      if (newLines !== oldLines + 1) {
+        DR.logger.warn(
+          `Line count mismatch for ${oldDoc.docType || 'doc'} ${oldDoc._id}: Old=${oldLines}, New=${newLines}.`
+        );
+      }
+    };
     
     function createNewDoc(oldDoc) {
       if (mapFromObjectIdToUUID.has(oldDoc._id.toString()) && mapFromUUIDToDocument.has(mapFromObjectIdToUUID.get(oldDoc._id.toString()))) {
@@ -166,8 +178,8 @@ export default class MigrationService {
     }
 
     // Filter to only legacy users with the chosen usernames
-    // const userNames = ['demoUser1', 'demoUser2', "testUser", "testUser2"];
-    const userNames = ["testUser"];
+    const userNames = ['demoUser1', 'demoUser2', "testUser", "testUser2"];
+    // const userNames = ["testUser"];
     const legacyUsers = users.filter((u) => userNames.includes(u.userName) && typeof u._id === 'object');
     DR.logger.info(`Found ${legacyUsers.length} legacy users to migrate.`);
     
@@ -176,6 +188,7 @@ export default class MigrationService {
     legacyUsers.forEach((oldUserDoc) => {
       const newUser = createNewDoc(oldUserDoc);
       if (!newUser) return;
+      verifyDoc(oldUserDoc, newUser);
       newUsersToCreate.push(newUser);
     });
 
@@ -190,6 +203,7 @@ export default class MigrationService {
         const newKey = createNewDoc(oldKey);
         if (!newKey) return;
         newKey.userId = newUserId;
+        verifyDoc(oldKey, newKey);
         newApiKeysToCreate.push(newKey);
       });
 
@@ -234,7 +248,10 @@ export default class MigrationService {
           const newFilterSettings: any = {};
           Object.keys(oldTask.filterSettings).forEach((fsUserId) => {
             const newFsUserId = getUUID(fsUserId);
-            newFilterSettings[newFsUserId] = oldTask.filterSettings[fsUserId];
+            newFilterSettings[newFsUserId] = {
+              ...oldTask.filterSettings[fsUserId],
+              userId: newFsUserId
+            };
           });
           newTask.filterSettings = newFilterSettings;
 
@@ -242,7 +259,10 @@ export default class MigrationService {
           const newSortSettings: any = {};
           Object.keys(oldTask.sortSettings).forEach((ssUserId) => {
             const newSsUserId = getUUID(ssUserId);
-            newSortSettings[newSsUserId] = oldTask.sortSettings[ssUserId];
+            newSortSettings[newSsUserId] = {
+              ...oldTask.sortSettings[ssUserId],
+              userId: newSsUserId
+            };
           });
           newTask.sortSettings = newSortSettings;
 
@@ -253,7 +273,14 @@ export default class MigrationService {
           if (oldTask.parentTaskId) {
             newTask.parentTaskId = getUUID(oldTask.parentTaskId);
           }
+          if (oldTask.parentRecurringTaskInfo) {
+            newTask.parentRecurringTaskInfo = {
+              ...oldTask.parentRecurringTaskInfo,
+              taskId: getUUID(oldTask.parentRecurringTaskInfo.taskId)
+            };
+          }
 
+          verifyDoc(oldTask, newTask);
           newTasksToCreate.push(newTask);
         }
 
@@ -267,7 +294,6 @@ export default class MigrationService {
       const userConfigs = configs.filter((c) => c.userId.toString() === oldUserIdStr);
       userConfigs.forEach((oldConfig) => {
         const newConfig = createNewDoc(oldConfig);
-        DR.logger.info(`Old config: ${JSON.stringify(oldConfig, null, 2)}`);
         if (!newConfig) return;
         newConfig.userId = newUserId;
         newConfig.collaborators = (oldConfig.collaborators || []).map((id) =>
@@ -284,7 +310,18 @@ export default class MigrationService {
             }
           );
         }
-        console.log(`New config: ${JSON.stringify(newConfig, null, 2)}`);
+        if (newConfig.taskListFilterSettings) {
+          Object.entries(newConfig.taskListFilterSettings).forEach(
+            ([category, settings]: [string, any]) => {
+              const newSettings = {
+                ...settings,
+                userId: getUUID(settings.userId)
+              };
+              newConfig.taskListFilterSettings[category] = newSettings;
+            }
+          );
+        }
+        verifyDoc(oldConfig, newConfig);
         newConfigsToCreate.push(newConfig);
       });
 
@@ -294,6 +331,7 @@ export default class MigrationService {
         const newItem = createNewDoc(oldItem);
         if (!newItem) return;
         newItem.userId = newUserId;
+        verifyDoc(oldItem, newItem);
         newNonogramItemsToCreate.push(newItem);
       });
 
@@ -303,6 +341,7 @@ export default class MigrationService {
         const newUpgrade = createNewDoc(oldUpgrade);
         if (!newUpgrade) return;
         newUpgrade.userId = newUserId;
+        verifyDoc(oldUpgrade, newUpgrade);
         newNonogramUpgradesToCreate.push(newUpgrade);
       });
     }
