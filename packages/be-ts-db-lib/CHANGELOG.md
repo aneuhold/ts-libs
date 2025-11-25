@@ -7,13 +7,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## 🔖 [3.0.1] (2025-11-25)
 
-### ✅ Added
-
 ### 🏗️ Changed
 
-### 🩹 Fixed
-
-### 🔥 Removed
+- All dashboard repositories now require `docType` in delete and update queries for stricter document targeting.
+- Improved internal filtering in `getAllForUser` and similar methods to use repository-level collection access and default filters.
+- Refactored `DashboardUserConfigRepository` to ensure collaborator and userId references always include `docType`.
+- Updated migration logic in `MigrationService` for more robust and complete UUID migration, including all dashboard-related document types.
+- Added `uuid` as a dependency in `package.json`.
 
 ## 🔖 [3.0.0] (2025-11-23)
 
@@ -103,6 +103,7 @@ Updated dependencies: now requires `@aneuhold/core-ts-db-lib@^3.0.0`, `@aneuhold
 - Updated workflow permissions to allow repository write access
 
 <!-- Link References -->
+
 [3.0.1]: https://github.com/aneuhold/ts-libs/compare/be-ts-db-lib-v3.0.0...be-ts-db-lib-v3.0.1
 [3.0.0]: https://github.com/aneuhold/ts-libs/compare/be-ts-db-lib-v2.0.85...be-ts-db-lib-v3.0.0
 [2.0.85]: https://github.com/aneuhold/ts-libs/compare/be-ts-db-lib-v2.0.84...be-ts-db-lib-v2.0.85
