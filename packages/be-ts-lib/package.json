@@ -61,7 +61,7 @@
     "octokit": "^5.0.5"
   },
   "devDependencies": {
-    "@aneuhold/local-npm-registry": "^0.2.17",
+    "@aneuhold/local-npm-registry": "^0.2.18",
     "@aneuhold/main-scripts": "^2.7.2",
     "@types/node": "^24.10.0",
     "@types/node-fetch": "^2.6.13",

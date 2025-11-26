@@ -71,12 +71,12 @@
     "TypeScript"
   ],
   "dependencies": {
-    "@aneuhold/core-ts-db-lib": "^3.0.0",
+    "@aneuhold/core-ts-db-lib": "^3.0.1",
     "@aneuhold/core-ts-lib": "^2.3.11",
     "bson": "^7.0.0"
   },
   "devDependencies": {
-    "@aneuhold/local-npm-registry": "^0.2.17",
+    "@aneuhold/local-npm-registry": "^0.2.18",
     "@aneuhold/main-scripts": "^2.7.2",
     "@types/node": "^24.10.0",
     "eslint": "^9.39.1",

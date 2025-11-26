@@ -1,8 +1,7 @@
 ---
-mode: 'agent'
 tools: ['get_commit', 'get_file_contents', 'list_branches', 'list_commits', 'list_pull_requests', 'search_pull_requests', 'editFiles', 'search', 'runCommands', 'runTasks', 'usages', 'vscodeAPI', 'problems', 'pull_request_read']
 description: 'Updates changelogs in the mono-repo'
-model: GPT-4.1
+model: Raptor mini (Preview) (copilot)
 ---
 
 For each package in the mono-repo (`packages/*/CHANGELOG.md`) that has had a version bump compared to main, update the changelog file to include the changes made since the last version. Keep the updates exclusive to each package, and have them conform to the existing format in the CHANGELOG file, using the headers:
