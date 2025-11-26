@@ -15,21 +15,21 @@ import DashboardTaskSortService from './TaskSortService.js';
  * A type for the task filter settings for a particular task.
  */
 export type DashboardTaskFilterTaskInfo = {
-  taskId: string;
-  allChildrenIds: string[];
+  taskId: UUID;
+  allChildrenIds: UUID[];
 };
 
 /**
  * The result of filtering and sorting tasks.
  */
 export type DashboardTaskFilterAndSortResult = {
-  filteredAndSortedIds: string[];
+  filteredAndSortedIds: UUID[];
   /**
    * The IDs of the tasks that were filtered, but still apply to the same
    * category. Does not include tasks that were filtered because of grand
    * children tasks.
    */
-  removedIds: string[];
+  removedIds: UUID[];
 };
 
 /**
@@ -44,8 +44,8 @@ export default class DashboardTaskService {
    * @returns An array of UUID representing the children task IDs.
    */
   static getChildrenIds = (allUserTasks: DashboardTask[], parentTaskIds: UUID[]): UUID[] => {
-    const parentToTaskIdsDict: Record<string, string[]> = {};
-    const taskIdToTaskDict: Record<string, DashboardTask> = {};
+    const parentToTaskIdsDict: Record<UUID, UUID[]> = {};
+    const taskIdToTaskDict: Record<UUID, DashboardTask> = {};
     allUserTasks.forEach((task) => {
       taskIdToTaskDict[task._id] = task;
       if (task.parentTaskId) {
@@ -64,7 +64,7 @@ export default class DashboardTaskService {
           parentToTaskIdsDict,
           taskId
         );
-        childrenIds.push(...(childrenTaskIds as UUID[]));
+        childrenIds.push(...childrenTaskIds);
       }
     });
     return childrenIds;
@@ -160,12 +160,12 @@ export default class DashboardTaskService {
    */
   static getTagHeaderMap(
     taskMap: DashboardTaskMap,
-    taskIds: string[],
-    userId: string,
+    taskIds: UUID[],
+    userId: UUID,
     tagSettings: DashboardTagSettings,
     noPriorityTagsIndicator: string,
     sortDirection: DashboardTaskSortDirection
-  ): Record<string, string> {
+  ): Record<UUID, string> {
     return DashboardTaskSortService.getTagHeaderMap(
       taskMap,
       taskIds,
@@ -185,10 +185,10 @@ export default class DashboardTaskService {
    * @returns An array of strings representing the children task IDs.
    */
   private static getChildrenTaskIds(
-    taskIdToTaskDict: Record<string, DashboardTask>,
-    parentToTaskIdsDict: Record<string, string[]>,
-    taskId: string
-  ): string[] {
+    taskIdToTaskDict: Record<UUID, DashboardTask>,
+    parentToTaskIdsDict: Record<UUID, UUID[]>,
+    taskId: UUID
+  ): UUID[] {
     const childrenIds = parentToTaskIdsDict[taskId];
     if (!childrenIds) {
       return [];

@@ -1,3 +1,4 @@
+import type { UUID } from 'crypto';
 import DashboardUserConfig from '../../../documents/dashboard/UserConfig.js';
 import Validate from '../../../schemas/validators/ValidateUtil.js';
 
@@ -7,7 +8,7 @@ import Validate from '../../../schemas/validators/ValidateUtil.js';
  * @param userId - The ID of the user.
  * @returns The default filter settings for the user's task list.
  */
-export function getDefaultTaskListFilterSettings(userId: string): DashboardTaskListFilterSettings {
+export function getDefaultTaskListFilterSettings(userId: UUID): DashboardTaskListFilterSettings {
   return {
     userId,
     completed: { show: true },
@@ -66,7 +67,7 @@ export type DashboardTaskListGlobalFilterSettings = {
  * own settings for a task.
  */
 export type DashboardTaskFilterSettings = {
-  [userId: string]: DashboardTaskListFilterSettings;
+  [userId: UUID]: DashboardTaskListFilterSettings;
 };
 
 /**
@@ -76,7 +77,7 @@ export type DashboardTaskFilterSettings = {
  * without breaking existing users or tasks.
  */
 export type DashboardTaskListFilterSettings = {
-  userId: string;
+  userId: UUID;
   completed: StandardFilterSetting;
   grandChildrenTasks: StandardFilterSetting;
   startDate: {
