@@ -1,3 +1,4 @@
+import type { UUID } from 'crypto';
 import type { DashboardTaskMap } from '../../../documents/dashboard/Task.js';
 import type { DashboardTaskListFilterSettings } from '../../../embedded-types/dashboard/task/FilterSettings.js';
 
@@ -5,13 +6,13 @@ export type DashboardTaskFilterResult = {
   /**
    * The IDs of the tasks that satisfy the filter settings.
    */
-  resultIds: string[];
+  resultIds: UUID[];
   /**
    * The IDs of the tasks that were filtered, but still apply to the same
    * category. Does not include tasks that were filtered because of grand
    * children tasks.
    */
-  removedIds: string[];
+  removedIds: UUID[];
 };
 
 /**
@@ -38,14 +39,14 @@ export default class DashboardTaskFilterService {
    */
   static filter(
     taskMap: DashboardTaskMap,
-    taskIds: string[],
+    taskIds: UUID[],
     settings: DashboardTaskListFilterSettings,
     category: string,
-    parentTaskId?: string
+    parentTaskId?: UUID
   ): DashboardTaskFilterResult {
     // The filtered IDs that apply to the category, and aren't grandchildren
     // tasks.
-    const removedIds: string[] = [];
+    const removedIds: UUID[] = [];
     const resultIds = taskIds.filter((taskId) => {
       const task = taskMap[taskId];
 

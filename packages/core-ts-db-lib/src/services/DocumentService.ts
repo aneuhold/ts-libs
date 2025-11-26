@@ -9,7 +9,7 @@ import BaseDocument from '../documents/BaseDocument.js';
  * @template T - The type of document being mapped, must extend BaseDocument.
  */
 export type DocumentMap<T extends BaseDocument> = {
-  [docId: string]: T | undefined;
+  [docId: UUID]: T | undefined;
 };
 
 /**

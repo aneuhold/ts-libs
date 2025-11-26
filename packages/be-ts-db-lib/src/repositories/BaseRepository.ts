@@ -153,9 +153,9 @@ export default abstract class BaseRepository<TBasetype extends BaseDocument> {
    *
    * @returns An object where the keys are document IDs and the values are true.
    */
-  async getAllIdsAsHash(): Promise<{ [id: string]: boolean }> {
+  async getAllIdsAsHash(): Promise<{ [id: UUID]: boolean }> {
     const allDocs = await this.getAll();
-    return allDocs.reduce<{ [id: string]: boolean }>((acc, doc) => {
+    return allDocs.reduce<{ [id: UUID]: boolean }>((acc, doc) => {
       acc[doc._id] = true;
       return acc;
     }, {});

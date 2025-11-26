@@ -1,3 +1,4 @@
+import type { UUID } from 'crypto';
 import type { DashboardTaskMap } from '../../../documents/dashboard/Task.js';
 import DashboardTask from '../../../documents/dashboard/Task.js';
 import type { DashboardTaskListSortSettings } from '../../../embedded-types/dashboard/task/SortSettings.js';
@@ -22,10 +23,10 @@ export default class DashboardTaskSortService {
    */
   static sort(
     taskMap: DashboardTaskMap,
-    taskIds: string[],
+    taskIds: UUID[],
     sortSettings: DashboardTaskListSortSettings,
     tagSettings: DashboardTagSettings
-  ): string[] {
+  ): UUID[] {
     return taskIds.sort((idA, idB) => {
       const taskA = taskMap[idA];
       const taskB = taskMap[idB];
@@ -65,13 +66,13 @@ export default class DashboardTaskSortService {
    */
   static getTagHeaderMap(
     taskMap: DashboardTaskMap,
-    taskIds: string[],
-    userId: string,
+    taskIds: UUID[],
+    userId: UUID,
     tagSettings: DashboardTagSettings,
     noPriorityTagsIndicator: string,
     sortDirection: DashboardTaskSortDirection
-  ): Record<string, string> {
-    const tagHeaderMap: Record<string, string> = {};
+  ): Record<UUID, string> {
+    const tagHeaderMap: Record<UUID, string> = {};
     if (taskIds.length === 0 || taskIds.length === 1) return tagHeaderMap;
     const firstTask = taskMap[taskIds[0]];
     if (!firstTask) return tagHeaderMap;
@@ -107,7 +108,7 @@ export default class DashboardTaskSortService {
     sortBy: DashboardTaskSortBy,
     sortDirection: DashboardTaskSortDirection,
     tagSettings: DashboardTagSettings,
-    userId: string
+    userId: UUID
   ): (taskA: DashboardTask, taskB: DashboardTask) => number {
     switch (sortBy) {
       case DashboardTaskSortBy.tags:
@@ -181,7 +182,7 @@ export default class DashboardTaskSortService {
    */
   private static getHighestPriorityTag(
     task: DashboardTask,
-    userId: string,
+    userId: UUID,
     tagSettings: DashboardTagSettings,
     sortDirection: DashboardTaskSortDirection
   ): string | null {
@@ -200,7 +201,7 @@ export default class DashboardTaskSortService {
    */
   private static getHighestPriorityTagValue(
     task: DashboardTask,
-    userId: string,
+    userId: UUID,
     tagSettings: DashboardTagSettings,
     sortDirection: DashboardTaskSortDirection
   ): number {
@@ -219,7 +220,7 @@ export default class DashboardTaskSortService {
    */
   private static getPriorityTagForTask(
     task: DashboardTask,
-    userId: string,
+    userId: UUID,
     tagSettings: DashboardTagSettings,
     sortDirection: DashboardTaskSortDirection
   ): { tag: string; priority: number } | null {

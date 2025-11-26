@@ -1,3 +1,4 @@
+import type { UUID } from 'crypto';
 import DashboardUserConfig from '../../../documents/dashboard/UserConfig.js';
 import Validate from '../../../schemas/validators/ValidateUtil.js';
 
@@ -7,7 +8,7 @@ import Validate from '../../../schemas/validators/ValidateUtil.js';
  * @param userId - The ID of the user.
  * @returns The default task list sort settings for the user.
  */
-export function getDefaultTaskListSortSettings(userId: string): DashboardTaskListSortSettings {
+export function getDefaultTaskListSortSettings(userId: UUID): DashboardTaskListSortSettings {
   return {
     userId,
     sortList: []
@@ -44,14 +45,14 @@ export type DashboardTaskListGlobalSortSettings = {
  * own settings for a task.
  */
 export type DashboardTaskSortSettings = {
-  [userId: string]: DashboardTaskListSortSettings;
+  [userId: UUID]: DashboardTaskListSortSettings;
 };
 
 /**
  * The sort settings for a list of tasks for a particular user.
  */
 export type DashboardTaskListSortSettings = {
-  userId: string;
+  userId: UUID;
   sortList: Array<DashboardTaskSortSetting>;
 };
 

@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+
+## 🔖 [3.0.2] (2025-11-26)
+
+### 🏗️ Changed
+- Updated all type signatures and internal logic to use `UUID` instead of `string` for document IDs in repository and migration services.
+- Updated dependency: now requires `@aneuhold/core-ts-db-lib@^3.0.1` and `@aneuhold/local-npm-registry@^0.2.18`.
+
 ## 🔖 [3.0.1] (2025-11-25)
 
 ### 🏗️ Changed
@@ -103,7 +110,7 @@ Updated dependencies: now requires `@aneuhold/core-ts-db-lib@^3.0.0`, `@aneuhold
 - Updated workflow permissions to allow repository write access
 
 <!-- Link References -->
-
+[3.0.2]: https://github.com/aneuhold/ts-libs/compare/be-ts-db-lib-v3.0.1...be-ts-db-lib-v3.0.2
 [3.0.1]: https://github.com/aneuhold/ts-libs/compare/be-ts-db-lib-v3.0.0...be-ts-db-lib-v3.0.1
 [3.0.0]: https://github.com/aneuhold/ts-libs/compare/be-ts-db-lib-v2.0.85...be-ts-db-lib-v3.0.0
 [2.0.85]: https://github.com/aneuhold/ts-libs/compare/be-ts-db-lib-v2.0.84...be-ts-db-lib-v2.0.85
