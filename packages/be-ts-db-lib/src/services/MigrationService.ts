@@ -123,7 +123,7 @@ export default class MigrationService {
     }
 
     // Now create the actual map
-    const mapFromObjectIdToUUID = new Map<string, string>();
+    const mapFromObjectIdToUUID = new Map<string, UUID>();
 
     const newUsersToCreate: User[] = [];
     const newApiKeysToCreate: ApiKey[] = [];
@@ -136,7 +136,7 @@ export default class MigrationService {
      * Gets a UUID for a given legacy ObjectId. If one already exists in the map,
      * it is returned. Otherwise, a new one is generated and added to the map.
      */
-    const getUUID = (oldId: ObjectId): string => {
+    const getUUID = (oldId: ObjectId): UUID => {
       const oldIdStr = oldId.toString();
       if (mapFromObjectIdToUUID.has(oldIdStr)) {
         return mapFromObjectIdToUUID.get(oldIdStr);
@@ -147,7 +147,7 @@ export default class MigrationService {
     };
 
     // Create a map of UUID to documents
-    const mapFromUUIDToDocument = new Map<string, any>();
+    const mapFromUUIDToDocument = new Map<UUID, any>();
 
     const verifyDoc = (oldDoc: any, newDoc: any) => {
       const oldJson = JSON.stringify(oldDoc, null, 2);

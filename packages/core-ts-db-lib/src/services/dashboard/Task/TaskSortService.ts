@@ -72,7 +72,7 @@ export default class DashboardTaskSortService {
     noPriorityTagsIndicator: string,
     sortDirection: DashboardTaskSortDirection
   ): Record<UUID, string> {
-    const tagHeaderMap: Record<string, string> = {};
+    const tagHeaderMap: Record<UUID, string> = {};
     if (taskIds.length === 0 || taskIds.length === 1) return tagHeaderMap;
     const firstTask = taskMap[taskIds[0]];
     if (!firstTask) return tagHeaderMap;

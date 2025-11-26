@@ -147,7 +147,7 @@ export default class DashboardTask extends BaseDocumentWithType implements Requi
   /**
    * User-assigned tags for this task.
    */
-  tags: { [userId: string]: string[] | undefined } = {};
+  tags: { [userId: UUID]: string[] | undefined } = {};
 
   /**
    * System-assigned category for this task. This should be used to determine

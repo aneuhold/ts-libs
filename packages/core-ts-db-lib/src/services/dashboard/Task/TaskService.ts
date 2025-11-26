@@ -121,7 +121,7 @@ export default class DashboardTaskService {
     if (!taskInfo) {
       filterResult = DashboardTaskFilterService.filter(
         taskMap,
-        Object.keys(taskMap),
+        Object.keys(taskMap) as UUID[],
         filterSettings,
         category
       );
