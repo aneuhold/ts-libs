@@ -2,11 +2,11 @@ import type { APIResponse } from '../../types/APIResponse.js';
 import type {
   AuthValidateUserInput,
   AuthValidateUserOutput
-} from '../DOFunctionService/functions/authValidateUser.js';
+} from '../../types/AuthValidateUser.js';
 import type {
   ProjectDashboardInput,
   ProjectDashboardOutput
-} from '../DOFunctionService/functions/projectDashboard.js';
+} from '../../types/ProjectDashboard.js';
 import GCloudAPIService from '../GCloudAPIService/GCloudAPIService.js';
 
 /**

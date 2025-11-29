@@ -72,20 +72,19 @@
   ],
   "dependencies": {
     "@aneuhold/core-ts-lib": "^2.3.11",
-    "bson": "^7.0.0",
     "uuid": "^13.0.0",
-    "zod": "^4.1.12"
+    "zod": "^4.1.13"
   },
   "devDependencies": {
     "@aneuhold/local-npm-registry": "^0.2.18",
     "@aneuhold/main-scripts": "^2.7.2",
-    "@types/node": "^24.10.0",
+    "@types/node": "^24.10.1",
     "eslint": "^9.39.1",
     "jsr": "^0.13.5",
-    "prettier": "^3.6.2",
-    "rimraf": "^6.1.0",
+    "prettier": "^3.7.2",
+    "rimraf": "^6.1.2",
     "tsx": "^4.20.6",
     "typescript": "^5.9.3",
-    "vitest": "^4.0.8"
+    "vitest": "^4.0.14"
   }
 }
