@@ -163,9 +163,6 @@ importers:
       '@aneuhold/core-ts-lib':
         specifier: ^2.3.11
         version: link:../core-ts-lib
-      bson:
-        specifier: ^7.0.0
-        version: 7.0.0
     devDependencies:
       '@aneuhold/local-npm-registry':
         specifier: ^0.2.18
@@ -203,9 +200,6 @@ importers:
       '@aneuhold/core-ts-lib':
         specifier: ^2.3.11
         version: link:../core-ts-lib
-      bson:
-        specifier: ^7.0.0
-        version: 7.0.0
       uuid:
         specifier: ^13.0.0
         version: 13.0.0
