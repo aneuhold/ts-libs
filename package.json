@@ -15,7 +15,7 @@
     "upgrade:all": "pnpm up --latest && pnpm -r --stream upgrade:all"
   },
   "devDependencies": {
-    "@aneuhold/eslint-config": "^1.3.20",
+    "@aneuhold/eslint-config": "^1.3.21",
     "@types/node": "^24.10.1",
     "concurrently": "^9.2.1",
     "eslint": "^9.39.1",

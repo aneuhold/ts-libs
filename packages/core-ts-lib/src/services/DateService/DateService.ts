@@ -262,4 +262,25 @@ export default class DateService {
       first.getDate() === second.getDate()
     );
   }
+
+  /**
+   * Reviver function for JSON.parse to automatically convert ISO date strings
+   * back to Date objects.
+   *
+   * This follows the signature used by JSON.parse for reviver functions.
+   *
+   * @example
+   * ```typescript
+   * const parsed = JSON.parse(jsonString, DateService.dateReviver);
+   * ```
+   *
+   * @param _key - The key of the property being parsed. (Not actually used.)
+   * @param value - The value of the property being parsed.
+   */
+  static dateReviver(this: void, _key: string, value: unknown): unknown {
+    if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}Z$/.test(value)) {
+      return new Date(value);
+    }
+    return value;
+  }
 }
