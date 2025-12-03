@@ -9,11 +9,20 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### ✅ Added
 
+- New unit tests for `GCloudAPIService` covering API calls, date parsing, and error handling.
+- Added types: `AuthCheckPasswordInput`, `AuthCheckPasswordOutput`, `AuthValidateUserInput`, `AuthValidateUserOutput`, and `ProjectDashboardInput`/`Output` to `src/types/`.
+
 ### 🏗️ Changed
 
-### 🩹 Fixed
+- API service now uses JSON for requests/responses instead of BSON.
+- Refactored APIService and GCloudAPIService to use new type locations and improved error handling.
+- Updated dependencies: now requires `@aneuhold/core-ts-api-lib@^3.0.2`, `@aneuhold/core-ts-lib@^2.3.12`, and `@aneuhold/local-npm-registry@^0.2.19`.
+- Development dependencies updated for compatibility: `@types/node`, `prettier`, `rimraf`, and `vitest`.
 
 ### 🔥 Removed
+
+- Removed Digital Ocean function classes and related service files from `src/services/DOFunctionService/`.
+- Removed legacy test utilities and example function files.
 
 ## 🔖 [3.0.1] (2025-11-26)
 
@@ -132,6 +141,7 @@ No direct code changes; version bump for compatibility.
 - Updated workflow permissions to allow repository write access
 
 <!-- Link References -->
+
 [3.0.2]: https://github.com/aneuhold/ts-libs/compare/core-ts-api-lib-v3.0.1...core-ts-api-lib-v3.0.2
 [3.0.1]: https://github.com/aneuhold/ts-libs/compare/core-ts-api-lib-v3.0.0...core-ts-api-lib-v3.0.1
 [3.0.0]: https://github.com/aneuhold/ts-libs/compare/core-ts-api-lib-v2.2.8...core-ts-api-lib-v3.0.0
