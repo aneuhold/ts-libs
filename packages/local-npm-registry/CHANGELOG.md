@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 
+## 🔖 [0.2.19] (2025-12-03)
+
+### ✅ Added
+
+### 🏗️ Changed
+
+### 🩹 Fixed
+
+### 🔥 Removed
+
 ## 🔖 [0.2.18] (2025-11-26)
 
 ### 🏗️ Changed
@@ -108,6 +118,7 @@ No direct code changes; version bump for compatibility.
 - Updated workflow permissions to allow repository write access
 
 <!-- Link References -->
+[0.2.19]: https://github.com/aneuhold/ts-libs/compare/local-npm-registry-v0.2.18...local-npm-registry-v0.2.19
 [0.2.18]: https://github.com/aneuhold/ts-libs/compare/local-npm-registry-v0.2.17...local-npm-registry-v0.2.18
 [0.2.17]: https://github.com/aneuhold/ts-libs/compare/local-npm-registry-v0.2.16...local-npm-registry-v0.2.17
 [0.2.16]: https://github.com/aneuhold/ts-libs/compare/local-npm-registry-v0.2.15...local-npm-registry-v0.2.16
