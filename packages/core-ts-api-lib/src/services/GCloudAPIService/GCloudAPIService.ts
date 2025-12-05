@@ -1,13 +1,13 @@
-import { BSON } from 'bson';
+import { DateService, ErrorUtils } from '@aneuhold/core-ts-lib';
 import type { APIResponse } from '../../types/APIResponse.js';
 import type {
   AuthValidateUserInput,
   AuthValidateUserOutput
-} from '../DOFunctionService/functions/authValidateUser.js';
+} from '../../types/AuthValidateUser.js';
 import type {
   ProjectDashboardInput,
   ProjectDashboardOutput
-} from '../DOFunctionService/functions/projectDashboard.js';
+} from '../../types/ProjectDashboard.js';
 
 /**
  * A service for interacting with the Google Cloud API service for personal projects.
@@ -65,10 +65,10 @@ export default class GCloudAPIService {
       method: 'POST',
       headers: {
         Connection: 'keep-alive',
-        'Content-Type': 'application/octet-stream',
-        Accept: 'application/octet-stream'
+        'Content-Type': 'application/json',
+        Accept: 'application/json'
       },
-      body: Buffer.from(BSON.serialize(input))
+      body: JSON.stringify(input)
     });
     const decodedResponse = await this.decodeResponse<TOutput>(response);
     return decodedResponse;
@@ -81,18 +81,13 @@ export default class GCloudAPIService {
    * @returns The decoded output.
    */
   private static async decodeResponse<TOutput>(response: Response): Promise<APIResponse<TOutput>> {
-    const contentType = response.headers.get('Content-Type');
-    const isBson = contentType?.includes('application/octet-stream');
-    if (isBson) {
-      const buffer = await response.arrayBuffer();
-      const uint8Array = new Uint8Array(buffer);
-      return BSON.deserialize(uint8Array) as APIResponse<TOutput>;
-    } else {
-      // This normally only happens if there is an error
-      const result = (await response.json()) as unknown;
+    try {
+      const text = await response.text();
+      return JSON.parse(text, DateService.dateReviver) as APIResponse<TOutput>;
+    } catch (error) {
       return {
         success: false,
-        errors: [JSON.stringify(result, null, 2)],
+        errors: ['Failed to parse response', ErrorUtils.getErrorString(error)],
         data: {} as TOutput
       };
     }

@@ -6,9 +6,7 @@ import {
   NonogramKatanaUpgrade
 } from '@aneuhold/core-ts-db-lib';
 import type { UUID } from 'crypto';
-import type { Translations } from '../../../types/Translations.js';
-import type { DOFunctionInput, DOFunctionOutput } from '../DOFunction.js';
-import DOFunction from '../DOFunction.js';
+import type { Translations } from './Translations.js';
 
 /**
  * Options for configuring the project dashboard.
@@ -84,7 +82,7 @@ export interface ProjectDashboardOptions {
 /**
  * Represents the input to the project dashboard function.
  */
-export interface ProjectDashboardInput extends DOFunctionInput {
+export interface ProjectDashboardInput {
   apiKey: UUID;
   options: ProjectDashboardOptions;
 }
@@ -92,7 +90,7 @@ export interface ProjectDashboardInput extends DOFunctionInput {
 /**
  * Represents the output of the project dashboard function.
  */
-export interface ProjectDashboardOutput extends DOFunctionOutput {
+export interface ProjectDashboardOutput {
   translations?: Translations;
   userConfig?: DashboardUserConfig;
   tasks?: DashboardTask[];
@@ -100,26 +98,4 @@ export interface ProjectDashboardOutput extends DOFunctionOutput {
   userFromUserName?: UserCTO | null;
   nonogramKatanaItems?: NonogramKatanaItem[];
   nonogramKatanaUpgrades?: NonogramKatanaUpgrade[];
-}
-
-/**
- * The Digital Ocean function which handles all data requests for the
- * dashboard project.
- */
-export default class ProjectDashboard extends DOFunction<
-  ProjectDashboardInput,
-  ProjectDashboardOutput
-> {
-  private static instance: ProjectDashboard | undefined;
-
-  private constructor() {
-    super();
-  }
-
-  static getFunction(): ProjectDashboard {
-    if (!ProjectDashboard.instance) {
-      ProjectDashboard.instance = new ProjectDashboard();
-    }
-    return ProjectDashboard.instance;
-  }
 }

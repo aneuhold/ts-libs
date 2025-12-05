@@ -2,7 +2,7 @@
   "name": "@aneuhold/be-ts-db-lib",
   "author": "Anton G. Neuhold Jr.",
   "license": "MIT",
-  "version": "3.0.2",
+  "version": "3.0.3",
   "description": "A backend database library meant to actually interact with various databases in personal projects",
   "packageManager": "pnpm@10.12.1",
   "type": "module",
@@ -57,26 +57,26 @@
     "MongoDB"
   ],
   "dependencies": {
-    "@aneuhold/be-ts-lib": "^3.0.1",
-    "@aneuhold/core-ts-db-lib": "^3.0.1",
-    "@aneuhold/core-ts-lib": "^2.3.11",
+    "@aneuhold/be-ts-lib": "^3.0.2",
+    "@aneuhold/core-ts-db-lib": "^3.0.2",
+    "@aneuhold/core-ts-lib": "^2.3.12",
     "bson": "^7.0.0",
     "mongodb": "^7.0.0",
     "uuid": "^13.0.0"
   },
   "devDependencies": {
-    "@aneuhold/local-npm-registry": "^0.2.18",
+    "@aneuhold/local-npm-registry": "^0.2.19",
     "@aneuhold/main-scripts": "^2.7.2",
-    "@types/node": "^24.10.0",
+    "@types/node": "^24.10.1",
     "@types/node-fetch": "^2.6.13",
     "dotenv": "^17.2.3",
     "eslint": "^9.39.1",
     "jsr": "^0.13.5",
-    "prettier": "^3.6.2",
-    "rimraf": "^6.1.0",
+    "prettier": "^3.7.2",
+    "rimraf": "^6.1.2",
     "tslib": "^2.8.1",
     "tsx": "^4.20.6",
     "typescript": "^5.9.3",
-    "vitest": "^4.0.8"
+    "vitest": "^4.0.14"
   }
 }

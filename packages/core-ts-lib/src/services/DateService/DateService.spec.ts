@@ -68,4 +68,57 @@ describe('DateService', () => {
       expect(result).toEqual(null);
     });
   });
+
+  describe('dateReviver', () => {
+    it('should convert ISO date strings to Date objects', () => {
+      const dateStr = '2023-10-27T10:00:00.000Z';
+      const mockResponse = {
+        createdAt: dateStr,
+        name: 'Test'
+      };
+
+      const parsed = JSON.parse(JSON.stringify(mockResponse), DateService.dateReviver) as {
+        createdAt: Date;
+        name: string;
+      };
+
+      expect(parsed.createdAt).toBeInstanceOf(Date);
+      expect(parsed.createdAt.toISOString()).toBe(dateStr);
+      expect(parsed.name).toBe('Test');
+    });
+
+    it('should leave non-ISO date strings untouched', () => {
+      const mockResponse = {
+        someString: '2023-10-27',
+        anotherString: 'hello world'
+      };
+
+      const parsed = JSON.parse(JSON.stringify(mockResponse), DateService.dateReviver) as {
+        someString: string;
+        anotherString: string;
+      };
+
+      expect(typeof parsed.someString).toBe('string');
+      expect(parsed.someString).toBe('2023-10-27');
+      expect(parsed.anotherString).toBe('hello world');
+    });
+
+    it('should leave non-string values untouched', () => {
+      const mockResponse = {
+        count: 42,
+        active: true,
+        items: [1, 2, 3]
+      };
+
+      const parsed = JSON.parse(JSON.stringify(mockResponse), DateService.dateReviver) as {
+        count: number;
+        active: boolean;
+        items: number[];
+      };
+
+      expect(parsed.count).toBe(42);
+      expect(parsed.active).toBe(true);
+      expect(parsed.items).toEqual([1, 2, 3]);
+    });
+  });
 });
