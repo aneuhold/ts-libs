@@ -68,7 +68,7 @@ export const RecurrenceFrequencySchema = z.object({
        */
       x: z.int()
     })
-    .optional(),
+    .nullish(),
   /**
    * The set of week days that the task should recur on. This is 0-6 with 0
    * being Sunday.
@@ -76,7 +76,7 @@ export const RecurrenceFrequencySchema = z.object({
    * The idea that each of these values is unique needs to be enforced on the
    * frontend.
    */
-  weekDaySet: z.array(z.int().min(0).max(6)).optional(),
+  weekDaySet: z.array(z.int().min(0).max(6)).nullish(),
   everyXWeekdayOfMonth: z
     .object({
       weekDay: z.int().min(0).max(6),
@@ -87,7 +87,7 @@ export const RecurrenceFrequencySchema = z.object({
        */
       weekOfMonth: z.union([z.int().min(0).max(4), z.literal('last')])
     })
-    .optional()
+    .nullish()
 });
 
 /**
@@ -117,8 +117,8 @@ export const ParentRecurringTaskInfoSchema = z.object({
    * The ID of the parent recurring task.
    */
   taskId: z.uuidv7().transform((val) => val as UUID),
-  startDate: z.date().optional(),
-  dueDate: z.date().optional()
+  startDate: z.date().nullish(),
+  dueDate: z.date().nullish()
 });
 
 /**

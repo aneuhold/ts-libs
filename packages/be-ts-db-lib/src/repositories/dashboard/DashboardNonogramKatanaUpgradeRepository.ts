@@ -1,4 +1,5 @@
-import { NonogramKatanaUpgrade, User } from '@aneuhold/core-ts-db-lib';
+import type { NonogramKatanaUpgrade, User } from '@aneuhold/core-ts-db-lib';
+import { NonogramKatanaUpgrade_docType } from '@aneuhold/core-ts-db-lib';
 import type { UUID } from 'crypto';
 import type { RepoListeners } from '../../services/RepoSubscriptionService.js';
 import CleanDocument from '../../util/DocumentCleaner.js';
@@ -13,7 +14,7 @@ export default class DashboardNonogramKatanaUpgradeRepository extends DashboardB
 
   private constructor() {
     super(
-      NonogramKatanaUpgrade.docType,
+      NonogramKatanaUpgrade_docType,
       new DashboardNonogramKatanaUpgradeValidator(),
       CleanDocument.userId
     );
@@ -27,7 +28,7 @@ export default class DashboardNonogramKatanaUpgradeRepository extends DashboardB
           await upgradeRepo.getCollection()
         ).deleteMany({
           userId,
-          docType: NonogramKatanaUpgrade.docType
+          docType: NonogramKatanaUpgrade_docType
         });
       },
       deleteList: async (userIds) => {
@@ -35,7 +36,7 @@ export default class DashboardNonogramKatanaUpgradeRepository extends DashboardB
           await upgradeRepo.getCollection()
         ).deleteMany({
           userId: { $in: userIds },
-          docType: NonogramKatanaUpgrade.docType
+          docType: NonogramKatanaUpgrade_docType
         });
       }
     };

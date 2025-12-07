@@ -5,13 +5,22 @@ import { ApiKeySchema } from './documents/common/ApiKey.js';
 import type { User, UserCTO } from './documents/common/User.js';
 import { UserCTOSchema, UserSchema } from './documents/common/User.js';
 import type { NonogramKatanaItem } from './documents/dashboard/NonogramKatanaItem.js';
-import { NonogramKatanaItemSchema } from './documents/dashboard/NonogramKatanaItem.js';
+import {
+  NonogramKatanaItem_docType,
+  NonogramKatanaItemSchema
+} from './documents/dashboard/NonogramKatanaItem.js';
 import type { NonogramKatanaUpgrade } from './documents/dashboard/NonogramKatanaUpgrade.js';
-import { NonogramKatanaUpgradeSchema } from './documents/dashboard/NonogramKatanaUpgrade.js';
+import {
+  NonogramKatanaUpgrade_docType,
+  NonogramKatanaUpgradeSchema
+} from './documents/dashboard/NonogramKatanaUpgrade.js';
 import type { DashboardTask, DashboardTaskMap } from './documents/dashboard/Task.js';
-import { DashboardTaskSchema } from './documents/dashboard/Task.js';
+import { DashboardTask_docType, DashboardTaskSchema } from './documents/dashboard/Task.js';
 import type { DashboardUserConfig } from './documents/dashboard/UserConfig.js';
-import { DashboardUserConfigSchema } from './documents/dashboard/UserConfig.js';
+import {
+  DashboardUserConfig_docType,
+  DashboardUserConfigSchema
+} from './documents/dashboard/UserConfig.js';
 import NonogramKatanaItemName from './embedded-types/dashboard/nonogramKatanaItem/ItemName.js';
 import NonogramKatanaUpgradeName from './embedded-types/dashboard/nonogramKatanaUpgrade/UpgradeName.js';
 import type {
@@ -55,14 +64,18 @@ export {
   ApiKeySchema,
   BaseDocumentSchema,
   BaseDocumentWithTypeSchema,
+  DashboardTask_docType,
   DashboardTaskSchema,
   DashboardTaskService,
   DashboardTaskSortBy,
   DashboardTaskSortDirection,
+  DashboardUserConfig_docType,
   DashboardUserConfigSchema,
   DocumentService,
+  NonogramKatanaItem_docType,
   NonogramKatanaItemName,
   NonogramKatanaItemSchema,
+  NonogramKatanaUpgrade_docType,
   NonogramKatanaUpgradeName,
   NonogramKatanaUpgradeSchema,
   RecurrenceBasis,

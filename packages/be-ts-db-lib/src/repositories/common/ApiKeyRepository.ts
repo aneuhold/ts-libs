@@ -1,4 +1,5 @@
-import { ApiKey, User } from '@aneuhold/core-ts-db-lib';
+import type { ApiKey, User } from '@aneuhold/core-ts-db-lib';
+import { ApiKeySchema } from '@aneuhold/core-ts-db-lib';
 import type { RepoListeners } from '../../services/RepoSubscriptionService.js';
 import ApiKeyValidator from '../../validators/common/ApiKeyValidator.js';
 import BaseRepository from '../BaseRepository.js';
@@ -29,10 +30,10 @@ export default class ApiKeyRepository extends BaseRepository<ApiKey> {
         });
       },
       insertNew: async (user) => {
-        await apiKeyRepo.insertNew(new ApiKey(user._id));
+        await apiKeyRepo.insertNew(ApiKeySchema.parse({ userId: user._id }));
       },
       insertMany: async (users) => {
-        await apiKeyRepo.insertMany(users.map((user) => new ApiKey(user._id)));
+        await apiKeyRepo.insertMany(users.map((user) => ApiKeySchema.parse({ userId: user._id })));
       }
     };
   }

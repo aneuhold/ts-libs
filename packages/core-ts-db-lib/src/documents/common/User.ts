@@ -12,11 +12,11 @@ export const UserCTOSchema = BaseDocumentSchema.extend({
  * The schema for {@link User} documents.
  */
 export const UserSchema = UserCTOSchema.extend({
-  email: z.email().optional(),
+  email: z.email().nullish(),
   auth: z
     .object({
-      password: z.string().optional(),
-      googleId: z.string().optional()
+      password: z.string().nullish(),
+      googleId: z.string().nullish()
     })
     .default({}),
   projectAccess: z

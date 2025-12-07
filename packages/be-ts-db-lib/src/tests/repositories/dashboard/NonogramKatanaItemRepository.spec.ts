@@ -1,4 +1,8 @@
-import { NonogramKatanaItem, NonogramKatanaItemName, User } from '@aneuhold/core-ts-db-lib';
+import {
+  NonogramKatanaItemName,
+  NonogramKatanaItemSchema,
+  UserSchema
+} from '@aneuhold/core-ts-db-lib';
 import crypto from 'crypto';
 import { describe, expect, it } from 'vitest';
 import UserRepository from '../../../repositories/common/UserRepository.js';
@@ -11,7 +15,10 @@ const itemRepo = DashboardNonogramKatanaItemRepository.getRepo();
 describe('Create operations', () => {
   it('can create a new nonogram katana item', async () => {
     const newUser = await createNewTestUser();
-    const newItem = new NonogramKatanaItem(newUser._id, NonogramKatanaItemName.Anchor);
+    const newItem = NonogramKatanaItemSchema.parse({
+      userId: newUser._id,
+      itemName: NonogramKatanaItemName.Anchor
+    });
     const insertResult = await itemRepo.insertNew(newItem);
     expect(insertResult).toBeTruthy();
 
@@ -38,7 +45,9 @@ it.skip('can delete all items', async () => {
  * @returns The new user
  */
 async function createNewTestUser() {
-  const newUser = new User(getTestUserName(`${crypto.randomUUID()}nonogramKatanaItemTest`));
+  const newUser = UserSchema.parse({
+    userName: getTestUserName(`${crypto.randomUUID()}nonogramKatanaItemTest`)
+  });
   newUser.projectAccess.dashboard = true;
   const insertResult = await userRepo.insertNew(newUser);
   expect(insertResult).toBeTruthy();

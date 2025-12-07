@@ -7,12 +7,17 @@ import { RequiredUserIdSchema } from '../../schemas/required-refs/RequiredUserId
 import { BaseDocumentWithTypeSchema } from '../BaseDocument.js';
 
 /**
+ * The docType value for DashboardUserConfig documents.
+ */
+export const DashboardUserConfig_docType = 'userConfig';
+
+/**
  * The schema for {@link DashboardUserConfig} documents.
  */
 export const DashboardUserConfigSchema = z.object({
   ...BaseDocumentWithTypeSchema.shape,
   ...RequiredUserIdSchema.shape,
-  docType: z.literal('userConfig').default('userConfig'),
+  docType: z.literal(DashboardUserConfig_docType).default(DashboardUserConfig_docType),
   /**
    * The different users that the owner of this config is collaborating with
    * on the dashboard.

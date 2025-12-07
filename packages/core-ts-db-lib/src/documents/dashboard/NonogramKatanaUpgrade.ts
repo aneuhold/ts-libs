@@ -4,15 +4,22 @@ import { RequiredUserIdSchema } from '../../schemas/required-refs/RequiredUserId
 import { BaseDocumentWithTypeSchema } from '../BaseDocument.js';
 
 /**
+ * The docType value for NonogramKatanaUpgrade documents.
+ */
+export const NonogramKatanaUpgrade_docType = 'nonogramKatanaUpgrade';
+
+/**
  * The schema for {@link NonogramKatanaUpgrade} documents.
  */
 export const NonogramKatanaUpgradeSchema = z.object({
   ...BaseDocumentWithTypeSchema.shape,
   ...RequiredUserIdSchema.shape,
-  docType: z.literal('nonogramKatanaUpgrade').default('nonogramKatanaUpgrade'),
+  docType: z.literal(NonogramKatanaUpgrade_docType).default(NonogramKatanaUpgrade_docType),
   upgradeName: z.enum(NonogramKatanaUpgradeName),
   completed: z.boolean().default(false),
-  currentItemAmounts: z.record(z.string(), z.int().optional()).default({}),
+  currentItemAmounts: z
+    .partialRecord(z.enum(NonogramKatanaUpgradeName), z.int().nullish())
+    .default({}),
   /**
    * Priority, where the higher the number, the higher up the list it is.
    */

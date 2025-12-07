@@ -11,12 +11,17 @@ import type { DocumentMap } from '../../services/DocumentService.js';
 import { BaseDocumentWithTypeSchema } from '../BaseDocument.js';
 
 /**
+ * The docType value for DashboardTask documents.
+ */
+export const DashboardTask_docType = 'task';
+
+/**
  * The schema for {@link DashboardTask} documents.
  */
 export const DashboardTaskSchema = z.object({
   ...BaseDocumentWithTypeSchema.shape,
   ...RequiredUserIdSchema.shape,
-  docType: z.literal('task').default('task'),
+  docType: z.literal(DashboardTask_docType).default(DashboardTask_docType),
   /**
    * What happens when:
    *
@@ -36,18 +41,18 @@ export const DashboardTaskSchema = z.object({
   assignedTo: z
     .uuidv7()
     .transform((val) => val as UUID)
-    .optional(),
+    .nullish(),
   /**
    * The recurrence info for this task if there is any.
    */
-  recurrenceInfo: RecurrenceInfoSchema.optional(),
+  recurrenceInfo: RecurrenceInfoSchema.nullish(),
   /**
    * The recurring task info for the parent recurring task if there is one.
    *
    * If this is set, then the current tasks's recurrence info should be the
    * same as the parent recurring task.
    */
-  parentRecurringTaskInfo: ParentRecurringTaskInfoSchema.optional(),
+  parentRecurringTaskInfo: ParentRecurringTaskInfoSchema.nullish(),
   /**
    * The title of the task.
    */
@@ -59,14 +64,14 @@ export const DashboardTaskSchema = z.object({
   parentTaskId: z
     .uuidv7()
     .transform((val) => val as UUID)
-    .optional(),
+    .nullish(),
   /**
    * The description of the task. This is purposefully optional in case the
    * user wants to just use the title. This also helps the frontend
    * differentiate between a task that has no description and a task that has
    * an empty description.
    */
-  description: z.string().optional(),
+  description: z.string().nullish(),
   /**
    * The date this task was created.
    */
@@ -75,12 +80,17 @@ export const DashboardTaskSchema = z.object({
    * The date this task was last updated.
    */
   lastUpdatedDate: z.date().default(() => new Date()),
-  startDate: z.date().optional(),
-  dueDate: z.date().optional(),
+  startDate: z.date().nullish(),
+  dueDate: z.date().nullish(),
   /**
    * User-assigned tags for this task.
    */
-  tags: z.record(z.string(), z.array(z.string()).optional()).default({}),
+  tags: z
+    .record(
+      z.uuidv7().transform((id) => id as UUID),
+      z.array(z.string()).nullish()
+    )
+    .default({}),
   /**
    * System-assigned category for this task. This should be used to determine
    * where this task should be displayed.

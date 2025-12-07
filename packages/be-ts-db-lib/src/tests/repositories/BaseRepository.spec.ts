@@ -1,4 +1,8 @@
-import { DashboardTask, DashboardUserConfig, User } from '@aneuhold/core-ts-db-lib';
+import {
+  DashboardTaskSchema,
+  DashboardUserConfigSchema,
+  UserSchema
+} from '@aneuhold/core-ts-db-lib';
 import type { UUID } from 'crypto';
 import crypto from 'crypto';
 import { afterAll, expect, it } from 'vitest';
@@ -11,7 +15,7 @@ import { cleanupDoc, getTestUserName } from '../testsUtil.js';
 
 it('can create a new document and delete it', async () => {
   const userRepository = UserRepository.getRepo();
-  const newUser = new User(getTestUserName());
+  const newUser = UserSchema.parse({ userName: getTestUserName() });
   const createResult = await userRepository.insertNew(newUser);
   expect(createResult).toBeTruthy();
 
@@ -22,7 +26,7 @@ it('can create a new document and delete it', async () => {
 
 it.skip('can add a new test user', async () => {
   const userRepository = UserRepository.getRepo();
-  const newUser = new User('demoUser2');
+  const newUser = UserSchema.parse({ userName: 'demoUser2' });
   newUser.auth.password = crypto.randomUUID();
   const createResult = await userRepository.insertNew(newUser);
   expect(createResult).toBeTruthy();
@@ -47,7 +51,7 @@ it.skip('can create a dashboard config for a user', async () => {
 
   if (user) {
     const configRepo = DashboardUserConfigRepository.getRepo();
-    const newConfig = new DashboardUserConfig(user._id);
+    const newConfig = DashboardUserConfigSchema.parse({ userId: user._id });
     newConfig.enableDevMode = true;
     await configRepo.insertNew(newConfig);
   }
@@ -60,7 +64,7 @@ it.skip(`can create a new task for a user`, async () => {
 
   if (user) {
     const taskRepo = DashboardTaskRepository.getRepo();
-    const newTask = new DashboardTask(user._id);
+    const newTask = DashboardTaskSchema.parse({ userId: user._id });
     newTask.title = 'Test Task';
     await taskRepo.insertNew(newTask);
   }

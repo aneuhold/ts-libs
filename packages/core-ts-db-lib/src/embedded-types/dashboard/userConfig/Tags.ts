@@ -8,7 +8,7 @@ export const DashboardTagSettingSchema = z.object({
    * Higher priority value means higher priority.
    */
   priority: z.int(),
-  color: z.string().optional()
+  color: z.string().nullish()
 });
 
 /**

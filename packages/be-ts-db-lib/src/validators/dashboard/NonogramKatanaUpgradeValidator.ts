@@ -1,4 +1,5 @@
-import { NonogramKatanaUpgrade, validateNonogramKatanaUpgrade } from '@aneuhold/core-ts-db-lib';
+import type { NonogramKatanaUpgrade } from '@aneuhold/core-ts-db-lib';
+import { NonogramKatanaUpgradeSchema } from '@aneuhold/core-ts-db-lib';
 import { DR, ErrorUtils } from '@aneuhold/core-ts-lib';
 import type { UUID } from 'crypto';
 import UserRepository from '../../repositories/common/UserRepository.js';
@@ -6,7 +7,11 @@ import DashboardNonogramKatanaUpgradeRepository from '../../repositories/dashboa
 import IValidator from '../BaseValidator.js';
 
 export default class DashboardNonogramKatanaUpgradeValidator extends IValidator<NonogramKatanaUpgrade> {
-  async validateNewObject(newUpgrade: NonogramKatanaUpgrade): Promise<void> {
+  constructor() {
+    super(NonogramKatanaUpgradeSchema, NonogramKatanaUpgradeSchema.partial());
+  }
+
+  protected async validateNewObjectBusinessLogic(newUpgrade: NonogramKatanaUpgrade): Promise<void> {
     // Check if the item already exists for the user
     const upgradeRepo = DashboardNonogramKatanaUpgradeRepository.getRepo();
     const existingItem = await upgradeRepo.get({
@@ -26,12 +31,14 @@ export default class DashboardNonogramKatanaUpgradeValidator extends IValidator<
     }
   }
 
-  // eslint-disable-next-line @typescript-eslint/require-await
-  async validateUpdateObject(updatedUpgrade: Partial<NonogramKatanaUpgrade>): Promise<void> {
+  protected validateUpdateObjectBusinessLogic(
+    updatedUpgrade: Partial<NonogramKatanaUpgrade>
+  ): Promise<void> {
     // Check if an id is defined
     if (!updatedUpgrade._id) {
       ErrorUtils.throwError(`No _id defined for NonogramKatanaUpgrade update.`, updatedUpgrade);
     }
+    return Promise.resolve();
   }
 
   async validateRepositoryInDb(dryRun: boolean): Promise<void> {
@@ -51,10 +58,6 @@ export default class DashboardNonogramKatanaUpgradeValidator extends IValidator<
           return true;
         }
         return false;
-      },
-      documentValidator: (upgrade) => {
-        const { updatedDoc, errors } = validateNonogramKatanaUpgrade(upgrade);
-        return { updatedDoc, errors };
       },
       deletionFunction: async (docIdsToDelete: UUID[]) => {
         await upgradeRepo.deleteList(docIdsToDelete);

@@ -1,4 +1,5 @@
-import { DashboardTask, User } from '@aneuhold/core-ts-db-lib';
+import type { User } from '@aneuhold/core-ts-db-lib';
+import { DashboardTaskSchema, UserSchema } from '@aneuhold/core-ts-db-lib';
 import crypto from 'crypto';
 import { afterAll, describe, expect, it } from 'vitest';
 import UserRepository from '../../../repositories/common/UserRepository.js';
@@ -13,7 +14,7 @@ const taskRepo = DashboardTaskRepository.getRepo();
 describe('Create operations', () => {
   it('can create a new task', async () => {
     const newUser = await createNewTestUser();
-    const newTask = new DashboardTask(newUser._id);
+    const newTask = DashboardTaskSchema.parse({ userId: newUser._id });
     const insertResult = await taskRepo.insertNew(newTask);
     expect(insertResult).toBeTruthy();
     const insertedTask = await taskRepo.get({ _id: newTask._id });
@@ -33,12 +34,12 @@ describe('Create operations', () => {
 describe('Get operations', () => {
   it('can get a set of tasks for a user, without any tasks from other users', async () => {
     const newUser = await createNewTestUser();
-    const newTask = new DashboardTask(newUser._id);
+    const newTask = DashboardTaskSchema.parse({ userId: newUser._id });
     const insertResult = await taskRepo.insertNew(newTask);
     expect(insertResult).toBeTruthy();
 
     const otherUser = await createNewTestUser();
-    const otherUserTask = new DashboardTask(otherUser._id);
+    const otherUserTask = DashboardTaskSchema.parse({ userId: otherUser._id });
     const insertResult2 = await taskRepo.insertNew(otherUserTask);
     expect(insertResult2).toBeTruthy();
 
@@ -53,12 +54,12 @@ describe('Get operations', () => {
   it('can get a set of tasks for a user, including tasks shared with that user', async () => {
     const configRepo = DashboardUserConfigRepository.getRepo();
     const newUser = await createNewTestUser();
-    const newTask = new DashboardTask(newUser._id);
+    const newTask = DashboardTaskSchema.parse({ userId: newUser._id });
     const insertResult = await taskRepo.insertNew(newTask);
     expect(insertResult).toBeTruthy();
 
     const otherUser = await createNewTestUser();
-    const otherUserTask = new DashboardTask(otherUser._id);
+    const otherUserTask = DashboardTaskSchema.parse({ userId: otherUser._id });
 
     // Add other user as collaborator
     const otherUserConfig = await configRepo.get({ userId: otherUser._id });
@@ -92,7 +93,9 @@ afterAll(async () => {
  * @returns The new user
  */
 async function createNewTestUser(): Promise<User> {
-  const newUser = new User(getTestUserName(`${crypto.randomUUID()}dashboardTaskTest`));
+  const newUser = UserSchema.parse({
+    userName: getTestUserName(`${crypto.randomUUID()}dashboardTaskTest`)
+  });
   const insertResult = await userRepo.insertNew(newUser);
   expect(insertResult).toBeTruthy();
   return newUser;

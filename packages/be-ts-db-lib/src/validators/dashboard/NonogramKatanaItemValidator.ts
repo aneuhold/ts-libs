@@ -1,4 +1,5 @@
-import { NonogramKatanaItem, validateNonogramKatanaItem } from '@aneuhold/core-ts-db-lib';
+import type { NonogramKatanaItem } from '@aneuhold/core-ts-db-lib';
+import { NonogramKatanaItemSchema } from '@aneuhold/core-ts-db-lib';
 import { DR, ErrorUtils } from '@aneuhold/core-ts-lib';
 import type { UUID } from 'crypto';
 import UserRepository from '../../repositories/common/UserRepository.js';
@@ -6,7 +7,11 @@ import DashboardNonogramKatanaItemRepository from '../../repositories/dashboard/
 import IValidator from '../BaseValidator.js';
 
 export default class DashboardNonogramKatanaItemValidator extends IValidator<NonogramKatanaItem> {
-  async validateNewObject(newItem: NonogramKatanaItem): Promise<void> {
+  constructor() {
+    super(NonogramKatanaItemSchema, NonogramKatanaItemSchema.partial());
+  }
+
+  protected async validateNewObjectBusinessLogic(newItem: NonogramKatanaItem): Promise<void> {
     // Check if the item already exists for the user
     const itemRepo = DashboardNonogramKatanaItemRepository.getRepo();
     const existingItem = await itemRepo.get({
@@ -26,12 +31,14 @@ export default class DashboardNonogramKatanaItemValidator extends IValidator<Non
     }
   }
 
-  // eslint-disable-next-line @typescript-eslint/require-await
-  async validateUpdateObject(updatedItem: Partial<NonogramKatanaItem>): Promise<void> {
+  protected validateUpdateObjectBusinessLogic(
+    updatedItem: Partial<NonogramKatanaItem>
+  ): Promise<void> {
     // Check if an id is defined
     if (!updatedItem._id) {
       ErrorUtils.throwError(`No _id defined for NonogramKatanaItem update.`, updatedItem);
     }
+    return Promise.resolve();
   }
 
   async validateRepositoryInDb(dryRun: boolean): Promise<void> {
@@ -51,10 +58,6 @@ export default class DashboardNonogramKatanaItemValidator extends IValidator<Non
           return true;
         }
         return false;
-      },
-      documentValidator: (item) => {
-        const { updatedDoc, errors } = validateNonogramKatanaItem(item);
-        return { updatedDoc, errors };
       },
       deletionFunction: async (docIdsToDelete: UUID[]) => {
         await itemRepo.deleteList(docIdsToDelete);

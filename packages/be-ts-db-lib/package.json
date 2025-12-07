@@ -62,7 +62,8 @@
     "@aneuhold/core-ts-lib": "^2.3.12",
     "bson": "^7.0.0",
     "mongodb": "^7.0.0",
-    "uuid": "^13.0.0"
+    "uuid": "^13.0.0",
+    "zod": "^4.1.13"
   },
   "devDependencies": {
     "@aneuhold/local-npm-registry": "^0.2.19",

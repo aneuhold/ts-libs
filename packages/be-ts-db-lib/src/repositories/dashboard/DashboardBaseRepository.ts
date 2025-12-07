@@ -1,4 +1,4 @@
-import { BaseDocumentWithType } from '@aneuhold/core-ts-db-lib';
+import type { BaseDocumentWithType } from '@aneuhold/core-ts-db-lib';
 import CleanDocument from '../../util/DocumentCleaner.js';
 import IValidator from '../../validators/BaseValidator.js';
 import BaseRepository from '../BaseRepository.js';

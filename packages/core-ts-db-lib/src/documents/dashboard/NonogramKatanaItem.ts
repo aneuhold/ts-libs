@@ -4,17 +4,22 @@ import { RequiredUserIdSchema } from '../../schemas/required-refs/RequiredUserId
 import { BaseDocumentWithTypeSchema } from '../BaseDocument.js';
 
 /**
+ * The docType value for NonogramKatanaItem documents.
+ */
+export const NonogramKatanaItem_docType = 'nonogramKatanaItem';
+
+/**
  * The schema for {@link NonogramKatanaItem} documents.
  */
 export const NonogramKatanaItemSchema = z.object({
   ...BaseDocumentWithTypeSchema.shape,
   ...RequiredUserIdSchema.shape,
-  docType: z.literal('nonogramKatanaItem').default('nonogramKatanaItem'),
+  docType: z.literal(NonogramKatanaItem_docType).default(NonogramKatanaItem_docType),
   itemName: z.enum(NonogramKatanaItemName),
   currentAmount: z.int().default(0),
-  storageCap: z.int().optional(),
-  minDesired: z.int().optional(),
-  maxDesired: z.int().optional(),
+  storageCap: z.int().nullish(),
+  minDesired: z.int().nullish(),
+  maxDesired: z.int().nullish(),
   /**
    * Priority, where the higher the number, the higher up the list it is.
    */

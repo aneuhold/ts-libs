@@ -1,5 +1,4 @@
-import type { UserCTO } from '@aneuhold/core-ts-db-lib';
-import { User } from '@aneuhold/core-ts-db-lib';
+import type { User, UserCTO } from '@aneuhold/core-ts-db-lib';
 import type { UUID } from 'crypto';
 import UserValidator from '../../validators/common/UserValidator.js';
 import BaseRepository from '../BaseRepository.js';

@@ -1,4 +1,5 @@
-import { NonogramKatanaItem, User } from '@aneuhold/core-ts-db-lib';
+import type { NonogramKatanaItem, User } from '@aneuhold/core-ts-db-lib';
+import { NonogramKatanaItem_docType } from '@aneuhold/core-ts-db-lib';
 import type { UUID } from 'crypto';
 import type { RepoListeners } from '../../services/RepoSubscriptionService.js';
 import CleanDocument from '../../util/DocumentCleaner.js';
@@ -13,7 +14,7 @@ export default class DashboardNonogramKatanaItemRepository extends DashboardBase
 
   private constructor() {
     super(
-      NonogramKatanaItem.docType,
+      NonogramKatanaItem_docType,
       new DashboardNonogramKatanaItemValidator(),
       CleanDocument.userId
     );
@@ -27,7 +28,7 @@ export default class DashboardNonogramKatanaItemRepository extends DashboardBase
           await nonogramKatanaRepo.getCollection()
         ).deleteMany({
           userId,
-          docType: NonogramKatanaItem.docType
+          docType: NonogramKatanaItem_docType
         });
       },
       deleteList: async (userIds) => {
@@ -35,7 +36,7 @@ export default class DashboardNonogramKatanaItemRepository extends DashboardBase
           await nonogramKatanaRepo.getCollection()
         ).deleteMany({
           userId: { $in: userIds },
-          docType: NonogramKatanaItem.docType
+          docType: NonogramKatanaItem_docType
         });
       }
     };
@@ -65,6 +66,6 @@ export default class DashboardNonogramKatanaItemRepository extends DashboardBase
       $and: [this.getFilterWithDefault(), { userId }]
     };
     const result = await collection.find(filter).toArray();
-    return result as NonogramKatanaItem[];
+    return result;
   }
 }
