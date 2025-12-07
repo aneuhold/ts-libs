@@ -5,13 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## 🔖 [4.0.0] (2025-12-03)
+
+## 🔖 [4.0.0] (2025-12-07)
 
 ### 🏗️ Changed
 
-- Updated dependencies: now requires `@aneuhold/core-ts-lib@^2.3.12`, `zod@^4.1.13`, and `@aneuhold/local-npm-registry@^0.2.19`.
-- Development dependencies updated for compatibility: `@types/node`, `prettier`, `rimraf`, and `vitest`.
-- `DocumentService.deepCopy` now uses `structuredClone` instead of BSON EJSON for deep copying objects.
+- *Breaking Change:* Migrated all document, embedded type, and validator logic to use Zod schemas instead of class/type-based validation.
+- *Breaking Change:* All repositories, services, and validators now expect Zod-validated objects, not class instances.
+- Removed all custom type-guard and validation utility files in favor of Zod.
+- Major refactor of dashboard, user, and task types and schemas to use Zod throughout.
+- Removed legacy test and validation files, and updated all tests to use Zod schemas.
+- Updated dependencies to latest major versions, including `zod@^4.1.13`.
+
+### 🔥 Removed
+
+- *Breaking Change:* Removed all legacy class-based document, type-guard, and validation code.
+- *Breaking Change:* Deleted all custom document validator and type-guard files now handled by Zod schemas.
 
 ## 🔖 [3.0.1] (2025-11-26)
 

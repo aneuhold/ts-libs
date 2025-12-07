@@ -5,14 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## 🔖 [4.0.0] (2025-11-29)
+
+## 🔖 [4.0.0] (2025-12-07)
 
 ### 🏗️ Changed
 
-- Updated dependencies: now requires `@aneuhold/be-ts-lib@^3.0.2`, `@aneuhold/core-ts-db-lib@^3.0.2`, `@aneuhold/core-ts-lib@^2.3.12`, and `@aneuhold/local-npm-registry@^0.2.19`.
-- Development dependencies updated for compatibility: `@types/node`, `prettier`, `rimraf`, and `vitest`.
-- Migration logic in `MigrationService` refactored to delete legacy documents (ObjectId) instead of migrated documents (string IDs).
-- Improved migration mapping and document creation for user-related entities.
+- *Breaking Change:* Migrated all document and validator logic to use Zod schemas instead of class-based validation.
+- *Breaking Change:* All repository and service logic now expects Zod-validated objects, not class instances.
+- Major refactor of all dashboard, user, and API key repositories and validators to use new Zod-based types.
+- Updated all test utilities and test cases to use Zod schemas for object creation and validation.
+- Replaced most `import` statements to use `type` imports and direct schema imports from core libraries.
+- Updated dependencies to latest major versions, including `@aneuhold/core-ts-db-lib@^4.0.0` and `zod@^4.1.13`.
+
+### 🔥 Removed
+
+- *Breaking Change:* Removed all legacy class-based document and validator code.
+- *Breaking Change:* Removed all usage of custom ValidateUtil and type-guard utilities in favor of Zod.
+- Deleted all custom document validator and type-guard files that are now handled by Zod schemas.
 
 ## 🔖 [3.0.2] (2025-11-26)
 
