@@ -20,7 +20,7 @@
     "checkAll": "pnpm build && pnpm lint && pnpm test && pnpm jsr:validate",
     "jsr:publish": "tsx ./scripts/publishJsr.ts",
     "npm:publish": "npm publish --access public",
-    "upgrade:all": "pnpm up \"\\!@aneuhold/*\""
+    "upgrade:all": "pnpm update '!@aneuhold/*' --latest"
   },
   "main": "lib/browser.js",
   "types": "lib/browser.d.ts",
@@ -71,10 +71,10 @@
     "eslint": "^9.39.1",
     "jsr": "^0.13.5",
     "nodemon": "^3.1.11",
-    "prettier": "^3.7.2",
+    "prettier": "^3.7.4",
     "rimraf": "^6.1.2",
-    "tsx": "^4.20.6",
+    "tsx": "^4.21.0",
     "typescript": "~5.9.3",
-    "vitest": "^4.0.14"
+    "vitest": "^4.0.15"
   }
 }
