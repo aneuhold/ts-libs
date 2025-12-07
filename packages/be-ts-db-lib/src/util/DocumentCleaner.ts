@@ -1,4 +1,4 @@
-import { BaseDocument, BaseDocumentWithType, RequiredUserId } from '@aneuhold/core-ts-db-lib';
+import type { BaseDocument, BaseDocumentWithType, RequiredUserId } from '@aneuhold/core-ts-db-lib';
 
 /**
  * A class which contains some standard methods for cleaning update documents

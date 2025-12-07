@@ -1,4 +1,5 @@
-import { DashboardTask, validateDashboardTask } from '@aneuhold/core-ts-db-lib';
+import type { DashboardTask } from '@aneuhold/core-ts-db-lib';
+import { DashboardTaskSchema } from '@aneuhold/core-ts-db-lib';
 import { DR, ErrorUtils } from '@aneuhold/core-ts-lib';
 import type { UUID } from 'crypto';
 import UserRepository from '../../repositories/common/UserRepository.js';
@@ -6,7 +7,11 @@ import DashboardTaskRepository from '../../repositories/dashboard/DashboardTaskR
 import IValidator from '../BaseValidator.js';
 
 export default class DashboardTaskValidator extends IValidator<DashboardTask> {
-  async validateNewObject(newTask: DashboardTask): Promise<void> {
+  constructor() {
+    super(DashboardTaskSchema, DashboardTaskSchema.partial());
+  }
+
+  protected async validateNewObjectBusinessLogic(newTask: DashboardTask): Promise<void> {
     const errors: string[] = [];
     // Check if the user exists, and any shared users exist
     const userRepo = UserRepository.getRepo();
@@ -26,7 +31,9 @@ export default class DashboardTaskValidator extends IValidator<DashboardTask> {
     }
   }
 
-  async validateUpdateObject(updatedTask: Partial<DashboardTask>): Promise<void> {
+  protected async validateUpdateObjectBusinessLogic(
+    updatedTask: Partial<DashboardTask>
+  ): Promise<void> {
     const errors: string[] = [];
     // Check if an id is defined
     if (!updatedTask._id) {
@@ -63,8 +70,9 @@ export default class DashboardTaskValidator extends IValidator<DashboardTask> {
         }
         return false;
       },
-      documentValidator: (task: DashboardTask) => {
-        const { updatedDoc, errors } = validateDashboardTask(task);
+      additionalValidation: (task: DashboardTask) => {
+        const updatedDoc = { ...task };
+        const errors: string[] = [];
 
         // Check sharedWith
         const sharedWithUserIds = [...task.sharedWith];
@@ -74,7 +82,7 @@ export default class DashboardTaskValidator extends IValidator<DashboardTask> {
               `User with ID: ${userId} does not exist in sharedWith property of task with ID: ${task._id}.`
             );
 
-            task.sharedWith = task.sharedWith.filter((id) => id !== userId);
+            updatedDoc.sharedWith = updatedDoc.sharedWith.filter((id) => id !== userId);
           }
         });
 

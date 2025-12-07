@@ -1,56 +1,32 @@
-import type { UUID } from 'crypto';
+import { z } from 'zod';
 import NonogramKatanaItemName from '../../embedded-types/dashboard/nonogramKatanaItem/ItemName.js';
-import RequiredUserId from '../../schemas/required-refs/RequiredUserId.js';
-import type { DocumentValidator } from '../../schemas/validators/DocumentValidator.js';
-import BaseDocumentWithType from '../BaseDocumentWithType.js';
+import { RequiredUserIdSchema } from '../../schemas/required-refs/RequiredUserId.js';
+import { BaseDocumentWithTypeSchema } from '../BaseDocument.js';
 
 /**
- * Validates a {@link NonogramKatanaItem}.
- *
- * @param item - The {@link NonogramKatanaItem} to validate.
- * @returns An object containing the updated document and any validation errors.
+ * The docType value for NonogramKatanaItem documents.
  */
-export const validateNonogramKatanaItem: DocumentValidator<NonogramKatanaItem> = (
-  item: NonogramKatanaItem
-) => {
-  const errors: string[] = [];
+export const NonogramKatanaItem_docType = 'nonogramKatanaItem';
 
-  // No validation at the moment.
-
-  return { updatedDoc: item, errors };
-};
+/**
+ * The schema for {@link NonogramKatanaItem} documents.
+ */
+export const NonogramKatanaItemSchema = z.object({
+  ...BaseDocumentWithTypeSchema.shape,
+  ...RequiredUserIdSchema.shape,
+  docType: z.literal(NonogramKatanaItem_docType).default(NonogramKatanaItem_docType),
+  itemName: z.enum(NonogramKatanaItemName),
+  currentAmount: z.int().default(0),
+  storageCap: z.int().nullish(),
+  minDesired: z.int().nullish(),
+  maxDesired: z.int().nullish(),
+  /**
+   * Priority, where the higher the number, the higher up the list it is.
+   */
+  priority: z.int().default(0)
+});
 
 /**
  * An item in the Nonogram Katana game.
  */
-export default class NonogramKatanaItem extends BaseDocumentWithType implements RequiredUserId {
-  static docType = 'nonogramKatanaItem';
-
-  docType = NonogramKatanaItem.docType;
-
-  /**
-   * The owner of this Nonogram Katana item.
-   */
-  userId: UUID;
-
-  itemName: NonogramKatanaItemName;
-
-  currentAmount: number = 0;
-
-  storageCap?: number;
-
-  minDesired?: number;
-
-  maxDesired?: number;
-
-  /**
-   * Priority, where the higher the number, the higher up the list it is.
-   */
-  priority: number = 0;
-
-  constructor(ownerId: UUID, itemName: NonogramKatanaItemName) {
-    super();
-    this.userId = ownerId;
-    this.itemName = itemName;
-  }
-}
+export type NonogramKatanaItem = z.infer<typeof NonogramKatanaItemSchema>;

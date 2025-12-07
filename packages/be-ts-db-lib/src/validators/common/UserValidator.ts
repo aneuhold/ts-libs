@@ -1,4 +1,5 @@
-import { User, validateUser } from '@aneuhold/core-ts-db-lib';
+import type { User } from '@aneuhold/core-ts-db-lib';
+import { UserSchema } from '@aneuhold/core-ts-db-lib';
 import { DR, ErrorUtils } from '@aneuhold/core-ts-lib';
 import type { UUID } from 'crypto';
 import UserRepository from '../../repositories/common/UserRepository.js';
@@ -9,7 +10,11 @@ import IValidator from '../BaseValidator.js';
  * Validator for the User class.
  */
 export default class UserValidator extends IValidator<User> {
-  async validateNewObject(newUser: User): Promise<void> {
+  constructor() {
+    super(UserSchema, UserSchema.partial());
+  }
+
+  protected async validateNewObjectBusinessLogic(newUser: User): Promise<void> {
     // Check if the username already exists
     const userRepo = UserRepository.getRepo();
     await this.checkIfUserNameExists(userRepo, newUser.userName);
@@ -19,12 +24,11 @@ export default class UserValidator extends IValidator<User> {
    * Validates the object to be updated.
    *
    * @param userToUpdate - The user to be updated.
-   * @returns A promise that resolves when the validation is complete.
    */
-  async validateUpdateObject(userToUpdate: Partial<User>): Promise<void> {
+  protected async validateUpdateObjectBusinessLogic(userToUpdate: Partial<User>): Promise<void> {
     // Check if an id is defined
     if (!userToUpdate._id) {
-      ErrorUtils.throwError(`No _id defined for ${User.name} to update.`, userToUpdate);
+      ErrorUtils.throwError(`No _id defined for User to update.`, userToUpdate);
     }
 
     // Check to see if the user exists
@@ -32,7 +36,7 @@ export default class UserValidator extends IValidator<User> {
     const userInDb = await userRepo.get({ _id: userToUpdate._id });
     if (!userInDb) {
       ErrorUtils.throwError(
-        `${User.name} with ID: ${userToUpdate._id} does not exist in the database.`,
+        `User with ID: ${userToUpdate._id} does not exist in the database.`,
         userToUpdate
       );
       return;
@@ -60,7 +64,6 @@ export default class UserValidator extends IValidator<User> {
         }
         return false;
       },
-      documentValidator: validateUser,
       deletionFunction: async (docIdsToDelete: UUID[]) => {
         await userRepo.deleteList(docIdsToDelete);
       },

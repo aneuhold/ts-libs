@@ -1,4 +1,4 @@
-import { ApiKey, User } from '@aneuhold/core-ts-db-lib';
+import type { ApiKey, User } from '@aneuhold/core-ts-db-lib';
 import type { DashboardConfig } from './DashboardConfig.js';
 
 /**

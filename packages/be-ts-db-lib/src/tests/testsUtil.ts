@@ -1,4 +1,4 @@
-import { BaseDocument } from '@aneuhold/core-ts-db-lib';
+import type { BaseDocument } from '@aneuhold/core-ts-db-lib';
 import crypto from 'crypto';
 import { expect } from 'vitest';
 import BaseRepository from '../repositories/BaseRepository.js';

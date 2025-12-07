@@ -1,60 +1,5 @@
 import type { UUID } from 'crypto';
-import DashboardUserConfig from '../../../documents/dashboard/UserConfig.js';
-import Validate from '../../../schemas/validators/ValidateUtil.js';
-
-/**
- * Gets the default task list sort settings for a user.
- *
- * @param userId - The ID of the user.
- * @returns The default task list sort settings for the user.
- */
-export function getDefaultTaskListSortSettings(userId: UUID): DashboardTaskListSortSettings {
-  return {
-    userId,
-    sortList: []
-  };
-}
-
-/**
- * Validates the sort settings for the task list.
- *
- * @param validate - The validation utility.
- * @param config - The user configuration for the dashboard.
- */
-export function validateSortSettings(validate: Validate, config: DashboardUserConfig) {
-  validate.object('taskListSortSettings', {});
-  const categories = Object.keys(config.taskListSortSettings);
-  if (categories.length > 0) {
-    const defaultSettings = getDefaultTaskListSortSettings(config.userId);
-    categories.forEach((category) => {
-      validate.string(`taskListSortSettings.${category}.userId`, defaultSettings.userId);
-      validate.array(`taskListSortSettings.${category}.sortList`, defaultSettings.sortList);
-    });
-  }
-}
-
-/**
- * Represents the global sort settings for the task list.
- */
-export type DashboardTaskListGlobalSortSettings = {
-  [category: string]: DashboardTaskListSortSettings;
-};
-
-/**
- * The sort settings for a particular task. Each user can have their
- * own settings for a task.
- */
-export type DashboardTaskSortSettings = {
-  [userId: UUID]: DashboardTaskListSortSettings;
-};
-
-/**
- * The sort settings for a list of tasks for a particular user.
- */
-export type DashboardTaskListSortSettings = {
-  userId: UUID;
-  sortList: Array<DashboardTaskSortSetting>;
-};
+import { z } from 'zod';
 
 /**
  * The sortBy options for a task list.
@@ -72,12 +17,9 @@ export enum DashboardTaskSortBy {
 }
 
 /**
- * Represents a sort setting for a task list.
+ * Zod schema for {@link DashboardTaskSortBy}.
  */
-export type DashboardTaskSortSetting = {
-  sortBy: DashboardTaskSortBy;
-  sortDirection: DashboardTaskSortDirection;
-};
+export const DashboardTaskSortBySchema = z.enum(DashboardTaskSortBy);
 
 /**
  * The sort direction for a sorting setting. This is used as a multiplier
@@ -93,3 +35,66 @@ export enum DashboardTaskSortDirection {
    */
   descending = -1
 }
+
+/**
+ * Zod schema for {@link DashboardTaskSortDirection}.
+ */
+export const DashboardTaskSortDirectionSchema = z.enum(DashboardTaskSortDirection);
+
+/**
+ * Zod schema for {@link DashboardTaskSortSetting}.
+ */
+export const DashboardTaskSortSettingSchema = z.object({
+  sortBy: DashboardTaskSortBySchema,
+  sortDirection: DashboardTaskSortDirectionSchema
+});
+
+/**
+ * Represents a sort setting for a task list.
+ */
+export type DashboardTaskSortSetting = z.infer<typeof DashboardTaskSortSettingSchema>;
+
+/**
+ * Zod schema for {@link DashboardTaskListSortSettings}.
+ */
+export const DashboardTaskListSortSettingsSchema = z.object({
+  /**
+   * The ID of the user.
+   */
+  userId: z.uuidv7().transform((val) => val as UUID),
+  sortList: z.array(DashboardTaskSortSettingSchema)
+});
+
+/**
+ * The sort settings for a list of tasks for a particular user.
+ */
+export type DashboardTaskListSortSettings = z.infer<typeof DashboardTaskListSortSettingsSchema>;
+
+/**
+ * Zod schema for {@link DashboardTaskSortSettings}.
+ */
+export const DashboardTaskSortSettingsSchema = z.record(
+  z.uuidv7().transform((val) => val as UUID),
+  DashboardTaskListSortSettingsSchema
+);
+
+/**
+ * The sort settings for a particular task. Each user can have their
+ * own settings for a task.
+ */
+export type DashboardTaskSortSettings = z.infer<typeof DashboardTaskSortSettingsSchema>;
+
+/**
+ * Zod schema for {@link DashboardTaskListGlobalSortSettings}.
+ */
+export const DashboardTaskListGlobalSortSettingsSchema = z.record(
+  z.string(),
+  DashboardTaskListSortSettingsSchema
+);
+
+/**
+ * Represents the global sort settings for the task list.
+ */
+export type DashboardTaskListGlobalSortSettings = z.infer<
+  typeof DashboardTaskListGlobalSortSettingsSchema
+>;

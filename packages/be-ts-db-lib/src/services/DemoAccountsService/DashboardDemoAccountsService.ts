@@ -1,4 +1,5 @@
-import { DashboardTask, DashboardUserConfig } from '@aneuhold/core-ts-db-lib';
+import type { DashboardTask } from '@aneuhold/core-ts-db-lib';
+import { DashboardTaskSchema, DashboardUserConfigSchema } from '@aneuhold/core-ts-db-lib';
 import type { UUID } from 'crypto';
 import DashboardTaskRepository from '../../repositories/dashboard/DashboardTaskRepository.js';
 import DashboardUserConfigRepository from '../../repositories/dashboard/DashboardUserConfigRepository.js';
@@ -61,7 +62,7 @@ export default class DashboardDemoAccountsService {
     let cfg = await cfgRepo.getForUser(ownerId);
     let isNew = false;
     if (!cfg) {
-      cfg = new DashboardUserConfig(ownerId);
+      cfg = DashboardUserConfigSchema.parse({ userId: ownerId });
       isNew = true;
     }
     // Ensure collaborator and reset flags
@@ -133,7 +134,7 @@ export default class DashboardDemoAccountsService {
     }
   ): Promise<DashboardTask> {
     const taskRepo = DashboardTaskRepository.getRepo();
-    const task = new DashboardTask(ownerId);
+    const task = DashboardTaskSchema.parse({ userId: ownerId });
     task.title = title;
     if (opts?.description) task.description = opts.description;
     if (opts?.completed !== undefined) task.completed = opts.completed;

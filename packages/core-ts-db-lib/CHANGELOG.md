@@ -5,6 +5,32 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## 🔖 [4.0.0] (2025-12-07)
+
+### ✅ Added
+
+- Added Zod-based schemas for all document, embedded, and type files.
+- Added new and updated tests for all document and service logic using Zod schemas.
+
+### 🏗️ Changed
+
+- _Breaking Change:_ Migrated all document, type, and service code from legacy validation and type-guards to Zod schemas.
+- _Breaking Change:_ All type-only imports now use `import type` for clarity and build performance.
+- Refactored all document, embedded, and service files to use new Zod-based validation and schemas.
+- Updated dependencies: now requires `@aneuhold/core-ts-lib@^2.3.13`, `zod@^4.1.13`, and `@aneuhold/local-npm-registry@^0.2.20`.
+- Updated dev dependencies for compatibility: `prettier`, `tsx`, and `vitest`.
+- Improved test coverage for all document and embedded types.
+
+### 🩹 Fixed
+
+- Fixed issues with partial updates and field validation in document schemas.
+- Fixed bugs in document creation and migration logic for dashboard-related entities.
+
+### 🔥 Removed
+
+- _Breaking Change:_ Removed all legacy validation utilities, type-guards, and helper files in favor of Zod schemas.
+- Removed unused files and legacy test utilities.
+
 ## 🔖 [3.0.3] (2025-12-07)
 
 ### 🏗️ Changed
@@ -122,6 +148,7 @@ Updated dependency: now requires `@aneuhold/core-ts-lib@^2.3.11`.
 
 <!-- Link References -->
 
+[4.0.0]: https://github.com/aneuhold/ts-libs/compare/core-ts-db-lib-v3.0.3...core-ts-db-lib-v4.0.0
 [3.0.3]: https://github.com/aneuhold/ts-libs/compare/core-ts-db-lib-v3.0.2...core-ts-db-lib-v3.0.3
 [3.0.2]: https://github.com/aneuhold/ts-libs/compare/core-ts-db-lib-v3.0.1...core-ts-db-lib-v3.0.2
 [3.0.1]: https://github.com/aneuhold/ts-libs/compare/core-ts-db-lib-v3.0.0...core-ts-db-lib-v3.0.1

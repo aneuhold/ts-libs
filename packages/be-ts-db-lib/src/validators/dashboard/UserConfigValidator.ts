@@ -1,4 +1,5 @@
-import { DashboardUserConfig, validateDashboardUserConfig } from '@aneuhold/core-ts-db-lib';
+import type { DashboardUserConfig } from '@aneuhold/core-ts-db-lib';
+import { DashboardUserConfigSchema } from '@aneuhold/core-ts-db-lib';
 import { DR, ErrorUtils } from '@aneuhold/core-ts-lib';
 import type { UUID } from 'crypto';
 import UserRepository from '../../repositories/common/UserRepository.js';
@@ -6,7 +7,13 @@ import DashboardUserConfigRepository from '../../repositories/dashboard/Dashboar
 import IValidator from '../BaseValidator.js';
 
 export default class DashboardUserConfigValidator extends IValidator<DashboardUserConfig> {
-  async validateNewObject(newUserConfig: DashboardUserConfig): Promise<void> {
+  constructor() {
+    super(DashboardUserConfigSchema, DashboardUserConfigSchema.partial());
+  }
+
+  protected async validateNewObjectBusinessLogic(
+    newUserConfig: DashboardUserConfig
+  ): Promise<void> {
     // Check if the config already exists for the user
     const configRepo = DashboardUserConfigRepository.getRepo();
     const existingConfig = await configRepo.get({
@@ -39,7 +46,9 @@ export default class DashboardUserConfigValidator extends IValidator<DashboardUs
     }
   }
 
-  async validateUpdateObject(updatedUserConfig: Partial<DashboardUserConfig>): Promise<void> {
+  protected async validateUpdateObjectBusinessLogic(
+    updatedUserConfig: Partial<DashboardUserConfig>
+  ): Promise<void> {
     // Check if an id is defined
     if (!updatedUserConfig._id) {
       DR.logger.error(`No _id defined for DashboardUserConfig update.`);
@@ -78,8 +87,9 @@ export default class DashboardUserConfigValidator extends IValidator<DashboardUs
         }
         return false;
       },
-      documentValidator: (userConfig) => {
-        const { updatedDoc, errors } = validateDashboardUserConfig(userConfig);
+      additionalValidation: (userConfig) => {
+        const updatedDoc = { ...userConfig };
+        const errors: string[] = [];
         const collaboratorIds = [...userConfig.collaborators];
         collaboratorIds.forEach((userId) => {
           if (!allUserIds[userId]) {

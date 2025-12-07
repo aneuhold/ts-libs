@@ -1,76 +1,5 @@
 import type { UUID } from 'crypto';
-import DashboardTask from '../../../documents/dashboard/Task.js';
-
-/**
- * Validates the recurrence information of a given task.
- *
- * @param task - The dashboard task to validate.
- * @param errors - An array to collect validation error messages.
- */
-export function validateRecurrenceInfo(task: DashboardTask, errors: string[]): void {
-  const recurrenceErrors: string[] = [];
-  if (!task.recurrenceInfo) {
-    return;
-  }
-
-  if (!task.recurrenceInfo.frequency) {
-    recurrenceErrors.push('RecurrenceInfo frequency is required.');
-  }
-  if (!task.recurrenceInfo.recurrenceBasis) {
-    recurrenceErrors.push('RecurrenceInfo recurrenceBasis is required.');
-  }
-  if (!task.recurrenceInfo.recurrenceEffect) {
-    recurrenceErrors.push('RecurrenceInfo recurrenceEffect is required.');
-  }
-
-  // Write more of this later if there are any changes to the data model so it
-  // can be correctly converted.
-
-  if (recurrenceErrors.length > 0) {
-    task.recurrenceInfo = undefined;
-  }
-  errors.push(...recurrenceErrors);
-}
-
-/**
- * Represents the recurrence information for a task.
- */
-export type RecurrenceInfo = {
-  frequency: RecurrenceFrequency;
-  recurrenceBasis: RecurrenceBasis;
-  recurrenceEffect: RecurrenceEffect;
-};
-
-/**
- * Represents the frequency of recurrence for a task.
- */
-export type RecurrenceFrequency = {
-  type: RecurrenceFrequencyType;
-  everyXTimeUnit?: {
-    timeUnit: 'day' | 'week' | 'month' | 'year';
-    /**
-     * The number of time units that should pass before the task recurs.
-     */
-    x: number;
-  };
-  /**
-   * The set of week days that the task should recur on. This is 0-6 with 0
-   * being Sunday.
-   *
-   * The idea that each of these values is unique needs to be enforced on the
-   * frontend.
-   */
-  weekDaySet?: number[];
-  everyXWeekdayOfMonth?: {
-    weekDay: number;
-    /**
-     * The week of the month that the task should recur on. This is 0-4 with 0
-     * being the first week of the month. If this is 'last', then it will
-     * recur on the last week of the month.
-     */
-    weekOfMonth: number | 'last';
-  };
-};
+import { z } from 'zod';
 
 /**
  * Enum representing the different types of recurrence frequencies.
@@ -83,12 +12,22 @@ export enum RecurrenceFrequencyType {
 }
 
 /**
+ * Zod schema for {@link RecurrenceFrequencyType}.
+ */
+export const RecurrenceFrequencyTypeSchema = z.enum(RecurrenceFrequencyType);
+
+/**
  * The basis of date movement for a recurring task.
  */
 export enum RecurrenceBasis {
   startDate = 'startDate',
   dueDate = 'dueDate'
 }
+
+/**
+ * Zod schema for {@link RecurrenceBasis}.
+ */
+export const RecurrenceBasisSchema = z.enum(RecurrenceBasis);
 
 /**
  * The effect of recurrence for a recurring task.
@@ -112,13 +51,80 @@ export enum RecurrenceEffect {
 }
 
 /**
+ * Zod schema for {@link RecurrenceEffect}.
+ */
+export const RecurrenceEffectSchema = z.enum(RecurrenceEffect);
+
+/**
+ * Zod schema for {@link RecurrenceFrequency}.
+ */
+export const RecurrenceFrequencySchema = z.object({
+  type: RecurrenceFrequencyTypeSchema,
+  everyXTimeUnit: z
+    .object({
+      timeUnit: z.enum(['day', 'week', 'month', 'year']),
+      /**
+       * The number of time units that should pass before the task recurs.
+       */
+      x: z.int()
+    })
+    .nullish(),
+  /**
+   * The set of week days that the task should recur on. This is 0-6 with 0
+   * being Sunday.
+   *
+   * The idea that each of these values is unique needs to be enforced on the
+   * frontend.
+   */
+  weekDaySet: z.array(z.int().min(0).max(6)).nullish(),
+  everyXWeekdayOfMonth: z
+    .object({
+      weekDay: z.int().min(0).max(6),
+      /**
+       * The week of the month that the task should recur on. This is 0-4 with 0
+       * being the first week of the month. If this is 'last', then it will
+       * recur on the last week of the month.
+       */
+      weekOfMonth: z.union([z.int().min(0).max(4), z.literal('last')])
+    })
+    .nullish()
+});
+
+/**
+ * Represents the frequency of recurrence for a task.
+ */
+export type RecurrenceFrequency = z.infer<typeof RecurrenceFrequencySchema>;
+
+/**
+ * Zod schema for {@link RecurrenceInfo}.
+ */
+export const RecurrenceInfoSchema = z.object({
+  frequency: RecurrenceFrequencySchema,
+  recurrenceBasis: RecurrenceBasisSchema,
+  recurrenceEffect: RecurrenceEffectSchema
+});
+
+/**
+ * Represents the recurrence information for a task.
+ */
+export type RecurrenceInfo = z.infer<typeof RecurrenceInfoSchema>;
+
+/**
+ * Zod schema for {@link ParentRecurringTaskInfo}.
+ */
+export const ParentRecurringTaskInfoSchema = z.object({
+  /**
+   * The ID of the parent recurring task.
+   */
+  taskId: z.uuidv7().transform((val) => val as UUID),
+  startDate: z.date().nullish(),
+  dueDate: z.date().nullish()
+});
+
+/**
  * The recurring task info for the parent recurring task if there is one.
  *
  * If this is set, then the current tasks's recurrence info should be the
  * same as the parent recurring task.
  */
-export type ParentRecurringTaskInfo = {
-  taskId: UUID;
-  startDate?: Date;
-  dueDate?: Date;
-};
+export type ParentRecurringTaskInfo = z.infer<typeof ParentRecurringTaskInfoSchema>;

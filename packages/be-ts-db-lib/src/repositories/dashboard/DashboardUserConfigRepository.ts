@@ -1,4 +1,5 @@
-import { DashboardUserConfig, User } from '@aneuhold/core-ts-db-lib';
+import type { DashboardUserConfig, User } from '@aneuhold/core-ts-db-lib';
+import { DashboardUserConfig_docType, DashboardUserConfigSchema } from '@aneuhold/core-ts-db-lib';
 import type { UUID } from 'crypto';
 import type { AnyBulkWriteOperation, BulkWriteResult, UpdateResult } from 'mongodb';
 import type { RepoListeners } from '../../services/RepoSubscriptionService.js';
@@ -16,7 +17,7 @@ export default class DashboardUserConfigRepository extends DashboardBaseReposito
    * Private constructor to enforce singleton pattern.
    */
   private constructor() {
-    super(DashboardUserConfig.docType, new DashboardUserConfigValidator(), CleanDocument.userId);
+    super(DashboardUserConfig_docType, new DashboardUserConfigValidator(), CleanDocument.userId);
   }
 
   /**
@@ -29,9 +30,9 @@ export default class DashboardUserConfigRepository extends DashboardBaseReposito
     return {
       deleteOne: async (userId) => {
         const collection = await userConfigRepo.getCollection();
-        await collection.deleteOne({ userId, docType: DashboardUserConfig.docType });
+        await collection.deleteOne({ userId, docType: DashboardUserConfig_docType });
         await collection.updateMany(
-          { collaborators: userId, docType: DashboardUserConfig.docType },
+          { collaborators: userId, docType: DashboardUserConfig_docType },
           { $pull: { collaborators: userId } }
         );
       },
@@ -39,10 +40,10 @@ export default class DashboardUserConfigRepository extends DashboardBaseReposito
         const collection = await userConfigRepo.getCollection();
         await collection.deleteMany({
           userId: { $in: userIds },
-          docType: DashboardUserConfig.docType
+          docType: DashboardUserConfig_docType
         });
         await collection.updateMany(
-          { collaborators: { $in: userIds }, docType: DashboardUserConfig.docType },
+          { collaborators: { $in: userIds }, docType: DashboardUserConfig_docType },
           {
             $pull: { collaborators: { $in: userIds } }
           }
@@ -50,13 +51,13 @@ export default class DashboardUserConfigRepository extends DashboardBaseReposito
       },
       insertNew: async (user) => {
         if (user.projectAccess.dashboard) {
-          await userConfigRepo.insertNew(new DashboardUserConfig(user._id));
+          await userConfigRepo.insertNew(DashboardUserConfigSchema.parse({ userId: user._id }));
         }
       },
       insertMany: async (users) => {
         const usersThatNeedConfig = users.filter((user) => user.projectAccess.dashboard);
         await userConfigRepo.insertMany(
-          usersThatNeedConfig.map((user) => new DashboardUserConfig(user._id))
+          usersThatNeedConfig.map((user) => DashboardUserConfigSchema.parse({ userId: user._id }))
         );
       }
     };
@@ -88,7 +89,7 @@ export default class DashboardUserConfigRepository extends DashboardBaseReposito
     if (newDoc.collaborators.length > 0) {
       await this.updateCollaboratorsIfNeeded([
         {
-          originalDoc: new DashboardUserConfig(newDoc.userId),
+          originalDoc: DashboardUserConfigSchema.parse({ userId: newDoc.userId }),
           updatedDoc: newDoc
         }
       ]);
@@ -109,7 +110,7 @@ export default class DashboardUserConfigRepository extends DashboardBaseReposito
     // Simulate having no collaborators originally.
     await this.updateCollaboratorsIfNeeded(
       newDocs.map((doc) => ({
-        originalDoc: new DashboardUserConfig(doc.userId),
+        originalDoc: DashboardUserConfigSchema.parse({ userId: doc.userId }),
         updatedDoc: doc
       }))
     );
@@ -154,7 +155,7 @@ export default class DashboardUserConfigRepository extends DashboardBaseReposito
     await this.updateCollaboratorsIfNeeded(
       originalDocs.map((originalDoc, index) => ({
         originalDoc,
-        updatedDoc: updatedDocs[index] as DashboardUserConfig
+        updatedDoc: updatedDocs[index]
       }))
     );
     return result;
@@ -205,7 +206,7 @@ export default class DashboardUserConfigRepository extends DashboardBaseReposito
           if (!updatedCollaborators.includes(collaboratorId)) {
             bulkOps.push({
               updateOne: {
-                filter: { userId: collaboratorId, docType: DashboardUserConfig.docType },
+                filter: { userId: collaboratorId, docType: DashboardUserConfig_docType },
                 update: { $pull: { collaborators: docSet.originalDoc.userId } }
               }
             });
@@ -217,7 +218,7 @@ export default class DashboardUserConfigRepository extends DashboardBaseReposito
           if (!originalCollaborators.includes(collaboratorId)) {
             bulkOps.push({
               updateOne: {
-                filter: { userId: collaboratorId, docType: DashboardUserConfig.docType },
+                filter: { userId: collaboratorId, docType: DashboardUserConfig_docType },
                 update: {
                   $addToSet: { collaborators: docSet.originalDoc.userId }
                 }

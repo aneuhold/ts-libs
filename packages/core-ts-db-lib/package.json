@@ -2,7 +2,7 @@
   "name": "@aneuhold/core-ts-db-lib",
   "author": "Anton G. Neuhold Jr.",
   "license": "MIT",
-  "version": "3.0.3",
+  "version": "4.0.0",
   "description": "A core database library used for personal projects",
   "packageManager": "pnpm@10.12.1",
   "type": "module",
@@ -15,14 +15,14 @@
     "lint": "eslint",
     "test": "vitest run",
     "preparePkg": "tb pkg prepare",
-    "jsr:validate": "tb pkg validateJsr",
+    "jsr:validate": "tb pkg validateJsr --allow-slow-types",
     "npm:validate": "tb pkg validateNpm",
     "versionPropagation:validate": "tsx ../../scripts/validatePackageVersions.ts",
     "checkAll": "pnpm build && pnpm lint && pnpm test && pnpm jsr:validate",
     "jsr:publish": "tb pkg publishJsr",
     "npm:publish": "tb pkg publishNpm",
     "upgrade:core": "pnpm update '@aneuhold/main-scripts' --latest",
-    "upgrade:all": "pnpm up"
+    "upgrade:all": "pnpm update '!@aneuhold/*' --latest"
   },
   "main": "lib/browser.js",
   "types": "lib/browser.d.ts",
@@ -71,20 +71,20 @@
     "Node.js"
   ],
   "dependencies": {
-    "@aneuhold/core-ts-lib": "^2.3.13",
+    "@aneuhold/core-ts-lib": "^2.3.14",
     "uuid": "^13.0.0",
     "zod": "^4.1.13"
   },
   "devDependencies": {
-    "@aneuhold/local-npm-registry": "^0.2.20",
-    "@aneuhold/main-scripts": "^2.7.2",
+    "@aneuhold/local-npm-registry": "^0.2.21",
+    "@aneuhold/main-scripts": "^2.8.0",
     "@types/node": "^24.10.1",
     "eslint": "^9.39.1",
     "jsr": "^0.13.5",
-    "prettier": "^3.7.2",
+    "prettier": "^3.7.4",
     "rimraf": "^6.1.2",
-    "tsx": "^4.20.6",
+    "tsx": "^4.21.0",
     "typescript": "^5.9.3",
-    "vitest": "^4.0.14"
+    "vitest": "^4.0.15"
   }
 }

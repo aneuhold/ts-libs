@@ -1,4 +1,4 @@
-import { User } from '@aneuhold/core-ts-db-lib';
+import { UserSchema } from '@aneuhold/core-ts-db-lib';
 import crypto from 'crypto';
 import { afterAll, describe, expect, it } from 'vitest';
 import UserRepository from '../../../repositories/common/UserRepository.js';
@@ -127,7 +127,9 @@ afterAll(async () => {
  * @returns The new user
  */
 async function createNewTestUser() {
-  const newUser = new User(getTestUserName(`${crypto.randomUUID()}userconfigtest`));
+  const newUser = UserSchema.parse({
+    userName: getTestUserName(`${crypto.randomUUID()}userconfigtest`)
+  });
   newUser.projectAccess.dashboard = true;
   const insertResult = await userRepo.insertNew(newUser);
   expect(insertResult).toBeTruthy();

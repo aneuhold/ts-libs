@@ -1,4 +1,5 @@
-import { DashboardTask, DashboardTaskService, User } from '@aneuhold/core-ts-db-lib';
+import type { DashboardTask, User } from '@aneuhold/core-ts-db-lib';
+import { DashboardTask_docType, DashboardTaskService } from '@aneuhold/core-ts-db-lib';
 import type { UUID } from 'crypto';
 import type { DeleteResult } from 'mongodb';
 import type { RepoListeners } from '../../services/RepoSubscriptionService.js';
@@ -17,7 +18,7 @@ export default class DashboardTaskRepository extends DashboardBaseRepository<Das
    * Private constructor to enforce singleton pattern.
    */
   private constructor() {
-    super(DashboardTask.docType, new DashboardTaskValidator(), (task: Partial<DashboardTask>) => {
+    super(DashboardTask_docType, new DashboardTaskValidator(), (task: Partial<DashboardTask>) => {
       const docCopy = CleanDocument.userId(task);
       delete docCopy.createdDate;
       docCopy.lastUpdatedDate = new Date();
@@ -37,10 +38,10 @@ export default class DashboardTaskRepository extends DashboardBaseRepository<Das
       deleteOne: async (userId) => {
         const taskCollection = await taskRepo.getCollection();
         // Remove all tasks for the user
-        await taskCollection.deleteMany({ userId, docType: DashboardTask.docType });
+        await taskCollection.deleteMany({ userId, docType: DashboardTask_docType });
         // Remove all assignedTo references for the user
         await taskCollection.updateMany(
-          { assignedTo: userId, docType: DashboardTask.docType },
+          { assignedTo: userId, docType: DashboardTask_docType },
           { $set: { assignedTo: undefined } }
         );
       },
@@ -49,11 +50,11 @@ export default class DashboardTaskRepository extends DashboardBaseRepository<Das
         // Remove all tasks for the users
         await taskCollection.deleteMany({
           userId: { $in: userIds },
-          docType: DashboardTask.docType
+          docType: DashboardTask_docType
         });
         // Remove all assignedTo references for the users
         await taskCollection.updateMany(
-          { assignedTo: { $in: userIds }, docType: DashboardTask.docType },
+          { assignedTo: { $in: userIds }, docType: DashboardTask_docType },
           { $set: { assignedTo: undefined } }
         );
       }

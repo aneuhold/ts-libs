@@ -1,18 +1,25 @@
-import BaseDocument from './documents/BaseDocument.js';
-import BaseDocumentWithType from './documents/BaseDocumentWithType.js';
-import ApiKey, { validateApiKey } from './documents/common/ApiKey.js';
-import type { UserCTO } from './documents/common/User.js';
-import User, { validateUser } from './documents/common/User.js';
-import NonogramKatanaItem, {
-  validateNonogramKatanaItem
+import type { BaseDocument, BaseDocumentWithType } from './documents/BaseDocument.js';
+import { BaseDocumentSchema, BaseDocumentWithTypeSchema } from './documents/BaseDocument.js';
+import type { ApiKey } from './documents/common/ApiKey.js';
+import { ApiKeySchema } from './documents/common/ApiKey.js';
+import type { User, UserCTO } from './documents/common/User.js';
+import { UserCTOSchema, UserSchema } from './documents/common/User.js';
+import type { NonogramKatanaItem } from './documents/dashboard/NonogramKatanaItem.js';
+import {
+  NonogramKatanaItem_docType,
+  NonogramKatanaItemSchema
 } from './documents/dashboard/NonogramKatanaItem.js';
-import NonogramKatanaUpgrade, {
-  validateNonogramKatanaUpgrade
+import type { NonogramKatanaUpgrade } from './documents/dashboard/NonogramKatanaUpgrade.js';
+import {
+  NonogramKatanaUpgrade_docType,
+  NonogramKatanaUpgradeSchema
 } from './documents/dashboard/NonogramKatanaUpgrade.js';
-import type { DashboardTaskMap } from './documents/dashboard/Task.js';
-import DashboardTask, { validateDashboardTask } from './documents/dashboard/Task.js';
-import DashboardUserConfig, {
-  validateDashboardUserConfig
+import type { DashboardTask, DashboardTaskMap } from './documents/dashboard/Task.js';
+import { DashboardTask_docType, DashboardTaskSchema } from './documents/dashboard/Task.js';
+import type { DashboardUserConfig } from './documents/dashboard/UserConfig.js';
+import {
+  DashboardUserConfig_docType,
+  DashboardUserConfigSchema
 } from './documents/dashboard/UserConfig.js';
 import NonogramKatanaItemName from './embedded-types/dashboard/nonogramKatanaItem/ItemName.js';
 import NonogramKatanaUpgradeName from './embedded-types/dashboard/nonogramKatanaUpgrade/UpgradeName.js';
@@ -21,7 +28,6 @@ import type {
   DashboardTaskListFilterSettings,
   DashboardTaskListGlobalFilterSettings
 } from './embedded-types/dashboard/task/FilterSettings.js';
-import { getDefaultTaskListFilterSettings } from './embedded-types/dashboard/task/FilterSettings.js';
 import type {
   ParentRecurringTaskInfo,
   RecurrenceFrequency,
@@ -40,15 +46,14 @@ import type {
 } from './embedded-types/dashboard/task/SortSettings.js';
 import {
   DashboardTaskSortBy,
-  DashboardTaskSortDirection,
-  getDefaultTaskListSortSettings
+  DashboardTaskSortDirection
 } from './embedded-types/dashboard/task/SortSettings.js';
 import type {
   DashboardTagSetting,
   DashboardTagSettings
 } from './embedded-types/dashboard/userConfig/Tags.js';
-import RequiredUserId from './schemas/required-refs/RequiredUserId.js';
-import type { DocumentValidator } from './schemas/validators/DocumentValidator.js';
+import type { RequiredUserId } from './schemas/required-refs/RequiredUserId.js';
+import { RequiredUserIdSchema } from './schemas/required-refs/RequiredUserId.js';
 import type { DocumentMap } from './services/DocumentService.js';
 import DocumentService from './services/DocumentService.js';
 import type { DashboardTaskFilterAndSortResult } from './services/dashboard/Task/TaskService.js';
@@ -56,38 +61,39 @@ import DashboardTaskService from './services/dashboard/Task/TaskService.js';
 
 // Export all browser-safe functions and classes from this library
 export {
-  ApiKey,
-  BaseDocument,
-  BaseDocumentWithType,
-  DashboardTask,
+  ApiKeySchema,
+  BaseDocumentSchema,
+  BaseDocumentWithTypeSchema,
+  DashboardTask_docType,
+  DashboardTaskSchema,
   DashboardTaskService,
   DashboardTaskSortBy,
   DashboardTaskSortDirection,
-  DashboardUserConfig,
+  DashboardUserConfig_docType,
+  DashboardUserConfigSchema,
   DocumentService,
-  getDefaultTaskListFilterSettings,
-  getDefaultTaskListSortSettings,
-  NonogramKatanaItem,
+  NonogramKatanaItem_docType,
   NonogramKatanaItemName,
-  NonogramKatanaUpgrade,
+  NonogramKatanaItemSchema,
+  NonogramKatanaUpgrade_docType,
   NonogramKatanaUpgradeName,
+  NonogramKatanaUpgradeSchema,
   RecurrenceBasis,
   RecurrenceEffect,
   RecurrenceFrequencyType,
-  RequiredUserId,
-  User,
-  validateApiKey,
-  validateDashboardTask,
-  validateDashboardUserConfig,
-  validateNonogramKatanaItem,
-  validateNonogramKatanaUpgrade,
-  validateUser
+  RequiredUserIdSchema,
+  UserCTOSchema,
+  UserSchema
 };
 
 // Export TypeScript types where needed
 export type {
+  ApiKey,
+  BaseDocument,
+  BaseDocumentWithType,
   DashboardTagSetting,
   DashboardTagSettings,
+  DashboardTask,
   DashboardTaskFilterAndSortResult,
   DashboardTaskFilterSettings,
   DashboardTaskListFilterSettings,
@@ -97,10 +103,14 @@ export type {
   DashboardTaskMap,
   DashboardTaskSortSetting,
   DashboardTaskSortSettings,
+  DashboardUserConfig,
   DocumentMap,
-  DocumentValidator,
+  NonogramKatanaItem,
+  NonogramKatanaUpgrade,
   ParentRecurringTaskInfo,
   RecurrenceFrequency,
   RecurrenceInfo,
+  RequiredUserId,
+  User,
   UserCTO
 };

@@ -1,7 +1,7 @@
-import type { DocumentValidator } from '@aneuhold/core-ts-db-lib';
-import { BaseDocument } from '@aneuhold/core-ts-db-lib';
+import type { BaseDocument } from '@aneuhold/core-ts-db-lib';
 import { DR } from '@aneuhold/core-ts-lib';
 import type { UUID } from 'crypto';
+import type { ZodType } from 'zod';
 
 export enum ObjectSchemaState {
   Valid,
@@ -9,19 +9,79 @@ export enum ObjectSchemaState {
   InvalidAndUncorrectable
 }
 
+/**
+ * Base validator class for document validation.
+ * Handles both Zod schema validation and business logic validation.
+ */
 export default abstract class IValidator<TBaseType extends BaseDocument> {
   /**
-   * Validates that an object that is supposed to be inserted in to the database
-   * is correct.
+   * Constructs a new validator.
+   *
+   * @param schema - The Zod schema for the document type.
+   * @param partialSchema - The Zod schema for partial document updates.
    */
-  abstract validateNewObject(object: TBaseType): Promise<void>;
+  constructor(
+    protected schema: ZodType<TBaseType>,
+    protected partialSchema: ZodType<Partial<TBaseType>>
+  ) {}
 
   /**
-   * Validates an object that is suppposed to be updated in the database.
+   * Validates that an object that is supposed to be inserted in to the database
+   * is correct. This includes both schema validation and business logic validation.
+   *
+   * @param object - The object to validate.
+   */
+  async validateNewObject(object: TBaseType): Promise<void> {
+    // First validate schema with Zod
+    const parseResult = this.schema.safeParse(object);
+    if (!parseResult.success) {
+      const errorMessage = parseResult.error.issues
+        .map((e) => `${e.path.join('.')}: ${e.message}`)
+        .join(', ');
+      throw new Error(`Schema validation failed: ${errorMessage}`);
+    }
+    // Then run business logic validation
+    await this.validateNewObjectBusinessLogic(object);
+  }
+
+  /**
+   * Business logic validation for new objects.
+   * Override this method to add custom validation logic.
+   *
+   * @param object - The object to validate.
+   */
+  protected abstract validateNewObjectBusinessLogic(object: TBaseType): Promise<void>;
+
+  /**
+   * Validates an object that is supposed to be updated in the database.
+   * This includes both schema validation and business logic validation.
    *
    * At this point, the fields that do not change should already be stripped.
+   *
+   * @param partialObject - The partial object to validate.
    */
-  abstract validateUpdateObject(partialObject: Partial<TBaseType>): Promise<void>;
+  async validateUpdateObject(partialObject: Partial<TBaseType>): Promise<void> {
+    // First validate schema with Zod using partial schema
+    const parseResult = this.partialSchema.safeParse(partialObject);
+    if (!parseResult.success) {
+      const errorMessage = parseResult.error.issues
+        .map((e) => `${e.path.join('.')}: ${e.message}`)
+        .join(', ');
+      throw new Error(`Schema validation failed: ${errorMessage}`);
+    }
+    // Then run business logic validation
+    await this.validateUpdateObjectBusinessLogic(partialObject);
+  }
+
+  /**
+   * Business logic validation for update objects.
+   * Override this method to add custom validation logic.
+   *
+   * @param partialObject - The partial object to validate.
+   */
+  protected abstract validateUpdateObjectBusinessLogic(
+    partialObject: Partial<TBaseType>
+  ): Promise<void>;
 
   /**
    * Validates the entire DB for the repository, and corrects where needed.
@@ -40,24 +100,21 @@ export default abstract class IValidator<TBaseType extends BaseDocument> {
   /**
    * Runs the standard validation for a repository.
    *
-   * @param input
-   * @param shouldDelete A function that returns true if the document should be
-   * deleted. This should also log the specific error because it will not be
-   * logged elsewhere.
-   * @param input.dryRun
-   * @param input.docName
-   * @param input.allDocs
-   * @param input.shouldDelete
-   * @param input.documentValidator
-   * @param input.deletionFunction
-   * @param input.updateFunction
+   * @param input - The validation configuration.
+   * @param input.dryRun - Whether to run in dry-run mode.
+   * @param input.docName - The name of the document type.
+   * @param input.allDocs - All documents to validate.
+   * @param input.shouldDelete - A function that returns true if the document should be deleted. This should also log the specific error because it will not be logged elsewhere.
+   * @param input.additionalValidation - Optional additional validation logic beyond schema validation.
+   * @param input.deletionFunction - Function to delete documents.
+   * @param input.updateFunction - Function to update documents.
    */
   protected async runStandardValidationForRepository(input: {
     dryRun: boolean;
     docName: string;
     allDocs: Array<TBaseType>;
     shouldDelete: (doc: TBaseType) => boolean;
-    documentValidator: DocumentValidator<TBaseType>;
+    additionalValidation?: (doc: TBaseType) => { updatedDoc: TBaseType; errors: string[] };
     deletionFunction: (docIdsToDelete: UUID[]) => Promise<void>;
     updateFunction: (docsToUpdate: TBaseType[]) => Promise<void>;
   }) {
@@ -66,7 +123,7 @@ export default abstract class IValidator<TBaseType extends BaseDocument> {
       docName,
       allDocs,
       shouldDelete,
-      documentValidator,
+      additionalValidation,
       deletionFunction,
       updateFunction
     } = input;
@@ -85,12 +142,31 @@ export default abstract class IValidator<TBaseType extends BaseDocument> {
     });
     // Validate the rest
     docsToValidate.forEach((doc) => {
-      const { updatedDoc, errors } = documentValidator(doc);
+      const errors: string[] = [];
+      let updatedDoc = doc;
+
+      // First validate with Zod schema
+      const parseResult = this.schema.safeParse(doc);
+      if (!parseResult.success) {
+        errors.push(...parseResult.error.issues.map((e) => `${e.path.join('.')}: ${e.message}`));
+      } else {
+        updatedDoc = parseResult.data;
+      }
+
+      // Then run additional validation if provided
+      if (additionalValidation) {
+        const additionalResult = additionalValidation(doc);
+        errors.push(...additionalResult.errors);
+        if (additionalResult.updatedDoc !== doc) {
+          updatedDoc = additionalResult.updatedDoc;
+        }
+      }
+
       if (errors.length !== 0) {
         DR.logger.error(`${docName} with ID: ${doc._id} is invalid. Errors:`);
         numInvalidDocs += 1;
         errors.forEach((error) => {
-          DR.logger.error(error);
+          DR.logger.error(`  ${error}`);
         });
         docsToUpdate.push(updatedDoc);
       }
@@ -127,8 +203,8 @@ export default abstract class IValidator<TBaseType extends BaseDocument> {
   /**
    * Checks that all elements that exist in array1, exist in array2.
    *
-   * @param array1
-   * @param array2
+   * @param array1 - The first array.
+   * @param array2 - The second array.
    */
   protected checkAllElementsExistInArr(array1: Array<unknown>, array2: Array<unknown>): boolean {
     return array1.every((value) => array2.includes(value));

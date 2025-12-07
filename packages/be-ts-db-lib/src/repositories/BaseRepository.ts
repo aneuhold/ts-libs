@@ -1,4 +1,4 @@
-import { BaseDocument } from '@aneuhold/core-ts-db-lib';
+import type { BaseDocument } from '@aneuhold/core-ts-db-lib';
 import type { UUID } from 'crypto';
 import type {
   AnyBulkWriteOperation,
@@ -13,7 +13,7 @@ import type { RepoListeners, RepoSubscribers } from '../services/RepoSubscriptio
 import RepoSubscriptionService from '../services/RepoSubscriptionService.js';
 import DocumentCleaner from '../util/DocumentCleaner.js';
 import DocumentDb from '../util/DocumentDb.js';
-import IValidator from '../validators/BaseValidator.js';
+import type IValidator from '../validators/BaseValidator.js';
 
 /**
  * Base repository class for handling common database operations.
@@ -35,7 +35,7 @@ export default abstract class BaseRepository<TBasetype extends BaseDocument> {
    * Constructs a new base repository.
    *
    * @param collectionName - The name of the collection.
-   * @param validator - The validator for the document type.
+   * @param validator - The validator for the document type (handles both schema and business logic validation).
    * @param defaultFilter - The default filter to apply to queries.
    * @param defaultUpdateCleaner - A function to clean update objects before sending to the DB.
    */

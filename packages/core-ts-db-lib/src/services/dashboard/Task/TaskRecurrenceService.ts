@@ -1,5 +1,5 @@
 import { DateService } from '@aneuhold/core-ts-lib';
-import DashboardTask from '../../../documents/dashboard/Task.js';
+import type { DashboardTask } from '../../../documents/dashboard/Task.js';
 import type { RecurrenceFrequency } from '../../../embedded-types/dashboard/task/RecurrenceInfo.js';
 import {
   RecurrenceBasis,
@@ -148,13 +148,16 @@ export default class DashboardTaskRecurrenceService {
   }
 
   /**
-   * Calculates the difference in time between the basis date and the next frequency date.
+   * Gets the difference in time between the basis date and the next frequency date.
    *
-   * @param basisDate - The date from which to calculate the difference.
-   * @param frequency - The recurrence frequency details.
+   * @param basisDate - The date to base the next frequency date on.
+   * @param frequency - The frequency to use.
    * @returns The difference in time in milliseconds.
    */
-  private static getDiffForDateUpdate(basisDate: Date | undefined, frequency: RecurrenceFrequency) {
+  private static getDiffForDateUpdate(
+    basisDate: Date | null | undefined,
+    frequency: RecurrenceFrequency
+  ) {
     if (!basisDate) {
       return 0;
     }

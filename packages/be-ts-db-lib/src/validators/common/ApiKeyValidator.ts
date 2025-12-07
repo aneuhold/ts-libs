@@ -1,4 +1,5 @@
-import { ApiKey, validateApiKey } from '@aneuhold/core-ts-db-lib';
+import type { ApiKey } from '@aneuhold/core-ts-db-lib';
+import { ApiKeySchema } from '@aneuhold/core-ts-db-lib';
 import { DR, ErrorUtils } from '@aneuhold/core-ts-lib';
 import type { UUID } from 'crypto';
 import ApiKeyRepository from '../../repositories/common/ApiKeyRepository.js';
@@ -6,7 +7,11 @@ import UserRepository from '../../repositories/common/UserRepository.js';
 import IValidator from '../BaseValidator.js';
 
 export default class ApiKeyValidator extends IValidator<ApiKey> {
-  async validateNewObject(newApiKey: ApiKey): Promise<void> {
+  constructor() {
+    super(ApiKeySchema, ApiKeySchema.partial());
+  }
+
+  protected async validateNewObjectBusinessLogic(newApiKey: ApiKey): Promise<void> {
     // Check if the user exists
     const userRepo = UserRepository.getRepo();
     const userInDb = await userRepo.get({ _id: newApiKey.userId });
@@ -27,14 +32,14 @@ export default class ApiKeyValidator extends IValidator<ApiKey> {
     }
   }
 
-  // eslint-disable-next-line @typescript-eslint/require-await
-  async validateUpdateObject(updatedApiKey: Partial<ApiKey>): Promise<void> {
+  protected validateUpdateObjectBusinessLogic(updatedApiKey: Partial<ApiKey>): Promise<void> {
     // Throw, because API keys should not be updated. Only created and deleted.
     DR.logger.error(`API keys should not be updated at this time. Only created and deleted.`);
     ErrorUtils.throwError(
       `API keys should not be updated at this time. Only created and deleted.`,
       updatedApiKey
     );
+    return Promise.resolve();
   }
 
   async validateRepositoryInDb(dryRun: boolean): Promise<void> {
@@ -53,7 +58,6 @@ export default class ApiKeyValidator extends IValidator<ApiKey> {
         }
         return false;
       },
-      documentValidator: validateApiKey,
       deletionFunction: async (docIdsToDelete: UUID[]) => {
         await apiKeyRepo.deleteList(docIdsToDelete);
       },
