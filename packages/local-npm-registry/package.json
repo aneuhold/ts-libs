@@ -17,7 +17,7 @@
     "test": "vitest run",
     "preparePkg": "tb pkg prepare",
     "upgrade:core": "pnpm update '@aneuhold/main-scripts' --latest",
-    "upgrade:all": "pnpm up",
+    "upgrade:all": "pnpm up \"\\!@aneuhold/*\"",
     "jsr:validate": "tb pkg validateJsr",
     "npm:validate": "tb pkg validateNpm --alternative-names local-npm-registry",
     "versionPropagation:validate": "tsx ../../scripts/validatePackageVersions.ts",

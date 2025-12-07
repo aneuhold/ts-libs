@@ -42,13 +42,13 @@ importers:
   packages/be-ts-db-lib:
     dependencies:
       '@aneuhold/be-ts-lib':
-        specifier: workspace:^
+        specifier: ^3.0.2
         version: link:../be-ts-lib
       '@aneuhold/core-ts-db-lib':
-        specifier: workspace:^
+        specifier: ^3.0.2
         version: link:../core-ts-db-lib
       '@aneuhold/core-ts-lib':
-        specifier: workspace:^
+        specifier: ^2.3.12
         version: link:../core-ts-lib
       bson:
         specifier: ^7.0.0
@@ -61,7 +61,7 @@ importers:
         version: 13.0.0
     devDependencies:
       '@aneuhold/local-npm-registry':
-        specifier: workspace:^
+        specifier: ^0.2.19
         version: link:../local-npm-registry
       '@aneuhold/main-scripts':
         specifier: ^2.7.2
@@ -82,7 +82,7 @@ importers:
         specifier: ^0.13.5
         version: 0.13.5
       prettier:
-        specifier: ^3.7.4
+        specifier: ^3.7.2
         version: 3.7.4
       rimraf:
         specifier: ^6.1.2
@@ -91,22 +91,22 @@ importers:
         specifier: ^2.8.1
         version: 2.8.1
       tsx:
-        specifier: ^4.21.0
+        specifier: ^4.20.6
         version: 4.21.0
       typescript:
         specifier: ^5.9.3
         version: 5.9.3
       vitest:
-        specifier: ^4.0.15
+        specifier: ^4.0.14
         version: 4.0.15(@types/node@24.10.1)(jiti@2.4.2)(tsx@4.21.0)(yaml@2.7.1)
 
   packages/be-ts-lib:
     dependencies:
       '@aneuhold/core-ts-api-lib':
-        specifier: workspace:^
+        specifier: ^3.0.2
         version: link:../core-ts-api-lib
       '@aneuhold/core-ts-lib':
-        specifier: workspace:^
+        specifier: ^2.3.12
         version: link:../core-ts-lib
       dotenv:
         specifier: ^17.2.3
@@ -122,7 +122,7 @@ importers:
         version: 5.0.5
     devDependencies:
       '@aneuhold/local-npm-registry':
-        specifier: workspace:^
+        specifier: ^0.2.19
         version: link:../local-npm-registry
       '@aneuhold/main-scripts':
         specifier: ^2.7.2
@@ -140,35 +140,35 @@ importers:
         specifier: ^0.13.5
         version: 0.13.5
       prettier:
-        specifier: ^3.7.4
+        specifier: ^3.7.2
         version: 3.7.4
       rimraf:
         specifier: ^6.1.2
         version: 6.1.2
       tsx:
-        specifier: ^4.21.0
+        specifier: ^4.20.6
         version: 4.21.0
       typescript:
         specifier: ^5.9.3
         version: 5.9.3
       vitest:
-        specifier: ^4.0.15
+        specifier: ^4.0.14
         version: 4.0.15(@types/node@24.10.1)(jiti@2.4.2)(tsx@4.21.0)(yaml@2.7.1)
 
   packages/core-ts-api-lib:
     dependencies:
       '@aneuhold/core-ts-db-lib':
-        specifier: workspace:^
+        specifier: ^3.0.2
         version: link:../core-ts-db-lib
       '@aneuhold/core-ts-lib':
-        specifier: workspace:^
+        specifier: ^2.3.12
         version: link:../core-ts-lib
       bson:
         specifier: ^7.0.0
         version: 7.0.0
     devDependencies:
       '@aneuhold/local-npm-registry':
-        specifier: workspace:^
+        specifier: ^0.2.19
         version: link:../local-npm-registry
       '@aneuhold/main-scripts':
         specifier: ^2.7.2
@@ -183,25 +183,25 @@ importers:
         specifier: ^0.13.5
         version: 0.13.5
       prettier:
-        specifier: ^3.7.4
+        specifier: ^3.7.2
         version: 3.7.4
       rimraf:
         specifier: ^6.1.2
         version: 6.1.2
       tsx:
-        specifier: ^4.21.0
+        specifier: ^4.20.6
         version: 4.21.0
       typescript:
         specifier: ^5.9.3
         version: 5.9.3
       vitest:
-        specifier: ^4.0.15
+        specifier: ^4.0.14
         version: 4.0.15(@types/node@24.10.1)(jiti@2.4.2)(tsx@4.21.0)(yaml@2.7.1)
 
   packages/core-ts-db-lib:
     dependencies:
       '@aneuhold/core-ts-lib':
-        specifier: workspace:^
+        specifier: ^2.3.12
         version: link:../core-ts-lib
       uuid:
         specifier: ^13.0.0
@@ -211,7 +211,7 @@ importers:
         version: 4.1.13
     devDependencies:
       '@aneuhold/local-npm-registry':
-        specifier: workspace:^
+        specifier: ^0.2.19
         version: link:../local-npm-registry
       '@aneuhold/main-scripts':
         specifier: ^2.7.2
@@ -226,19 +226,19 @@ importers:
         specifier: ^0.13.5
         version: 0.13.5
       prettier:
-        specifier: ^3.7.4
+        specifier: ^3.7.2
         version: 3.7.4
       rimraf:
         specifier: ^6.1.2
         version: 6.1.2
       tsx:
-        specifier: ^4.21.0
+        specifier: ^4.20.6
         version: 4.21.0
       typescript:
         specifier: ^5.9.3
         version: 5.9.3
       vitest:
-        specifier: ^4.0.15
+        specifier: ^4.0.14
         version: 4.0.15(@types/node@24.10.1)(jiti@2.4.2)(tsx@4.21.0)(yaml@2.7.1)
 
   packages/core-ts-lib:
@@ -256,31 +256,31 @@ importers:
         specifier: ^3.1.11
         version: 3.1.11
       prettier:
-        specifier: ^3.7.4
+        specifier: ^3.7.2
         version: 3.7.4
       rimraf:
         specifier: ^6.1.2
         version: 6.1.2
       tsx:
-        specifier: ^4.21.0
+        specifier: ^4.20.6
         version: 4.21.0
       typescript:
         specifier: ~5.9.3
         version: 5.9.3
       vitest:
-        specifier: ^4.0.15
+        specifier: ^4.0.14
         version: 4.0.15(@types/node@24.10.1)(jiti@2.4.2)(tsx@4.21.0)(yaml@2.7.1)
 
   packages/local-npm-registry:
     dependencies:
       '@aneuhold/core-ts-lib':
-        specifier: workspace:^
+        specifier: ^2.3.12
         version: link:../core-ts-lib
       commander:
         specifier: ^14.0.2
         version: 14.0.2
       execa:
-        specifier: ^9.6.1
+        specifier: ^9.6.0
         version: 9.6.1
       fs-extra:
         specifier: ^11.3.2
@@ -292,7 +292,7 @@ importers:
         specifier: ^4.1.2
         version: 4.1.2
       verdaccio:
-        specifier: ^6.2.4
+        specifier: ^6.2.3
         version: 6.2.4(typanion@3.14.0)
     devDependencies:
       '@aneuhold/main-scripts':
@@ -320,19 +320,19 @@ importers:
         specifier: ^0.13.5
         version: 0.13.5
       prettier:
-        specifier: ^3.7.4
+        specifier: ^3.7.2
         version: 3.7.4
       rimraf:
         specifier: ^6.1.2
         version: 6.1.2
       tsx:
-        specifier: ^4.21.0
+        specifier: ^4.20.6
         version: 4.21.0
       typescript:
         specifier: ~5.9.3
         version: 5.9.3
       vitest:
-        specifier: ^4.0.15
+        specifier: ^4.0.14
         version: 4.0.15(@types/node@24.10.1)(jiti@2.4.2)(tsx@4.21.0)(yaml@2.7.1)
 
 packages:
