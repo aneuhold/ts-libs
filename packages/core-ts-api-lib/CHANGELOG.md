@@ -5,14 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## 🔖 [3.0.3] (2025-12-07)
+## 🔖 [3.0.4] (2025-12-07)
 
 ### 🏗️ Changed
 
 - Updated all type imports to use `import type` for improved clarity and build performance.
-- Updated dependencies: now requires `@aneuhold/core-ts-db-lib@^4.0.0`, `@aneuhold/core-ts-lib@^2.3.13`, and `@aneuhold/local-npm-registry@^0.2.20`.
 - Updated dev dependencies for compatibility: `prettier`, `tsx`, and `vitest`.
 - Minor refactor in `AuthValidateUser.ts` and `ProjectDashboard.ts` to use explicit type-only imports.
+
+## 🔖 [3.0.3] (2025-12-07)
+
+### 🏗️ Changed
+
+- Updated dependencies: now requires `@aneuhold/core-ts-db-lib@^3.0.3`, `@aneuhold/core-ts-lib@^2.3.13`, and `@aneuhold/local-npm-registry@^0.2.20`.
 
 ## 🔖 [3.0.2] (2025-12-03)
 
@@ -149,6 +154,7 @@ No direct code changes; version bump for compatibility.
 
 <!-- Link References -->
 
+[3.0.4]: https://github.com/aneuhold/ts-libs/compare/core-ts-api-lib-v3.0.3...core-ts-api-lib-v3.0.4
 [3.0.3]: https://github.com/aneuhold/ts-libs/compare/core-ts-api-lib-v3.0.2...core-ts-api-lib-v3.0.3
 [3.0.2]: https://github.com/aneuhold/ts-libs/compare/core-ts-api-lib-v3.0.1...core-ts-api-lib-v3.0.2
 [3.0.1]: https://github.com/aneuhold/ts-libs/compare/core-ts-api-lib-v3.0.0...core-ts-api-lib-v3.0.1

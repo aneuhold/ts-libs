@@ -5,13 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## 🔖 [0.2.20] (2025-12-07)
+## 🔖 [0.2.21] (2025-12-07)
 
 ### 🏗️ Changed
 
 - Updated all type imports to use `import type` for improved clarity and build performance.
-- Updated dependencies: now requires `@aneuhold/core-ts-lib@^2.3.13`, `execa@^9.6.1`, and `verdaccio@^6.2.4`.
+- Updated dependencies: now requires `@aneuhold/core-ts-lib@^2.3.14`, `execa@^9.6.1`, and `verdaccio@^6.2.4`.
 - Updated dev dependencies for compatibility: `prettier`, `tsx`, and `vitest`.
+
+## 🔖 [0.2.20] (2025-12-07)
+
+### 🏗️ Changed
+
+- Updated dependencies: now requires `@aneuhold/core-ts-lib@^2.3.13`.
 
 ## 🔖 [0.2.19] (2025-12-03)
 
@@ -124,6 +130,7 @@ No direct code changes; version bump for compatibility.
 
 <!-- Link References -->
 
+[0.2.21]: https://github.com/aneuhold/ts-libs/compare/local-npm-registry-v0.2.20...local-npm-registry-v0.2.21
 [0.2.20]: https://github.com/aneuhold/ts-libs/compare/local-npm-registry-v0.2.19...local-npm-registry-v0.2.20
 [0.2.19]: https://github.com/aneuhold/ts-libs/compare/local-npm-registry-v0.2.18...local-npm-registry-v0.2.19
 [0.2.18]: https://github.com/aneuhold/ts-libs/compare/local-npm-registry-v0.2.17...local-npm-registry-v0.2.18
