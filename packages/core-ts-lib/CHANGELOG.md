@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## 🔖 [2.3.13] (2025-12-03)
+## 🔖 [2.3.12] (2025-12-03)
 
 ### ✅ Added
 
@@ -144,7 +144,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Updated workflow permissions to allow repository write access
 
 <!-- Link References -->
-[2.3.13]: https://github.com/aneuhold/ts-libs/compare/core-ts-lib-v2.3.11...core-ts-lib-v2.3.13
+
+[2.3.12]: https://github.com/aneuhold/ts-libs/compare/core-ts-lib-v2.3.11...core-ts-lib-v2.3.12
 [2.3.11]: https://github.com/aneuhold/ts-libs/compare/core-ts-lib-v2.3.10...core-ts-lib-v2.3.11
 [2.3.10]: https://github.com/aneuhold/ts-libs/compare/core-ts-lib-v2.3.9...core-ts-lib-v2.3.10
 [2.3.9]: https://github.com/aneuhold/ts-libs/compare/core-ts-lib-v2.3.8...core-ts-lib-v2.3.9
