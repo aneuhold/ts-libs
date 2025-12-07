@@ -7,13 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## 🔖 [2.3.13] (2025-12-07)
 
-### ✅ Added
-
 ### 🏗️ Changed
 
-### 🩹 Fixed
-
-### 🔥 Removed
+- Updated development dependencies: `@types/node`, `nodemon`, `prettier`, `rimraf`, and `vitest` for compatibility.
+- Added support for `allowSlowTypes` in JSR publish validation and publishing methods.
 
 ## 🔖 [2.3.12] (2025-12-03)
 
@@ -154,6 +151,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Updated workflow permissions to allow repository write access
 
 <!-- Link References -->
+
 [2.3.13]: https://github.com/aneuhold/ts-libs/compare/core-ts-lib-v2.3.12...core-ts-lib-v2.3.13
 [2.3.12]: https://github.com/aneuhold/ts-libs/compare/core-ts-lib-v2.3.11...core-ts-lib-v2.3.12
 [2.3.11]: https://github.com/aneuhold/ts-libs/compare/core-ts-lib-v2.3.10...core-ts-lib-v2.3.11

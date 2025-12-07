@@ -7,13 +7,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## 🔖 [0.2.20] (2025-12-07)
 
-### ✅ Added
-
 ### 🏗️ Changed
 
-### 🩹 Fixed
-
-### 🔥 Removed
+- Updated dependencies: now requires `@aneuhold/core-ts-lib@^2.3.13`.
 
 ## 🔖 [0.2.19] (2025-12-03)
 
@@ -125,6 +121,7 @@ No direct code changes; version bump for compatibility.
 - Updated workflow permissions to allow repository write access
 
 <!-- Link References -->
+
 [0.2.20]: https://github.com/aneuhold/ts-libs/compare/local-npm-registry-v0.2.19...local-npm-registry-v0.2.20
 [0.2.19]: https://github.com/aneuhold/ts-libs/compare/local-npm-registry-v0.2.18...local-npm-registry-v0.2.19
 [0.2.18]: https://github.com/aneuhold/ts-libs/compare/local-npm-registry-v0.2.17...local-npm-registry-v0.2.18
