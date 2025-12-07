@@ -57,17 +57,17 @@
     "MongoDB"
   ],
   "dependencies": {
-    "@aneuhold/be-ts-lib": "^3.0.3",
+    "@aneuhold/be-ts-lib": "^3.0.4",
     "@aneuhold/core-ts-db-lib": "^4.0.0",
-    "@aneuhold/core-ts-lib": "^2.3.13",
+    "@aneuhold/core-ts-lib": "^2.3.14",
     "bson": "^7.0.0",
     "mongodb": "^7.0.0",
     "uuid": "^13.0.0",
     "zod": "^4.1.13"
   },
   "devDependencies": {
-    "@aneuhold/local-npm-registry": "^0.2.20",
-    "@aneuhold/main-scripts": "^2.7.2",
+    "@aneuhold/local-npm-registry": "^0.2.21",
+    "@aneuhold/main-scripts": "^2.8.0",
     "@types/node": "^24.10.1",
     "@types/node-fetch": "^2.6.13",
     "dotenv": "^17.2.3",

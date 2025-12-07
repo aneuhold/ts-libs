@@ -15,7 +15,7 @@
     "lint": "eslint",
     "test": "vitest run",
     "preparePkg": "tb pkg prepare",
-    "jsr:validate": "tb pkg validateJsr",
+    "jsr:validate": "tb pkg validateJsr --allow-slow-types",
     "npm:validate": "tb pkg validateNpm",
     "versionPropagation:validate": "tsx ../../scripts/validatePackageVersions.ts",
     "checkAll": "pnpm build && pnpm lint && pnpm test && pnpm jsr:validate",
@@ -71,13 +71,13 @@
     "Node.js"
   ],
   "dependencies": {
-    "@aneuhold/core-ts-lib": "^2.3.13",
+    "@aneuhold/core-ts-lib": "^2.3.14",
     "uuid": "^13.0.0",
     "zod": "^4.1.13"
   },
   "devDependencies": {
-    "@aneuhold/local-npm-registry": "^0.2.20",
-    "@aneuhold/main-scripts": "^2.7.2",
+    "@aneuhold/local-npm-registry": "^0.2.21",
+    "@aneuhold/main-scripts": "^2.8.0",
     "@types/node": "^24.10.1",
     "eslint": "^9.39.1",
     "jsr": "^0.13.5",
