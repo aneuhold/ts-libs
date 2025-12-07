@@ -6,10 +6,10 @@ import { RequiredUserIdSchema } from '../../schemas/required-refs/RequiredUserId
  * The schema for {@link ApiKey} documents.
  */
 export const ApiKeySchema = RequiredUserIdSchema.extend({
-  key: z
-    .uuid()
-    .default(() => randomUUID())
-    .describe('The API key for the user. This is indexed in the DB.')
+  /**
+   * The API key for the user. This is indexed in the DB.
+   */
+  key: z.uuid().default(() => randomUUID())
 });
 
 /**

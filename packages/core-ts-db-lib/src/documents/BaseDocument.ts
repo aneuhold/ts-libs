@@ -8,6 +8,7 @@ import DocumentService from '../services/DocumentService.js';
  * this schema.
  */
 export const BaseDocumentSchema = z.object({
+  /** The unique identifier for this document */
   _id: z
     .uuidv7()
     .default(() => DocumentService.generateID())

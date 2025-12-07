@@ -6,6 +6,9 @@ import { BaseDocumentSchema } from '../../documents/BaseDocument.js';
  * Schema for {@link RequiredUserId} documents.
  */
 export const RequiredUserIdSchema = BaseDocumentSchema.extend({
+  /**
+   * Does this work?
+   */
   userId: z
     .uuidv7()
     .transform((val) => val as UUID)
