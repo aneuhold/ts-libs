@@ -24,7 +24,7 @@
     "jsr:publish": "tb pkg publishJsr",
     "npm:publish": "tb pkg publishNpm",
     "upgrade:core": "pnpm update '@aneuhold/main-scripts' --latest",
-    "upgrade:all": "pnpm up",
+    "upgrade:all": "pnpm up \"\\!@aneuhold/*\"",
     "migrate": "tsx ./scripts/migrate.ts",
     "migrate:dry": "tsx ./scripts/migrateDry.ts"
   },

@@ -22,7 +22,7 @@
     "jsr:publish": "tb pkg publishJsr",
     "npm:publish": "tb pkg publishNpm",
     "upgrade:core": "pnpm update '@aneuhold/main-scripts' --latest",
-    "upgrade:all": "pnpm up"
+    "upgrade:all": "pnpm up \"\\!@aneuhold/*\""
   },
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
