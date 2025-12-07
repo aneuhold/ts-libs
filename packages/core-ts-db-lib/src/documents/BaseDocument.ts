@@ -1,13 +1,20 @@
 import type { UUID } from 'crypto';
+import z from 'zod';
 import DocumentService from '../services/DocumentService.js';
 
 /**
- * Base class for all document types stored in a document database.
- *
- * Provides the common `_id` field required by MongoDB and other
- * document databases. All document types should extend this class.
+ * Base schema for all documents. Provides the common `_id` field required by
+ * MongoDB and other document databases. All document schemas should extend
+ * this schema.
  */
-export default abstract class BaseDocument {
-  /** The unique identifier for this document */
-  _id: UUID = DocumentService.generateID();
-}
+export const BaseDocumentSchema = z.object({
+  _id: z
+    .uuidv7()
+    .default(() => DocumentService.generateID())
+    .transform((val) => val as UUID)
+});
+
+/**
+ * Base document type for all documents stored in a document database.
+ */
+export type BaseDocument = z.infer<typeof BaseDocumentSchema>;
