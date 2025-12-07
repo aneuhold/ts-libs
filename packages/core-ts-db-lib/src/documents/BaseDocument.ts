@@ -15,6 +15,18 @@ export const BaseDocumentSchema = z.object({
 });
 
 /**
+ * Base schema for all documents with a `docType` field.
+ */
+export const BaseDocumentWithTypeSchema = BaseDocumentSchema.extend({
+  docType: z.string()
+});
+
+/**
  * Base document type for all documents stored in a document database.
  */
 export type BaseDocument = z.infer<typeof BaseDocumentSchema>;
+
+/**
+ * Base document type with a `docType` field.
+ */
+export type BaseDocumentWithType = z.infer<typeof BaseDocumentWithTypeSchema>;
