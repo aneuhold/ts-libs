@@ -1,5 +1,5 @@
 import { DateService } from '@aneuhold/core-ts-lib';
-import DashboardTask from '../../../documents/dashboard/Task.js';
+import type { DashboardTask } from '../../../documents/dashboard/Task.js';
 import type { RecurrenceFrequency } from '../../../embedded-types/dashboard/task/RecurrenceInfo.js';
 import {
   RecurrenceBasis,

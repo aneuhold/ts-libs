@@ -1,66 +1,25 @@
-import type { UUID } from 'crypto';
-import NonogramKatanaItemName from '../../embedded-types/dashboard/nonogramKatanaItem/ItemName.js';
+import { z } from 'zod';
 import NonogramKatanaUpgradeName from '../../embedded-types/dashboard/nonogramKatanaUpgrade/UpgradeName.js';
-import RequiredUserId from '../../schemas/required-refs/RequiredUserId.js';
-import type { DocumentValidator } from '../../schemas/validators/DocumentValidator.js';
-import BaseDocumentWithType from '../BaseDocumentWithType.js';
+import { RequiredUserIdSchema } from '../../schemas/required-refs/RequiredUserId.js';
+import { BaseDocumentWithTypeSchema } from '../BaseDocument.js';
 
 /**
- * Validates a {@link NonogramKatanaUpgrade} document.
- *
- * @param upgrade The {@link NonogramKatanaUpgrade} document to validate.
- * @returns An object containing the updated document and any validation errors.
+ * The schema for {@link NonogramKatanaUpgrade} documents.
  */
-export const validateNonogramKatanaUpgrade: DocumentValidator<NonogramKatanaUpgrade> = (
-  upgrade: NonogramKatanaUpgrade
-) => {
-  const errors: string[] = [];
-
-  // No validation at the moment.
-
-  return { updatedDoc: upgrade, errors };
-};
-
-/**
- * Represents an upgrade for a Nonogram Katana.
- *
- * @example
- * ```typescript
- * const upgrade = new NonogramKatanaUpgrade(ownerId, upgradeName);
- * upgrade.completed = true;
- * upgrade.priority = 5;
- * ```
- */
-export default class NonogramKatanaUpgrade extends BaseDocumentWithType implements RequiredUserId {
-  static docType = 'nonogramKatanaUpgrade';
-
-  docType = NonogramKatanaUpgrade.docType;
-
-  /**
-   * The owner of this Nonogram Katana upgrade.
-   */
-  userId: UUID;
-
-  upgradeName: NonogramKatanaUpgradeName;
-
-  completed: boolean = false;
-
-  currentItemAmounts: { [key in NonogramKatanaItemName]?: number } = {};
-
+export const NonogramKatanaUpgradeSchema = z.object({
+  ...BaseDocumentWithTypeSchema.shape,
+  ...RequiredUserIdSchema.shape,
+  docType: z.literal('nonogramKatanaUpgrade').default('nonogramKatanaUpgrade'),
+  upgradeName: z.enum(NonogramKatanaUpgradeName),
+  completed: z.boolean().default(false),
+  currentItemAmounts: z.record(z.string(), z.int().optional()).default({}),
   /**
    * Priority, where the higher the number, the higher up the list it is.
    */
-  priority: number = 0;
+  priority: z.int().default(0)
+});
 
-  /**
-   * Creates an instance of NonogramKatanaUpgrade.
-   *
-   * @param ownerId - The ID of the owner of this upgrade.
-   * @param upgradeName - The name of the upgrade.
-   */
-  constructor(ownerId: UUID, upgradeName: NonogramKatanaUpgradeName) {
-    super();
-    this.userId = ownerId;
-    this.upgradeName = upgradeName;
-  }
-}
+/**
+ * Represents an upgrade for a Nonogram Katana.
+ */
+export type NonogramKatanaUpgrade = z.infer<typeof NonogramKatanaUpgradeSchema>;

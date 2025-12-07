@@ -1,4 +1,4 @@
-import BaseDocument from '../../documents/BaseDocument.js';
+import type { BaseDocument } from '../../documents/BaseDocument.js';
 
 /**
  * A validator for a document.

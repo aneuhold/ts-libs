@@ -7,12 +7,9 @@ import { BaseDocumentSchema } from '../../documents/BaseDocument.js';
  */
 export const RequiredUserIdSchema = BaseDocumentSchema.extend({
   /**
-   * Does this work?
+   * The user ID that this document is for. This field is indexed in the database.
    */
-  userId: z
-    .uuidv7()
-    .transform((val) => val as UUID)
-    .describe('The user ID that this document is for. This field is indexed in the database.')
+  userId: z.uuidv7().transform((val) => val as UUID)
 });
 
 /**

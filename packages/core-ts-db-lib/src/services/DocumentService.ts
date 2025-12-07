@@ -1,6 +1,6 @@
 import type { UUID } from 'crypto';
 import { v7 as uuidv7 } from 'uuid';
-import BaseDocument from '../documents/BaseDocument.js';
+import type { BaseDocument } from '../documents/BaseDocument.js';
 
 /**
  * Utility type for mapping document IDs to their corresponding documents.

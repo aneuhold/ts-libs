@@ -1,46 +1,102 @@
 import type { UUID } from 'crypto';
-import type { DashboardTaskFilterSettings } from '../../embedded-types/dashboard/task/FilterSettings.js';
-import type {
-  ParentRecurringTaskInfo,
-  RecurrenceInfo
+import { z } from 'zod';
+import { DashboardTaskFilterSettingsSchema } from '../../embedded-types/dashboard/task/FilterSettings.js';
+import {
+  ParentRecurringTaskInfoSchema,
+  RecurrenceInfoSchema
 } from '../../embedded-types/dashboard/task/RecurrenceInfo.js';
-import { validateRecurrenceInfo } from '../../embedded-types/dashboard/task/RecurrenceInfo.js';
-import type { DashboardTaskSortSettings } from '../../embedded-types/dashboard/task/SortSettings.js';
-import RequiredUserId from '../../schemas/required-refs/RequiredUserId.js';
-import type { DocumentValidator } from '../../schemas/validators/DocumentValidator.js';
-import Validate from '../../schemas/validators/ValidateUtil.js';
-import DocumentService, { type DocumentMap } from '../../services/DocumentService.js';
-import BaseDocumentWithType from '../BaseDocumentWithType.js';
+import { DashboardTaskSortSettingsSchema } from '../../embedded-types/dashboard/task/SortSettings.js';
+import { RequiredUserIdSchema } from '../../schemas/required-refs/RequiredUserId.js';
+import type { DocumentMap } from '../../services/DocumentService.js';
+import { BaseDocumentWithTypeSchema } from '../BaseDocument.js';
 
 /**
- * Validates a {@link DashboardTask} object.
- *
- * @param task - The {@link DashboardTask} object to validate.
- * @returns An object containing the updated document and any validation errors.
+ * The schema for {@link DashboardTask} documents.
  */
-export const validateDashboardTask: DocumentValidator<DashboardTask> = (task: DashboardTask) => {
-  const errors: string[] = [];
-  const validate = new Validate(task, errors);
-  const exampleTask = new DashboardTask(DocumentService.generateID());
-
-  validate.string('title', exampleTask.title);
-  validate.boolean('completed', exampleTask.completed);
-  validate.optionalString('description');
-  validate.array('sharedWith', exampleTask.sharedWith);
-  validate.optionalObject('recurrenceInfo');
-  validate.object('tags', {});
-  validate.string('category', exampleTask.category);
-  validate.object('createdDate', exampleTask.createdDate);
-  validate.object('lastUpdatedDate', exampleTask.lastUpdatedDate);
-  validate.optionalObject('startDate');
-  validate.optionalObject('dueDate');
-  validate.optionalObject('parentRecurringTaskInfo');
-  validate.object('filterSettings', {});
-  validate.object('sortSettings', {});
-  validateRecurrenceInfo(task, errors);
-
-  return { updatedDoc: task, errors };
-};
+export const DashboardTaskSchema = z.object({
+  ...BaseDocumentWithTypeSchema.shape,
+  ...RequiredUserIdSchema.shape,
+  docType: z.literal('task').default('task'),
+  /**
+   * What happens when:
+   *
+   * - A task is shared that has sub tasks? All the subtasks are shared as well from the frontend. This in case the frontend fails to make a connection to the backend, the state will still be correct.
+   * - A subtask of a shared task is deleted? It is deleted like normal
+   * - A user that has been shared a task adds a subtask? The subtask gets the same owner as the parent shared task.
+   * - A shared task with subtasks is unshared? The frontend will need to make the updates and send them to the backend.
+   * - A user removes a collaborator and they have shared tasks with that
+   * collaborator? Nothing happens to the tasks. That way, if they add the
+   * collaborator back it will return to normal. But the frontend needs to
+   * double check for this when displaying things.
+   */
+  sharedWith: z.array(z.uuidv7().transform((val) => val as UUID)).default([]),
+  /**
+   * The user ID that this task is assigned to.
+   */
+  assignedTo: z
+    .uuidv7()
+    .transform((val) => val as UUID)
+    .optional(),
+  /**
+   * The recurrence info for this task if there is any.
+   */
+  recurrenceInfo: RecurrenceInfoSchema.optional(),
+  /**
+   * The recurring task info for the parent recurring task if there is one.
+   *
+   * If this is set, then the current tasks's recurrence info should be the
+   * same as the parent recurring task.
+   */
+  parentRecurringTaskInfo: ParentRecurringTaskInfoSchema.optional(),
+  /**
+   * The title of the task.
+   */
+  title: z.string().default(''),
+  completed: z.boolean().default(false),
+  /**
+   * The ID of the parent task if there is one.
+   */
+  parentTaskId: z
+    .uuidv7()
+    .transform((val) => val as UUID)
+    .optional(),
+  /**
+   * The description of the task. This is purposefully optional in case the
+   * user wants to just use the title. This also helps the frontend
+   * differentiate between a task that has no description and a task that has
+   * an empty description.
+   */
+  description: z.string().optional(),
+  /**
+   * The date this task was created.
+   */
+  createdDate: z.date().default(() => new Date()),
+  /**
+   * The date this task was last updated.
+   */
+  lastUpdatedDate: z.date().default(() => new Date()),
+  startDate: z.date().optional(),
+  dueDate: z.date().optional(),
+  /**
+   * User-assigned tags for this task.
+   */
+  tags: z.record(z.string(), z.array(z.string()).optional()).default({}),
+  /**
+   * System-assigned category for this task. This should be used to determine
+   * where this task should be displayed.
+   */
+  category: z.string().default('default'),
+  /**
+   * The filter settings for subtasks of this task specifically, keyed on
+   * each user.
+   */
+  filterSettings: DashboardTaskFilterSettingsSchema.default({}),
+  /**
+   * The sort settings for subtasks of this task specifically, keyed on
+   * each user.
+   */
+  sortSettings: DashboardTaskSortSettingsSchema.default({})
+});
 
 /**
  * A utility type for a map of tasks.
@@ -68,110 +124,4 @@ export type DashboardTaskMap = DocumentMap<DashboardTask>;
  * - The user sets a task as recurring with a frequency? Only that task is marked, because when the recurrence comes up, the frontend will update that task and all sub tasks.
  * - The date + time for the recurrence happens? If the users browser is open, the frontend will trigger the update ideally. This needs to be checked if this can be done in a performant way.
  */
-export default class DashboardTask extends BaseDocumentWithType implements RequiredUserId {
-  static docType = 'task';
-
-  docType = DashboardTask.docType;
-
-  /**
-   * The owner of this task.
-   */
-  userId: UUID;
-
-  /**
-   * What happens when:
-   *
-   * - A task is shared that has sub tasks? All the subtasks are shared as well from the frontend. This in case the frontend fails to make a connection to the backend, the state will still be correct.
-   * - A subtask of a shared task is deleted? It is deleted like normal
-   * - A user that has been shared a task adds a subtask? The subtask gets the same owner as the parent shared task.
-   * - A shared task with subtasks is unshared? The frontend will need to make the updates and send them to the backend.
-   * - A user removes a collaborator and they have shared tasks with that
-   * collaborator? Nothing happens to the tasks. That way, if they add the
-   * collaborator back it will return to normal. But the frontend needs to
-   * double check for this when displaying things.
-   */
-  sharedWith: UUID[] = [];
-
-  /**
-   * The user ID that this task is assigned to.
-   */
-  assignedTo?: UUID;
-
-  /**
-   * The recurrence info for this task if there is any.
-   */
-  recurrenceInfo?: RecurrenceInfo;
-
-  /**
-   * The recurring task info for the parent recurring task if there is one.
-   *
-   * If this is set, then the current tasks's recurrence info should be the
-   * same as the parent recurring task.
-   */
-  parentRecurringTaskInfo?: ParentRecurringTaskInfo;
-
-  /**
-   * The title of the task.
-   */
-  title = '';
-
-  completed = false;
-
-  /**
-   * The ID of the parent task if there is one.
-   */
-  parentTaskId?: UUID;
-
-  /**
-   * The description of the task. This is purposefully optional in case the
-   * user wants to just use the title. This also helps the frontend
-   * differentiate between a task that has no description and a task that has
-   * an empty description.
-   */
-  description?: string;
-
-  /**
-   * The date this task was created.
-   */
-  createdDate: Date = new Date();
-
-  /**
-   * The date this task was last updated.
-   */
-  lastUpdatedDate: Date = new Date();
-
-  startDate?: Date;
-
-  dueDate?: Date;
-
-  /**
-   * User-assigned tags for this task.
-   */
-  tags: { [userId: UUID]: string[] | undefined } = {};
-
-  /**
-   * System-assigned category for this task. This should be used to determine
-   * where this task should be displayed.
-   */
-  category: string = 'default';
-
-  /**
-   * The filter settings for subtasks of this task specifically, keyed on
-   * each user.
-   */
-  filterSettings: DashboardTaskFilterSettings = {};
-
-  /**
-   * The sort settings for subtasks of this task specifically, keyed on
-   * each user.
-   */
-  sortSettings: DashboardTaskSortSettings = {};
-
-  constructor(ownerId: UUID) {
-    super();
-    this.userId = ownerId;
-    this.tags = {
-      [ownerId]: []
-    };
-  }
-}
+export type DashboardTask = z.infer<typeof DashboardTaskSchema>;

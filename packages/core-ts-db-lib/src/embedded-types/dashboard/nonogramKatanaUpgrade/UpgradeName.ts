@@ -1,3 +1,5 @@
+import { z } from 'zod';
+
 /**
  * Enum for nonogram katana upgrade names.
  */
@@ -262,5 +264,10 @@ enum NonogramKatanaUpgradeName {
   DungeonAbilityTrapsIndifference = 'dungeonAbilityTrapsIndifference',
   DungeonAbilityTrapsAgility = 'dungeonAbilityTrapsAgility'
 }
+
+/**
+ * Zod schema for {@link NonogramKatanaUpgradeName}.
+ */
+export const NonogramKatanaUpgradeNameSchema = z.enum(NonogramKatanaUpgradeName);
 
 export default NonogramKatanaUpgradeName;

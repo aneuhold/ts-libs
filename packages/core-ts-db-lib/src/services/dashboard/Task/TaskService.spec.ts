@@ -1,6 +1,6 @@
 import type { UUID } from 'crypto';
 import { describe, expect, it } from 'vitest';
-import DashboardTask from '../../../documents/dashboard/Task.js';
+import { type DashboardTask, DashboardTaskSchema } from '../../../documents/dashboard/Task.js';
 import type { DashboardTaskListFilterSettings } from '../../../embedded-types/dashboard/task/FilterSettings.js';
 import {
   RecurrenceBasis,
@@ -126,8 +126,8 @@ describe('DashboardTaskService', () => {
 
   describe('updateDatesForRecurrence', () => {
     describe('Start date basis', () => {
-      it('should update the start date correctly for a daily recurrence', () => {
-        const task = new DashboardTask(DocumentService.generateID());
+      it('should update the start date and due date for a daily recurrence', () => {
+        const task = DashboardTaskSchema.parse({ userId: DocumentService.generateID() });
         task.startDate = new Date(2024, 0, 1);
         task.recurrenceInfo = {
           frequency: {
@@ -145,7 +145,7 @@ describe('DashboardTaskService', () => {
       });
 
       it('should update the start date correctly for daily recurrence on subtask', () => {
-        const task = new DashboardTask(DocumentService.generateID());
+        const task = DashboardTaskSchema.parse({ userId: DocumentService.generateID() });
         task.startDate = new Date(2024, 0, 8);
         task.dueDate = new Date(2024, 0, 13);
         task.recurrenceInfo = {
@@ -169,7 +169,7 @@ describe('DashboardTaskService', () => {
       });
 
       it('should update the start date correctly for a weekly recurrence', () => {
-        const task = new DashboardTask(DocumentService.generateID());
+        const task = DashboardTaskSchema.parse({ userId: DocumentService.generateID() });
         task.startDate = new Date(2024, 0, 1);
         task.recurrenceInfo = {
           frequency: {
@@ -187,7 +187,7 @@ describe('DashboardTaskService', () => {
       });
 
       it('should update the start and due date correctly for a weekDaySet reccurence', () => {
-        const task = new DashboardTask(DocumentService.generateID());
+        const task = DashboardTaskSchema.parse({ userId: DocumentService.generateID() });
         task.startDate = new Date(2024, 0, 1, 11);
         task.dueDate = new Date(2024, 0, 4, 23, 59);
         task.recurrenceInfo = {
@@ -204,7 +204,7 @@ describe('DashboardTaskService', () => {
       });
 
       it('should update the start and due date correctly for a everyXWeekdayOfMonth reccurence', () => {
-        const task = new DashboardTask(DocumentService.generateID());
+        const task = DashboardTaskSchema.parse({ userId: DocumentService.generateID() });
         task.startDate = new Date(2024, 0, 1, 11);
         task.dueDate = new Date(2024, 0, 4, 23, 59);
         task.recurrenceInfo = {
@@ -590,7 +590,7 @@ function setupSortAndFilterTest(numTasks = 5) {
 function createTasksList(numTasks: number, userId: UUID): DashboardTask[] {
   const tasks: DashboardTask[] = [];
   for (let i = 0; i < numTasks; i += 1) {
-    const task = new DashboardTask(userId);
+    const task = DashboardTaskSchema.parse({ userId });
     tasks.push(task);
   }
   return tasks;

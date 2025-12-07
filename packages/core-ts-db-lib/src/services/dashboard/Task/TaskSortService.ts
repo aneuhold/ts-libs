@@ -1,6 +1,5 @@
 import type { UUID } from 'crypto';
-import type { DashboardTaskMap } from '../../../documents/dashboard/Task.js';
-import DashboardTask from '../../../documents/dashboard/Task.js';
+import type { DashboardTask, DashboardTaskMap } from '../../../documents/dashboard/Task.js';
 import type { DashboardTaskListSortSettings } from '../../../embedded-types/dashboard/task/SortSettings.js';
 import {
   DashboardTaskSortBy,

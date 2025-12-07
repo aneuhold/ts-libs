@@ -1,3 +1,5 @@
+import { z } from 'zod';
+
 /**
  * Nonogram Katana item name enum.
  */
@@ -96,5 +98,10 @@ enum NonogramKatanaItemName {
   TreasureMapLvl3 = 'treasureMapLvl3',
   SamaruiArmor = 'samaruiArmor'
 }
+
+/**
+ * Zod schema for {@link NonogramKatanaItemName}.
+ */
+export const NonogramKatanaItemNameSchema = z.enum(NonogramKatanaItemName);
 
 export default NonogramKatanaItemName;
