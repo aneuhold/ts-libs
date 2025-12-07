@@ -20,9 +20,13 @@ export default class PackageService {
    *
    * **Warning:** This method uses simple string replacement for package names, which may have unintended effects
    * if the package name appears in unexpected places. Use with caution.
+   * @param allowSlowTypes Whether to allow slow types during validation
    */
-  static async validateJsrPublish(alternativePackageNames?: string[]): Promise<void> {
-    return JsrPackageService.validatePublish(alternativePackageNames);
+  static async validateJsrPublish(
+    alternativePackageNames?: string[],
+    allowSlowTypes = false
+  ): Promise<void> {
+    return JsrPackageService.validatePublish(alternativePackageNames, allowSlowTypes);
   }
 
   /**

@@ -2,7 +2,7 @@
   "name": "@aneuhold/local-npm-registry",
   "author": "Anton G. Neuhold Jr.",
   "license": "MIT",
-  "version": "0.2.19",
+  "version": "0.2.20",
   "description": "Manages local npm package installations and updates across your machine.",
   "packageManager": "pnpm@10.12.1",
   "type": "module",
@@ -53,7 +53,7 @@
     "registry"
   ],
   "dependencies": {
-    "@aneuhold/core-ts-lib": "^2.3.12",
+    "@aneuhold/core-ts-lib": "^2.3.13",
     "commander": "^14.0.2",
     "execa": "^9.6.0",
     "fs-extra": "^11.3.2",
