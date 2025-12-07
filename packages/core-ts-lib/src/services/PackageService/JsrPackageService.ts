@@ -26,8 +26,12 @@ export default class JsrPackageService {
    *
    * **Warning:** This method uses simple string replacement for package names, which may have unintended effects
    * if the package name appears in unexpected places. Use with caution.
+   * @param allowSlowTypes Whether to allow slow types during publishing
    */
-  static async validatePublish(alternativePackageNames?: string[]): Promise<void> {
+  static async validatePublish(
+    alternativePackageNames?: string[],
+    allowSlowTypes = false
+  ): Promise<void> {
     const { packageName: originalPackageName, version: currentVersion } =
       await PackageServiceUtils.getPackageInfo();
 
@@ -46,7 +50,11 @@ export default class JsrPackageService {
 
       await this.replaceMonorepoImportsWithNpmSpecifiers();
       const { version } = await JsrPackageService.updateJsrFromPackageJson();
-      const successfulDryRun = await JsrPackageService.publishDryRun(packageName, version);
+      const successfulDryRun = await JsrPackageService.publishDryRun(
+        packageName,
+        version,
+        allowSlowTypes
+      );
 
       await PackageServiceUtils.resetGitChanges();
 
@@ -153,17 +161,21 @@ export default class JsrPackageService {
    *
    * @param packageName The package name from jsr.json
    * @param currentVersion The current version from package.json
+   * @param allowSlowTypes Whether to allow slow types during publishing
    */
   private static async publishDryRun(
     packageName: string,
-    currentVersion: string
+    currentVersion: string,
+    allowSlowTypes = false
   ): Promise<boolean> {
     // Check for existing versions on JSR first
     await JsrPackageService.checkVersionConflicts(packageName, currentVersion);
 
     DR.logger.info('Running `jsr publish --dry-run`');
     try {
-      const { stdout, stderr } = await execAsync('jsr publish --allow-dirty --dry-run');
+      const { stdout, stderr } = await execAsync(
+        'jsr publish --allow-dirty --dry-run' + (allowSlowTypes ? ' --allow-slow-types' : '')
+      );
       if (stderr) {
         DR.logger.info(stderr);
       }
@@ -183,7 +195,7 @@ export default class JsrPackageService {
   private static async publishToJsr(): Promise<boolean> {
     DR.logger.info('Running `jsr publish`');
     return new Promise((resolve) => {
-      const child = spawn('jsr publish', ['--allow-dirty'], {
+      const child = spawn('jsr publish', ['--allow-dirty', '--allow-slow-types'], {
         stdio: 'inherit',
         shell: true
       });
