@@ -7,13 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## 🔖 [2.3.13] (2025-12-07)
 
-### ✅ Added
-
 ### 🏗️ Changed
 
-### 🩹 Fixed
-
-### 🔥 Removed
+- Updated all type imports to use `import type` for improved clarity and build performance.
+- Updated dependencies: now requires `prettier@^3.7.4`, `tsx@^4.21.0`, and `vitest@^4.0.15`.
 
 ## 🔖 [2.3.12] (2025-12-03)
 
@@ -154,6 +151,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Updated workflow permissions to allow repository write access
 
 <!-- Link References -->
+
 [2.3.13]: https://github.com/aneuhold/ts-libs/compare/core-ts-lib-v2.3.12...core-ts-lib-v2.3.13
 [2.3.12]: https://github.com/aneuhold/ts-libs/compare/core-ts-lib-v2.3.11...core-ts-lib-v2.3.12
 [2.3.11]: https://github.com/aneuhold/ts-libs/compare/core-ts-lib-v2.3.10...core-ts-lib-v2.3.11

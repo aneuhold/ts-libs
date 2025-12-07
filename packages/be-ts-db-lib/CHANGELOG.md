@@ -9,11 +9,27 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### ✅ Added
 
+- Added Zod-based schemas and validation for all document and repository types.
+- Added new tests for repository and validator logic using Zod schemas.
+
 ### 🏗️ Changed
+
+- _Breaking Change:_ Migrated all document, repository, and validator code from legacy validation utilities to Zod schemas.
+- _Breaking Change:_ All type-only imports now use `import type` for clarity and build performance.
+- Refactored repository, service, and validator files to use new Zod-based validation and schemas.
+- Updated dependencies: now requires `@aneuhold/core-ts-db-lib@^4.0.0`, `@aneuhold/core-ts-lib@^2.3.13`, `@aneuhold/be-ts-lib@^3.0.3`, `zod@^4.1.13`, and `@aneuhold/local-npm-registry@^0.2.20`.
+- Updated dev dependencies for compatibility: `prettier`, `tsx`, and `vitest`.
+- Improved test coverage for partial updates and edge cases in repositories.
 
 ### 🩹 Fixed
 
+- Fixed issues with partial updates not clearing or preserving fields as expected.
+- Fixed bugs in migration and document creation logic for user-related entities.
+
 ### 🔥 Removed
+
+- _Breaking Change:_ Removed all legacy validation utilities and type-guard helpers in favor of Zod schemas.
+- Removed unused files and legacy test utilities.
 
 ## 🔖 [3.0.3] (2025-11-29)
 
@@ -129,6 +145,7 @@ Updated dependencies: now requires `@aneuhold/core-ts-db-lib@^3.0.0`, `@aneuhold
 - Updated workflow permissions to allow repository write access
 
 <!-- Link References -->
+
 [4.0.0]: https://github.com/aneuhold/ts-libs/compare/be-ts-db-lib-v3.0.3...be-ts-db-lib-v4.0.0
 [3.0.3]: https://github.com/aneuhold/ts-libs/compare/be-ts-db-lib-v3.0.2...be-ts-db-lib-v3.0.3
 [3.0.2]: https://github.com/aneuhold/ts-libs/compare/be-ts-db-lib-v3.0.1...be-ts-db-lib-v3.0.2
