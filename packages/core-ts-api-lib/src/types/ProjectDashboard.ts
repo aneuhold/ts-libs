@@ -1,9 +1,9 @@
-import type { UserCTO } from '@aneuhold/core-ts-db-lib';
-import {
+import type {
   DashboardTask,
   DashboardUserConfig,
   NonogramKatanaItem,
-  NonogramKatanaUpgrade
+  NonogramKatanaUpgrade,
+  UserCTO
 } from '@aneuhold/core-ts-db-lib';
 import type { UUID } from 'crypto';
 import type { Translations } from './Translations.js';
