@@ -53,7 +53,7 @@
     "registry"
   ],
   "dependencies": {
-    "@aneuhold/core-ts-lib": "^2.3.12",
+    "@aneuhold/core-ts-lib": "^2.3.13",
     "commander": "^14.0.2",
     "execa": "^9.6.0",
     "fs-extra": "^11.3.2",
