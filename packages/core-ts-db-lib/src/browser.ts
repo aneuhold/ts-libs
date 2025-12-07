@@ -45,7 +45,6 @@ import type {
 } from './embedded-types/dashboard/userConfig/Tags.js';
 import type { RequiredUserId } from './schemas/required-refs/RequiredUserId.js';
 import { RequiredUserIdSchema } from './schemas/required-refs/RequiredUserId.js';
-import type { DocumentValidator } from './schemas/validators/DocumentValidator.js';
 import type { DocumentMap } from './services/DocumentService.js';
 import DocumentService from './services/DocumentService.js';
 import type { DashboardTaskFilterAndSortResult } from './services/dashboard/Task/TaskService.js';
@@ -93,7 +92,6 @@ export type {
   DashboardTaskSortSettings,
   DashboardUserConfig,
   DocumentMap,
-  DocumentValidator,
   NonogramKatanaItem,
   NonogramKatanaUpgrade,
   ParentRecurringTaskInfo,
