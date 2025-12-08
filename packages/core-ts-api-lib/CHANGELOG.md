@@ -160,6 +160,7 @@ No direct code changes; version bump for compatibility.
 
 <!-- Link References -->
 
+[3.0.5]: https://github.com/aneuhold/ts-libs/compare/core-ts-api-lib-v3.0.4...core-ts-api-lib-v3.0.5
 [3.0.4]: https://github.com/aneuhold/ts-libs/compare/core-ts-api-lib-v3.0.3...core-ts-api-lib-v3.0.4
 [3.0.3]: https://github.com/aneuhold/ts-libs/compare/core-ts-api-lib-v3.0.2...core-ts-api-lib-v3.0.3
 [3.0.2]: https://github.com/aneuhold/ts-libs/compare/core-ts-api-lib-v3.0.1...core-ts-api-lib-v3.0.2

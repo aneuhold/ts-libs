@@ -158,6 +158,7 @@ Updated dependencies: now requires `@aneuhold/core-ts-db-lib@^3.0.0`, `@aneuhold
 
 <!-- Link References -->
 
+[4.0.1]: https://github.com/aneuhold/ts-libs/compare/be-ts-db-lib-v4.0.0...be-ts-db-lib-v4.0.1
 [4.0.0]: https://github.com/aneuhold/ts-libs/compare/be-ts-db-lib-v3.0.4...be-ts-db-lib-v4.0.0
 [3.0.4]: https://github.com/aneuhold/ts-libs/compare/be-ts-db-lib-v3.0.3...be-ts-db-lib-v3.0.4
 [3.0.3]: https://github.com/aneuhold/ts-libs/compare/be-ts-db-lib-v3.0.2...be-ts-db-lib-v3.0.3
