@@ -45,7 +45,7 @@ importers:
         specifier: ^3.0.4
         version: link:../be-ts-lib
       '@aneuhold/core-ts-db-lib':
-        specifier: ^4.0.0
+        specifier: ^4.0.1
         version: link:../core-ts-db-lib
       '@aneuhold/core-ts-lib':
         specifier: ^2.3.14
@@ -161,7 +161,7 @@ importers:
   packages/core-ts-api-lib:
     dependencies:
       '@aneuhold/core-ts-db-lib':
-        specifier: ^4.0.0
+        specifier: ^4.0.1
         version: link:../core-ts-db-lib
       '@aneuhold/core-ts-lib':
         specifier: ^2.3.14
