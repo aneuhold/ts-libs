@@ -21,12 +21,23 @@ import {
   DashboardUserConfig_docType,
   DashboardUserConfigSchema
 } from './documents/dashboard/UserConfig.js';
-import NonogramKatanaItemName from './embedded-types/dashboard/nonogramKatanaItem/ItemName.js';
-import NonogramKatanaUpgradeName from './embedded-types/dashboard/nonogramKatanaUpgrade/UpgradeName.js';
+import NonogramKatanaItemName, {
+  NonogramKatanaItemNameSchema
+} from './embedded-types/dashboard/nonogramKatanaItem/ItemName.js';
+import NonogramKatanaUpgradeName, {
+  NonogramKatanaUpgradeNameSchema
+} from './embedded-types/dashboard/nonogramKatanaUpgrade/UpgradeName.js';
 import type {
   DashboardTaskFilterSettings,
   DashboardTaskListFilterSettings,
-  DashboardTaskListGlobalFilterSettings
+  DashboardTaskListGlobalFilterSettings,
+  StandardFilterSetting
+} from './embedded-types/dashboard/task/FilterSettings.js';
+import {
+  DashboardTaskFilterSettingsSchema,
+  DashboardTaskListFilterSettingsSchema,
+  DashboardTaskListGlobalFilterSettingsSchema,
+  StandardFilterSettingSchema
 } from './embedded-types/dashboard/task/FilterSettings.js';
 import type {
   ParentRecurringTaskInfo,
@@ -34,9 +45,15 @@ import type {
   RecurrenceInfo
 } from './embedded-types/dashboard/task/RecurrenceInfo.js';
 import {
+  ParentRecurringTaskInfoSchema,
   RecurrenceBasis,
+  RecurrenceBasisSchema,
   RecurrenceEffect,
-  RecurrenceFrequencyType
+  RecurrenceEffectSchema,
+  RecurrenceFrequencySchema,
+  RecurrenceFrequencyType,
+  RecurrenceFrequencyTypeSchema,
+  RecurrenceInfoSchema
 } from './embedded-types/dashboard/task/RecurrenceInfo.js';
 import type {
   DashboardTaskListGlobalSortSettings,
@@ -45,12 +62,22 @@ import type {
   DashboardTaskSortSettings
 } from './embedded-types/dashboard/task/SortSettings.js';
 import {
+  DashboardTaskListGlobalSortSettingsSchema,
+  DashboardTaskListSortSettingsSchema,
   DashboardTaskSortBy,
-  DashboardTaskSortDirection
+  DashboardTaskSortBySchema,
+  DashboardTaskSortDirection,
+  DashboardTaskSortDirectionSchema,
+  DashboardTaskSortSettingSchema,
+  DashboardTaskSortSettingsSchema
 } from './embedded-types/dashboard/task/SortSettings.js';
 import type {
   DashboardTagSetting,
   DashboardTagSettings
+} from './embedded-types/dashboard/userConfig/Tags.js';
+import {
+  DashboardTagSettingSchema,
+  DashboardTagSettingsSchema
 } from './embedded-types/dashboard/userConfig/Tags.js';
 import type { RequiredUserId } from './schemas/required-refs/RequiredUserId.js';
 import { RequiredUserIdSchema } from './schemas/required-refs/RequiredUserId.js';
@@ -64,24 +91,44 @@ export {
   ApiKeySchema,
   BaseDocumentSchema,
   BaseDocumentWithTypeSchema,
+  DashboardTagSettingSchema,
+  DashboardTagSettingsSchema,
   DashboardTask_docType,
+  DashboardTaskFilterSettingsSchema,
+  DashboardTaskListFilterSettingsSchema,
+  DashboardTaskListGlobalFilterSettingsSchema,
+  DashboardTaskListGlobalSortSettingsSchema,
+  DashboardTaskListSortSettingsSchema,
   DashboardTaskSchema,
   DashboardTaskService,
   DashboardTaskSortBy,
+  DashboardTaskSortBySchema,
   DashboardTaskSortDirection,
+  DashboardTaskSortDirectionSchema,
+  DashboardTaskSortSettingSchema,
+  DashboardTaskSortSettingsSchema,
   DashboardUserConfig_docType,
   DashboardUserConfigSchema,
   DocumentService,
   NonogramKatanaItem_docType,
   NonogramKatanaItemName,
+  NonogramKatanaItemNameSchema,
   NonogramKatanaItemSchema,
   NonogramKatanaUpgrade_docType,
   NonogramKatanaUpgradeName,
+  NonogramKatanaUpgradeNameSchema,
   NonogramKatanaUpgradeSchema,
+  ParentRecurringTaskInfoSchema,
   RecurrenceBasis,
+  RecurrenceBasisSchema,
   RecurrenceEffect,
+  RecurrenceEffectSchema,
+  RecurrenceFrequencySchema,
   RecurrenceFrequencyType,
+  RecurrenceFrequencyTypeSchema,
+  RecurrenceInfoSchema,
   RequiredUserIdSchema,
+  StandardFilterSettingSchema,
   UserCTOSchema,
   UserSchema
 };
@@ -111,6 +158,7 @@ export type {
   RecurrenceFrequency,
   RecurrenceInfo,
   RequiredUserId,
+  StandardFilterSetting,
   User,
   UserCTO
 };
