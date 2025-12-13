@@ -67,7 +67,7 @@ export const DashboardUserConfigSchema = z.object({
    */
   taskListSortSettings: DashboardTaskListGlobalSortSettingsSchema.default({}),
   /**
-   * The global filter settings for the user's task list.
+   * The global filter settings for the user's task list. Keyed on the category.
    */
   taskListFilterSettings: DashboardTaskListGlobalFilterSettingsSchema.default({})
 });

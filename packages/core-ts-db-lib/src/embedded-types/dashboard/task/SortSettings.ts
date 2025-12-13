@@ -73,7 +73,7 @@ export type DashboardTaskListSortSettings = z.infer<typeof DashboardTaskListSort
 /**
  * Zod schema for {@link DashboardTaskSortSettings}.
  */
-export const DashboardTaskSortSettingsSchema = z.record(
+export const DashboardTaskSortSettingsSchema = z.partialRecord(
   z.uuidv7().transform((val) => val as UUID),
   DashboardTaskListSortSettingsSchema
 );
@@ -87,13 +87,16 @@ export type DashboardTaskSortSettings = z.infer<typeof DashboardTaskSortSettings
 /**
  * Zod schema for {@link DashboardTaskListGlobalSortSettings}.
  */
-export const DashboardTaskListGlobalSortSettingsSchema = z.record(
+export const DashboardTaskListGlobalSortSettingsSchema = z.partialRecord(
+  /**
+   * The category of the task list.
+   */
   z.string(),
   DashboardTaskListSortSettingsSchema
 );
 
 /**
- * Represents the global sort settings for the task list.
+ * Represents the global sort settings for the task list. Keyed on the category.
  */
 export type DashboardTaskListGlobalSortSettings = z.infer<
   typeof DashboardTaskListGlobalSortSettingsSchema

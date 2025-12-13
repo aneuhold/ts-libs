@@ -19,7 +19,13 @@ export type DashboardTagSetting = z.infer<typeof DashboardTagSettingSchema>;
 /**
  * Zod schema for {@link DashboardTagSettings}.
  */
-export const DashboardTagSettingsSchema = z.record(z.string(), DashboardTagSettingSchema);
+export const DashboardTagSettingsSchema = z.partialRecord(
+  /**
+   * The name of the tag.
+   */
+  z.string(),
+  DashboardTagSettingSchema
+);
 
 /**
  * Represents the settings for all tags, keyed on the tag name.

@@ -29,7 +29,7 @@ export const DashboardTaskListFilterSettingsSchema = z.object({
   /**
    * The default for tags, if not defined, is to show them.
    */
-  tags: z.record(z.string(), StandardFilterSettingSchema).default({})
+  tags: z.partialRecord(z.string(), StandardFilterSettingSchema).default({})
 });
 
 /**
@@ -43,7 +43,7 @@ export type DashboardTaskListFilterSettings = z.infer<typeof DashboardTaskListFi
 /**
  * Zod schema for {@link DashboardTaskFilterSettings}.
  */
-export const DashboardTaskFilterSettingsSchema = z.record(
+export const DashboardTaskFilterSettingsSchema = z.partialRecord(
   z.uuidv7().transform((val) => val as UUID),
   DashboardTaskListFilterSettingsSchema
 );
@@ -57,14 +57,17 @@ export type DashboardTaskFilterSettings = z.infer<typeof DashboardTaskFilterSett
 /**
  * Zod schema for {@link DashboardTaskListGlobalFilterSettings}.
  */
-export const DashboardTaskListGlobalFilterSettingsSchema = z.record(
+export const DashboardTaskListGlobalFilterSettingsSchema = z.partialRecord(
+  /**
+   * The category of the task list filter settings.
+   */
   z.string(),
   DashboardTaskListFilterSettingsSchema
 );
 
 /**
  * Global task list filter settings. These are created for each user in the
- * Dashboard config.
+ * Dashboard config. This is keyed on the category.
  */
 export type DashboardTaskListGlobalFilterSettings = z.infer<
   typeof DashboardTaskListGlobalFilterSettingsSchema

@@ -33,6 +33,8 @@ Follow this general flow when making updates to any package in the monorepo:
    pnpm preparePkg
    ```
 
+   > You may need to run this multiple times in order for it to correctly propagate version changes all the way through.
+
 1. **Commit your changes** if there are any remaining uncommitted changes:
 
    ```bash
