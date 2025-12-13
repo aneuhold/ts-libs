@@ -1,23 +1,17 @@
 import type { NonogramKatanaUpgrade, User } from '@aneuhold/core-ts-db-lib';
 import { NonogramKatanaUpgrade_docType } from '@aneuhold/core-ts-db-lib';
-import type { UUID } from 'crypto';
 import type { RepoListeners } from '../../services/RepoSubscriptionService.js';
-import CleanDocument from '../../util/DocumentCleaner.js';
 import DashboardNonogramKatanaUpgradeValidator from '../../validators/dashboard/NonogramKatanaUpgradeValidator.js';
-import DashboardBaseRepository from './DashboardBaseRepository.js';
+import DashboardBaseWithUserIdRepository from './DashboardBaseWithUserIdRepository.js';
 
 /**
  * The repository that contains {@link NonogramKatanaUpgrade} documents.
  */
-export default class DashboardNonogramKatanaUpgradeRepository extends DashboardBaseRepository<NonogramKatanaUpgrade> {
+export default class DashboardNonogramKatanaUpgradeRepository extends DashboardBaseWithUserIdRepository<NonogramKatanaUpgrade> {
   private static singletonInstance: DashboardNonogramKatanaUpgradeRepository | undefined;
 
   private constructor() {
-    super(
-      NonogramKatanaUpgrade_docType,
-      new DashboardNonogramKatanaUpgradeValidator(),
-      CleanDocument.userId
-    );
+    super(NonogramKatanaUpgrade_docType, new DashboardNonogramKatanaUpgradeValidator());
   }
 
   static getListenersForUserRepo(): RepoListeners<User> {
@@ -53,19 +47,5 @@ export default class DashboardNonogramKatanaUpgradeRepository extends DashboardB
         new DashboardNonogramKatanaUpgradeRepository();
     }
     return DashboardNonogramKatanaUpgradeRepository.singletonInstance;
-  }
-
-  /**
-   * Gets all Nonogram Katana upgrades for a given user.
-   *
-   * @param userId The ID of the user to get upgrades for.
-   */
-  async getAllForUser(userId: UUID): Promise<NonogramKatanaUpgrade[]> {
-    const collection = await DashboardNonogramKatanaUpgradeRepository.getRepo().getCollection();
-    const filter = {
-      $and: [this.getFilterWithDefault(), { userId }]
-    };
-    const result = await collection.find(filter).toArray();
-    return result;
   }
 }

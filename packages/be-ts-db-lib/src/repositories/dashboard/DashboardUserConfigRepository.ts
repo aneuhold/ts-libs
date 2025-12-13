@@ -5,12 +5,12 @@ import type { AnyBulkWriteOperation, BulkWriteResult, UpdateResult } from 'mongo
 import type { RepoListeners } from '../../services/RepoSubscriptionService.js';
 import CleanDocument from '../../util/DocumentCleaner.js';
 import DashboardUserConfigValidator from '../../validators/dashboard/UserConfigValidator.js';
-import DashboardBaseRepository from './DashboardBaseRepository.js';
+import DashboardBaseWithUserIdRepository from './DashboardBaseWithUserIdRepository.js';
 
 /**
  * The repository that contains {@link DashboardUserConfig} documents.
  */
-export default class DashboardUserConfigRepository extends DashboardBaseRepository<DashboardUserConfig> {
+export default class DashboardUserConfigRepository extends DashboardBaseWithUserIdRepository<DashboardUserConfig> {
   private static singletonInstance?: DashboardUserConfigRepository;
 
   /**

@@ -5,13 +5,13 @@ import type { DeleteResult } from 'mongodb';
 import type { RepoListeners } from '../../services/RepoSubscriptionService.js';
 import CleanDocument from '../../util/DocumentCleaner.js';
 import DashboardTaskValidator from '../../validators/dashboard/TaskValidator.js';
-import DashboardBaseRepository from './DashboardBaseRepository.js';
+import DashboardBaseWithUserIdRepository from './DashboardBaseWithUserIdRepository.js';
 import DashboardUserConfigRepository from './DashboardUserConfigRepository.js';
 
 /**
  * The repository that contains {@link DashboardTask} documents.
  */
-export default class DashboardTaskRepository extends DashboardBaseRepository<DashboardTask> {
+export default class DashboardTaskRepository extends DashboardBaseWithUserIdRepository<DashboardTask> {
   private static singletonInstance?: DashboardTaskRepository;
 
   /**
@@ -108,7 +108,7 @@ export default class DashboardTaskRepository extends DashboardBaseRepository<Das
    * @param userId The ID of the user to get tasks for.
    * @returns The list of tasks for the user.
    */
-  async getAllForUser(userId: UUID): Promise<DashboardTask[]> {
+  override async getAllForUser(userId: UUID): Promise<DashboardTask[]> {
     const userConfigRepo = DashboardUserConfigRepository.getRepo();
     const userConfig = await userConfigRepo.get({ userId });
     if (!userConfig) {
