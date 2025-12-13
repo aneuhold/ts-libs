@@ -1,4 +1,4 @@
-import { randomUUID } from 'crypto';
+import { randomUUID, type UUID } from 'crypto';
 import { z } from 'zod';
 import { RequiredUserIdSchema } from '../../schemas/required-refs/RequiredUserId.js';
 
@@ -9,7 +9,10 @@ export const ApiKeySchema = RequiredUserIdSchema.extend({
   /**
    * The API key for the user. This is indexed in the DB.
    */
-  key: z.uuid().default(() => randomUUID())
+  key: z
+    .uuid()
+    .transform((x) => x as UUID)
+    .default(() => randomUUID())
 });
 
 /**

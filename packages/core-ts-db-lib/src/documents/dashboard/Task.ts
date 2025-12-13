@@ -86,9 +86,9 @@ export const DashboardTaskSchema = z.object({
    * User-assigned tags for this task.
    */
   tags: z
-    .record(
+    .partialRecord(
       z.uuidv7().transform((id) => id as UUID),
-      z.array(z.string()).nullish()
+      z.array(z.string())
     )
     .default({}),
   /**
