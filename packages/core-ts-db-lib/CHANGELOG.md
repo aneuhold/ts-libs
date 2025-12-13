@@ -7,13 +7,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## 🔖 [4.0.2] (2025-12-13)
 
-### ✅ Added
-
 ### 🏗️ Changed
+
+- Updated all dashboard filter, sort, and tag schemas to use `z.partialRecord` for improved type safety and flexibility.
+- Improved documentation for dashboard user config and embedded types.
 
 ### 🩹 Fixed
 
-### 🔥 Removed
+- Fixed dashboard schemas to ensure correct default values and prevent undefined errors for tags and filter settings.
 
 ## 🔖 [4.0.1] (2025-12-08)
 
@@ -171,6 +172,7 @@ Updated dependency: now requires `@aneuhold/core-ts-lib@^2.3.11`.
 - Updated workflow permissions to allow repository write access
 
 <!-- Link References -->
+
 [4.0.2]: https://github.com/aneuhold/ts-libs/compare/core-ts-db-lib-v4.0.1...core-ts-db-lib-v4.0.2
 [4.0.1]: https://github.com/aneuhold/ts-libs/compare/core-ts-db-lib-v4.0.0...core-ts-db-lib-v4.0.1
 [4.0.0]: https://github.com/aneuhold/ts-libs/compare/core-ts-db-lib-v3.0.3...core-ts-db-lib-v4.0.0
