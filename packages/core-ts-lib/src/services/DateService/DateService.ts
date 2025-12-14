@@ -289,7 +289,7 @@ export default class DateService {
    *
    * @param body the body to revive
    */
-  static reviveDates(body: unknown) {
+  static reviveDatesRecursive(body: unknown) {
     if (body === null || typeof body !== 'object') {
       return;
     }
@@ -305,7 +305,7 @@ export default class DateService {
       if (revivedValue !== value) {
         bodyAsRecord[key] = revivedValue;
       } else if (typeof value === 'object') {
-        this.reviveDates(value);
+        this.reviveDatesRecursive(value);
       }
     }
   }
