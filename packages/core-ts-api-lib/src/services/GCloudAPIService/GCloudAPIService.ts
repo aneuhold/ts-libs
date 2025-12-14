@@ -13,11 +13,22 @@ import type {
  * A service for interacting with the Google Cloud API service for personal projects.
  */
 export default class GCloudAPIService {
+  static readonly defaultUrl: string = 'https://gcloud-backend-926119935605.us-west1.run.app/';
+
   /**
    * The base URL of the Google Cloud API. For example, `something.com/api/`. It will include
    * the trailing slash.
    */
-  static #baseUrl: string = 'https://gcloud-backend-926119935605.us-west1.run.app/';
+  static #baseUrl: string = this.defaultUrl;
+
+  /**
+   * Gets the current URL of the Google Cloud API.
+   *
+   * @returns the current URL of the Google Cloud API.
+   */
+  static getUrl(): string {
+    return this.#baseUrl;
+  }
 
   /**
    * Sets the URL of the Google Cloud API.

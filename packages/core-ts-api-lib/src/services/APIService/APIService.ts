@@ -41,11 +41,25 @@ export default class APIService {
   }
 
   /**
+   * Gets the current base URL for the API.
+   */
+  static getCurrentAPIUrl(): string {
+    return GCloudAPIService.getUrl();
+  }
+
+  /**
    * Sets the base URL for the API.
    *
    * @param url - The URL to be set for the API. This should include a trailing slash.
    */
-  static setAPIUrl(url: string) {
+  static setAPIUrl(url: string): void {
     GCloudAPIService.setUrl(url);
+  }
+
+  /**
+   * Gets the default base URL for the API.
+   */
+  static getDefaultAPIUrl(): string {
+    return GCloudAPIService.defaultUrl;
   }
 }
