@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## 🔖 [0.2.23] (2025-12-14)
+
+### 🏗️ Changed
+- Updated dependency: now requires `@aneuhold/core-ts-lib@^2.3.16`.
+
 ## 🔖 [0.2.22] (2025-12-14)
 
 ### 🏗️ Changed
@@ -135,6 +140,7 @@ No direct code changes; version bump for compatibility.
 - Updated workflow permissions to allow repository write access
 
 <!-- Link References -->
+[0.2.23]: https://github.com/aneuhold/ts-libs/compare/local-npm-registry-v0.2.22...local-npm-registry-v0.2.23
 [0.2.22]: https://github.com/aneuhold/ts-libs/compare/local-npm-registry-v0.2.21...local-npm-registry-v0.2.22
 [0.2.21]: https://github.com/aneuhold/ts-libs/compare/local-npm-registry-v0.2.20...local-npm-registry-v0.2.21
 [0.2.20]: https://github.com/aneuhold/ts-libs/compare/local-npm-registry-v0.2.19...local-npm-registry-v0.2.20

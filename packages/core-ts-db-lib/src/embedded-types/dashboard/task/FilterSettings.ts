@@ -23,9 +23,11 @@ export const DashboardTaskListFilterSettingsSchema = z.object({
   userId: z.uuidv7().transform((val) => val as UUID),
   completed: StandardFilterSettingSchema.default({ show: true }),
   grandChildrenTasks: StandardFilterSettingSchema.default({ show: false }),
-  startDate: z.object({
-    showFutureTasks: z.boolean().default(true)
-  }),
+  startDate: z
+    .object({
+      showFutureTasks: z.boolean().default(true)
+    })
+    .default({ showFutureTasks: true }),
   /**
    * The default for tags, if not defined, is to show them.
    */
