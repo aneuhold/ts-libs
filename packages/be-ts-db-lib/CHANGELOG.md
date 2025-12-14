@@ -8,12 +8,17 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## 🔖 [4.1.0] (2025-12-14)
 
 ### ✅ Added
+- Added doc caching and retrieval strategy to repositories
+- Created base user ID repository for dashboard
 
 ### 🏗️ Changed
+- Updated test scripts to include coverage
+- Updated dependencies for compatibility
 
 ### 🩹 Fixed
+- Fixed import paths in dashboard repositories
 
-### 🔥 Removed
+
 
 ## 🔖 [4.0.2] (2025-12-13)
 

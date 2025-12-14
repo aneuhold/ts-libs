@@ -8,12 +8,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## 🔖 [3.0.7] (2025-12-14)
 
 ### ✅ Added
+- Added websocket types for dashboard communication
 
 ### 🏗️ Changed
+- Updated dependencies for compatibility
 
-### 🩹 Fixed
-
-### 🔥 Removed
 
 ## 🔖 [3.0.6] (2025-12-13)
 
