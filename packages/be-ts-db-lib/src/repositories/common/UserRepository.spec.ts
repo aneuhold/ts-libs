@@ -1,10 +1,10 @@
 import type { User } from '@aneuhold/core-ts-db-lib';
 import { UserSchema } from '@aneuhold/core-ts-db-lib';
 import { afterAll, describe, expect, it } from 'vitest';
-import ApiKeyRepository from '../../../repositories/common/ApiKeyRepository.js';
-import UserRepository from '../../../repositories/common/UserRepository.js';
-import DocumentDb from '../../../util/DocumentDb.js';
-import { cleanupDoc, expectToThrow, getTestUserName } from '../../testsUtil.js';
+import { cleanupDoc, expectToThrow, getTestUserName } from '../../tests/testsUtil.js';
+import DocumentDb from '../../util/DocumentDb.js';
+import ApiKeyRepository from './ApiKeyRepository.js';
+import UserRepository from './UserRepository.js';
 
 const userRepo = UserRepository.getRepo();
 

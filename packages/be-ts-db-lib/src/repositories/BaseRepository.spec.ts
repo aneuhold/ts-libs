@@ -6,12 +6,12 @@ import {
 import type { UUID } from 'crypto';
 import crypto from 'crypto';
 import { afterAll, expect, it } from 'vitest';
-import UserRepository from '../../repositories/common/UserRepository.js';
-import DashboardTaskRepository from '../../repositories/dashboard/DashboardTaskRepository.js';
-import DashboardUserConfigRepository from '../../repositories/dashboard/DashboardUserConfigRepository.js';
-import { DemoAccountsService } from '../../services/DemoAccountsService/index.js';
-import DocumentDb from '../../util/DocumentDb.js';
-import { cleanupDoc, getTestUserName } from '../testsUtil.js';
+import DemoAccountsService from '../services/DemoAccountsService/DemoAccountsService.js';
+import { cleanupDoc, getTestUserName } from '../tests/testsUtil.js';
+import DocumentDb from '../util/DocumentDb.js';
+import UserRepository from './common/UserRepository.js';
+import DashboardTaskRepository from './dashboard/DashboardTaskRepository.js';
+import DashboardUserConfigRepository from './dashboard/DashboardUserConfigRepository.js';
 
 it('can create a new document and delete it', async () => {
   const userRepository = UserRepository.getRepo();
