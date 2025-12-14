@@ -2,11 +2,11 @@ import type { User } from '@aneuhold/core-ts-db-lib';
 import { DashboardTaskSchema, UserSchema } from '@aneuhold/core-ts-db-lib';
 import crypto from 'crypto';
 import { afterAll, describe, expect, it } from 'vitest';
-import UserRepository from '../../../repositories/common/UserRepository.js';
-import DashboardTaskRepository from '../../../repositories/dashboard/DashboardTaskRepository.js';
-import DashboardUserConfigRepository from '../../../repositories/dashboard/DashboardUserConfigRepository.js';
-import DocumentDb from '../../../util/DocumentDb.js';
-import { cleanupDoc, getTestUserName } from '../../testsUtil.js';
+import { cleanupDoc, getTestUserName } from '../../tests/testsUtil.js';
+import DocumentDb from '../../util/DocumentDb.js';
+import UserRepository from '../common/UserRepository.js';
+import DashboardTaskRepository from './DashboardTaskRepository.js';
+import DashboardUserConfigRepository from './DashboardUserConfigRepository.js';
 
 const userRepo = UserRepository.getRepo();
 const taskRepo = DashboardTaskRepository.getRepo();
