@@ -8,12 +8,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## 🔖 [3.0.8] (2025-12-14)
 
 ### ✅ Added
+- Added `APIService.getCurrentAPIUrl()` to retrieve the current API base URL.
 
 ### 🏗️ Changed
-
-### 🩹 Fixed
-
-### 🔥 Removed
+- Updated dependencies: now requires `@aneuhold/core-ts-db-lib@^4.0.4`, `@aneuhold/core-ts-lib@^2.3.16`, and `@aneuhold/local-npm-registry@^0.2.23`.
 
 ## 🔖 [3.0.7] (2025-12-14)
 

@@ -7,13 +7,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## 🔖 [4.0.4] (2025-12-14)
 
-### ✅ Added
-
 ### 🏗️ Changed
-
-### 🩹 Fixed
-
-### 🔥 Removed
+- Updated `DashboardTaskListFilterSettingsSchema.startDate` to default to `{ showFutureTasks: true }`.
+- Updated dependencies: now requires `@aneuhold/core-ts-lib@^2.3.16` and `@aneuhold/local-npm-registry@^0.2.23`.
 
 ## 🔖 [4.0.3] (2025-12-14)
 

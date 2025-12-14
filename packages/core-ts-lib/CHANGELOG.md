@@ -8,12 +8,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## 🔖 [2.3.16] (2025-12-14)
 
 ### ✅ Added
-
-### 🏗️ Changed
-
-### 🩹 Fixed
-
-### 🔥 Removed
+- Added `DateService.reviveDatesRecursive()` to recursively revive dates in objects.
 
 ## 🔖 [2.3.15] (2025-12-14)
 
