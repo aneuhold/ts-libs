@@ -71,7 +71,7 @@
     "Node.js"
   ],
   "dependencies": {
-    "@aneuhold/core-ts-lib": "^2.3.15",
+    "@aneuhold/core-ts-lib": "^2.3.16",
     "uuid": "^13.0.0",
     "zod": "^4.1.13"
   },
