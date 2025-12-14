@@ -283,4 +283,30 @@ export default class DateService {
     }
     return value;
   }
+
+  /**
+   * Recursively revives dates in the provided body. This happens in-place.
+   *
+   * @param body the body to revive
+   */
+  static reviveDates(body: unknown) {
+    if (body === null || typeof body !== 'object') {
+      return;
+    }
+
+    const keys = Object.keys(body);
+    if (keys.length === 0) {
+      return;
+    }
+    const bodyAsRecord = body as Record<string, unknown>;
+    for (const key of Object.keys(bodyAsRecord)) {
+      const value = bodyAsRecord[key];
+      const revivedValue = DateService.dateReviver(key, value);
+      if (revivedValue !== value) {
+        bodyAsRecord[key] = revivedValue;
+      } else if (typeof value === 'object') {
+        this.reviveDates(value);
+      }
+    }
+  }
 }
