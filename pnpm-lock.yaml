@@ -42,13 +42,13 @@ importers:
   packages/be-ts-db-lib:
     dependencies:
       '@aneuhold/be-ts-lib':
-        specifier: ^3.0.6
+        specifier: ^3.0.7
         version: link:../be-ts-lib
       '@aneuhold/core-ts-db-lib':
-        specifier: ^4.0.2
+        specifier: ^4.0.3
         version: link:../core-ts-db-lib
       '@aneuhold/core-ts-lib':
-        specifier: ^2.3.14
+        specifier: ^2.3.15
         version: link:../core-ts-lib
       bson:
         specifier: ^7.0.0
@@ -64,7 +64,7 @@ importers:
         version: 4.1.13
     devDependencies:
       '@aneuhold/local-npm-registry':
-        specifier: ^0.2.21
+        specifier: ^0.2.22
         version: link:../local-npm-registry
       '@aneuhold/main-scripts':
         specifier: ^2.8.0
@@ -109,10 +109,10 @@ importers:
   packages/be-ts-lib:
     dependencies:
       '@aneuhold/core-ts-api-lib':
-        specifier: ^3.0.6
+        specifier: ^3.0.7
         version: link:../core-ts-api-lib
       '@aneuhold/core-ts-lib':
-        specifier: ^2.3.14
+        specifier: ^2.3.15
         version: link:../core-ts-lib
       dotenv:
         specifier: ^17.2.3
@@ -128,7 +128,7 @@ importers:
         version: 5.0.5
     devDependencies:
       '@aneuhold/local-npm-registry':
-        specifier: ^0.2.21
+        specifier: ^0.2.22
         version: link:../local-npm-registry
       '@aneuhold/main-scripts':
         specifier: ^2.8.0
@@ -164,17 +164,17 @@ importers:
   packages/core-ts-api-lib:
     dependencies:
       '@aneuhold/core-ts-db-lib':
-        specifier: ^4.0.2
+        specifier: ^4.0.3
         version: link:../core-ts-db-lib
       '@aneuhold/core-ts-lib':
-        specifier: ^2.3.14
+        specifier: ^2.3.15
         version: link:../core-ts-lib
       bson:
         specifier: ^7.0.0
         version: 7.0.0
     devDependencies:
       '@aneuhold/local-npm-registry':
-        specifier: ^0.2.21
+        specifier: ^0.2.22
         version: link:../local-npm-registry
       '@aneuhold/main-scripts':
         specifier: ^2.8.0
@@ -207,7 +207,7 @@ importers:
   packages/core-ts-db-lib:
     dependencies:
       '@aneuhold/core-ts-lib':
-        specifier: ^2.3.14
+        specifier: ^2.3.15
         version: link:../core-ts-lib
       uuid:
         specifier: ^13.0.0
@@ -217,7 +217,7 @@ importers:
         version: 4.1.13
     devDependencies:
       '@aneuhold/local-npm-registry':
-        specifier: ^0.2.21
+        specifier: ^0.2.22
         version: link:../local-npm-registry
       '@aneuhold/main-scripts':
         specifier: ^2.8.0
@@ -280,7 +280,7 @@ importers:
   packages/local-npm-registry:
     dependencies:
       '@aneuhold/core-ts-lib':
-        specifier: ^2.3.14
+        specifier: ^2.3.15
         version: link:../core-ts-lib
       commander:
         specifier: ^14.0.2
@@ -6657,14 +6657,6 @@ snapshots:
     optionalDependencies:
       vite: 7.2.7(@types/node@24.10.4)(jiti@2.4.2)(tsx@4.21.0)(yaml@2.7.1)
 
-  '@vitest/mocker@4.0.15(vite@7.2.7(@types/node@25.0.2)(jiti@2.4.2)(tsx@4.21.0)(yaml@2.7.1))':
-    dependencies:
-      '@vitest/spy': 4.0.15
-      estree-walker: 3.0.3
-      magic-string: 0.30.21
-    optionalDependencies:
-      vite: 7.2.7(@types/node@25.0.2)(jiti@2.4.2)(tsx@4.21.0)(yaml@2.7.1)
-
   '@vitest/pretty-format@4.0.15':
     dependencies:
       tinyrainbow: 3.0.3
@@ -10140,7 +10132,7 @@ snapshots:
   vitest@4.0.15(@types/node@25.0.2)(jiti@2.4.2)(tsx@4.21.0)(yaml@2.7.1):
     dependencies:
       '@vitest/expect': 4.0.15
-      '@vitest/mocker': 4.0.15(vite@7.2.7(@types/node@25.0.2)(jiti@2.4.2)(tsx@4.21.0)(yaml@2.7.1))
+      '@vitest/mocker': 4.0.15(vite@7.2.7(@types/node@24.10.4)(jiti@2.4.2)(tsx@4.21.0)(yaml@2.7.1))
       '@vitest/pretty-format': 4.0.15
       '@vitest/runner': 4.0.15
       '@vitest/snapshot': 4.0.15
