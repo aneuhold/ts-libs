@@ -1,5 +1,5 @@
 import { expect, it } from 'vitest';
-import DashboardNonogramKatanaUpgradeRepository from '../../../repositories/dashboard/DashboardNonogramKatanaUpgradeRepository.js';
+import DashboardNonogramKatanaUpgradeRepository from './DashboardNonogramKatanaUpgradeRepository.js';
 
 const upgradeRepo = DashboardNonogramKatanaUpgradeRepository.getRepo();
 

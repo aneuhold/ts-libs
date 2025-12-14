@@ -1,43 +1,41 @@
 import type { NonogramKatanaItem, User } from '@aneuhold/core-ts-db-lib';
 import { NonogramKatanaItem_docType } from '@aneuhold/core-ts-db-lib';
-import type { UUID } from 'crypto';
 import type { RepoListeners } from '../../services/RepoSubscriptionService.js';
-import CleanDocument from '../../util/DocumentCleaner.js';
 import DashboardNonogramKatanaItemValidator from '../../validators/dashboard/NonogramKatanaItemValidator.js';
-import DashboardBaseRepository from './DashboardBaseRepository.js';
+import DashboardBaseWithUserIdRepository from './DashboardBaseWithUserIdRepository.js';
 
 /**
  * The repository that contains {@link NonogramKatanaItem} documents.
  */
-export default class DashboardNonogramKatanaItemRepository extends DashboardBaseRepository<NonogramKatanaItem> {
+export default class DashboardNonogramKatanaItemRepository extends DashboardBaseWithUserIdRepository<NonogramKatanaItem> {
   private static singletonInstance?: DashboardNonogramKatanaItemRepository;
 
   private constructor() {
-    super(
-      NonogramKatanaItem_docType,
-      new DashboardNonogramKatanaItemValidator(),
-      CleanDocument.userId
-    );
+    super(NonogramKatanaItem_docType, new DashboardNonogramKatanaItemValidator());
   }
 
   static getListenersForUserRepo(): RepoListeners<User> {
     const nonogramKatanaRepo = DashboardNonogramKatanaItemRepository.getRepo();
     return {
-      deleteOne: async (userId) => {
+      deleteOne: async (userId, meta) => {
         await (
           await nonogramKatanaRepo.getCollection()
         ).deleteMany({
           userId,
           docType: NonogramKatanaItem_docType
         });
+        meta?.recordDocTypeTouched(NonogramKatanaItem_docType);
+        meta?.addAffectedUserIds([userId]);
       },
-      deleteList: async (userIds) => {
+      deleteList: async (userIds, meta) => {
         await (
           await nonogramKatanaRepo.getCollection()
         ).deleteMany({
           userId: { $in: userIds },
           docType: NonogramKatanaItem_docType
         });
+        meta?.recordDocTypeTouched(NonogramKatanaItem_docType);
+        meta?.addAffectedUserIds(userIds);
       }
     };
   }
@@ -53,19 +51,5 @@ export default class DashboardNonogramKatanaItemRepository extends DashboardBase
         new DashboardNonogramKatanaItemRepository();
     }
     return DashboardNonogramKatanaItemRepository.singletonInstance;
-  }
-
-  /**
-   * Gets all Nonogram Katana items for a given user.
-   *
-   * @param userId The ID of the user to get items for.
-   */
-  async getAllForUser(userId: UUID): Promise<NonogramKatanaItem[]> {
-    const collection = await DashboardNonogramKatanaItemRepository.getRepo().getCollection();
-    const filter = {
-      $and: [this.getFilterWithDefault(), { userId }]
-    };
-    const result = await collection.find(filter).toArray();
-    return result;
   }
 }

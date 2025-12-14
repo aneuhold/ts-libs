@@ -2,11 +2,12 @@ import type { User } from '@aneuhold/core-ts-db-lib';
 import { DashboardTaskSchema, UserSchema } from '@aneuhold/core-ts-db-lib';
 import crypto from 'crypto';
 import { afterAll, describe, expect, it } from 'vitest';
-import UserRepository from '../../../repositories/common/UserRepository.js';
-import DashboardTaskRepository from '../../../repositories/dashboard/DashboardTaskRepository.js';
-import DashboardUserConfigRepository from '../../../repositories/dashboard/DashboardUserConfigRepository.js';
-import DocumentDb from '../../../util/DocumentDb.js';
-import { cleanupDoc, getTestUserName } from '../../testsUtil.js';
+import { cleanupDoc, getTestUserName } from '../../tests/testsUtil.js';
+import DbOperationMetaData from '../../util/DbOperationMetaData.js';
+import DocumentDb from '../../util/DocumentDb.js';
+import UserRepository from '../common/UserRepository.js';
+import DashboardTaskRepository from './DashboardTaskRepository.js';
+import DashboardUserConfigRepository from './DashboardUserConfigRepository.js';
 
 const userRepo = UserRepository.getRepo();
 const taskRepo = DashboardTaskRepository.getRepo();
@@ -47,8 +48,7 @@ describe('Get operations', () => {
     expect(tasks.length).toBe(1);
     expect(tasks[0]._id).toEqual(newTask._id);
 
-    await cleanupDoc(userRepo, newUser);
-    await cleanupDoc(userRepo, otherUser);
+    await Promise.all([cleanupDoc(userRepo, newUser), cleanupDoc(userRepo, otherUser)]);
   });
 
   it('can get a set of tasks for a user, including tasks shared with that user', async () => {
@@ -78,8 +78,57 @@ describe('Get operations', () => {
     expect(tasks[0]._id).toEqual(newTask._id);
     expect(tasks[1]._id).toEqual(otherUserTask._id);
 
-    await cleanupDoc(userRepo, newUser);
-    await cleanupDoc(userRepo, otherUser);
+    await Promise.all([cleanupDoc(userRepo, newUser), cleanupDoc(userRepo, otherUser)]);
+  });
+});
+
+describe('DbOperationMetaData tracking', () => {
+  it('tracks affected users on insertNew', async () => {
+    const [newUser, sharedUser] = await Promise.all([createNewTestUser(), createNewTestUser()]);
+    const newTask = DashboardTaskSchema.parse({
+      userId: newUser._id,
+      sharedWith: [sharedUser._id]
+    });
+    const meta = new DbOperationMetaData();
+
+    await taskRepo.insertNew(newTask, meta);
+
+    expect(meta.getAffectedUserIds().has(sharedUser._id)).toBe(true);
+    expect(meta.getAffectedUserIds().has(newUser._id)).toBe(true);
+    await Promise.all([cleanupDoc(userRepo, newUser), cleanupDoc(userRepo, sharedUser)]);
+  });
+
+  it('tracks affected users on update', async () => {
+    const [newUser, sharedUser] = await Promise.all([createNewTestUser(), createNewTestUser()]);
+    const newTask = DashboardTaskSchema.parse({
+      userId: newUser._id,
+      sharedWith: [sharedUser._id]
+    });
+    await taskRepo.insertNew(newTask);
+
+    const meta = new DbOperationMetaData();
+    // Update something unrelated
+    await taskRepo.update({ _id: newTask._id, title: 'Updated Label' }, meta);
+
+    expect(meta.getAffectedUserIds().has(sharedUser._id)).toBe(true);
+    expect(meta.getAffectedUserIds().has(newUser._id)).toBe(true);
+    await Promise.all([cleanupDoc(userRepo, newUser), cleanupDoc(userRepo, sharedUser)]);
+  });
+
+  it('tracks affected users on delete', async () => {
+    const [newUser, sharedUser] = await Promise.all([createNewTestUser(), createNewTestUser()]);
+    const newTask = DashboardTaskSchema.parse({
+      userId: newUser._id,
+      sharedWith: [sharedUser._id]
+    });
+    await taskRepo.insertNew(newTask);
+
+    const meta = new DbOperationMetaData();
+    await taskRepo.delete(newTask._id, meta);
+
+    expect(meta.getAffectedUserIds().has(sharedUser._id)).toBe(true);
+    expect(meta.getAffectedUserIds().has(newUser._id)).toBe(true);
+    await Promise.all([cleanupDoc(userRepo, newUser), cleanupDoc(userRepo, sharedUser)]);
   });
 });
 

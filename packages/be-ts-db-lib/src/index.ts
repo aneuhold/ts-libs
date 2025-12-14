@@ -4,6 +4,7 @@ import DashboardNonogramKatanaItemRepository from './repositories/dashboard/Dash
 import DashboardNonogramKatanaUpgradeRepository from './repositories/dashboard/DashboardNonogramKatanaUpgradeRepository.js';
 import DashboardTaskRepository from './repositories/dashboard/DashboardTaskRepository.js';
 import DashboardUserConfigRepository from './repositories/dashboard/DashboardUserConfigRepository.js';
+import DbOperationMetaData from './util/DbOperationMetaData.js';
 import DocumentDb from './util/DocumentDb.js';
 
 // Export all the functions and classes from this library
@@ -13,6 +14,7 @@ export {
   DashboardNonogramKatanaUpgradeRepository,
   DashboardTaskRepository,
   DashboardUserConfigRepository,
+  DbOperationMetaData,
   DocumentDb,
   UserRepository
 };

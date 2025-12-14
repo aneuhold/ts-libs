@@ -5,9 +5,9 @@ import {
 } from '@aneuhold/core-ts-db-lib';
 import crypto from 'crypto';
 import { describe, expect, it } from 'vitest';
-import UserRepository from '../../../repositories/common/UserRepository.js';
-import DashboardNonogramKatanaItemRepository from '../../../repositories/dashboard/DashboardNonogramKatanaItemRepository.js';
-import { cleanupDoc, getTestUserName } from '../../testsUtil.js';
+import { cleanupDoc, getTestUserName } from '../../tests/testsUtil.js';
+import UserRepository from '../common/UserRepository.js';
+import DashboardNonogramKatanaItemRepository from './DashboardNonogramKatanaItemRepository.js';
 
 const userRepo = UserRepository.getRepo();
 const itemRepo = DashboardNonogramKatanaItemRepository.getRepo();

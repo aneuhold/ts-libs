@@ -85,6 +85,7 @@ export interface ProjectDashboardOptions {
 export interface ProjectDashboardInput {
   apiKey: UUID;
   options: ProjectDashboardOptions;
+  socketId?: string;
 }
 
 /**

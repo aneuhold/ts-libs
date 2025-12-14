@@ -1,5 +1,6 @@
 import type { BaseDocument } from '@aneuhold/core-ts-db-lib';
 import type { UUID } from 'crypto';
+import type DbOperationMetaData from '../util/DbOperationMetaData.js';
 
 export type RepoSubscribers<TDocType extends BaseDocument> = {
   insertNew: InsertNewSubscriber<TDocType>[];
@@ -19,23 +20,29 @@ export type RepoListeners<TDocType extends BaseDocument> = {
   deleteList?: DeleteListSubscriber;
 };
 
-export type InsertNewSubscriber<TDocType extends BaseDocument> = (doc: TDocType) => Promise<void>;
+export type InsertNewSubscriber<TDocType extends BaseDocument> = (
+  doc: TDocType,
+  meta?: DbOperationMetaData
+) => Promise<void>;
 
 export type InsertManySubscriber<TDocType extends BaseDocument> = (
-  docs: TDocType[]
+  docs: TDocType[],
+  meta?: DbOperationMetaData
 ) => Promise<void>;
 
 export type UpdateOneSubscriber<TDocType extends BaseDocument> = (
-  doc: Partial<TDocType>
+  doc: Partial<TDocType>,
+  meta?: DbOperationMetaData
 ) => Promise<void>;
 
 export type UpdateManySubscriber<TDocType extends BaseDocument> = (
-  docs: Partial<TDocType>[]
+  docs: Partial<TDocType>[],
+  meta?: DbOperationMetaData
 ) => Promise<void>;
 
-export type DeleteOneSubscriber = (docId: UUID) => Promise<void>;
+export type DeleteOneSubscriber = (docId: UUID, meta?: DbOperationMetaData) => Promise<void>;
 
-export type DeleteListSubscriber = (docIds: UUID[]) => Promise<void>;
+export type DeleteListSubscriber = (docIds: UUID[], meta?: DbOperationMetaData) => Promise<void>;
 
 /**
  * A subscription service that allows repositories to subscribe to events

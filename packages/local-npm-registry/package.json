@@ -2,9 +2,9 @@
   "name": "@aneuhold/local-npm-registry",
   "author": "Anton G. Neuhold Jr.",
   "license": "MIT",
-  "version": "0.2.21",
+  "version": "0.2.22",
   "description": "Manages local npm package installations and updates across your machine.",
-  "packageManager": "pnpm@10.12.1",
+  "packageManager": "pnpm@10.25.0",
   "type": "module",
   "scripts": {
     "refresh": "pnpm build && npm uninstall -g @aneuhold/local-npm-registry && npm install -g .",
@@ -53,7 +53,7 @@
     "registry"
   ],
   "dependencies": {
-    "@aneuhold/core-ts-lib": "^2.3.14",
+    "@aneuhold/core-ts-lib": "^2.3.15",
     "commander": "^14.0.2",
     "execa": "^9.6.1",
     "fs-extra": "^11.3.2",
@@ -65,10 +65,10 @@
     "@aneuhold/main-scripts": "^2.8.0",
     "@types/fs-extra": "^11.0.4",
     "@types/js-yaml": "^4.0.9",
-    "@types/node": "^24.10.1",
+    "@types/node": "^25.0.2",
     "@types/proper-lockfile": "^4.1.4",
     "@verdaccio/types": "^10.8.0",
-    "eslint": "^9.39.1",
+    "eslint": "^9.39.2",
     "jsr": "^0.13.5",
     "prettier": "^3.7.4",
     "rimraf": "^6.1.2",

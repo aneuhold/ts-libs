@@ -3,14 +3,15 @@ import { DashboardUserConfig_docType, DashboardUserConfigSchema } from '@aneuhol
 import type { UUID } from 'crypto';
 import type { AnyBulkWriteOperation, BulkWriteResult, UpdateResult } from 'mongodb';
 import type { RepoListeners } from '../../services/RepoSubscriptionService.js';
+import type DbOperationMetaData from '../../util/DbOperationMetaData.js';
 import CleanDocument from '../../util/DocumentCleaner.js';
 import DashboardUserConfigValidator from '../../validators/dashboard/UserConfigValidator.js';
-import DashboardBaseRepository from './DashboardBaseRepository.js';
+import DashboardBaseWithUserIdRepository from './DashboardBaseWithUserIdRepository.js';
 
 /**
  * The repository that contains {@link DashboardUserConfig} documents.
  */
-export default class DashboardUserConfigRepository extends DashboardBaseRepository<DashboardUserConfig> {
+export default class DashboardUserConfigRepository extends DashboardBaseWithUserIdRepository<DashboardUserConfig> {
   private static singletonInstance?: DashboardUserConfigRepository;
 
   /**
@@ -28,15 +29,17 @@ export default class DashboardUserConfigRepository extends DashboardBaseReposito
   static getListenersForUserRepo(): RepoListeners<User> {
     const userConfigRepo = DashboardUserConfigRepository.getRepo();
     return {
-      deleteOne: async (userId) => {
+      deleteOne: async (userId, meta) => {
         const collection = await userConfigRepo.getCollection();
         await collection.deleteOne({ userId, docType: DashboardUserConfig_docType });
         await collection.updateMany(
           { collaborators: userId, docType: DashboardUserConfig_docType },
           { $pull: { collaborators: userId } }
         );
+        meta?.recordDocTypeTouched(DashboardUserConfig_docType);
+        meta?.addAffectedUserIds([userId]);
       },
-      deleteList: async (userIds) => {
+      deleteList: async (userIds, meta) => {
         const collection = await userConfigRepo.getCollection();
         await collection.deleteMany({
           userId: { $in: userIds },
@@ -48,16 +51,22 @@ export default class DashboardUserConfigRepository extends DashboardBaseReposito
             $pull: { collaborators: { $in: userIds } }
           }
         );
+        meta?.recordDocTypeTouched(DashboardUserConfig_docType);
+        meta?.addAffectedUserIds(userIds);
       },
-      insertNew: async (user) => {
+      insertNew: async (user, meta) => {
         if (user.projectAccess.dashboard) {
-          await userConfigRepo.insertNew(DashboardUserConfigSchema.parse({ userId: user._id }));
+          await userConfigRepo.insertNew(
+            DashboardUserConfigSchema.parse({ userId: user._id }),
+            meta
+          );
         }
       },
-      insertMany: async (users) => {
+      insertMany: async (users, meta) => {
         const usersThatNeedConfig = users.filter((user) => user.projectAccess.dashboard);
         await userConfigRepo.insertMany(
-          usersThatNeedConfig.map((user) => DashboardUserConfigSchema.parse({ userId: user._id }))
+          usersThatNeedConfig.map((user) => DashboardUserConfigSchema.parse({ userId: user._id })),
+          meta
         );
       }
     };
@@ -82,10 +91,14 @@ export default class DashboardUserConfigRepository extends DashboardBaseReposito
    * collaborators will have the current user added to their collaborators list.
    *
    * @param newDoc The new {@link DashboardUserConfig} document to insert.
+   * @param meta Tracks database operation metadata for a single request.
    * @returns The inserted document or null if insertion failed.
    */
-  override async insertNew(newDoc: DashboardUserConfig): Promise<DashboardUserConfig | null> {
-    const result = await super.insertNew(newDoc);
+  override async insertNew(
+    newDoc: DashboardUserConfig,
+    meta?: DbOperationMetaData
+  ): Promise<DashboardUserConfig | null> {
+    const result = await super.insertNew(newDoc, meta);
     if (newDoc.collaborators.length > 0) {
       await this.updateCollaboratorsIfNeeded([
         {
@@ -103,10 +116,14 @@ export default class DashboardUserConfigRepository extends DashboardBaseReposito
    * list.
    *
    * @param newDocs The list of new {@link DashboardUserConfig} documents to insert.
+   * @param meta Tracks database operation metadata for a single request.
    * @returns The list of inserted documents.
    */
-  override async insertMany(newDocs: DashboardUserConfig[]): Promise<DashboardUserConfig[]> {
-    const result = await super.insertMany(newDocs);
+  override async insertMany(
+    newDocs: DashboardUserConfig[],
+    meta?: DbOperationMetaData
+  ): Promise<DashboardUserConfig[]> {
+    const result = await super.insertMany(newDocs, meta);
     // Simulate having no collaborators originally.
     await this.updateCollaboratorsIfNeeded(
       newDocs.map((doc) => ({
@@ -122,14 +139,16 @@ export default class DashboardUserConfigRepository extends DashboardBaseReposito
    * will have the current user added to their collaborators list.
    *
    * @param updatedDoc The updated {@link DashboardUserConfig} document.
+   * @param meta Tracks database operation metadata for a single request.
    * @returns The result of the update operation.
    */
   override async update(
-    updatedDoc: Partial<DashboardUserConfig>
+    updatedDoc: Partial<DashboardUserConfig>,
+    meta?: DbOperationMetaData
   ): Promise<UpdateResult<DashboardUserConfig>> {
     // Get the config before the update
     const originalDoc = await super.get({ _id: updatedDoc._id });
-    const result = await super.update(updatedDoc);
+    const result = await super.update(updatedDoc, meta);
     if (originalDoc) {
       await this.updateCollaboratorsIfNeeded([{ originalDoc, updatedDoc }]);
     }
@@ -141,9 +160,13 @@ export default class DashboardUserConfigRepository extends DashboardBaseReposito
    * will have the current user added to their collaborators list.
    *
    * @param updatedDocs The list of updated {@link DashboardUserConfig} documents.
+   * @param meta Tracks database operation metadata for a single request.
    * @returns The result of the bulk update operation.
    */
-  override async updateMany(updatedDocs: Partial<DashboardUserConfig>[]): Promise<BulkWriteResult> {
+  override async updateMany(
+    updatedDocs: Partial<DashboardUserConfig>[],
+    meta?: DbOperationMetaData
+  ): Promise<BulkWriteResult> {
     const docIds: UUID[] = [];
     updatedDocs.forEach((doc) => {
       if (doc._id) {
@@ -151,7 +174,7 @@ export default class DashboardUserConfigRepository extends DashboardBaseReposito
       }
     });
     const originalDocs = await super.getList(docIds);
-    const result = await super.updateMany(updatedDocs);
+    const result = await super.updateMany(updatedDocs, meta);
     await this.updateCollaboratorsIfNeeded(
       originalDocs.map((originalDoc, index) => ({
         originalDoc,

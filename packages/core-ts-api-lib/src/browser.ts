@@ -9,6 +9,11 @@ import type {
   ProjectDashboardOutput
 } from './types/ProjectDashboard.js';
 import type { Translation, Translations } from './types/Translations.js';
+import type {
+  DashboardWebSocketClientToServerEvents,
+  DashboardWebSocketServerToClientEvents,
+  WebSocketHandshakeAuth
+} from './types/WebSocket.js';
 
 // Export all browser-safe functions and classes from this library
 export { APIService };
@@ -21,9 +26,12 @@ export type {
   AuthValidateUserInput,
   AuthValidateUserOutput,
   DashboardConfig,
+  DashboardWebSocketClientToServerEvents,
+  DashboardWebSocketServerToClientEvents,
   ProjectDashboardInput,
   ProjectDashboardOptions,
   ProjectDashboardOutput,
   Translation,
-  Translations
+  Translations,
+  WebSocketHandshakeAuth
 };
