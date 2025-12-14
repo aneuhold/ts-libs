@@ -32,14 +32,14 @@ export default class DbOperationMetaData {
   /**
    * Gets all doc types that were touched during this request.
    */
-  getDocTypesTouched() {
+  getDocTypesTouched(): Set<string> {
     return this.docTypesTouched;
   }
 
   /**
    * Gets all user IDs recorded as affected during this request.
    */
-  getAffectedUserIds() {
+  getAffectedUserIds(): Set<UUID> {
     return this.affectedUserIds;
   }
 
