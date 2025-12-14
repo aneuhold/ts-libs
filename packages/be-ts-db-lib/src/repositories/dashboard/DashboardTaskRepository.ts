@@ -1,8 +1,9 @@
 import type { DashboardTask, User } from '@aneuhold/core-ts-db-lib';
 import { DashboardTask_docType, DashboardTaskService } from '@aneuhold/core-ts-db-lib';
 import type { UUID } from 'crypto';
-import type { DeleteResult } from 'mongodb';
+import type { BulkWriteResult, DeleteResult, UpdateResult } from 'mongodb';
 import type { RepoListeners } from '../../services/RepoSubscriptionService.js';
+import type DbOperationMetaData from '../../util/DbOperationMetaData.js';
 import CleanDocument from '../../util/DocumentCleaner.js';
 import DashboardTaskValidator from '../../validators/dashboard/TaskValidator.js';
 import DashboardBaseWithUserIdRepository from './DashboardBaseWithUserIdRepository.js';
@@ -35,8 +36,19 @@ export default class DashboardTaskRepository extends DashboardBaseWithUserIdRepo
   static getListenersForUserRepo(): RepoListeners<User> {
     const taskRepo = DashboardTaskRepository.getRepo();
     return {
-      deleteOne: async (userId) => {
+      deleteOne: async (userId, meta) => {
         const taskCollection = await taskRepo.getCollection();
+
+        // Get all tasks owned by the user to report sharedWith users
+        if (meta) {
+          const tasksOwnedByUser = await taskCollection
+            .find({ userId, docType: DashboardTask_docType })
+            .toArray();
+          tasksOwnedByUser.forEach((task) => {
+            meta.addAffectedUserIds(task.sharedWith);
+          });
+        }
+
         // Remove all tasks for the user
         await taskCollection.deleteMany({ userId, docType: DashboardTask_docType });
         // Remove all assignedTo references for the user
@@ -44,9 +56,22 @@ export default class DashboardTaskRepository extends DashboardBaseWithUserIdRepo
           { assignedTo: userId, docType: DashboardTask_docType },
           { $set: { assignedTo: undefined } }
         );
+        meta?.recordDocTypeTouched(DashboardTask_docType);
+        meta?.addAffectedUserIds([userId]);
       },
-      deleteList: async (userIds) => {
+      deleteList: async (userIds, meta) => {
         const taskCollection = await taskRepo.getCollection();
+
+        // Get all tasks owned by the users to report sharedWith users
+        if (meta) {
+          const tasksOwnedByUsers = await taskCollection
+            .find({ userId: { $in: userIds }, docType: DashboardTask_docType })
+            .toArray();
+          tasksOwnedByUsers.forEach((task) => {
+            meta.addAffectedUserIds(task.sharedWith);
+          });
+        }
+
         // Remove all tasks for the users
         await taskCollection.deleteMany({
           userId: { $in: userIds },
@@ -57,6 +82,8 @@ export default class DashboardTaskRepository extends DashboardBaseWithUserIdRepo
           { assignedTo: { $in: userIds }, docType: DashboardTask_docType },
           { $set: { assignedTo: undefined } }
         );
+        meta?.recordDocTypeTouched(DashboardTask_docType);
+        meta?.addAffectedUserIds(userIds);
       }
     };
   }
@@ -75,16 +102,74 @@ export default class DashboardTaskRepository extends DashboardBaseWithUserIdRepo
     return DashboardTaskRepository.singletonInstance;
   }
 
+  override async insertNew(
+    newDoc: DashboardTask,
+    meta?: DbOperationMetaData
+  ): Promise<DashboardTask | null> {
+    const result = await super.insertNew(newDoc, meta);
+    if (result && meta) {
+      meta.addAffectedUserIds(result.sharedWith);
+    }
+    return result;
+  }
+
+  override async insertMany(
+    newDocs: DashboardTask[],
+    meta?: DbOperationMetaData
+  ): Promise<DashboardTask[]> {
+    const result = await super.insertMany(newDocs, meta);
+    if (meta && result.length > 0) {
+      const sharedWithUsers = result.flatMap((task) => task.sharedWith);
+      meta.addAffectedUserIds(sharedWithUsers);
+    }
+    return result;
+  }
+
+  override async update(
+    updatedDoc: Partial<DashboardTask>,
+    meta?: DbOperationMetaData
+  ): Promise<UpdateResult> {
+    if (meta && updatedDoc._id) {
+      const docs = await this.fetchAndCacheDocsForMeta([updatedDoc._id], meta);
+      if (docs.length > 0) {
+        meta.addAffectedUserIds(docs[0].sharedWith);
+      }
+    }
+    return super.update(updatedDoc, meta);
+  }
+
+  override async updateMany(
+    updatedDocs: Partial<DashboardTask>[],
+    meta?: DbOperationMetaData
+  ): Promise<BulkWriteResult> {
+    if (meta && updatedDocs.length > 0) {
+      const docIds = updatedDocs.map((doc) => doc._id).filter((id): id is UUID => id !== undefined);
+      const cachedDocs = await this.fetchAndCacheDocsForMeta(docIds, meta);
+      const sharedWithUsers = cachedDocs.flatMap((task) => task.sharedWith);
+      meta.addAffectedUserIds(sharedWithUsers);
+    }
+    return super.updateMany(updatedDocs, meta);
+  }
+
   /**
    * Deletes a task and removes the reference to this task from any other tasks
    * that have it as a parent.
    *
    * @param docId The ID of the document to delete.
+   * @param meta Tracks database operation metadata for a single request.
    * @returns The result of the delete operation.
    */
-  override async delete(docId: UUID): Promise<DeleteResult> {
+  override async delete(docId: UUID, meta?: DbOperationMetaData): Promise<DeleteResult> {
     const docIdsToDelete = await this.getAllTaskIDsToDelete([docId]);
-    const deleteResult = await super.deleteList(docIdsToDelete);
+
+    // Fetch and cache all tasks before deletion to report sharedWith users
+    if (meta && docIdsToDelete.length > 0) {
+      const tasksToDelete = await this.fetchAndCacheDocsForMeta(docIdsToDelete, meta);
+      const sharedWithUsers = tasksToDelete.flatMap((task) => task.sharedWith);
+      meta.addAffectedUserIds(sharedWithUsers);
+    }
+
+    const deleteResult = await super.deleteList(docIdsToDelete, meta);
     return deleteResult;
   }
 
@@ -92,11 +177,20 @@ export default class DashboardTaskRepository extends DashboardBaseWithUserIdRepo
    * Deletes a list of tasks and all children of those tasks.
    *
    * @param docIds The IDs of the documents to delete.
+   * @param meta Tracks database operation metadata for a single request.
    * @returns The result of the delete operation.
    */
-  override async deleteList(docIds: UUID[]): Promise<DeleteResult> {
+  override async deleteList(docIds: UUID[], meta?: DbOperationMetaData): Promise<DeleteResult> {
     const docIdsToDelete = await this.getAllTaskIDsToDelete(docIds);
-    const result = await super.deleteList(docIdsToDelete);
+
+    // Fetch and cache all tasks before deletion to report sharedWith users
+    if (meta && docIdsToDelete.length > 0) {
+      const tasksToDelete = await this.fetchAndCacheDocsForMeta(docIdsToDelete, meta);
+      const sharedWithUsers = tasksToDelete.flatMap((task) => task.sharedWith);
+      meta.addAffectedUserIds(sharedWithUsers);
+    }
+
+    const result = await super.deleteList(docIdsToDelete, meta);
     return result;
   }
 

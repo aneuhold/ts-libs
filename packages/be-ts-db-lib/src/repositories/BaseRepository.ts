@@ -11,6 +11,7 @@ import type {
 } from 'mongodb';
 import type { RepoListeners, RepoSubscribers } from '../services/RepoSubscriptionService.js';
 import RepoSubscriptionService from '../services/RepoSubscriptionService.js';
+import type DbOperationMetaData from '../util/DbOperationMetaData.js';
 import DocumentCleaner from '../util/DocumentCleaner.js';
 import DocumentDb from '../util/DocumentDb.js';
 import type IValidator from '../validators/BaseValidator.js';
@@ -21,15 +22,15 @@ import type IValidator from '../validators/BaseValidator.js';
  * Implementation note: I have tried to do the types correctly here, but kept struggling with
  * MongoDB's types around Filter<T> and _id fields.
  *
- * @template TBasetype - The type of the documents in the collection.
+ * @template TBaseType - The type of the documents in the collection.
  */
-export default abstract class BaseRepository<TBasetype extends BaseDocument> {
+export default abstract class BaseRepository<TBaseType extends BaseDocument> {
   protected collectionName: string;
 
-  private collection?: Collection<TBasetype>;
+  private collection?: Collection<TBaseType>;
 
-  protected subscribers: RepoSubscribers<TBasetype> =
-    RepoSubscriptionService.getDefaultSubscribers<TBasetype>();
+  protected subscribers: RepoSubscribers<TBaseType> =
+    RepoSubscriptionService.getDefaultSubscribers<TBaseType>();
 
   /**
    * Constructs a new base repository.
@@ -41,9 +42,9 @@ export default abstract class BaseRepository<TBasetype extends BaseDocument> {
    */
   constructor(
     collectionName: string,
-    private validator: IValidator<TBasetype>,
-    private defaultFilter?: Partial<TBasetype>,
-    private defaultUpdateCleaner?: (doc: Partial<TBasetype>) => Partial<TBasetype>
+    private validator: IValidator<TBaseType>,
+    private defaultFilter?: Partial<TBaseType>,
+    private defaultUpdateCleaner?: (doc: Partial<TBaseType>) => Partial<TBaseType>
   ) {
     this.collectionName = collectionName;
   }
@@ -53,7 +54,7 @@ export default abstract class BaseRepository<TBasetype extends BaseDocument> {
    *
    * @returns The collection.
    */
-  protected async getCollection(): Promise<Collection<TBasetype>> {
+  protected async getCollection(): Promise<Collection<TBaseType>> {
     if (!this.collection) {
       this.collection = await DocumentDb.getCollection(this.collectionName);
       this.setupSubscribers();
@@ -69,7 +70,7 @@ export default abstract class BaseRepository<TBasetype extends BaseDocument> {
    *
    * @param listeners - The listeners to register.
    */
-  subscribeToChanges(listeners: RepoListeners<TBasetype>) {
+  subscribeToChanges(listeners: RepoListeners<TBaseType>) {
     const { insertNew, updateOne, updateMany, deleteOne, deleteList } = listeners;
     if (insertNew) {
       this.subscribers.insertNew.push(insertNew);
@@ -92,16 +93,17 @@ export default abstract class BaseRepository<TBasetype extends BaseDocument> {
    * Inserts a new document into the collection.
    *
    * @param newDoc - The new document to insert.
+   * @param meta - Tracks database operation metadata for a single request.
    * @returns The inserted document or null if the insertion failed.
    */
-  async insertNew(newDoc: TBasetype): Promise<TBasetype | null> {
+  async insertNew(newDoc: TBaseType, meta?: DbOperationMetaData): Promise<TBaseType | null> {
     const collection = await this.getCollection();
     await this.validator.validateNewObject(newDoc);
-    const insertResult = await collection.insertOne(newDoc as OptionalUnlessRequiredId<TBasetype>);
+    const insertResult = await collection.insertOne(newDoc as OptionalUnlessRequiredId<TBaseType>);
     if (!insertResult.acknowledged) {
       return null;
     }
-    await Promise.all(this.subscribers.insertNew.map((subscriber) => subscriber(newDoc)));
+    await Promise.all(this.subscribers.insertNew.map((subscriber) => subscriber(newDoc, meta)));
     return newDoc;
   }
 
@@ -109,18 +111,19 @@ export default abstract class BaseRepository<TBasetype extends BaseDocument> {
    * Inserts multiple new documents into the collection.
    *
    * @param newDocs - The new documents to insert.
+   * @param meta - Tracks database operation metadata for a single request.
    * @returns The inserted documents or an empty array if the insertion failed.
    */
-  async insertMany(newDocs: TBasetype[]): Promise<TBasetype[]> {
+  async insertMany(newDocs: TBaseType[], meta?: DbOperationMetaData): Promise<TBaseType[]> {
     const collection = await this.getCollection();
     await Promise.all(newDocs.map((doc) => this.validator.validateNewObject(doc)));
     const insertResult = await collection.insertMany(
-      newDocs as OptionalUnlessRequiredId<TBasetype>[]
+      newDocs as OptionalUnlessRequiredId<TBaseType>[]
     );
     if (!insertResult.acknowledged) {
       return [];
     }
-    await Promise.all(this.subscribers.insertMany.map((subscriber) => subscriber(newDocs)));
+    await Promise.all(this.subscribers.insertMany.map((subscriber) => subscriber(newDocs, meta)));
     return newDocs;
   }
 
@@ -130,10 +133,10 @@ export default abstract class BaseRepository<TBasetype extends BaseDocument> {
    * @param filter - The filter to apply.
    * @returns The matching document or null if no document was found.
    */
-  async get(filter: Partial<TBasetype>): Promise<TBasetype | null> {
+  async get(filter: Partial<TBaseType>): Promise<TBaseType | null> {
     const collection = await this.getCollection();
-    const result = await collection.findOne(this.getFilterWithDefault(filter as Filter<TBasetype>));
-    return result as TBasetype | null;
+    const result = await collection.findOne(this.getFilterWithDefault(filter as Filter<TBaseType>));
+    return result as TBaseType | null;
   }
 
   /**
@@ -141,11 +144,11 @@ export default abstract class BaseRepository<TBasetype extends BaseDocument> {
    *
    * @returns An array of all documents in the collection.
    */
-  async getAll(): Promise<TBasetype[]> {
+  async getAll(): Promise<TBaseType[]> {
     const collection = await this.getCollection();
     const result = await collection.find(this.getFilterWithDefault()).toArray();
     // Set to unknown first because of some weird type things.
-    return result as unknown as TBasetype[];
+    return result as unknown as TBaseType[];
   }
 
   /**
@@ -167,38 +170,40 @@ export default abstract class BaseRepository<TBasetype extends BaseDocument> {
    * @param docIds - The IDs of the documents to retrieve.
    * @returns An array of matching documents.
    */
-  async getList(docIds: UUID[]): Promise<TBasetype[]> {
+  async getList(docIds: UUID[]): Promise<TBaseType[]> {
     const collection = await this.getCollection();
     const result = await collection
-      .find(this.getFilterWithDefault({ _id: { $in: docIds } } as Filter<TBasetype>))
+      .find(this.getFilterWithDefault({ _id: { $in: docIds } } as Filter<TBaseType>))
       .toArray();
-    return result as TBasetype[];
+    return result as TBaseType[];
   }
 
   /**
    * Deletes a document by its ID.
    *
    * @param docId - The ID of the document to delete.
+   * @param meta - Tracks database operation metadata for a single request.
    * @returns The result of the delete operation.
    */
-  async delete(docId: UUID): Promise<DeleteResult> {
+  async delete(docId: UUID, meta?: DbOperationMetaData): Promise<DeleteResult> {
     const collection = await this.getCollection();
-    await Promise.all(this.subscribers.deleteOne.map((subscriber) => subscriber(docId)));
-    return collection.deleteOne({ _id: docId } as Filter<TBasetype>);
+    await Promise.all(this.subscribers.deleteOne.map((subscriber) => subscriber(docId, meta)));
+    return collection.deleteOne({ _id: docId } as Filter<TBaseType>);
   }
 
   /**
    * Deletes multiple documents by their IDs.
    *
    * @param docIds - The IDs of the documents to delete.
+   * @param meta - Tracks database operation metadata for a single request.
    * @returns The result of the delete operation.
    */
-  async deleteList(docIds: UUID[]): Promise<DeleteResult> {
+  async deleteList(docIds: UUID[], meta?: DbOperationMetaData): Promise<DeleteResult> {
     const collection = await this.getCollection();
     const deleteResult = collection.deleteMany({
       _id: { $in: docIds }
-    } as Filter<TBasetype>);
-    await Promise.all(this.subscribers.deleteList.map((subscriber) => subscriber(docIds)));
+    } as Filter<TBaseType>);
+    await Promise.all(this.subscribers.deleteList.map((subscriber) => subscriber(docIds, meta)));
     return deleteResult;
   }
 
@@ -218,9 +223,10 @@ export default abstract class BaseRepository<TBasetype extends BaseDocument> {
    * This base method strips the `_id` before updating.
    *
    * @param updatedDoc - The document to update.
+   * @param meta - Tracks database operation metadata for a single request.
    * @returns The result of the update operation.
    */
-  async update(updatedDoc: Partial<TBasetype>): Promise<UpdateResult> {
+  async update(updatedDoc: Partial<TBaseType>, meta?: DbOperationMetaData): Promise<UpdateResult> {
     const collection = await this.getCollection();
     await this.validator.validateUpdateObject(updatedDoc);
 
@@ -228,10 +234,10 @@ export default abstract class BaseRepository<TBasetype extends BaseDocument> {
 
     const cleanedDoc = this.cleanUpdateObject(updatedDoc);
 
-    const result = collection.updateOne({ _id: docId } as Filter<TBasetype>, {
+    const result = collection.updateOne({ _id: docId } as Filter<TBaseType>, {
       $set: cleanedDoc
     });
-    await Promise.all(this.subscribers.updateOne.map((subscriber) => subscriber(updatedDoc)));
+    await Promise.all(this.subscribers.updateOne.map((subscriber) => subscriber(updatedDoc, meta)));
     return result;
   }
 
@@ -241,9 +247,13 @@ export default abstract class BaseRepository<TBasetype extends BaseDocument> {
    * This base method strips the `_id` before updating.
    *
    * @param updatedDocs - The documents to update.
+   * @param meta - Tracks database operation metadata for a single request.
    * @returns The result of the bulk update operation.
    */
-  async updateMany(updatedDocs: Array<Partial<TBasetype>>): Promise<BulkWriteResult> {
+  async updateMany(
+    updatedDocs: Array<Partial<TBaseType>>,
+    meta?: DbOperationMetaData
+  ): Promise<BulkWriteResult> {
     const collection = await this.getCollection();
     await Promise.all(updatedDocs.map((doc) => this.validator.validateUpdateObject(doc)));
 
@@ -256,11 +266,51 @@ export default abstract class BaseRepository<TBasetype extends BaseDocument> {
           update: { $set: cleanedDoc }
         }
       };
-    }) as AnyBulkWriteOperation<TBasetype>[];
+    }) as AnyBulkWriteOperation<TBaseType>[];
 
-    await Promise.all(this.subscribers.updateMany.map((subscriber) => subscriber(updatedDocs)));
+    await Promise.all(
+      this.subscribers.updateMany.map((subscriber) => subscriber(updatedDocs, meta))
+    );
 
     return collection.bulkWrite(bulkOps);
+  }
+
+  /**
+   * Fetches and caches multiple documents, returning only those not already cached.
+   * This method checks the cache in the provided metadata object first, then fetches
+   * any missing documents from the database and caches them.
+   *
+   * @param docIds - The IDs of the documents to fetch.
+   * @param meta - The metadata object containing the cache.
+   * @returns An array of all documents (from cache and newly fetched).
+   */
+  protected async fetchAndCacheDocsForMeta(
+    docIds: UUID[],
+    meta: DbOperationMetaData
+  ): Promise<TBaseType[]> {
+    const docIdsToFetch: UUID[] = [];
+    const cachedDocs: TBaseType[] = [];
+
+    // Check cache first
+    for (const docId of docIds) {
+      const cached = meta.getCachedDoc<TBaseType>(docId);
+      if (cached) {
+        cachedDocs.push(cached);
+      } else {
+        docIdsToFetch.push(docId);
+      }
+    }
+
+    // Fetch uncached docs
+    if (docIdsToFetch.length > 0) {
+      const fetchedDocs = await this.getList(docIdsToFetch);
+      fetchedDocs.forEach((doc) => {
+        meta.cacheDoc(doc._id, doc);
+        cachedDocs.push(doc);
+      });
+    }
+
+    return cachedDocs;
   }
 
   /**
@@ -269,7 +319,7 @@ export default abstract class BaseRepository<TBasetype extends BaseDocument> {
    * @param filter - The filter to apply.
    * @returns The filter with the default filter applied.
    */
-  protected getFilterWithDefault(filter: Filter<TBasetype> = {}): Filter<TBasetype> {
+  protected getFilterWithDefault(filter: Filter<TBaseType> = {}): Filter<TBaseType> {
     if (!this.defaultFilter) {
       return filter;
     }
@@ -299,7 +349,7 @@ export default abstract class BaseRepository<TBasetype extends BaseDocument> {
    * @param updatedDoc - The document to clean.
    * @returns The cleaned document.
    */
-  private cleanUpdateObject(updatedDoc: Partial<TBasetype>): Partial<TBasetype> {
+  private cleanUpdateObject(updatedDoc: Partial<TBaseType>): Partial<TBaseType> {
     return this.defaultUpdateCleaner
       ? this.defaultUpdateCleaner(DocumentCleaner.id(updatedDoc))
       : DocumentCleaner.id(updatedDoc);

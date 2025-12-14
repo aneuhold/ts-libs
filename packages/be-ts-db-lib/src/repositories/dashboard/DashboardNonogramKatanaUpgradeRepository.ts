@@ -17,21 +17,25 @@ export default class DashboardNonogramKatanaUpgradeRepository extends DashboardB
   static getListenersForUserRepo(): RepoListeners<User> {
     const upgradeRepo = DashboardNonogramKatanaUpgradeRepository.getRepo();
     return {
-      deleteOne: async (userId) => {
+      deleteOne: async (userId, meta) => {
         await (
           await upgradeRepo.getCollection()
         ).deleteMany({
           userId,
           docType: NonogramKatanaUpgrade_docType
         });
+        meta?.recordDocTypeTouched(NonogramKatanaUpgrade_docType);
+        meta?.addAffectedUserIds([userId]);
       },
-      deleteList: async (userIds) => {
+      deleteList: async (userIds, meta) => {
         await (
           await upgradeRepo.getCollection()
         ).deleteMany({
           userId: { $in: userIds },
           docType: NonogramKatanaUpgrade_docType
         });
+        meta?.recordDocTypeTouched(NonogramKatanaUpgrade_docType);
+        meta?.addAffectedUserIds(userIds);
       }
     };
   }
