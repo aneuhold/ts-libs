@@ -301,7 +301,7 @@ export default class DateService {
     const bodyAsRecord = body as Record<string, unknown>;
     for (const key of Object.keys(bodyAsRecord)) {
       const value = bodyAsRecord[key];
-      const revivedValue = DateService.dateReviver(key, value);
+      const revivedValue = this.dateReviver(key, value);
       if (revivedValue !== value) {
         bodyAsRecord[key] = revivedValue;
       } else if (typeof value === 'object') {
