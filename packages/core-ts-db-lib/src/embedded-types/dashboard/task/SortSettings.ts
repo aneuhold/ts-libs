@@ -62,7 +62,7 @@ export const DashboardTaskListSortSettingsSchema = z.object({
    * The ID of the user.
    */
   userId: z.uuidv7().transform((val) => val as UUID),
-  sortList: z.array(DashboardTaskSortSettingSchema)
+  sortList: z.array(DashboardTaskSortSettingSchema).default([])
 });
 
 /**
