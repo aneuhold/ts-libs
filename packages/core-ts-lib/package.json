@@ -4,7 +4,7 @@
   "license": "MIT",
   "version": "2.3.14",
   "description": "A core library for all of my TypeScript projects",
-  "packageManager": "pnpm@10.12.1",
+  "packageManager": "pnpm@10.25.0",
   "type": "module",
   "scripts": {
     "build": "rimraf lib && pnpm build:withoutClean",
@@ -67,8 +67,8 @@
     "Node.js"
   ],
   "devDependencies": {
-    "@types/node": "^24.10.1",
-    "eslint": "^9.39.1",
+    "@types/node": "^25.0.2",
+    "eslint": "^9.39.2",
     "jsr": "^0.13.5",
     "nodemon": "^3.1.11",
     "prettier": "^3.7.4",

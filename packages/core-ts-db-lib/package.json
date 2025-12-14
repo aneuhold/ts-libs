@@ -4,7 +4,7 @@
   "license": "MIT",
   "version": "4.0.2",
   "description": "A core database library used for personal projects",
-  "packageManager": "pnpm@10.12.1",
+  "packageManager": "pnpm@10.25.0",
   "type": "module",
   "scripts": {
     "build": "rimraf lib && pnpm build:withoutClean",
@@ -78,8 +78,8 @@
   "devDependencies": {
     "@aneuhold/local-npm-registry": "^0.2.21",
     "@aneuhold/main-scripts": "^2.8.0",
-    "@types/node": "^24.10.1",
-    "eslint": "^9.39.1",
+    "@types/node": "^25.0.2",
+    "eslint": "^9.39.2",
     "jsr": "^0.13.5",
     "prettier": "^3.7.4",
     "rimraf": "^6.1.2",

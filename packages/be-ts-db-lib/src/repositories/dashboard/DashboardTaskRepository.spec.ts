@@ -3,6 +3,7 @@ import { DashboardTaskSchema, UserSchema } from '@aneuhold/core-ts-db-lib';
 import crypto from 'crypto';
 import { afterAll, describe, expect, it } from 'vitest';
 import { cleanupDoc, getTestUserName } from '../../tests/testsUtil.js';
+import DbOperationMetaData from '../../util/DbOperationMetaData.js';
 import DocumentDb from '../../util/DocumentDb.js';
 import UserRepository from '../common/UserRepository.js';
 import DashboardTaskRepository from './DashboardTaskRepository.js';
@@ -80,6 +81,62 @@ describe('Get operations', () => {
 
     await cleanupDoc(userRepo, newUser);
     await cleanupDoc(userRepo, otherUser);
+  });
+});
+
+describe('DbOperationMetaData tracking', () => {
+  it('tracks affected users on insertNew', async () => {
+    const newUser = await createNewTestUser();
+    const sharedUser = await createNewTestUser();
+    const newTask = DashboardTaskSchema.parse({
+      userId: newUser._id,
+      sharedWith: [sharedUser._id]
+    });
+    const meta = new DbOperationMetaData();
+
+    await taskRepo.insertNew(newTask, meta);
+
+    expect(meta.getAffectedUserIds().has(sharedUser._id)).toBe(true);
+    expect(meta.getAffectedUserIds().has(newUser._id)).toBe(true);
+    await cleanupDoc(userRepo, newUser);
+    await cleanupDoc(userRepo, sharedUser);
+  });
+
+  it('tracks affected users on update', async () => {
+    const newUser = await createNewTestUser();
+    const sharedUser = await createNewTestUser();
+    const newTask = DashboardTaskSchema.parse({
+      userId: newUser._id,
+      sharedWith: [sharedUser._id]
+    });
+    await taskRepo.insertNew(newTask);
+
+    const meta = new DbOperationMetaData();
+    // Update something unrelated
+    await taskRepo.update({ _id: newTask._id, title: 'Updated Label' }, meta);
+
+    expect(meta.getAffectedUserIds().has(sharedUser._id)).toBe(true);
+    expect(meta.getAffectedUserIds().has(newUser._id)).toBe(true);
+    await cleanupDoc(userRepo, newUser);
+    await cleanupDoc(userRepo, sharedUser);
+  });
+
+  it('tracks affected users on delete', async () => {
+    const newUser = await createNewTestUser();
+    const sharedUser = await createNewTestUser();
+    const newTask = DashboardTaskSchema.parse({
+      userId: newUser._id,
+      sharedWith: [sharedUser._id]
+    });
+    await taskRepo.insertNew(newTask);
+
+    const meta = new DbOperationMetaData();
+    await taskRepo.delete(newTask._id, meta);
+
+    expect(meta.getAffectedUserIds().has(sharedUser._id)).toBe(true);
+    expect(meta.getAffectedUserIds().has(newUser._id)).toBe(true);
+    await cleanupDoc(userRepo, newUser);
+    await cleanupDoc(userRepo, sharedUser);
   });
 });
 
