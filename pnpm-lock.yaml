@@ -64,7 +64,7 @@ importers:
         version: 4.1.13
     devDependencies:
       '@aneuhold/local-npm-registry':
-        specifier: ^0.2.22
+        specifier: ^0.2.23
         version: link:../local-npm-registry
       '@aneuhold/main-scripts':
         specifier: ^2.8.0
@@ -128,7 +128,7 @@ importers:
         version: 5.0.5
     devDependencies:
       '@aneuhold/local-npm-registry':
-        specifier: ^0.2.22
+        specifier: ^0.2.23
         version: link:../local-npm-registry
       '@aneuhold/main-scripts':
         specifier: ^2.8.0
@@ -174,7 +174,7 @@ importers:
         version: 7.0.0
     devDependencies:
       '@aneuhold/local-npm-registry':
-        specifier: ^0.2.22
+        specifier: ^0.2.23
         version: link:../local-npm-registry
       '@aneuhold/main-scripts':
         specifier: ^2.8.0
@@ -217,7 +217,7 @@ importers:
         version: 4.1.13
     devDependencies:
       '@aneuhold/local-npm-registry':
-        specifier: ^0.2.22
+        specifier: ^0.2.23
         version: link:../local-npm-registry
       '@aneuhold/main-scripts':
         specifier: ^2.8.0
