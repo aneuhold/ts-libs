@@ -13,7 +13,7 @@ import type {
  * A service for interacting with the Google Cloud API service for personal projects.
  */
 export default class GCloudAPIService {
-  static readonly defaultUrl: string = 'https://gcloud-backend-926119935605.us-west1.run.app/';
+  static readonly defaultUrl: string = 'https://api.antonneuhold.com/';
 
   /**
    * The base URL of the Google Cloud API. For example, `something.com/api/`. It will include
