@@ -7,30 +7,29 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## 🔖 [3.0.9] (2025-12-21)
 
-### ✅ Added
-
 ### 🏗️ Changed
 
-### 🩹 Fixed
-
-### 🔥 Removed
+- Changed `GCloudAPIService.defaultUrl` to `https://api.antonneuhold.com/` (was `gcloud-backend-926119935605.us-west1.run.app`).
 
 ## 🔖 [3.0.8] (2025-12-14)
 
 ### ✅ Added
+
 - Added `APIService.getCurrentAPIUrl()` to retrieve the current API base URL.
 
 ### 🏗️ Changed
+
 - Updated dependencies: now requires `@aneuhold/core-ts-db-lib@^4.0.4`, `@aneuhold/core-ts-lib@^2.3.16`, and `@aneuhold/local-npm-registry@^0.2.23`.
 
 ## 🔖 [3.0.7] (2025-12-14)
 
 ### ✅ Added
+
 - Added websocket types for dashboard communication
 
 ### 🏗️ Changed
-- Updated dependencies for compatibility
 
+- Updated dependencies for compatibility
 
 ## 🔖 [3.0.6] (2025-12-13)
 
@@ -192,6 +191,7 @@ No direct code changes; version bump for compatibility.
 - Updated workflow permissions to allow repository write access
 
 <!-- Link References -->
+
 [3.0.9]: https://github.com/aneuhold/ts-libs/compare/core-ts-api-lib-v3.0.8...core-ts-api-lib-v3.0.9
 [3.0.8]: https://github.com/aneuhold/ts-libs/compare/core-ts-api-lib-v3.0.7...core-ts-api-lib-v3.0.8
 [3.0.7]: https://github.com/aneuhold/ts-libs/compare/core-ts-api-lib-v3.0.6...core-ts-api-lib-v3.0.7
