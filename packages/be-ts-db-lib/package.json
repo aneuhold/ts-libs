@@ -57,7 +57,7 @@
     "MongoDB"
   ],
   "dependencies": {
-    "@aneuhold/be-ts-lib": "^3.0.8",
+    "@aneuhold/be-ts-lib": "^3.0.9",
     "@aneuhold/core-ts-db-lib": "^4.0.4",
     "@aneuhold/core-ts-lib": "^2.3.16",
     "bson": "^7.0.0",
