@@ -7,33 +7,31 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## 🔖 [4.1.2] (2025-12-21)
 
-### ✅ Added
-
 ### 🏗️ Changed
 
-### 🩹 Fixed
-
-### 🔥 Removed
+- Updated dependency: now requires `@aneuhold/be-ts-lib@^3.0.9`.
 
 ## 🔖 [4.1.1] (2025-12-14)
 
 ### 🏗️ Changed
+
 - Updated dependencies: now requires `@aneuhold/be-ts-lib@^3.0.8`, `@aneuhold/core-ts-db-lib@^4.0.4`, `@aneuhold/core-ts-lib@^2.3.16`, and `@aneuhold/local-npm-registry@^0.2.23`.
 
 ## 🔖 [4.1.0] (2025-12-14)
 
 ### ✅ Added
+
 - Added doc caching and retrieval strategy to repositories
 - Created base user ID repository for dashboard
 
 ### 🏗️ Changed
+
 - Updated test scripts to include coverage
 - Updated dependencies for compatibility
 
 ### 🩹 Fixed
+
 - Fixed import paths in dashboard repositories
-
-
 
 ## 🔖 [4.0.2] (2025-12-13)
 
@@ -193,6 +191,7 @@ Updated dependencies: now requires `@aneuhold/core-ts-db-lib@^3.0.0`, `@aneuhold
 - Updated workflow permissions to allow repository write access
 
 <!-- Link References -->
+
 [4.1.2]: https://github.com/aneuhold/ts-libs/compare/be-ts-db-lib-v4.1.1...be-ts-db-lib-v4.1.2
 [4.1.1]: https://github.com/aneuhold/ts-libs/compare/be-ts-db-lib-v4.1.0...be-ts-db-lib-v4.1.1
 [4.1.0]: https://github.com/aneuhold/ts-libs/compare/be-ts-db-lib-v4.0.2...be-ts-db-lib-v4.1.0
