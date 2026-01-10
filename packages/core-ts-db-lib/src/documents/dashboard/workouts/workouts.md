@@ -1,5 +1,7 @@
 # Dashboard Workouts Domain Model
 
+## Document Diagram
+
 ```mermaid
 classDiagram
   class WorkoutSession {
@@ -7,6 +9,7 @@ classDiagram
     + title: string
     + description: string?
     + startTime: Date
+    + rsm: Rsm?
   }
 
   class WorkoutExercise {
@@ -23,19 +26,40 @@ classDiagram
     + weight: number
   }
 
+  class Rsm {
+    + mindMuscleConnection: number
+    + pump: number
+    + disruption: number
+  }
+  <<interface>> Rsm
+
   %% A WorkoutExercise is now independent from WorkoutSession
   WorkoutExercise "1" --> "*" WorkoutSet : has many
   WorkoutSession "1" --> "*" WorkoutSet : has many
+  WorkoutSession "0..1" o-- "1" Rsm : defines
+```
+
+## Service Diagram
+
+```mermaid
+classDiagram
+  class WorkoutSessionService {
+    + getRsmResult(session: WorkoutSession): number?
+  }
 ```
 
 ## Terms
 
 - **Stimulus**: Stimulus is generally the amount of stress we are applying to a muscle over a particular time frame.
-- **Maximum Recoverable Volume (MRV)**:
+
 - **Effective Stimulus Range** (pg 28-29): The effective stimulus range is the range between very low stimulus, and just after the amount of stimulus that causes peak muscle growth, just where more stimulus would start resulting in muscle loss.
 - **Cell Swelling** (pg 26): "The Pump" 💪
 - **Relative Effort** (pg 23): Relative Effort is a measure of how close to failure you are on a lift or how difficult the lift is for you with respect to your current capacity.
 - **Reps in Reserve (RIR)** (pg 30): Reps in Reserve are the set's proximity to muscle failure. In other words, how many reps do you have left before you completely fail to produce the movement.
+- **Effective Sets** (pg 33): Effective sets are a set that is done within 5-30 reps, and within 0-5 RIR.
+- **Volume** (pg 34+): From page 34 and onwards, the book discusses volume as the number of effective sets. Even though this isn't the technical definition, everything averages out as long as you are using effective sets.
+- **Minimum Effective Volume (MRV)** (pg. 34): The minimum volume which leads to muscle growth. This varies by age, training experience, and existing muscle mass. As you get stronger / bigger, this gets higher.
+- **Maximum Recoverable Volume (MRV)** (pg. 34): The maximum volume that can be done before muscle loss begins.
 
 ## Key Concepts
 
@@ -64,3 +88,61 @@ During training, and while designing a program, we focus on the following stimul
 The number of "effective reps" you have done are the number of reps between 5 RIR and 0 RIR. So if you got to 0 RIR, then you did 5 "effective reps". This is not to say that reps before 5 RIR are not useful, they are, just less so.
 
 The catch to this is that lower RIR is much more fatigue, and in the grand scheme of things, always going to 0 RIR can cause muscle loss. So a more balanced average of 2-3 RIR is best.
+
+Further, notable growth happens between 30% 1RM and 85% 1RM per repetition. Any less, doesn't give enough stimulus, any more and fatigue + injury risk increase exponentially. Note this is <u>per rep</u>, which means you must keep hitting that weight throughout the set. See the book for a further analysis, but this seems like the most key takeaway.
+
+See Effective Sets for more info.
+
+### Effective Sets (pg. 33)
+
+Effective sets, are an extension of the effective reps, and basically widen the view a bit more. If only taking effective reps into account, one could conclude that a set with 2 RIR and one with 3 RIR is the same as one with 0 RIR. But that doesn't include the reps that were done before the effective reps. So overall the two sets will confer about twice the growth. More sets is virtually always better if they fit the parameters above and have at least 1 effective rep.
+
+Sets anywhere between 5 - 30 reps are great, as long as they have at least 1 effective rep. Note that for mind-muscle connection, 10 - 20 reps is normally ideal for most people. Too little and you are straining too much too focus, too much and fatigue comes in which also doesn't help with focus.
+
+Because of the averages and guidelines (roughly 2-3 RIR per set, and 5 - 30 reps per set), you can generally judge any workout program by the number effective sets in this way.
+
+### Checklist between Sets (pg. 39)
+
+- Are my pecs still burning from the last set?
+- Are my front delts and triceps ready to support my chest in another set?
+- Do I feel mentally and physically like I can push hard with my chest again?
+- Is my breathing more or less back to normal?
+
+If you can answer yes on the recovery side for all of these, then you are good to go.
+
+### Raw Stimulus Magnitude (RSM) (pg. 50-53)
+
+RSM is the amount of muscle growth stimulus any given Workout Session gives. It is very well proxied by some combination of mind-muscle connection, pump, and disruption.
+
+The following questions can quantify RSM for a given workout session, the results of which are valuable and can be used in various ways:
+
+#### Mind Muscle Connection
+
+On a scale of 0-3 how much did the training challenge your target muscles?
+
+- 0: You felt barely aware of your target muscles during the exercise
+- 1: You felt like your target muscles worked, but mildly
+- 2: You felt a good amount of tension and/or burn in the target muscles
+- 3: You felt tension and burn close to the limit in your target muscles
+
+#### The Pump
+
+On a scale of 0-3 how much pump did you experience in the target muscles?
+
+- 0: You got no pump at all in the target muscles
+- 1: You got a very mild pump in the target muscles
+- 2: You got a decent pump in the target muscles
+- 3: You got close to maximal pump in the target muscles
+
+#### Muscle Disruption
+
+On a scale of 0-3 how much did the training disrupt your target muscles?
+
+- 0: You had no fatigue, perturbation, or soreness in the target muscles
+- 1: You had some weakness and stiffness after the session in the target muscles, but recovered by the next day
+- 2: You had weakness and stiffness after the session and experienced soreness the following day
+- 3: You got much weaker and felt perturbation in the target muscles right after the session and also had soreness for a few days or more
+
+#### Result
+
+Add these scores together to get your RSM between 0-9.
