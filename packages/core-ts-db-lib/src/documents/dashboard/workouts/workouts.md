@@ -2,43 +2,28 @@
 
 ```mermaid
 classDiagram
-    class WorkoutSession {
-        +_id: UUID
-        +docType: 'workoutSession'
-        +userId: UUID
-        +createdDate: Date
-        +lastUpdatedDate: Date
-        +title: string
-        +description: string?
-        +startTime: Date
-        +endTime: Date?
-    }
+  class WorkoutSession {
+    + _id: UUID
+    + title: string
+    + description: string?
+    + startTime: Date
+  }
 
-    class WorkoutExercise {
-        +_id: UUID
-        +docType: 'workoutExercise'
-        +userId: UUID
-        +createdDate: Date
-        +lastUpdatedDate: Date
-        +workoutSessionId: UUID
-        +exerciseName: string
-        +orderIndex: number
-        +notes: string?
-    }
+  class WorkoutExercise {
+    + _id: UUID
+    + exerciseName: string
+    + notes: string?
+  }
 
-    class WorkoutSet {
-        +_id: UUID
-        +docType: 'workoutSet'
-        +userId: UUID
-        +createdDate: Date
-        +lastUpdatedDate: Date
-        +workoutExerciseId: UUID
-        +reps: number
-        +weight: number
-        +rpe: number?
-        +orderIndex: number
-    }
+  class WorkoutSet {
+    + _id: UUID
+    + workoutExerciseId: UUID
+    + workoutSessionId: UUID
+    + reps: number
+    + weight: number
+  }
 
-    WorkoutSession "1" --> "*" WorkoutExercise : has many
-    WorkoutExercise "1" --> "*" WorkoutSet : has many
+  %% A WorkoutExercise is now independent from WorkoutSession
+  WorkoutExercise "1" --> "*" WorkoutSet : has many
+  WorkoutSession "1" --> "*" WorkoutSet : has many
 ```
