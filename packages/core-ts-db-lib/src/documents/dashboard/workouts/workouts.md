@@ -6,13 +6,7 @@
 classDiagram
   class WorkoutMesocycle {
     + _id: UUID
-    + calibratedExercises: WorkoutMesocycleCalibratedExercise[]
-  }
-
-  class WorkoutMesocycleCalibratedExercise {
-    <<interface>>
-    + workoutExerciseId: UUID
-    + workoutExerciseCalibrationId: UUID
+    + calibratedExercises: UUID[]
   }
 
   class WorkoutMicrocycle {
@@ -92,10 +86,10 @@ classDiagram
   WorkoutSession "1" --> "*" WorkoutSet : has many
   WorkoutMicrocycle "1" --> "*" WorkoutSession : has many
   WorkoutMesocycle "1" --> "*" WorkoutMicrocycle : has many
+  WorkoutMesocycle "0..*" --> "0..*" WorkoutExerciseCalibration
   WorkoutExercise o-- ExerciseProperty
   WorkoutSession o-- Rsm
   WorkoutSession o-- Fatigue
-  WorkoutMesocycle o-- WorkoutMesocycleCalibratedExercise
 ```
 
 > Note: Where an interface is defined, that is meant to be an embedded definition of the class that defines it. This is a limitation of mermaid, so imagine every interface is just an embedded object definition.
@@ -103,7 +97,7 @@ classDiagram
 Model Notes:
 
 - `exerciseProperties` in `WorkoutSet` and `WorkoutExerciseCalibration` are populated from `WorkoutExercise.customProperties` at creation time. Then whenever customProperties are changed, they are changed among every single existing WorkoutSet with that WorkoutExercise linked to it.
-- `calibratedExercises` in `WorkoutMesocycle` is an array of objects linking a mesocycle to calibrated exercises. This is assigned in this way because we need a way to lock down what calibration is used for a particular mesocycle in the case that the user does a calibration part way through a cycle, or if they update it in the future. We need accurate records of what their 1RM was in the past for a particular cycle.
+- `calibratedExercises` in `WorkoutMesocycle` is an array of UUIDs referencing `WorkoutExerciseCalibration` documents. This locks which calibration was used for a mesocycle so historical 1RM values remain accurate even if calibrations are changed later.
 
 ## Service Diagram
 
@@ -280,7 +274,7 @@ There are different types of fatigue outlined below:
 
 Fatigue as it builds up can cause many issues. Starting with losing uncomfortable sessions, to reductions in performance, to full injury. Fatigue must be managed, and the balance of stimulus to fatigue is the biggest challenge in program design because you want the most stimulus you can get for the least fatigue.
 
-#### Stimulus to Fatigue Ratio (SFR) (pg. 91-94)
+#### Stimulus to Fatigue Ratio (SFR) (pg. 91-95)
 
 Because of the above info about fatigue, we get a handy term: Stimulus to Fatigue Ratio or SFR. This can be thought of as Hypertrophy Stimulated (RSM) / Fatigue Generated. To estimate fatigue we can use the following questions:
 
@@ -304,6 +298,24 @@ Unused Muscle Performance: On a scale of 0-3 how much performance falloff did yo
 - 1: Performance on subsequent exercises targeting unused muscles was as expected
 - 2: Performance on subsequent exercises targeting unused muscles was worse than expected
 - 3: Your performance on subsequent exercises targeting unused muscles was hugely deteriorated
+
+Then to get your SFR, you just divide RSM by Fatigue.
+
+To improve SFR:
+
+- Change the exercise (if there is a clear winner as far as stimulus to the target muscle and less or equal fatigue, for example partial low-bar squats vs deep squats, where deep squats is a clear winner). Some of the best SFR exercises allow for:
+  - The application of high forces through the largest ranges of motion
+  - Minimal involvement of non-target muscles
+  - The lowest possible energy expenditure to keep systemic fatigue low
+  - The lowest axial loading (loading on the spine) to keep axial fatigue low
+- Focus harder on form by:
+  - Using a full range of motion
+  - Focusing on mind-muscle connection with the target muscles (surprisingly effective)
+  - Controlling eccentric and concentric movements to enhance stimulus and reduce joint stress
+  - Avoiding swinging, momentum, or using unnecessary muscles to move the weight
+  - Executing the movement so that it biomechanically targets the intended muscle best (for example, placing your feet low on the leg press to target quads instead of placing them high to push more weight)
+  - Executing the movement so that wear and tear is reduced (not squatting on your toes, which would give your knees needless strain)
+  - Doing all of the above in an individually tailored way for your body
 
 ### Exercise and Program Concepts
 
