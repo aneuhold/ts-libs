@@ -112,6 +112,7 @@ classDiagram
   class WorkoutSessionService {
     + getRsmResult(session: WorkoutSession): number?
     + getFatigueResult(session: WorkoutSession): number?
+    + getSFRResult(session: WorkoutSession): number?
   }
 ```
 
