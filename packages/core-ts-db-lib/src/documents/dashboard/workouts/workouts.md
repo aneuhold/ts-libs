@@ -31,6 +31,7 @@ classDiagram
     + description: string?
     + startTime: Date
     + rsm: Rsm?
+    + fatigue: Fatigue?
   }
 
   class WorkoutSet {
@@ -79,6 +80,13 @@ classDiagram
     + disruption: number
   }
 
+  class Fatigue {
+    <<interface>>
+    + jointAndTissueDisruption: number
+    + perceivedEffort: number
+    + unusedMusclePerformance: number
+  }
+
   WorkoutExercise "1" --> "*" WorkoutSet : has many
   WorkoutExercise "1" --> "0..*" WorkoutExerciseCalibration
   WorkoutSession "1" --> "*" WorkoutSet : has many
@@ -86,6 +94,7 @@ classDiagram
   WorkoutMesocycle "1" --> "*" WorkoutMicrocycle : has many
   WorkoutExercise o-- ExerciseProperty
   WorkoutSession o-- Rsm
+  WorkoutSession o-- Fatigue
   WorkoutMesocycle o-- WorkoutMesocycleCalibratedExercise
 ```
 
@@ -102,6 +111,7 @@ Model Notes:
 classDiagram
   class WorkoutSessionService {
     + getRsmResult(session: WorkoutSession): number?
+    + getFatigueResult(session: WorkoutSession): number?
   }
 ```
 
@@ -121,8 +131,10 @@ Service Notes:
 - **Volume** (pg 34+): From page 34 and onwards, the book discusses volume as the number of effective sets. Even though this isn't the technical definition, everything averages out as long as you are using effective sets.
 - **Minimum Effective Volume (MEV)** (pg. 34): The minimum volume which leads to muscle growth. This varies by age, training experience, and existing muscle mass. As you get stronger / bigger, this gets higher.
 - **Maximum Recoverable Volume (MRV)** (pg. 34): The maximum volume that can be done before muscle loss begins.
+- **Raw Stimulus Magnitude (RSM)** (pg. 50-53): RSM is the amount of muscle growth stimulus any given Workout Session gives.
 - **Microcycle**: The shortest cycle of training that includes all workout sessions and rest days and is repeated. Typically, but not always, this is a week.
 - **Mesocycle**: An organized sequence of microcycles ordered to elicit a set of distinct training adaptations. The typical mesocycle is composed of two distinct phases: an accumulation phase, and a shorter deload phase.
+- **Stimulus to Fatigue Ratio (SFR)** (pg. 89,91-94): The relationship between stimulus and fatigue for any training input. This can be thought of as Hypertrophy Stimulated (proxied by ) / Fatigue Generated.
 
 ## Key Concepts
 
@@ -257,6 +269,40 @@ Then use the following table to determine how many sets to add the next week gen
 | **3** | Do not add sets | Do not add sets | Do not add sets | Employ recovery sessions (see Fatigue Management) |
 
 > The overall goal should be on set progression. Try not to increase load too much unless you really need to. Volume will give you more results than load as far as muscle growth.
+
+### Fatigue (pg. 87-89)
+
+There are different types of fatigue outlined below:
+
+- Systemic Fatigue: This impacts the whole body irrespective of where or how it was generated. Psychological stress also increases systemic fatigue and that can affect your rate of muscle growth. In fact, the symptoms of physically based systemic fatigue and psychologically based fatigue are often indistinguishable.
+- Local Fatigue: This is just the fatigue you feel in a muscle just after doing an exercise, or after a workout has concluded on that muscle.
+
+Fatigue as it builds up can cause many issues. Starting with losing uncomfortable sessions, to reductions in performance, to full injury. Fatigue must be managed, and the balance of stimulus to fatigue is the biggest challenge in program design because you want the most stimulus you can get for the least fatigue.
+
+#### Stimulus to Fatigue Ratio (SFR) (pg. 91-94)
+
+Because of the above info about fatigue, we get a handy term: Stimulus to Fatigue Ratio or SFR. This can be thought of as Hypertrophy Stimulated (RSM) / Fatigue Generated. To estimate fatigue we can use the following questions:
+
+Joint and Connective Tissue Disruption: On a scale of 0-3 how much did the training disrupt your joints and connective tissues?
+
+- 0: You had minimal to no pain or perturbation in your joints or connective tissues
+- 1: You had some pain or perturbation in your joints and connective tissues but recovered by the next day
+- 2: You had some persistent pain or tightness in your connective tissues that lasted through the following day or several days
+- 3: You develop chronic pain in the joints and connective tissues that persists across days to weeks or longer
+
+Perceived Exertion / Perceived Effort Per Set: On a scale of 0-3 how much perceived effort went into the training?
+
+- 0: Training felt very easy and hardly taxed you psychologically
+- 1: You put effort into the training, but felt recovered by the end of the day
+- 2: You put a large effort into the training and felt drained through the next day
+- 3: You put an all-out effort into the training and felt drained for days
+
+Unused Muscle Performance: On a scale of 0-3 how much performance falloff did you see in unused muscles?
+
+- 0: Performance on subsequent exercises targeting unused muscles was better than expected
+- 1: Performance on subsequent exercises targeting unused muscles was as expected
+- 2: Performance on subsequent exercises targeting unused muscles was worse than expected
+- 3: Your performance on subsequent exercises targeting unused muscles was hugely deteriorated
 
 ### Exercise and Program Concepts
 
