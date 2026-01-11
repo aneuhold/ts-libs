@@ -17,6 +17,7 @@ classDiagram
     + exerciseName: string
     + notes: string?
     + customProperties: ExerciseProperty[]?
+    + workoutMicrocycleId: UUID?
   }
 
   class WorkoutSet {
@@ -27,6 +28,19 @@ classDiagram
     + weight: number
     + rir: number
     + exerciseProperties: object?
+  }
+
+  class WorkoutMicrocycle {
+    + _id: UUID
+    + workoutMesocycleId: UUID?
+    + startDate: Date
+    + endDate: Date?
+    + sorenessScore: number?
+    + performanceScore: number?
+  }
+
+  class WorkoutMesocycle {
+    + _id: UUID
   }
 
   class ExerciseProperty {
@@ -52,9 +66,10 @@ classDiagram
 
   WorkoutExercise "1" --> "*" WorkoutSet : has many
   WorkoutSession "1" --> "*" WorkoutSet : has many
+  WorkoutMicrocycle "1" --> "*" WorkoutExercise : has many
+  WorkoutMesocycle "1" --> "*" WorkoutMicrocycle : has many
   WorkoutExercise o-- ExerciseProperty : defines
   WorkoutSession o-- Rsm : defines
-
 ```
 
 > Note: Where an interface is defined, that is meant to be an embedded definition of the class that defines it. This is a limitation of mermaid, so imagine every interface is just an embedded object definition.
@@ -71,6 +86,10 @@ classDiagram
     + getRsmResult(session: WorkoutSession): number?
   }
 ```
+
+Service Notes:
+
+- There will likely be a method or set of methods that create a schedule projection based on the mesocycle.
 
 ## Terms
 
@@ -220,3 +239,12 @@ Then use the following table to determine how many sets to add the next week gen
 | **3** | Do not add sets | Do not add sets | Do not add sets | Employ recovery sessions (see Fatigue Management) |
 
 > The overall goal should be on set progression. Try not to increase load too much unless you really need to. Volume will give you more results than load as far as muscle growth.
+
+### Exercise and Program Concepts
+
+#### Exercise Order (pg. 68-69)
+
+Exercises should generally stay the same over a mesocycle, but they can change order. You should generally have the following priorities when choosing the order:
+
+1. What your priority is as far as the muscles being trained (If you want better rear delts, train those first on the day where they get trained. Don't leave them till last)
+2. What gives you the best stimulus / pump (Even though you may not prefer an exercise, if it gives you a better pump, you need to use that)
