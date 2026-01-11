@@ -36,8 +36,10 @@ classDiagram
   %% A WorkoutExercise is now independent from WorkoutSession
   WorkoutExercise "1" --> "*" WorkoutSet : has many
   WorkoutSession "1" --> "*" WorkoutSet : has many
-  WorkoutSession "0..1" o-- "1" Rsm : defines
+  WorkoutSession o-- Rsm : defines
 ```
+
+> Note: Where an interface is defined, that is meant to be an embedded definition of the class that defines it. This is a limitation of mermaid, so imagine every interface is just an embedded object definition.
 
 ## Service Diagram
 
@@ -58,8 +60,10 @@ classDiagram
 - **Reps in Reserve (RIR)** (pg 30): Reps in Reserve are the set's proximity to muscle failure. In other words, how many reps do you have left before you completely fail to produce the movement.
 - **Effective Sets** (pg 33): Effective sets are a set that is done within 5-30 reps, and within 0-5 RIR.
 - **Volume** (pg 34+): From page 34 and onwards, the book discusses volume as the number of effective sets. Even though this isn't the technical definition, everything averages out as long as you are using effective sets.
-- **Minimum Effective Volume (MRV)** (pg. 34): The minimum volume which leads to muscle growth. This varies by age, training experience, and existing muscle mass. As you get stronger / bigger, this gets higher.
+- **Minimum Effective Volume (MEV)** (pg. 34): The minimum volume which leads to muscle growth. This varies by age, training experience, and existing muscle mass. As you get stronger / bigger, this gets higher.
 - **Maximum Recoverable Volume (MRV)** (pg. 34): The maximum volume that can be done before muscle loss begins.
+- **Microcycle**: The shortest cycle of training that includes all workout sessions and rest days and is repeated. Typically, but not always, this is a week.
+- **Mesocycle**: An organized sequence of microcycles ordered to elicit a set of distinct training adaptations. The typical mesocycle is composed of two distinct phases: an accumulation phase, and a shorter deload phase.
 
 ## Key Concepts
 
@@ -146,3 +150,47 @@ On a scale of 0-3 how much did the training disrupt your target muscles?
 #### Result
 
 Add these scores together to get your RSM between 0-9.
+
+### Mesocycles (pg. 58-59)
+
+Mesocycles consist of two phases, the accumulation phase, and the shorter deload phase.
+
+#### Accumulation Phase
+
+The goal of this phase is to start at your MEV, and then progress towards your MRV. In order to do that, we need to know what your MEV is. The first time you will need to gauge this. But you may be able to go a few mesocycles before gauging it again. You can gauge it again whenever you like, or just use the data that you have recorded to project into the future.
+
+To get your MEV, do the RSM calculation for the first 2-3 days of the mesocycle. Use that information to judge the following:
+
+<!-- prettier-ignore -->
+| Total Score | Proximity to MEV | Recommendation |
+|---:|---|---|
+| 0–1 | Stimulus likely below MEV | Increase volume the following week by two to four sets |
+| 2–3 | Stimulus likely at or below MEV | Increase volume the following week by two to four sets |
+| 4–6 | Stimulus likely at or just above MEV (a great place to start your mesocycle) | Progress normally |
+| 7–9 | Stimulus likely between MEV and MRV, possibly exceeding MRV | Drop volume the following week |
+
+After you get this information, go ahead and finish out the first week at MEV, then calculate how you should progress by answering the following questions:
+
+On a scale of 0-3 how sore did you get in the target muscles?
+
+- 0: You did not get at all sore in the target muscles
+- 1: You got stiff for a few hours after training and had mild soreness in the target muscles that resolved by next session targeting the same muscles
+- 2: You got DOMS in the target muscles that resolved just in time for the next session targeting the same muscles
+- 3: You got DOMS in the target muscles that remained for the next session targeting the same muscles
+
+On a scale of 0-3 how was your performance?
+
+- 0: You hit your target reps, but either had to do 2 more reps than planned to hit target RIR or you hit your target reps at 2 or more reps before target RIR
+- 1: You hit your target reps, but either had to do 0-1 more reps than planned to hit target RIR or you hit your target reps at 1 rep before target RIR
+- 2: You hit your target reps after your target RIR
+- 3: You could not match last week's reps at any RIR
+
+Then use the following table to determine how many sets to add the next week generally, or if you need to employ recovery sessions.
+
+<!-- prettier-ignore -->
+| Soreness Score ↓ \ Performance Score → | 0 | 1 | 2 | 3 |
+|---|---|---|---|---|
+| **0** | Add 1–3 sets | Add 0–2 sets | Do not add sets | Employ recovery sessions (see Fatigue Management) |
+| **1** | Add 1–2 sets | Add 0–1 sets | Do not add sets | Employ recovery sessions (see Fatigue Management) |
+| **2** | Do not add sets | Do not add sets | Do not add sets | Employ recovery sessions (see Fatigue Management) |
+| **3** | Do not add sets | Do not add sets | Do not add sets | Employ recovery sessions (see Fatigue Management) |
