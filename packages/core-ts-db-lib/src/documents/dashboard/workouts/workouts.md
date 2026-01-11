@@ -112,7 +112,7 @@ Service Notes:
 ## Terms
 
 - **Stimulus**: Stimulus is generally the amount of stress we are applying to a muscle over a particular time frame.
-
+- **Delayed Onset Muscle Soreness (DOMS)**
 - **Effective Stimulus Range** (pg 28-29): The effective stimulus range is the range between very low stimulus, and just after the amount of stimulus that causes peak muscle growth, just where more stimulus would start resulting in muscle loss.
 - **Cell Swelling** (pg 26): "The Pump" 💪
 - **Relative Effort** (pg 23): Relative Effort is a measure of how close to failure you are on a lift or how difficult the lift is for you with respect to your current capacity.
