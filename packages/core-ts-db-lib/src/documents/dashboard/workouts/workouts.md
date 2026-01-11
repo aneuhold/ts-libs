@@ -4,20 +4,26 @@
 
 ```mermaid
 classDiagram
+  class WorkoutMesocycle {
+    + _id: UUID
+  }
+
+  class WorkoutMicrocycle {
+    + _id: UUID
+    + workoutMesocycleId: UUID?
+    + startDate: Date
+    + endDate: Date?
+    + sorenessScore: number?
+    + performanceScore: number?
+  }
+
   class WorkoutSession {
     + _id: UUID
+    + workoutMicrocycleId: UUID?
     + title: string
     + description: string?
     + startTime: Date
     + rsm: Rsm?
-  }
-
-  class WorkoutExercise {
-    + _id: UUID
-    + exerciseName: string
-    + notes: string?
-    + customProperties: ExerciseProperty[]?
-    + workoutMicrocycleId: UUID?
   }
 
   class WorkoutSet {
@@ -30,17 +36,19 @@ classDiagram
     + exerciseProperties: object?
   }
 
-  class WorkoutMicrocycle {
+  class WorkoutExercise {
     + _id: UUID
-    + workoutMesocycleId: UUID?
-    + startDate: Date
-    + endDate: Date?
-    + sorenessScore: number?
-    + performanceScore: number?
+    + exerciseName: string
+    + notes: string?
+    + customProperties: ExerciseProperty[]?
   }
 
-  class WorkoutMesocycle {
+  class WorkoutExerciseCalibration {
     + _id: UUID
+    + workoutExerciseId: UUID
+    + exerciseProperties: object?
+    + oneRepMax: number
+    + dateRecorded: Date
   }
 
   class ExerciseProperty {
@@ -65,18 +73,19 @@ classDiagram
   }
 
   WorkoutExercise "1" --> "*" WorkoutSet : has many
+  WorkoutExercise "1" --> "0..*" WorkoutExerciseCalibration
   WorkoutSession "1" --> "*" WorkoutSet : has many
-  WorkoutMicrocycle "1" --> "*" WorkoutExercise : has many
+  WorkoutMicrocycle "1" --> "*" WorkoutSession : has many
   WorkoutMesocycle "1" --> "*" WorkoutMicrocycle : has many
-  WorkoutExercise o-- ExerciseProperty : defines
-  WorkoutSession o-- Rsm : defines
+  WorkoutExercise o-- ExerciseProperty
+  WorkoutSession o-- Rsm
 ```
 
 > Note: Where an interface is defined, that is meant to be an embedded definition of the class that defines it. This is a limitation of mermaid, so imagine every interface is just an embedded object definition.
 
 Model Notes:
 
-- `exerciseProperties` in `WorkoutSet` are populated from `WorkoutExercise.customProperties` at creation time. Then whenever customProperties are changed, they are changed among every single existing WorkoutSet with that WorkoutExercise linked to it.
+- `exerciseProperties` in `WorkoutSet` and `WorkoutExerciseCalibration` are populated from `WorkoutExercise.customProperties` at creation time. Then whenever customProperties are changed, they are changed among every single existing WorkoutSet with that WorkoutExercise linked to it.
 
 ## Service Diagram
 
