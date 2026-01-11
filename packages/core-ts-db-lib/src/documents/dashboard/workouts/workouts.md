@@ -6,6 +6,13 @@
 classDiagram
   class WorkoutMesocycle {
     + _id: UUID
+    + calibratedExercises: WorkoutMesocycleCalibratedExercise[]
+  }
+
+  class WorkoutMesocycleCalibratedExercise {
+    <<interface>>
+    + workoutExerciseId: UUID
+    + workoutExerciseCalibrationId: UUID
   }
 
   class WorkoutMicrocycle {
@@ -79,6 +86,7 @@ classDiagram
   WorkoutMesocycle "1" --> "*" WorkoutMicrocycle : has many
   WorkoutExercise o-- ExerciseProperty
   WorkoutSession o-- Rsm
+  WorkoutMesocycle o-- WorkoutMesocycleCalibratedExercise
 ```
 
 > Note: Where an interface is defined, that is meant to be an embedded definition of the class that defines it. This is a limitation of mermaid, so imagine every interface is just an embedded object definition.
@@ -86,6 +94,7 @@ classDiagram
 Model Notes:
 
 - `exerciseProperties` in `WorkoutSet` and `WorkoutExerciseCalibration` are populated from `WorkoutExercise.customProperties` at creation time. Then whenever customProperties are changed, they are changed among every single existing WorkoutSet with that WorkoutExercise linked to it.
+- `calibratedExercises` in `WorkoutMesocycle` is an array of objects linking a mesocycle to calibrated exercises. This is assigned in this way because we need a way to lock down what calibration is used for a particular mesocycle in the case that the user does a calibration part way through a cycle, or if they update it in the future. We need accurate records of what their 1RM was in the past for a particular cycle.
 
 ## Service Diagram
 
