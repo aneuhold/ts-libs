@@ -16,6 +16,7 @@ classDiagram
     + _id: UUID
     + exerciseName: string
     + notes: string?
+    + customProperties: ExerciseProperty[]?
   }
 
   class WorkoutSet {
@@ -24,22 +25,43 @@ classDiagram
     + workoutSessionId: UUID
     + reps: number
     + weight: number
+    + rir: number
+    + exerciseProperties: object?
+  }
+
+  class ExerciseProperty {
+    <<interface>>
+    + name: string
+    + type: ExercisePropertyType
+  }
+
+  class ExercisePropertyType {
+    <<enumeration>>
+    + Weight
+    + Text
+    + "Yes/No"
+    + Number
   }
 
   class Rsm {
+    <<interface>>
     + mindMuscleConnection: number
     + pump: number
     + disruption: number
   }
-  <<interface>> Rsm
 
-  %% A WorkoutExercise is now independent from WorkoutSession
   WorkoutExercise "1" --> "*" WorkoutSet : has many
   WorkoutSession "1" --> "*" WorkoutSet : has many
+  WorkoutExercise o-- ExerciseProperty : defines
   WorkoutSession o-- Rsm : defines
+
 ```
 
 > Note: Where an interface is defined, that is meant to be an embedded definition of the class that defines it. This is a limitation of mermaid, so imagine every interface is just an embedded object definition.
+
+Model Notes:
+
+- `exerciseProperties` in `WorkoutSet` are populated from `WorkoutExercise.customProperties` at creation time. Then whenever customProperties are changed, they are changed among every single existing WorkoutSet with that WorkoutExercise linked to it.
 
 ## Service Diagram
 
@@ -103,6 +125,8 @@ Effective sets, are an extension of the effective reps, and basically widen the 
 
 Sets anywhere between 5 - 30 reps are great, as long as they have at least 1 effective rep. Note that for mind-muscle connection, 10 - 20 reps is normally ideal for most people. Too little and you are straining too much too focus, too much and fatigue comes in which also doesn't help with focus.
 
+If you are trying to hit a target rep range of 10-20, and start at 16, 14, 12, 10, but need to add a fifth set the next week, it will need to be a drop set. So go down a bit of weight on the fifth set in order to keep your target reps of 10. (pg. 62)
+
 Because of the averages and guidelines (roughly 2-3 RIR per set, and 5 - 30 reps per set), you can generally judge any workout program by the number effective sets in this way.
 
 ### Checklist between Sets (pg. 39)
@@ -151,7 +175,7 @@ On a scale of 0-3 how much did the training disrupt your target muscles?
 
 Add these scores together to get your RSM between 0-9.
 
-### Mesocycles (pg. 58-59)
+### Mesocycles (pg. 58-61)
 
 Mesocycles consist of two phases, the accumulation phase, and the shorter deload phase.
 
@@ -194,3 +218,5 @@ Then use the following table to determine how many sets to add the next week gen
 | **1** | Add 1–2 sets | Add 0–1 sets | Do not add sets | Employ recovery sessions (see Fatigue Management) |
 | **2** | Do not add sets | Do not add sets | Do not add sets | Employ recovery sessions (see Fatigue Management) |
 | **3** | Do not add sets | Do not add sets | Do not add sets | Employ recovery sessions (see Fatigue Management) |
+
+> The overall goal should be on set progression. Try not to increase load too much unless you really need to. Volume will give you more results than load as far as muscle growth.
