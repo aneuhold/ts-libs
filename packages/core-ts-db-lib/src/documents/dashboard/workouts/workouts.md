@@ -125,11 +125,12 @@ Service Notes:
 - **Effective Sets** (pg 33): Effective sets are a set that is done within 5-30 reps, and within 0-5 RIR.
 - **Volume** (pg 34+): From page 34 and onwards, the book discusses volume as the number of effective sets. Even though this isn't the technical definition, everything averages out as long as you are using effective sets.
 - **Minimum Effective Volume (MEV)** (pg. 34): The minimum volume which leads to muscle growth. This varies by age, training experience, and existing muscle mass. As you get stronger / bigger, this gets higher.
-- **Maximum Recoverable Volume (MRV)** (pg. 34): The maximum volume that can be done before muscle loss begins.
+- **Maximum Recoverable Volume (MRV)** (pg. 34,117): The maximum volume that can be done before muscle loss begins.
 - **Raw Stimulus Magnitude (RSM)** (pg. 50-53): RSM is the amount of muscle growth stimulus any given Workout Session gives.
 - **Microcycle**: The shortest cycle of training that includes all workout sessions and rest days and is repeated. Typically, but not always, this is a week.
 - **Mesocycle**: An organized sequence of microcycles ordered to elicit a set of distinct training adaptations. The typical mesocycle is composed of two distinct phases: an accumulation phase, and a shorter deload phase.
 - **Stimulus to Fatigue Ratio (SFR)** (pg. 89,91-94): The relationship between stimulus and fatigue for any training input. This can be thought of as Hypertrophy Stimulated (proxied by ) / Fatigue Generated.
+- **Stimulus, Recovery, and Adaptation (SRA)** (pg. 123): SRA dictates when we should stimulate and when we should recover for best adaptation.
 
 ## Key Concepts
 
@@ -265,6 +266,21 @@ Then use the following table to determine how many sets to add the next week gen
 
 > The overall goal should be on set progression. Try not to increase load too much unless you really need to. Volume will give you more results than load as far as muscle growth.
 
+#### Deload Phase (pg. 100,110-112)
+
+The goal with the deload phase is that we do it right when our progression has a hit a high. Such as 85% 1RM, 0 RIR, and right at MRV. We want to give ourselves enough weeks of progression to make the deload worth it. For example if we hit that on week 2, then we would need 1 week of deload after week 2 and only get 2 weeks of progression for every 3. But if we do 4 weeks of progression, and 1 week of deload, we get a better ratio of muscle growth over the year.
+
+When to take a deload?
+
+- When you have hit MRV and it is scheduled
+- More than half of your muscles have required a recovery session in the last two weeks (even if for the first time)
+- Take one after you have had a sickness that takes more than 3 days to recover (see Fatigue Management section).
+
+How to take a deload?
+
+- How to choose the exercises: This can be done in 3 different ways, which are choosing the current mesocycle's exercises, the next mesocycle's, or specifically low stress exercises. To keep things simple for the purposes of my own program, I am just going to go with the first option. It is safest, and easiest to calculate.
+- How much stimulus to impose: Similar to recovery sessions, for the first half of the week, cut the last microcycle's sets and reps in half, but keep the same weight. The the second half of the week, cut the weight in half as well.
+
 ### Fatigue (pg. 87-89)
 
 There are different types of fatigue outlined below:
@@ -317,6 +333,20 @@ To improve SFR:
   - Executing the movement so that wear and tear is reduced (not squatting on your toes, which would give your knees needless strain)
   - Doing all of the above in an individually tailored way for your body
 
+#### Fatigue Management (pg. 101-111)
+
+In addition to the above, which help improve the SFR, which can also help reduce fatigue during an exercise, this section is for managing fatigue specifically.
+
+- Train within your volume landmarks (between MEV and MRV). If you find yourself hitting your limit, and falling in reps than what you did the previous week, you NEED to stop and take a rest week. This means you are already past your MRV which is bad. The rest of the suggestions below are assuming you are working out correctly between MEV and MRV.
+- Take a rest day. Try to fit 1 rest day per week, and optimally, 2 in a row (due to general word-of-mouth among bodybuilders it seems, 2 in a row is really good).
+- Take recovery sessions: When rest days would throw off your schedule, but you still need to reduce the load because you are tracking to go over MRV before the deload week, that is when a recovery session comes in handy. If you have your MEV and MRV on pat, then this normally shouldn't be necessary. But that is very unlikely when first starting programs.
+  - Recovery sessions should target the affected muscle group. In bad cases, you may need to take it easy for the entire session, but it is better if just the impacted muscle group has lower volume.
+  - To actually take a recovery session, simply cut the planned reps and sets in half. So if you planned to do 5 sets of 20 reps roughly, then do 2 sets of 10 reps. Use the same weight though. If you feel that you can't do any reps at the same weight, then cut the weight and sets in half, but leave the reps the same.
+  - Note that cutting things in half may seem like overkill. But what you want to avoid is only reducing the number of sets by 1, or number of reps by a couple and calling that a recovery. That just reduces stimulation AND doesn't reduce fatigue. Making both problems worse.
+- Active rest periods (pg. 112): This happens once per year and lasts 1-4 weeks. Take the time completely off and try not to binge eat lol. Normally this is done right after a deload, and works well with holidays. This is actually not needed for recreational hypertrophy training because the training is a hobby and not a career and the amount of stresses on the body is much less, but it is encouraged.
+
+If you are sick, and it is a fever or bad sickness, then take as many rest days as you need to fully recover. You don't want to exacerbate the problem by training early which will make it take even longer to recover and lose more time. After a sickness that takes more than a few days to recover, you need to take a deload and then start a new mesocycle.
+
 ### Exercise and Program Concepts
 
 #### Exercise Order (pg. 68-69)
@@ -325,3 +355,28 @@ Exercises should generally stay the same over a mesocycle, but they can change o
 
 1. What your priority is as far as the muscles being trained (If you want better rear delts, train those first on the day where they get trained. Don't leave them till last)
 2. What gives you the best stimulus / pump (Even though you may not prefer an exercise, if it gives you a better pump, you need to use that)
+
+#### Exercise Frequency (pg. 133-141)
+
+In the book, there is a very great level of detail into this topic, that can be researched at a later time if desired. Only the very highest-level points are summarized below.
+
+Note that you likely need a warm-up before each muscle group. So having a higher set count, and less sessions per week for a muscle-group means a more efficient use of time. But it needs to be balanced, because you can fit in more sets if you do more sessions, which means more stimulus is available.
+
+Session count:
+
+- If you are going to increase session count, never increase it more than 1 session per mesocycle to keep systemic fatigue at bay, and gauge your response.
+- 1x per week is insufficient. 2x per week is alright, and 4x per week is great. 5x per week has a very tiny fractional benefit over 4x per week.
+
+Muscle Group Session / Microcycle:
+
+- Smaller muscle groups (biceps / triceps) can be trained more often. Larger muscle groups likely need less.
+- Roughly 2-4 muscle group sessions / microcycle can turn out to be good, but that is a very loose rule of thumb (pg. 143)
+- A simple algorithm, is to start with 2x each muscle group per microcycle. Note the soreness score you get for each muscle group each week. Then at the end of the mesocycle (while following the set progression described elsewhere), look over all sessions and see if you healed just on time each time. If you did, then you can keep that number of sessions If you were never sore in that muscle group, or always healed early, bump it up by 1 session. If the set progression algorithm prevented volume increases, or you didn't recover in time, then consider removing a session for the next mesocycle. (pg. 145)
+
+Sets / Muscle Group / Session:
+
+- More than 2 sets and less than 15 sets are the hard limits. 15 is bad though, 12 is a much better cap and 2 is not great either, 3-5 is a better minimum. (pg. 142-143)
+
+Sets / Session:
+
+- 25 total sets per session is a good average MRV cap. Some people can do 30, but anything more than 30 should be a red flag. (pg. 142)
