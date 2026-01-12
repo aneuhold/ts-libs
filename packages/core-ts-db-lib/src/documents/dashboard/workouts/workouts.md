@@ -129,7 +129,7 @@ Service Notes:
 - **Raw Stimulus Magnitude (RSM)** (pg. 50-53): RSM is the amount of muscle growth stimulus any given Workout Session gives.
 - **Microcycle**: The shortest cycle of training that includes all workout sessions and rest days and is repeated. Typically, but not always, this is a week.
 - **Mesocycle**: An organized sequence of microcycles ordered to elicit a set of distinct training adaptations. The typical mesocycle is composed of two distinct phases: an accumulation phase, and a shorter deload phase.
-- **Stimulus to Fatigue Ratio (SFR)** (pg. 89,91-94): The relationship between stimulus and fatigue for any training input. This can be thought of as Hypertrophy Stimulated (proxied by ) / Fatigue Generated.
+- **Stimulus to Fatigue Ratio (SFR)** (pg. 89,91-94): The relationship between stimulus and fatigue for any training input. This can be thought of as Hypertrophy Stimulated (proxied by RSM) / Fatigue Generated.
 - **Stimulus, Recovery, and Adaptation (SRA)** (pg. 123): SRA dictates when we should stimulate and when we should recover for best adaptation.
 
 ## Key Concepts
