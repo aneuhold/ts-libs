@@ -24,6 +24,7 @@ classDiagram
     + title: string
     + description: string?
     + startTime: Date
+    + setOrder: UUID[]
     + rsm: Rsm?
     + fatigue: Fatigue?
   }
@@ -43,6 +44,7 @@ classDiagram
     + exerciseName: string
     + notes: string?
     + customProperties: ExerciseProperty[]?
+    + repRange: ExerciseRepRange
   }
 
   class WorkoutExerciseCalibration {
@@ -65,6 +67,13 @@ classDiagram
     + Text
     + "Yes/No"
     + Number
+  }
+
+  class ExerciseRepRange {
+    <<enumeration>>
+    + Heavy
+    + Medium
+    + Light
   }
 
   class Rsm {
@@ -96,8 +105,10 @@ classDiagram
 
 Model Notes:
 
+- `WorkoutExercise` is meant to be specific to a particular way of doing an exercise. For example there should be separate exercises for Barbell Bench Press (Straight Sets), Barbell Bench Press (Myoreps), Dumbbell Bench Press (Straight Sets, Eccentric Focus, 3s Down, 1s Pause). It needs to be ultra specific, because even a different hand position will result in a different exercise, and should be tracked separately.
 - `exerciseProperties` in `WorkoutSet` and `WorkoutExerciseCalibration` are populated from `WorkoutExercise.customProperties` at creation time. Then whenever customProperties are changed, they are changed among every single existing WorkoutSet with that WorkoutExercise linked to it.
 - `calibratedExercises` in `WorkoutMesocycle` is an array of UUIDs referencing `WorkoutExerciseCalibration` documents. This locks which calibration was used for a mesocycle so historical 1RM values remain accurate even if calibrations are changed later.
+- `setOrder` on `WorkoutSession` was chosen as a compromise for querying efficiency in order to quickly get metrics like "Last time you did this exercise when it was preceded by these 4 other exercises, you did this".
 
 ## Service Diagram
 
@@ -164,17 +175,23 @@ Further, notable growth happens between 30% 1RM and 85% 1RM per repetition. Any 
 
 See Effective Sets for more info.
 
-### Effective Sets (pg. 33)
+### Effective Sets (pg. 33,62,166-167)
 
 Effective sets, are an extension of the effective reps, and basically widen the view a bit more. If only taking effective reps into account, one could conclude that a set with 2 RIR and one with 3 RIR is the same as one with 0 RIR. But that doesn't include the reps that were done before the effective reps. So overall the two sets will confer about twice the growth. More sets is virtually always better if they fit the parameters above and have at least 1 effective rep.
 
-Sets anywhere between 5 - 30 reps are great, as long as they have at least 1 effective rep. Note that for mind-muscle connection, 10 - 20 reps is normally ideal for most people. Too little and you are straining too much too focus, too much and fatigue comes in which also doesn't help with focus.
+Sets anywhere between 5 - 30 reps are great, as long as they have at least 1 effective rep. Note that for mind-muscle connection, 10 - 20 reps is normally ideal for most people. Too little and you are straining too much too focus, too much and fatigue comes in which also doesn't help with focus. You can use this variation to your advantage for muscle groups and in a particular session. For example, the heavier sets are not practical at 30 reps, such as deadlifts, and it is generally unsafe to do enough weight to properly do 5 reps of flys. Because of this, I (personally) am making up a definition of "heavy", "medium", and "light" exercises. Which can be defined as:
+
+- "Heavy exercises": Normally done in the 5-15 rep range
+- "Medium exercises": Normally done in the 10-20 rep range (This should be the most common)
+- "Light exercises": Normally done in the 15-30 rep range
+
+You want to try and put the heavy exercises towards the beginning of the week if possible, and the lighter ones towards the end so that it is easier when your muscles are tired. But in general you also want to get the full range for each muscle group. This is part of the challenge with making a program.
 
 If you are trying to hit a target rep range of 10-20, and start at 16, 14, 12, 10, but need to add a fifth set the next week, it will need to be a drop set. So go down a bit of weight on the fifth set in order to keep your target reps of 10. (pg. 62)
 
 Because of the averages and guidelines (roughly 2-3 RIR per set, and 5 - 30 reps per set), you can generally judge any workout program by the number effective sets in this way.
 
-### Checklist between Sets (pg. 39)
+#### Checklist between Sets (pg. 39)
 
 - Are my pecs still burning from the last set?
 - Are my front delts and triceps ready to support my chest in another set?
@@ -224,6 +241,8 @@ Add these scores together to get your RSM between 0-9.
 
 Mesocycles consist of two phases, the accumulation phase, and the shorter deload phase.
 
+In general, DO NOT change exercises part way through a mesocycle. Not only does it prevent accurate tracking, but on page 174, it goes in depth that it can also prevent meaningful technique and load progression.
+
 #### Accumulation Phase
 
 The goal of this phase is to start at your MEV, and then progress towards your MRV. In order to do that, we need to know what your MEV is. The first time you will need to gauge this. But you may be able to go a few mesocycles before gauging it again. You can gauge it again whenever you like, or just use the data that you have recorded to project into the future.
@@ -266,6 +285,8 @@ Then use the following table to determine how many sets to add the next week gen
 
 > The overall goal should be on set progression. Try not to increase load too much unless you really need to. Volume will give you more results than load as far as muscle growth.
 
+You should have at least 4 weeks as your goal for the accumulation phase, and at the very most, 8 weeks. (pg. 184)
+
 #### Deload Phase (pg. 100,110-112)
 
 The goal with the deload phase is that we do it right when our progression has a hit a high. Such as 85% 1RM, 0 RIR, and right at MRV. We want to give ourselves enough weeks of progression to make the deload worth it. For example if we hit that on week 2, then we would need 1 week of deload after week 2 and only get 2 weeks of progression for every 3. But if we do 4 weeks of progression, and 1 week of deload, we get a better ratio of muscle growth over the year.
@@ -280,6 +301,14 @@ How to take a deload?
 
 - How to choose the exercises: This can be done in 3 different ways, which are choosing the current mesocycle's exercises, the next mesocycle's, or specifically low stress exercises. To keep things simple for the purposes of my own program, I am just going to go with the first option. It is safest, and easiest to calculate.
 - How much stimulus to impose: Similar to recovery sessions, for the first half of the week, cut the last microcycle's sets and reps in half, but keep the same weight. The the second half of the week, cut the weight in half as well.
+
+#### Phase Potentiation (pg. 181-191)
+
+This is a more advanced concept, and could be explored further later on. Basically, it is a way to organize mesocycles, outside of the periodic active rest periods, to get better performance. This seems to be characterized by a maintenance training phase which is an entire mesocycle training at MV (so very low volumes), but with high weight.
+
+Page 190 talks about the muscle-gain block -> maintenance block -> fat loss block macrocycle. This seems like the golden standard to look up to. It involves 2-4 mesocycles of gaining muscle through MEV-MRV training and hypercaloric eating, then a 1-2 mesocycle block of MV training and maintenance eating, then a 1-2 mesocycle block of fat loss with MEV-MRV training and hypocaloric eating. You would typically eat up to 20% body fat for males and 30% for females, then go back down. Again, this is the golden standard though that seems to be for professionals. I need to think through how to do this for more recreational purposes. But I do know this works.
+
+A clean middle-ground might be to just take a resensitization phase every 3-4 mesocycles, in addition to the active break once a year. So that would be 1-2 months of MV training basically. But a month is most likely all you need. See page 194 for more info.
 
 ### Fatigue (pg. 87-89)
 
@@ -380,3 +409,11 @@ Sets / Muscle Group / Session:
 Sets / Session:
 
 - 25 total sets per session is a good average MRV cap. Some people can do 30, but anything more than 30 should be a red flag. (pg. 142)
+
+Reps / Set (pg. 166-167):
+
+The number of reps per set are
+
+#### Exercise Selection (pg. 160-161)
+
+Generally choose exercises that are going to give you great Raw Stimulus Magnitude (RSM), and align with your goals. At the end of a mesocycle you can decide if you want to swap one out for another if it is stalling, feeling stale, or hurting you. But if things are going well, don't swap it out! Don't be afraid to hold onto an exercise through mesocycles for a year or more if it keeps working for you, but swap the ones that aren't working out. Just make sure to use an honest assessment. No dogma.
