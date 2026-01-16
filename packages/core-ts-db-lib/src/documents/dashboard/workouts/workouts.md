@@ -7,6 +7,7 @@ classDiagram
   class WorkoutMesocycle {
     + _id: UUID
     + calibratedExercises: UUID[]
+    + cycleType: CycleType
   }
 
   class WorkoutMicrocycle {
@@ -24,6 +25,15 @@ classDiagram
     + title: string
     + description: string?
     + startTime: Date
+    + sessionExerciseOrder: UUID[]
+    + rsm: Rsm?
+    + fatigue: Fatigue?
+  }
+
+  class WorkoutSessionExercise {
+    + _id: UUID
+    + workoutSessionId: UUID
+    + workoutExerciseId: UUID
     + setOrder: UUID[]
     + rsm: Rsm?
     + fatigue: Fatigue?
@@ -33,6 +43,7 @@ classDiagram
     + _id: UUID
     + workoutExerciseId: UUID
     + workoutSessionId: UUID
+    + workoutSessionExerciseId: UUID
     + reps: number
     + weight: number
     + rir: number
@@ -51,7 +62,8 @@ classDiagram
     + _id: UUID
     + workoutExerciseId: UUID
     + exerciseProperties: object?
-    + oneRepMax: number
+    + reps: number
+    + weight: number
     + dateRecorded: Date
   }
 
@@ -90,24 +102,32 @@ classDiagram
     + unusedMusclePerformance: number
   }
 
-  WorkoutExercise "1" --> "*" WorkoutSet : has many
+  class CycleType {
+    <<enumeration>>
+    + MuscleGain
+    + Resensitization
+    + Cut
+  }
+
+  WorkoutExercise "1" --> "*" WorkoutSessionExercise
+  WorkoutSession "1" --> "*" WorkoutSessionExercise : has many
+  WorkoutSessionExercise "1" --> "*" WorkoutSet : has many
   WorkoutExercise "1" --> "0..*" WorkoutExerciseCalibration
-  WorkoutSession "1" --> "*" WorkoutSet : has many
   WorkoutMicrocycle "1" --> "*" WorkoutSession : has many
   WorkoutMesocycle "1" --> "*" WorkoutMicrocycle : has many
   WorkoutMesocycle "0..*" --> "0..*" WorkoutExerciseCalibration
+  WorkoutMesocycle o-- CycleType
   WorkoutExercise o-- ExerciseProperty
-  WorkoutSession o-- Rsm
-  WorkoutSession o-- Fatigue
 ```
 
-> Note: Where an interface is defined, that is meant to be an embedded definition of the class that defines it. This is a limitation of mermaid, so imagine every interface is just an embedded object definition.
+> Note: Where an interface is defined, and associated to a particular document, that is meant to be an embedded definition of the class that defines it. This is a limitation of mermaid, so imagine those interfaces as just an embedded object definition.
 
 Model Notes:
 
 - `WorkoutExercise` is meant to be specific to a particular way of doing an exercise. For example there should be separate exercises for Barbell Bench Press (Straight Sets), Barbell Bench Press (Myoreps), Dumbbell Bench Press (Straight Sets, Eccentric Focus, 3s Down, 1s Pause). It needs to be ultra specific, because even a different hand position will result in a different exercise, and should be tracked separately.
 - `exerciseProperties` in `WorkoutSet` and `WorkoutExerciseCalibration` are populated from `WorkoutExercise.customProperties` at creation time. Then whenever customProperties are changed, they are changed among every single existing WorkoutSet with that WorkoutExercise linked to it.
 - `calibratedExercises` in `WorkoutMesocycle` is an array of UUIDs referencing `WorkoutExerciseCalibration` documents. This locks which calibration was used for a mesocycle so historical 1RM values remain accurate even if calibrations are changed later.
+- `WorkoutExerciseCalibration` documents are meant to store the lowest amount of reps the person can do for that exercise with the highest amount of weight they can. See the section in the notes on 1RM calculations for more detail.
 - `setOrder` on `WorkoutSession` was chosen as a compromise for querying efficiency in order to quickly get metrics like "Last time you did this exercise when it was preceded by these 4 other exercises, you did this".
 
 ## Service Diagram
@@ -119,11 +139,19 @@ classDiagram
     + getFatigueResult(session: WorkoutSession): number?
     + getSFRResult(session: WorkoutSession): number?
   }
+
+  class WorkoutExerciseCalibrationService {
+    + get1RepMax(calibration: WorkoutExerciseCalibration): number
+  }
 ```
 
 Service Notes:
 
 - There will likely be a method or set of methods that create a schedule projection based on the mesocycle.
+
+## Book Reference
+
+[Here is a link to the NotebookLM notebook that has the book in it's source set](https://notebooklm.google.com/notebook/89ca292a-0f03-4f8d-a386-73ab8a048c0f) (There is a limit of 50 queries per day)
 
 ## Terms
 
@@ -185,7 +213,7 @@ Sets anywhere between 5 - 30 reps are great, as long as they have at least 1 eff
 - "Medium exercises": Normally done in the 10-20 rep range (This should be the most common)
 - "Light exercises": Normally done in the 15-30 rep range
 
-You want to try and put the heavy exercises towards the beginning of the week if possible, and the lighter ones towards the end so that it is easier when your muscles are tired. But in general you also want to get the full range for each muscle group. This is part of the challenge with making a program.
+You want to try and put the heavy exercises towards the beginning of the week if possible, and the lighter ones towards the end so that it is easier when your muscles are tired. But in general you also want to get the full range for each muscle group. This is part of the challenge with making a program. (pg. 166-167)
 
 If you are trying to hit a target rep range of 10-20, and start at 16, 14, 12, 10, but need to add a fifth set the next week, it will need to be a drop set. So go down a bit of weight on the fifth set in order to keep your target reps of 10. (pg. 62)
 
@@ -310,6 +338,8 @@ Page 190 talks about the muscle-gain block -> maintenance block -> fat loss bloc
 
 A clean middle-ground might be to just take a resensitization phase every 3-4 mesocycles, in addition to the active break once a year. So that would be 1-2 months of MV training basically. But a month is most likely all you need. See page 194 for more info.
 
+Identifying the type of mesocycle that is happening in the data model may be helpful to provide even more context. For example, a strength gain mesocycle will likely always be more productive than a cutting mesocycle. There are some great tips on how to track progress during a cutting mesocycle and how to track on page 220-221. What it comes down to is trying to stay around MEV for as long as possible until your cut is complete. You don't want your cut to ever last longer than a single mesocycle, so for example, instead of progressing from 5 sets to 9 sets over four weeks, you might go from 5 to 7 sets over six weeks. You still take the deload at the end of course, and progress with the roughly normal (but reduced) set and rep progression algorithm.
+
 ### Fatigue (pg. 87-89)
 
 There are different types of fatigue outlined below:
@@ -410,10 +440,12 @@ Sets / Session:
 
 - 25 total sets per session is a good average MRV cap. Some people can do 30, but anything more than 30 should be a red flag. (pg. 142)
 
-Reps / Set (pg. 166-167):
-
-The number of reps per set are
-
 #### Exercise Selection (pg. 160-161)
 
 Generally choose exercises that are going to give you great Raw Stimulus Magnitude (RSM), and align with your goals. At the end of a mesocycle you can decide if you want to swap one out for another if it is stalling, feeling stale, or hurting you. But if things are going well, don't swap it out! Don't be afraid to hold onto an exercise through mesocycles for a year or more if it keeps working for you, but swap the ones that aren't working out. Just make sure to use an honest assessment. No dogma.
+
+#### 1 Rep Max Calculations
+
+These are exhausting to test, and dangerous. You will be strongest at the end of a resensitization phase, or phase where you are working at MV for an extended period of time. The upsides, are you get an accurate representation of 1RM that you can use, the downsides are the danger and fluctuations. Also testing causes 0 gains on it's own. [Here is a Youtube video from RP that discusses this](https://www.youtube.com/watch?v=4luBPhK-rlE). THe primary reason this information is needed, is for the algorithms.
+
+[NASM provides a 1-rep max calculator](https://www.nasm.org/resources/one-rep-max-calculator) / algorithm that seems like it is relatively accurate. It comes from a reputable organization so it seems safe to trust them. The algorithm can be done by trying to do the most weight you can for the lowest reps possible (lower reps makes it more accurate) and plug it in to: 1RM = (Weight Lifted x Reps / 30.48) + Weight Lifted.
