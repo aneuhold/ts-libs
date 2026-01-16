@@ -8,8 +8,8 @@ classDiagram
     + _id: UUID
     + title?: string
     + calibratedExercises: UUID[]
-    + status:
     + cycleType: CycleType
+    + completedDate: Date?
   }
 
   class WorkoutMicrocycle {
@@ -151,6 +151,7 @@ Model Notes:
 - `WorkoutExerciseCalibration` documents are meant to store the lowest amount of reps the person can do for that exercise with the highest amount of weight they can. See the section in the notes on 1RM calculations for more detail.
 - `setOrder` on `WorkoutSession` was chosen as a compromise for querying efficiency in order to quickly get metrics like "Last time you did this exercise when it was preceded by these 4 other exercises, you did this".
 - `restSeconds` on `WorkoutExercise` is used for a timer that will be built into the app for each exercise. No tracking will be done of the timer, it will be purely client-side.
+- `WorkoutMesocycle.completedDate` should be set after the user gets a "success" completion screen of some kind and they have buttoned up any last prompts. This should guide them into the next mesocycle.
 
 ## Service Diagram
 
