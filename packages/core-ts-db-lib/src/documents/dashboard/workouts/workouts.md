@@ -6,7 +6,9 @@
 classDiagram
   class WorkoutMesocycle {
     + _id: UUID
+    + title?: string
     + calibratedExercises: UUID[]
+    + status:
     + cycleType: CycleType
   }
 
@@ -53,9 +55,25 @@ classDiagram
   class WorkoutExercise {
     + _id: UUID
     + exerciseName: string
+    + workoutEquipmentTypeId: UUID
     + notes: string?
+    + restSeconds: number?
     + customProperties: ExerciseProperty[]?
     + repRange: ExerciseRepRange
+    + primaryMuscleGroups: UUID[]
+    + secondaryMuscleGroups: UUID[]
+  }
+
+  class WorkoutMuscleGroup {
+    + _id: UUID
+    + name: string
+    + description?: string
+  }
+
+  class WorkoutEquipmentType {
+    + _id: UUID
+    + title: string
+    + weightOptions: number[]?
   }
 
   class WorkoutExerciseCalibration {
@@ -109,6 +127,7 @@ classDiagram
     + Cut
   }
 
+  WorkoutEquipmentType "1" --> "*" WorkoutExercise
   WorkoutExercise "1" --> "*" WorkoutSessionExercise
   WorkoutSession "1" --> "*" WorkoutSessionExercise : has many
   WorkoutSessionExercise "1" --> "*" WorkoutSet : has many
@@ -118,6 +137,7 @@ classDiagram
   WorkoutMesocycle "0..*" --> "0..*" WorkoutExerciseCalibration
   WorkoutMesocycle o-- CycleType
   WorkoutExercise o-- ExerciseProperty
+  WorkoutExercise "0..*" --> "0..*" WorkoutMuscleGroup
 ```
 
 > Note: Where an interface is defined, and associated to a particular document, that is meant to be an embedded definition of the class that defines it. This is a limitation of mermaid, so imagine those interfaces as just an embedded object definition.
@@ -125,10 +145,12 @@ classDiagram
 Model Notes:
 
 - `WorkoutExercise` is meant to be specific to a particular way of doing an exercise. For example there should be separate exercises for Barbell Bench Press (Straight Sets), Barbell Bench Press (Myoreps), Dumbbell Bench Press (Straight Sets, Eccentric Focus, 3s Down, 1s Pause). It needs to be ultra specific, because even a different hand position will result in a different exercise, and should be tracked separately.
+- `WorkoutEquipmentType` is used to assist in algorithms where weight needs to be incremented or decremented for a schedule. But also helps dramatically to ease entering data for the user. This will be calculated in a view for the user where they can set a minimum weight (such as the bar) and possible increments, then the possible weights will be generated for them. Otherwise it is just a list of their dumbbell weights.
 - `exerciseProperties` in `WorkoutSet` and `WorkoutExerciseCalibration` are populated from `WorkoutExercise.customProperties` at creation time. Then whenever customProperties are changed, they are changed among every single existing WorkoutSet with that WorkoutExercise linked to it.
-- `calibratedExercises` in `WorkoutMesocycle` is an array of UUIDs referencing `WorkoutExerciseCalibration` documents. This locks which calibration was used for a mesocycle so historical 1RM values remain accurate even if calibrations are changed later.
+- `calibratedExercises` in `WorkoutMesocycle` is an array of UUIDs referencing `WorkoutExerciseCalibration` documents. This locks which calibration was used for a mesocycle so historical 1RM values remain accurate even if calibrations are changed later. This is purposefully not an object with a reference to both the exercise and the calibration, because you can get the exercise from the calibration.
 - `WorkoutExerciseCalibration` documents are meant to store the lowest amount of reps the person can do for that exercise with the highest amount of weight they can. See the section in the notes on 1RM calculations for more detail.
 - `setOrder` on `WorkoutSession` was chosen as a compromise for querying efficiency in order to quickly get metrics like "Last time you did this exercise when it was preceded by these 4 other exercises, you did this".
+- `restSeconds` on `WorkoutExercise` is used for a timer that will be built into the app for each exercise. No tracking will be done of the timer, it will be purely client-side.
 
 ## Service Diagram
 
@@ -449,3 +471,7 @@ Generally choose exercises that are going to give you great Raw Stimulus Magnitu
 These are exhausting to test, and dangerous. You will be strongest at the end of a resensitization phase, or phase where you are working at MV for an extended period of time. The upsides, are you get an accurate representation of 1RM that you can use, the downsides are the danger and fluctuations. Also testing causes 0 gains on it's own. [Here is a Youtube video from RP that discusses this](https://www.youtube.com/watch?v=4luBPhK-rlE). THe primary reason this information is needed, is for the algorithms.
 
 [NASM provides a 1-rep max calculator](https://www.nasm.org/resources/one-rep-max-calculator) / algorithm that seems like it is relatively accurate. It comes from a reputable organization so it seems safe to trust them. The algorithm can be done by trying to do the most weight you can for the lowest reps possible (lower reps makes it more accurate) and plug it in to: 1RM = (Weight Lifted x Reps / 30.48) + Weight Lifted.
+
+# Todo
+
+- Add equipment type
