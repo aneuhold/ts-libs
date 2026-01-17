@@ -9,6 +9,9 @@ classDiagram
     + title?: string
     + calibratedExercises: UUID[]
     + cycleType: CycleType
+    + plannedSessionCountPerMicrocycle: number
+    + plannedMicrocycleLengthInDays: number
+    + plannedMicrocycleRestDays: number[]
     + completedDate: Date?
   }
 
@@ -16,7 +19,7 @@ classDiagram
     + _id: UUID
     + workoutMesocycleId: UUID?
     + startDate: Date
-    + endDate: Date?
+    + endDate: Date
     + sorenessScore: number?
     + performanceScore: number?
   }
@@ -46,9 +49,12 @@ classDiagram
     + workoutExerciseId: UUID
     + workoutSessionId: UUID
     + workoutSessionExerciseId: UUID
-    + reps: number
-    + weight: number
-    + rir: number
+    + plannedReps: number?
+    + plannedWeight: number?
+    + plannedRir: number?
+    + actualReps: number?
+    + actualWeight: number?
+    + rir: number?
     + exerciseProperties: object?
   }
 
@@ -125,6 +131,7 @@ classDiagram
     + MuscleGain
     + Resensitization
     + Cut
+    + FreeForm
   }
 
   WorkoutEquipmentType "1" --> "*" WorkoutExercise
@@ -152,6 +159,7 @@ Model Notes:
 - `setOrder` on `WorkoutSession` was chosen as a compromise for querying efficiency in order to quickly get metrics like "Last time you did this exercise when it was preceded by these 4 other exercises, you did this".
 - `restSeconds` on `WorkoutExercise` is used for a timer that will be built into the app for each exercise. No tracking will be done of the timer, it will be purely client-side.
 - `WorkoutMesocycle.completedDate` should be set after the user gets a "success" completion screen of some kind and they have buttoned up any last prompts. This should guide them into the next mesocycle.
+- `CycleType` when set to MuscleGain, Resensitization, or Cut means that automatic recommendations will be made. If it is set to FreeForm, then recommendations go away. FreeForm will not be selectable by the user, rather it is an escape hatch if something goes south during the mesocycle.
 
 ## Service Diagram
 
@@ -171,6 +179,22 @@ classDiagram
 Service Notes:
 
 - There will likely be a method or set of methods that create a schedule projection based on the mesocycle.
+
+## System Requirements
+
+These are requirements that were developed after taking all the notes in the more educational sections in this markdown documents. So they are based on those notes above all else.
+
+- The user should no longer get automatic recommendations if they make any of the following changes during a mesocycle. Automatic recommendations / planning will happen again upon starting a new mesocycle:
+  - Reordering sessions within a mesocycle: The progression algorithm depends on soreness / performance per muscle group in order. Changing this makes the recommendations not mean much.
+  - Changing exercises mid-mesocycle: This is breaking a cardinal rule in a way. We won't have baseline for load / volume progression, and can't track if we are making progress anymore.
+  - Removing a muscle group assignment (or adding one) to exercises that are in a current mesocycle. This only matters if the muscle groups are being tracked. For example, if no exercise had rear delts assigned before, and suddenly it is added to an existing exercise that is being used, that shouldn't be a big deal. But if one is removed, like squats has quads removed, we lose an understanding of what is happening over the mesocycle.
+  - Session frequency: This one sucks that it can't be changed after the mesocycle starts, but again, it comes down to tracking. If you need to do less sets, then the algorithm should reduce the sets for you. If you need to wait a few days before doing your next session because something came up, that should be okay too.
+  - Skipping a session: Again, sucks that this can't be done, but same notes as above. If the time that was scheduled for a session has passed when the user opens the app back up, it should ask them if they want to move the session forward (within reason, such as a week), start a deload, or conclude that mesocycle for now. Otherwise, if they try to continue the workout, the workouts should be separated from a mesocycle, that way they aren't tied to a particular microcycle in a mesocycle progression for analytics purposes.
+- The user should still get automatic recommendations if they do any of the following, the system should accommodate the user:
+  - Move a session to a different day, as long as the order is maintained. If the number of rest days gets shorter though, then warn the user at least.
+  - Doing something different than the expected reps / weight. This is a basic capability and the algorithm should be able to adjust as long as we have good RIR and fatigue values from the user. Might just give them a heads up that if they are getting too close to 0 RIR early on in a mesocycle, then they will burn out too fast to complete it.
+  - Early deload: The system should be able to suggest if this needs to happen, so if the user does this explicitly, it should be just fine. No worries.
+- The user should be able to track workouts outside of a mesocycle / microcycle. There is a reason that those foreign ID references are optional. There just won't be any automatic suggestions for the user. They can free-form as much as they like and use the app more like a workout tracker and not a plan builder. They can use individual sessions, and microcycles completely freely. Having a mesocycle is the determination if we use more advanced logic.
 
 ## Book Reference
 
