@@ -1,4 +1,4 @@
-# Dashboard Workouts Domain Model
+# MesoPro Data Model + System Description
 
 ## Document Diagram
 
