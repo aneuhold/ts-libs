@@ -30,6 +30,7 @@ classDiagram
     + title: string
     + description: string?
     + startTime: Date
+    + complete: boolean
     + sessionExerciseOrder: UUID[]
     + rsm: Rsm?
     + fatigue: Fatigue?
