@@ -12,6 +12,7 @@ classDiagram
     + plannedSessionCountPerMicrocycle: number
     + plannedMicrocycleLengthInDays: number
     + plannedMicrocycleRestDays: number[]
+    + plannedMicrocycleCount: number?
     + completedDate: Date?
   }
 
@@ -20,6 +21,7 @@ classDiagram
     + workoutMesocycleId: UUID?
     + startDate: Date
     + endDate: Date
+    + sessionOrder: UUID[]
     + sorenessScore: number?
     + performanceScore: number?
   }
@@ -67,6 +69,7 @@ classDiagram
     + restSeconds: number?
     + customProperties: ExerciseProperty[]?
     + repRange: ExerciseRepRange
+    + preferredProgressionType: ExerciseProgressionType?
     + primaryMuscleGroups: UUID[]
     + secondaryMuscleGroups: UUID[]
   }
@@ -104,6 +107,12 @@ classDiagram
     + Text
     + "Yes/No"
     + Number
+  }
+
+  class ExerciseProgressionType {
+    <<enumeration>>
+    + Rep
+    + Load
   }
 
   class ExerciseRepRange {
@@ -167,19 +176,40 @@ Model Notes:
 ```mermaid
 classDiagram
   class WorkoutSessionService {
-    + getRsmResult(session: WorkoutSession): number?
-    + getFatigueResult(session: WorkoutSession): number?
-    + getSFRResult(session: WorkoutSession): number?
+    + getRsmTotal(session: WorkoutSession): number?
+    + getFatigueTotal(session: WorkoutSession): number?
+    + getSFR(session: WorkoutSession): number?
   }
 
   class WorkoutExerciseCalibrationService {
-    + get1RepMax(calibration: WorkoutExerciseCalibration): number
+    + get1RM(calibration: WorkoutExerciseCalibration): number
+    + getTargetWeight(calibration: WorkoutExerciseCalibration, targetReps: number, equipmentType: WorkoutEquipmentType): number
+  }
+
+  class WorkoutMesocycleService {
+    + generateInitialPlan(mesocycle: WorkoutMesocycle, calibrations: WorkoutExerciseCalibration[], exercises: WorkoutExercise[], equipmentTypes: WorkoutEquipmentType[]): GenerateInitialPlanOutput
+  }
+
+  class GenerateInitialPlanOutput {
+    <<interface>>
+    + mesocycleUpdate: Partial~WorkoutMesocycle~?
+    + microcycles: DocumentOperations~WorkoutMicrocycle~?
+    + sessions: DocumentOperations~WorkoutSession~?
+    + sessionExercises: DocumentOperations~WorkoutSessionExercise~?
+    + sets: DocumentOperations~WorkoutSet~?
+  }
+
+  class DocumentOperations~T~ {
+    <<interface>>
+    + insert: T[]?
+    + update: Partial~T~[]?
+    + delete: UUID[]?
   }
 ```
 
 Service Notes:
 
-- There will likely be a method or set of methods that create a schedule projection based on the mesocycle.
+- `WorkoutMesocycleService.generateInitialPlan()` creates the complete default plan for a mesocycle before any user adjustments or feedback
 
 ## System Requirements
 
@@ -361,7 +391,23 @@ Then use the following table to determine how many sets to add the next week gen
 
 > The overall goal should be on set progression. Try not to increase load too much unless you really need to. Volume will give you more results than load as far as muscle growth.
 
-You should have at least 4 weeks as your goal for the accumulation phase, and at the very most, 8 weeks. (pg. 184)
+You should have at least 4 weeks as your goal for the accumulation phase, and at the very most, 8 weeks. You know it's time to stop and go into deload when you are hitting 0 RIR, 85% 1RM. (pg. 184)
+
+As far as an initial calculation, before adjustments are introduced, you want to begin volume at 2-4 sets per muscle group per session (starting at 2 sets if no data exists), and project an increase of 1-2 sets per muscle group per week. If literally no data exists, then an increase of 1 set per week is great. As far as rep range, it ends up being pretty basic. You use the target rep range for that exercise (for example, a "Heavy" exercise is 5-15), then use the RIR. So in week 1, and a heavy exercise, this will always be a target of 11 reps for the first set where the load uses the targetPercentage formula, targeting 15 reps for the first set, then use the same weight for the subsequent sets.
+
+The user can choose how they want to progress between two types of progression for a particular exercise:
+
+- Load Progression: Add the lowest increment available for the weight that the exercise uses each week, within reason. Like if someone is lifting 300lbs, then perhaps increase by 10 lbs instead of 5lbs. A good rule of thumb is if the weight increase is less than 2% of the overall weight, then use the next higher increment available to get at, or above a 2% increase in the weight.
+- Rep Progression (Default): Add 2 reps per week to each set that is being executed. The reps should be above the previous week's by 2 once data starts coming in. Don't adjust the weight unless the target reps goes above the maximum for that exercise, in which case increase by the lowest increment available.
+
+So, with this in mind, the default projection might look like this:
+
+- Week 1: 4 RIR, 2 sets per exercise
+- Week 2: 3 RIR, 3 sets for the first exercise / session for each muscle group, and 2 sets for each subsequent exercise for that muscle group / session (if there's more than 1)
+- Week 3: 2 RIR, 3 sets for the first + second exercise for each muscle group, or 4 sets if there's only 1 exercise for that session
+- Week 4: 1 RIR, 4 sets for the first, 3 sets for the second, or 5 sets if there's only 1 exercise
+- Week 5: 0 RIR, 4 sets for the first, 4 sets for the second, or 6 sets if there's only 1 exercise
+- Week 6: Deload
 
 #### Deload Phase (pg. 100,110-112)
 
@@ -478,15 +524,21 @@ Muscle Group Session / Microcycle:
 
 - Smaller muscle groups (biceps / triceps) can be trained more often. Larger muscle groups likely need less.
 - Roughly 2-4 muscle group sessions / microcycle can turn out to be good, but that is a very loose rule of thumb (pg. 143)
-- A simple algorithm, is to start with 2x each muscle group per microcycle. Note the soreness score you get for each muscle group each week. Then at the end of the mesocycle (while following the set progression described elsewhere), look over all sessions and see if you healed just on time each time. If you did, then you can keep that number of sessions If you were never sore in that muscle group, or always healed early, bump it up by 1 session. If the set progression algorithm prevented volume increases, or you didn't recover in time, then consider removing a session for the next mesocycle. (pg. 145)
+- A simple algorithm, is to start with 2x each muscle group per microcycle. Note the soreness score you get for each muscle group each week. Then at the end of the mesocycle (while following the set progression described elsewhere), look over all sessions and see if you healed just on time each time. If you did, then you can keep that number of sessions If you were never sore in that muscle group, or always healed early, bump it up by 1 session. If the set progression algorithm prevented volume increases, or you didn't recover in time, then consider removing a muscle group session for the next mesocycle. (pg. 145)
 
 Sets / Muscle Group / Session:
 
-- More than 2 sets and less than 15 sets are the hard limits. 15 is bad though, 12 is a much better cap and 2 is not great either, 3-5 is a better minimum. (pg. 142-143)
+- 2 or more sets and less than 15 sets are the hard limits. 15 is bad though, 12 is a much better cap and 2 is not great either (except at the very beginning of a meso at MEV if needed), 3-5 is a better minimum. (pg. 142-143)
 
 Sets / Session:
 
 - 25 total sets per session is a good average MRV cap. Some people can do 30, but anything more than 30 should be a red flag. (pg. 142)
+
+#### Load Selection
+
+The overall goal is to use between 30% and 85% 1RM for loads (weight). So a set with a target of 5 reps should be 85% 1RM, and a set with a target of 30 reps should be 30% 1RM. A formula can be derived from this, where we find the expected increase in percentage per rep. 85-30 = 55, then 30-5 = 25. So 55/25 = 2.2%/rep. This means that for a given target of lets say 10, we can use 30% + ((10-5) \* 2.2) = 41% of 1RM. Then the more general formula becomes:
+
+targetPercentage = 30 + ((targetReps - 5) \* 2.2)
 
 #### Exercise Selection (pg. 160-161)
 
@@ -499,5 +551,3 @@ These are exhausting to test, and dangerous. You will be strongest at the end of
 [NASM provides a 1-rep max calculator](https://www.nasm.org/resources/one-rep-max-calculator) / algorithm that seems like it is relatively accurate. It comes from a reputable organization so it seems safe to trust them. The algorithm can be done by trying to do the most weight you can for the lowest reps possible (lower reps makes it more accurate) and plug it in to: 1RM = (Weight Lifted x Reps / 30.48) + Weight Lifted.
 
 # Todo
-
-- Add equipment type

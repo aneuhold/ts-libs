@@ -12,6 +12,26 @@ export type DocumentMap<T extends BaseDocument> = {
 };
 
 /**
+ * Represents database operations for a document type.
+ *
+ * @template T - The type of document, must extend BaseDocument.
+ */
+export type DocumentOperations<T extends BaseDocument> = {
+  /**
+   * Documents to create.
+   */
+  create?: T[];
+  /**
+   * Documents to update. Must include _id field.
+   */
+  update?: Partial<T>[];
+  /**
+   * Document IDs to delete.
+   */
+  delete?: UUID[];
+};
+
+/**
  * A service for low-level utilities related to documents.
  */
 export default class DocumentService {
