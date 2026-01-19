@@ -204,7 +204,9 @@ export default class WorkoutMesocycleService {
       microcycle.sessionOrder.push(session._id);
 
       // Create session exercises and sets
-      for (const { calibration, exercise } of sessionExerciseList) {
+      for (let exerciseIndex = 0; exerciseIndex < sessionExerciseList.length; exerciseIndex++) {
+        const { calibration, exercise } = sessionExerciseList[exerciseIndex];
+
         const sessionExercise = WorkoutSessionExerciseSchema.parse({
           userId: mesocycle.userId,
           workoutSessionId: session._id,
@@ -217,7 +219,7 @@ export default class WorkoutMesocycleService {
         const setCount = this.calculateSetCount(
           microcycleIndex,
           sessionExerciseList.length,
-          exercisesPerSession[sessionIndex].indexOf({ calibration, exercise }),
+          exerciseIndex,
           isDeloadMicrocycle
         );
 
