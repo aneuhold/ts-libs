@@ -33,6 +33,14 @@ export const WorkoutMicrocycleSchema = z.object({
    */
   endDate: z.date(),
   /**
+   * The order of sessions in this microcycle, represented as an array of
+   * WorkoutSession IDs.
+   *
+   * This makes it easier to reason about the order of sessions before dates
+   * are assigned.
+   */
+  sessionOrder: z.array(z.uuidv7().transform((val) => val as UUID)).default([]),
+  /**
    * The soreness score for this microcycle (0-3).
    *
    * - 0: You did not get at all sore in the target muscles

@@ -46,6 +46,17 @@ export enum ExerciseRepRange {
 }
 
 /**
+ * The preferred progression type for an exercise.
+ *
+ * - Rep: Add 2 reps per week (default). When max reps exceeded, increase weight by smallest increment.
+ * - Load: Add smallest available increment each week (or 2% of current load, whichever is greater).
+ */
+export enum ExerciseProgressionType {
+  Rep = 'Rep',
+  Load = 'Load'
+}
+
+/**
  * The docType value for WorkoutExercise documents.
  */
 export const WorkoutExercise_docType = 'workoutExercise';
@@ -96,6 +107,12 @@ export const WorkoutExerciseSchema = z.object({
    * The recommended rep range for this exercise. See {@link ExerciseRepRange} for details.
    */
   repRange: z.enum(ExerciseRepRange),
+  /**
+   * The preferred progression type for this exercise.
+   *
+   * Defaults to Rep progression if not specified.
+   */
+  preferredProgressionType: z.enum(ExerciseProgressionType).default(ExerciseProgressionType.Rep),
   /**
    * The IDs of the primary muscle groups targeted by this exercise.
    */

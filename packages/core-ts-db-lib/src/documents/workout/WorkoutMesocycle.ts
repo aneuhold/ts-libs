@@ -63,6 +63,12 @@ export const WorkoutMesocycleSchema = z.object({
    */
   plannedMicrocycleRestDays: z.array(z.number()).default([]),
   /**
+   * The planned total number of microcycles including accumulation and deload.
+   *
+   * Should typically be 5-9 microcycles (4-8 accumulation weeks + 1 deload week).
+   */
+  plannedMicrocycleCount: z.number().min(2).max(20).nullish(),
+  /**
    * The date this mesocycle was completed.
    *
    * This should be set after the user gets a "success" completion screen and
