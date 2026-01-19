@@ -50,6 +50,9 @@ describe('Unit Tests', () => {
         const currentStart = new Date(microcycles[i].startDate);
         expect(currentStart.getTime()).toBe(prevEnd.getTime());
       }
+
+      // Print the mesocycle plan for visualization
+      workoutTestUtil.printMesocyclePlan(result, exercises, calibrations);
     });
 
     it('should correctly apply progression formulas for sets, reps, RIR, and weights', () => {
@@ -80,7 +83,7 @@ describe('Unit Tests', () => {
       const microcycles = result.microcycles?.create ?? [];
 
       // Basic structure checks
-      expect(microcycles.length).toBe(3);
+      expect(microcycles.length).toBe(mesocycle.plannedMicrocycleCount);
       expect(sessions.length).toBe(9); // 3 sessions * 3 microcycles
       expect(sets.length).toBeGreaterThan(0); // At least some sets created
 
@@ -108,6 +111,9 @@ describe('Unit Tests', () => {
         expect(set.plannedReps).toBeGreaterThanOrEqual(5);
         expect(set.plannedReps).toBeLessThanOrEqual(30); // Max for light exercises
       });
+
+      // Print the mesocycle plan for visualization
+      workoutTestUtil.printMesocyclePlan(result, exercises, calibrations);
     });
   });
 });

@@ -103,6 +103,102 @@ describe('Unit Tests', () => {
       });
     });
 
+    describe('direction: prefer-down', () => {
+      it('should find weight <= targetWeight when available', () => {
+        const result = WorkoutEquipmentTypeService.findNearestWeight(
+          equipmentType,
+          22,
+          'prefer-down'
+        );
+
+        expect(result).toBe(20);
+      });
+
+      it('should fallback to weight >= targetWeight when no lower weight exists', () => {
+        const result = WorkoutEquipmentTypeService.findNearestWeight(
+          equipmentType,
+          5,
+          'prefer-down'
+        );
+
+        expect(result).toBe(10);
+      });
+
+      it('should return exact match when available', () => {
+        const result = WorkoutEquipmentTypeService.findNearestWeight(
+          equipmentType,
+          25,
+          'prefer-down'
+        );
+
+        expect(result).toBe(25);
+      });
+
+      it('should return null when no weights are available', () => {
+        const emptyEquipment = WorkoutEquipmentTypeSchema.parse({
+          userId: DocumentService.generateID(),
+          title: 'Empty Equipment',
+          weightOptions: []
+        });
+
+        const result = WorkoutEquipmentTypeService.findNearestWeight(
+          emptyEquipment,
+          25,
+          'prefer-down'
+        );
+
+        expect(result).toBeNull();
+      });
+    });
+
+    describe('direction: prefer-up', () => {
+      it('should find weight >= targetWeight when available', () => {
+        const result = WorkoutEquipmentTypeService.findNearestWeight(
+          equipmentType,
+          22,
+          'prefer-up'
+        );
+
+        expect(result).toBe(25);
+      });
+
+      it('should fallback to weight <= targetWeight when no higher weight exists', () => {
+        const result = WorkoutEquipmentTypeService.findNearestWeight(
+          equipmentType,
+          45,
+          'prefer-up'
+        );
+
+        expect(result).toBe(40);
+      });
+
+      it('should return exact match when available', () => {
+        const result = WorkoutEquipmentTypeService.findNearestWeight(
+          equipmentType,
+          25,
+          'prefer-up'
+        );
+
+        expect(result).toBe(25);
+      });
+
+      it('should return null when no weights are available', () => {
+        const emptyEquipment = WorkoutEquipmentTypeSchema.parse({
+          userId: DocumentService.generateID(),
+          title: 'Empty Equipment',
+          weightOptions: []
+        });
+
+        const result = WorkoutEquipmentTypeService.findNearestWeight(
+          emptyEquipment,
+          25,
+          'prefer-up'
+        );
+
+        expect(result).toBeNull();
+      });
+    });
+
     describe('edge cases', () => {
       it('should return null when weightOptions is null', () => {
         const emptyEquipment = WorkoutEquipmentTypeSchema.parse({

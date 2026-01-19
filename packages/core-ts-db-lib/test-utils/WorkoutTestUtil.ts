@@ -1,13 +1,16 @@
 import type { UUID } from 'crypto';
 import { WorkoutEquipmentTypeSchema } from '../src/documents/workout/WorkoutEquipmentType.js';
+import type { WorkoutExercise } from '../src/documents/workout/WorkoutExercise.js';
 import {
   ExerciseProgressionType,
   ExerciseRepRange,
   WorkoutExerciseSchema
 } from '../src/documents/workout/WorkoutExercise.js';
+import type { WorkoutExerciseCalibration } from '../src/documents/workout/WorkoutExerciseCalibration.js';
 import { WorkoutExerciseCalibrationSchema } from '../src/documents/workout/WorkoutExerciseCalibration.js';
 import { WorkoutMuscleGroupSchema } from '../src/documents/workout/WorkoutMuscleGroup.js';
 import DocumentService from '../src/services/DocumentService.js';
+import WorkoutMesocycleService from '../src/services/workout/Mesocycle/WorkoutMesocycleService.js';
 
 /**
  * A utility class for creating standardized test data for workout-related tests.
@@ -114,24 +117,121 @@ class WorkoutTestUtil {
       userId: this.userId,
       workoutExerciseId: this.STANDARD_EXERCISES.barbellBenchPress._id,
       weight: 135,
-      reps: 10,
+      reps: 5,
       exerciseProperties: {}
     }),
     romanianDeadlift: WorkoutExerciseCalibrationSchema.parse({
       userId: this.userId,
       workoutExerciseId: this.STANDARD_EXERCISES.romanianDeadlift._id,
-      weight: 135,
-      reps: 12,
+      weight: 200,
+      reps: 5,
       exerciseProperties: {}
     }),
     dumbbellLateralRaise: WorkoutExerciseCalibrationSchema.parse({
       userId: this.userId,
       workoutExerciseId: this.STANDARD_EXERCISES.dumbbellLateralRaise._id,
-      weight: 20,
-      reps: 15,
+      weight: 25,
+      reps: 10,
       exerciseProperties: {}
     })
   } as const;
+
+  /**
+   * Prints a formatted view of the mesocycle plan showing progression across
+   * microcycles, sessions, exercises, and sets.
+   *
+   * @param planResult The result from generateInitialPlan.
+   * @param exercises The exercises used in the plan.
+   * @param calibrations The calibrations used in the plan.
+   */
+  printMesocyclePlan(
+    planResult: ReturnType<typeof WorkoutMesocycleService.generateInitialPlan>,
+    exercises: WorkoutExercise[],
+    calibrations: WorkoutExerciseCalibration[]
+  ): void {
+    const microcycles = planResult.microcycles?.create ?? [];
+    const sessions = planResult.sessions?.create ?? [];
+    const sessionExercises = planResult.sessionExercises?.create ?? [];
+    const sets = planResult.sets?.create ?? [];
+
+    console.log('\n' + '='.repeat(100));
+    console.log('MESOCYCLE PLAN OVERVIEW');
+    console.log('='.repeat(100));
+    console.log(`Total Microcycles: ${microcycles.length}`);
+    console.log(`Total Sessions: ${sessions.length}`);
+    console.log(`Total Exercises: ${sessionExercises.length}`);
+    console.log(`Total Sets: ${sets.length}`);
+    console.log('='.repeat(100) + '\n');
+
+    // Print each microcycle
+    microcycles.forEach((microcycle, microIndex) => {
+      const microSessions = sessions.filter((s) => s.workoutMicrocycleId === microcycle._id);
+      const startDate = new Date(microcycle.startDate).toLocaleDateString();
+      const endDate = new Date(microcycle.endDate).toLocaleDateString();
+
+      console.log(`\n${'▼'.repeat(50)}`);
+      console.log(`MICROCYCLE ${microIndex + 1} | ${startDate} → ${endDate}`);
+      console.log('▼'.repeat(50));
+
+      // Print each session in this microcycle
+      microSessions.forEach((session, sessionIndex) => {
+        const sessionDate = new Date(session.startTime).toLocaleDateString();
+        const sessionExs = sessionExercises.filter((se) => se.workoutSessionId === session._id);
+
+        const sessionHeader = `SESSION ${sessionIndex + 1} - ${sessionDate}`;
+        const sessionWidth = sessionHeader.length + 1;
+
+        console.log(`\n  ┌${'─'.repeat(sessionWidth)}`);
+        console.log(`  │ ${sessionHeader}`);
+        console.log(`  ├${'─'.repeat(sessionWidth)}`);
+
+        // Print each exercise in this session
+        sessionExs.forEach((sessionEx, exIndex) => {
+          const exercise = exercises.find((e) => e._id === sessionEx.workoutExerciseId);
+          const calibration = calibrations.find((c) => c.workoutExerciseId === exercise?._id);
+          const exSets = sets.filter((s) => s.workoutSessionExerciseId === sessionEx._id);
+
+          if (!exercise) return;
+
+          console.log(`  │`);
+          console.log(
+            `  │   ${exIndex + 1}. ${exercise.exerciseName} (${exercise.repRange} range)`
+          );
+          console.log(
+            `  │      Calibration: ${calibration?.weight}lbs × ${calibration?.reps} reps`
+          );
+
+          // Set table header with dynamic width
+          const tableHeader = ' Set │ Weight │ Reps  │ RIR ';
+          const tableWidth = tableHeader.length;
+
+          console.log(`  │      ┌${'─'.repeat(tableWidth)}`);
+          console.log(`  │      │${tableHeader}│`);
+          console.log(`  │      ├${'─'.repeat(tableWidth)}`);
+
+          exSets.forEach((set, setIndex) => {
+            const weight = set.plannedWeight?.toString().padEnd(6) ?? 'N/A   ';
+            const reps = set.plannedReps?.toString().padEnd(5) ?? 'N/A  ';
+            const rir = set.plannedRir?.toString().padEnd(3) ?? 'N/A';
+
+            console.log(
+              `  │      │  ${(setIndex + 1).toString().padEnd(2)} │ ${weight} │ ${reps} │ ${rir} │`
+            );
+          });
+
+          console.log(`  │      └${'─'.repeat(tableWidth)}`);
+        });
+
+        console.log(`  └${'─'.repeat(sessionWidth)}`);
+      });
+
+      console.log('\n');
+    });
+
+    console.log('='.repeat(100));
+    console.log('END OF MESOCYCLE PLAN');
+    console.log('='.repeat(100) + '\n');
+  }
 }
 
 const workoutTestUtil = new WorkoutTestUtil();

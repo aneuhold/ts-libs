@@ -2,10 +2,7 @@ import { DateService } from '@aneuhold/core-ts-lib';
 import type { UUID } from 'crypto';
 import type { WorkoutEquipmentType } from '../../../documents/workout/WorkoutEquipmentType.js';
 import type { WorkoutExercise } from '../../../documents/workout/WorkoutExercise.js';
-import {
-  ExerciseProgressionType,
-  ExerciseRepRange
-} from '../../../documents/workout/WorkoutExercise.js';
+import { ExerciseRepRange } from '../../../documents/workout/WorkoutExercise.js';
 import type { WorkoutExerciseCalibration } from '../../../documents/workout/WorkoutExerciseCalibration.js';
 import type { WorkoutMesocycle } from '../../../documents/workout/WorkoutMesocycle.js';
 import type { WorkoutMicrocycle } from '../../../documents/workout/WorkoutMicrocycle.js';
@@ -17,9 +14,7 @@ import { WorkoutSessionExerciseSchema } from '../../../documents/workout/Workout
 import type { WorkoutSet } from '../../../documents/workout/WorkoutSet.js';
 import { WorkoutSetSchema } from '../../../documents/workout/WorkoutSet.js';
 import type { DocumentOperations } from '../../DocumentService.js';
-import WorkoutEquipmentTypeService from '../EquipmentType/WorkoutEquipmentTypeService.js';
 import WorkoutExerciseService from '../Exercise/WorkoutExerciseService.js';
-import WorkoutExerciseCalibrationService from '../ExerciseCalibration/WorkoutExerciseCalibrationService.js';
 
 /**
  * A service for handling operations related to {@link WorkoutMesocycle}s.
@@ -203,7 +198,7 @@ export default class WorkoutMesocycleService {
       // Add session to microcycle's session order
       microcycle.sessionOrder.push(session._id);
 
-      // Create session exercises and sets
+      // Create session exercise groupings and associated sets
       for (let exerciseIndex = 0; exerciseIndex < sessionExerciseList.length; exerciseIndex++) {
         const { calibration, exercise } = sessionExerciseList[exerciseIndex];
 
@@ -226,68 +221,55 @@ export default class WorkoutMesocycleService {
         // Get rep range for this exercise
         const repRange = WorkoutExerciseService.getRepRangeValues(exercise.repRange);
 
-        // Calculate target reps (start at max, subtract RIR)
-        const baseTargetReps = repRange.max - targetRir;
-
-        // Apply progression if using rep progression
-        let targetReps = baseTargetReps;
-        if (exercise.preferredProgressionType === ExerciseProgressionType.Rep) {
-          targetReps = baseTargetReps + microcycleIndex * 2; // Add 2 reps per microcycle
-          // Cap at max for rep range
-          targetReps = Math.min(targetReps, repRange.max);
-        }
-
         // Get equipment for weight calculations
         const equipment = equipmentMap.get(exercise.workoutEquipmentTypeId);
+        if (!equipment) {
+          throw new Error(
+            `Equipment type not found for exercise ${exercise._id}, ${exercise.exerciseName}`
+          );
+        }
+        if (!equipment.weightOptions || equipment.weightOptions.length === 0) {
+          throw new Error(
+            `No weight options defined for equipment type ${equipment._id}, ${equipment.title}`
+          );
+        }
+
+        // Calculate progressed targets using WorkoutExerciseService
+        const { targetWeight, targetReps } = WorkoutExerciseService.calculateProgressedTargets({
+          exercise,
+          calibration,
+          equipment,
+          microcycleIndex,
+          targetRir
+        });
 
         // Create sets
+        let currentWeight = targetWeight;
+        let currentReps = targetReps;
+
         for (let setIndex = 0; setIndex < setCount; setIndex++) {
-          // Calculate weight
-          let plannedWeight = WorkoutExerciseCalibrationService.getTargetWeight(
-            calibration,
-            targetReps
-          );
+          // Drop 2 reps per set within the session (19 -> 17 -> 15, etc.)
+          const nextSetReps = currentReps - 2;
 
-          // Round to nearest available weight if equipment exists
-          if (equipment) {
-            const rounded = WorkoutEquipmentTypeService.findNearestWeight(
-              equipment,
-              plannedWeight,
-              'nearest'
-            );
-            if (rounded !== null) {
-              plannedWeight = rounded;
-            }
-          }
-
-          // Apply load progression if needed
-          if (
-            exercise.preferredProgressionType === ExerciseProgressionType.Load &&
-            microcycleIndex > 0
-          ) {
-            // Increase weight by smallest increment or 2%, whichever is greater
-            const minIncrement = 2.5; // Default minimum increment
-            const twoPercentIncrease = plannedWeight * 0.02;
-            const increment = Math.max(minIncrement, twoPercentIncrease);
-
-            if (equipment && equipment.weightOptions && equipment.weightOptions.length > 0) {
-              // Find next available weight option
-              const currentIndex = equipment.weightOptions.findIndex((w) => w >= plannedWeight);
-              if (currentIndex >= 0 && currentIndex < equipment.weightOptions.length - 1) {
-                plannedWeight = equipment.weightOptions[currentIndex + 1];
-              } else {
-                plannedWeight += increment;
-              }
+          // Check if next set would go below minimum rep range
+          if (nextSetReps < repRange.min && setIndex > 0) {
+            // Reduce weight by one increment and bump reps back up by 6
+            const currentIndex = equipment.weightOptions.findIndex((w) => w >= currentWeight);
+            if (currentIndex > 0) {
+              currentWeight = equipment.weightOptions[currentIndex - 1];
             } else {
-              plannedWeight += increment;
+              currentWeight = Math.max(currentWeight - 5, 0); // Fallback: reduce by 5lbs
             }
+            currentReps = nextSetReps + 6;
           }
+
+          const plannedWeight = currentWeight;
 
           // Apply deload modifications
-          let deloadReps = targetReps;
+          let deloadReps = currentReps;
           let deloadWeight = plannedWeight;
           if (isDeloadMicrocycle) {
-            deloadReps = Math.floor(targetReps / 2);
+            deloadReps = Math.floor(currentReps / 2);
             // First half of deload microcycle: same weight, half reps/sets
             // Second half: half weight too
             if (sessionIndex >= Math.floor(mesocycle.plannedSessionCountPerMicrocycle / 2)) {
@@ -300,7 +282,7 @@ export default class WorkoutMesocycleService {
             workoutExerciseId: exercise._id,
             workoutSessionId: session._id,
             workoutSessionExerciseId: sessionExercise._id,
-            plannedReps: isDeloadMicrocycle ? deloadReps : targetReps,
+            plannedReps: isDeloadMicrocycle ? deloadReps : currentReps,
             plannedWeight: isDeloadMicrocycle ? deloadWeight : plannedWeight,
             plannedRir: targetRir,
             exerciseProperties: calibration.exerciseProperties
@@ -308,6 +290,9 @@ export default class WorkoutMesocycleService {
 
           sessionExercise.setOrder.push(workoutSet._id);
           sets.push(workoutSet);
+
+          // Update currentReps for next set
+          currentReps = nextSetReps;
         }
 
         sessionExercises.push(sessionExercise);

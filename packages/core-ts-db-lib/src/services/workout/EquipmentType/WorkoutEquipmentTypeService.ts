@@ -34,12 +34,18 @@ export default class WorkoutEquipmentTypeService {
    *
    * @param equipmentType The workout equipment type.
    * @param targetWeight The target weight.
-   * @param direction The direction to search ('up', 'down', or 'nearest').
+   * @param direction The direction to search:
+   * - 'up': Find the smallest weight >= targetWeight (returns null if none found)
+   * - 'down': Find the largest weight <= targetWeight (returns null if none found)
+   * - 'nearest': Find the weight with minimum absolute difference from targetWeight
+   * - 'prefer-down': Return 'down' if available, otherwise 'up' (may return null if neither found)
+   * - 'prefer-up': Return 'up' if available, otherwise 'down' (may return null if neither found)
+   * @returns The found weight, or null when not found.
    */
   static findNearestWeight(
     equipmentType: WorkoutEquipmentType,
     targetWeight: number,
-    direction: 'up' | 'down' | 'nearest'
+    direction: 'up' | 'down' | 'nearest' | 'prefer-down' | 'prefer-up'
   ): number | null {
     if (!equipmentType.weightOptions || equipmentType.weightOptions.length === 0) {
       return null;
@@ -47,28 +53,38 @@ export default class WorkoutEquipmentTypeService {
 
     const sortedWeights = [...equipmentType.weightOptions].sort((a, b) => a - b);
 
+    // Find the next lowest and next highest weights
+    const upResult = sortedWeights.find((weight) => weight >= targetWeight) ?? null;
+    const downResult =
+      sortedWeights
+        .slice()
+        .reverse()
+        .find((weight) => weight <= targetWeight) ?? null;
+
+    // Apply direction logic
     if (direction === 'up') {
-      const result = sortedWeights.find((weight) => weight >= targetWeight);
-      return result ?? null;
+      return upResult;
     }
 
     if (direction === 'down') {
-      const result = sortedWeights.reverse().find((weight) => weight <= targetWeight);
-      return result ?? null;
+      return downResult;
+    }
+
+    if (direction === 'prefer-down') {
+      return downResult ?? upResult;
+    }
+
+    if (direction === 'prefer-up') {
+      return upResult ?? downResult;
     }
 
     // direction === 'nearest'
-    let closestWeight = sortedWeights[0];
-    let minDifference = Math.abs(targetWeight - closestWeight);
+    if (upResult === null) return downResult;
+    if (downResult === null) return upResult;
 
-    for (const weight of sortedWeights) {
-      const difference = Math.abs(targetWeight - weight);
-      if (difference < minDifference) {
-        minDifference = difference;
-        closestWeight = weight;
-      }
-    }
+    const upDiff = Math.abs(targetWeight - upResult);
+    const downDiff = Math.abs(targetWeight - downResult);
 
-    return closestWeight;
+    return downDiff <= upDiff ? downResult : upResult;
   }
 }
