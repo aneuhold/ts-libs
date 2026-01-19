@@ -31,15 +31,22 @@ describe('Unit Tests', () => {
         const exercise = workoutTestUtil.STANDARD_EXERCISES.romanianDeadlift;
         const calibration = workoutTestUtil.STANDARD_CALIBRATIONS.romanianDeadlift;
 
+        // With 5 accumulation microcycles:
+        // Final microcycle (index 4): 20 (max) reps
+        // Microcycle 0: 20 - 4*2 = 12 base reps
+        // Microcycle 1: 20 - 3*2 = 14 base reps
+        // Microcycle 2: 20 - 2*2 = 16 base reps
+
         // Microcycle 0 with RIR 4
         const result0 = WorkoutExerciseService.calculateProgressedTargets({
           exercise,
           calibration,
           equipment,
           microcycleIndex: 0,
-          targetRir: 4
+          targetRir: 4,
+          totalAccumulationMicrocycles: 5
         });
-        expect(result0.targetReps).toBe(16); // 20 (max Medium) - 4 (RIR) + 0 (microcycle 0)
+        expect(result0.targetReps).toBe(8); // 12 (base) - 4 (RIR)
 
         // Microcycle 1 with RIR 3
         const result1 = WorkoutExerciseService.calculateProgressedTargets({
@@ -47,9 +54,10 @@ describe('Unit Tests', () => {
           calibration,
           equipment,
           microcycleIndex: 1,
-          targetRir: 3
+          targetRir: 3,
+          totalAccumulationMicrocycles: 5
         });
-        expect(result1.targetReps).toBe(19); // 20 (max Medium) - 3 (RIR) + 2 (microcycle 1)
+        expect(result1.targetReps).toBe(11); // 14 (base) - 3 (RIR)
 
         // Microcycle 2 with RIR 2
         const result2 = WorkoutExerciseService.calculateProgressedTargets({
@@ -57,25 +65,27 @@ describe('Unit Tests', () => {
           calibration,
           equipment,
           microcycleIndex: 2,
-          targetRir: 2
+          targetRir: 2,
+          totalAccumulationMicrocycles: 5
         });
-        expect(result2.targetReps).toBe(20); // 20 (max Medium) - 2 (RIR) + 4 (microcycle 2), capped at max 20
+        expect(result2.targetReps).toBe(14); // 16 (base) - 2 (RIR)
       });
 
-      it('should cap reps at max rep range', () => {
+      it('should reach max reps at final accumulation microcycle', () => {
         const equipment = workoutTestUtil.STANDARD_EQUIPMENT_TYPES.barbell;
         const exercise = workoutTestUtil.STANDARD_EXERCISES.romanianDeadlift;
         const calibration = workoutTestUtil.STANDARD_CALIBRATIONS.romanianDeadlift;
 
-        // Microcycle 5 with RIR 0 - should cap at max (20 for Medium)
+        // Microcycle 4 (final accumulation) with RIR 0 - should be at max (20 for Medium)
         const result = WorkoutExerciseService.calculateProgressedTargets({
           exercise,
           calibration,
           equipment,
-          microcycleIndex: 5,
-          targetRir: 0
+          microcycleIndex: 4,
+          targetRir: 0,
+          totalAccumulationMicrocycles: 5
         });
-        expect(result.targetReps).toBe(20); // Capped at max (20)
+        expect(result.targetReps).toBe(20); // 20 (base at final microcycle) - 0 (RIR)
       });
 
       it('should not change weight for rep progression', () => {
@@ -88,14 +98,16 @@ describe('Unit Tests', () => {
           calibration,
           equipment,
           microcycleIndex: 0,
-          targetRir: 4
+          targetRir: 4,
+          totalAccumulationMicrocycles: 5
         });
         const result1 = WorkoutExerciseService.calculateProgressedTargets({
           exercise,
           calibration,
           equipment,
           microcycleIndex: 1,
-          targetRir: 3
+          targetRir: 3,
+          totalAccumulationMicrocycles: 5
         });
 
         expect(result0.targetWeight).toBe(result1.targetWeight);
@@ -113,7 +125,8 @@ describe('Unit Tests', () => {
           calibration,
           equipment,
           microcycleIndex: 0,
-          targetRir: 4
+          targetRir: 4,
+          totalAccumulationMicrocycles: 5
         });
 
         expect(result.targetReps).toBe(11); // 15 (Heavy max) - 4
@@ -131,7 +144,8 @@ describe('Unit Tests', () => {
           calibration,
           equipment,
           microcycleIndex: 0,
-          targetRir: 4
+          targetRir: 4,
+          totalAccumulationMicrocycles: 5
         });
 
         const result1 = WorkoutExerciseService.calculateProgressedTargets({
@@ -139,7 +153,8 @@ describe('Unit Tests', () => {
           calibration,
           equipment,
           microcycleIndex: 1,
-          targetRir: 3
+          targetRir: 3,
+          totalAccumulationMicrocycles: 5
         });
 
         // Weight should increase by at least 2%
@@ -156,7 +171,8 @@ describe('Unit Tests', () => {
           calibration,
           equipment,
           microcycleIndex: 0,
-          targetRir: 4
+          targetRir: 4,
+          totalAccumulationMicrocycles: 5
         });
 
         const result1 = WorkoutExerciseService.calculateProgressedTargets({
@@ -164,14 +180,18 @@ describe('Unit Tests', () => {
           calibration,
           equipment,
           microcycleIndex: 1,
-          targetRir: 3
+          targetRir: 3,
+          totalAccumulationMicrocycles: 5
         });
 
-        // dumbbellLateralRaise is Rep progression, so reps increase by 2 per microcycle
-        // Microcycle 0: 30 (Light max) - 4 (RIR) + 0 = 26
-        // Microcycle 1: 30 (Light max) - 3 (RIR) + 2 (microcycle 1) = 29
-        expect(result1.targetReps).toBe(29);
-        expect(result0.targetReps).toBe(26);
+        // dumbbellLateralRaise is Rep progression, backward calculation:
+        // Final (index 4): 30 (Light max) reps
+        // Microcycle 0: 30 - 4*2 = 22 base reps
+        // Microcycle 1: 30 - 3*2 = 24 base reps
+        // Microcycle 0: 22 - 4 (RIR) = 18
+        // Microcycle 1: 24 - 3 (RIR) = 21
+        expect(result0.targetReps).toBe(18);
+        expect(result1.targetReps).toBe(21);
       });
     });
 
@@ -186,7 +206,8 @@ describe('Unit Tests', () => {
           calibration,
           equipment,
           microcycleIndex: 0,
-          targetRir: 4
+          targetRir: 4,
+          totalAccumulationMicrocycles: 5
         });
 
         // Should be an available weight option
@@ -203,7 +224,8 @@ describe('Unit Tests', () => {
           calibration,
           equipment,
           microcycleIndex: 0,
-          targetRir: 4
+          targetRir: 4,
+          totalAccumulationMicrocycles: 5
         });
 
         // Should round up to lowest available (45lbs for barbell)
@@ -228,7 +250,8 @@ describe('Unit Tests', () => {
             calibration,
             equipment,
             microcycleIndex: 0,
-            targetRir: 4
+            targetRir: 4,
+            totalAccumulationMicrocycles: 5
           })
         ).toThrow('No weight options defined');
       });
@@ -245,7 +268,8 @@ describe('Unit Tests', () => {
           calibration,
           equipment,
           microcycleIndex: 0,
-          targetRir: 4
+          targetRir: 4,
+          totalAccumulationMicrocycles: 5
         });
 
         expect(result.targetReps).toBe(11); // 15 (max) - 4 (RIR)
@@ -261,10 +285,12 @@ describe('Unit Tests', () => {
           calibration,
           equipment,
           microcycleIndex: 0,
-          targetRir: 4
+          targetRir: 4,
+          totalAccumulationMicrocycles: 5
         });
 
-        expect(result.targetReps).toBe(16); // 20 (max) - 4 (RIR)
+        // Backward calculation: 20 - 4*2 = 12 base, 12 - 4 (RIR) = 8
+        expect(result.targetReps).toBe(8);
       });
 
       it('should work with Light rep range (15-30)', () => {
@@ -277,10 +303,12 @@ describe('Unit Tests', () => {
           calibration,
           equipment,
           microcycleIndex: 0,
-          targetRir: 4
+          targetRir: 4,
+          totalAccumulationMicrocycles: 5
         });
 
-        expect(result.targetReps).toBe(26); // 30 (max) - 4 (RIR)
+        // Backward calculation: 30 - 4*2 = 22 base, 22 - 4 (RIR) = 18
+        expect(result.targetReps).toBe(18);
       });
     });
   });

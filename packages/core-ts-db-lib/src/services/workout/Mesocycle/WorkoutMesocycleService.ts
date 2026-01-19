@@ -89,6 +89,7 @@ export default class WorkoutMesocycleService {
         microcycleIndex,
         targetRir,
         isDeloadWeek,
+        deloadMicrocycleIndex,
         exercisesByMuscleGroup,
         calibrationMap,
         exerciseMap,
@@ -146,6 +147,7 @@ export default class WorkoutMesocycleService {
     microcycleIndex: number,
     targetRir: number,
     isDeloadMicrocycle: boolean,
+    totalAccumulationMicrocycles: number,
     exercisesByMuscleGroup: Map<
       UUID,
       { calibration: WorkoutExerciseCalibration; exercise: WorkoutExercise }[]
@@ -240,7 +242,8 @@ export default class WorkoutMesocycleService {
           calibration,
           equipment,
           microcycleIndex,
-          targetRir
+          targetRir,
+          totalAccumulationMicrocycles
         });
 
         // Create sets
