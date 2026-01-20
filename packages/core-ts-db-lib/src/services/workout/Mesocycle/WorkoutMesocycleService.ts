@@ -14,6 +14,7 @@ import { WorkoutSessionExerciseSchema } from '../../../documents/workout/Workout
 import type { WorkoutSet } from '../../../documents/workout/WorkoutSet.js';
 import { WorkoutSetSchema } from '../../../documents/workout/WorkoutSet.js';
 import type { DocumentOperations } from '../../DocumentService.js';
+import WorkoutEquipmentTypeService from '../EquipmentType/WorkoutEquipmentTypeService.js';
 import WorkoutExerciseService from '../Exercise/WorkoutExerciseService.js';
 
 /**
@@ -54,19 +55,15 @@ export default class WorkoutMesocycleService {
     const totalMicrocycles = mesocycle.plannedMicrocycleCount ?? 6;
     const deloadMicrocycleIndex = totalMicrocycles - 1;
 
-    // Group exercises by muscle group for distribution
-    const exercisesByMuscleGroup = this.groupExercisesByMuscleGroup(
-      mesocycle.calibratedExercises,
-      calibrationMap,
-      exerciseMap
-    );
+    // First microcycle RIR is always 4 (used for weight calculations)
+    const firstMicrocycleRir = 4;
 
     // Calculate start date (today if not specified)
     let currentDate = new Date();
 
     // Generate each microcycle
     for (let microcycleIndex = 0; microcycleIndex < totalMicrocycles; microcycleIndex++) {
-      const isDeloadWeek = microcycleIndex === deloadMicrocycleIndex;
+      const isDeloadMicrocycle = microcycleIndex === deloadMicrocycleIndex;
 
       // Calculate RIR for this microcycle (4 -> 3 -> 2 -> 1 -> 0, capped at microcycle 5)
       const rirForMicrocycle = Math.min(microcycleIndex, 4);
@@ -85,12 +82,10 @@ export default class WorkoutMesocycleService {
       const sessions = this.generateSessionsForMicrocycle(
         mesocycle,
         microcycle,
-        currentDate,
         microcycleIndex,
         targetRir,
-        isDeloadWeek,
-        deloadMicrocycleIndex,
-        exercisesByMuscleGroup,
+        firstMicrocycleRir,
+        isDeloadMicrocycle,
         calibrationMap,
         exerciseMap,
         equipmentMap
@@ -113,45 +108,13 @@ export default class WorkoutMesocycleService {
     };
   }
 
-  private static groupExercisesByMuscleGroup(
-    calibratedExerciseIds: UUID[],
-    calibrationMap: Map<UUID, WorkoutExerciseCalibration>,
-    exerciseMap: Map<UUID, WorkoutExercise>
-  ): Map<UUID, { calibration: WorkoutExerciseCalibration; exercise: WorkoutExercise }[]> {
-    const grouped = new Map<
-      UUID,
-      { calibration: WorkoutExerciseCalibration; exercise: WorkoutExercise }[]
-    >();
-
-    for (const calibrationId of calibratedExerciseIds) {
-      const calibration = calibrationMap.get(calibrationId);
-      if (!calibration) continue;
-      const exercise = exerciseMap.get(calibration.workoutExerciseId);
-      if (!exercise) continue;
-
-      // Group by primary muscle groups
-      for (const muscleGroupId of exercise.primaryMuscleGroups) {
-        const group = grouped.get(muscleGroupId) || [];
-        group.push({ calibration, exercise });
-        grouped.set(muscleGroupId, group);
-      }
-    }
-
-    return grouped;
-  }
-
   private static generateSessionsForMicrocycle(
     mesocycle: WorkoutMesocycle,
     microcycle: WorkoutMicrocycle,
-    startDate: Date,
     microcycleIndex: number,
     targetRir: number,
+    firstMicrocycleRir: number,
     isDeloadMicrocycle: boolean,
-    totalAccumulationMicrocycles: number,
-    exercisesByMuscleGroup: Map<
-      UUID,
-      { calibration: WorkoutExerciseCalibration; exercise: WorkoutExercise }[]
-    >,
     calibrationMap: Map<UUID, WorkoutExerciseCalibration>,
     exerciseMap: Map<UUID, WorkoutExercise>,
     equipmentMap: Map<UUID, WorkoutEquipmentType>
@@ -172,7 +135,7 @@ export default class WorkoutMesocycleService {
       exerciseMap
     );
 
-    let currentSessionDate = new Date(startDate);
+    let currentSessionDate = new Date(microcycle.startDate);
     let sessionIndex = 0;
 
     for (let day = 0; day < mesocycle.plannedMicrocycleLengthInDays; day++) {
@@ -242,7 +205,7 @@ export default class WorkoutMesocycleService {
           calibration,
           equipment,
           microcycleIndex,
-          firstMicrocycleRir: targetRir
+          firstMicrocycleRir
         });
 
         // Create sets
@@ -255,14 +218,21 @@ export default class WorkoutMesocycleService {
 
           // Check if next set would go below minimum rep range
           if (nextSetReps < repRange.min && setIndex > 0) {
-            // Reduce weight by one increment and bump reps back up by 6
-            const currentIndex = equipment.weightOptions.findIndex((w) => w >= currentWeight);
-            if (currentIndex > 0) {
-              currentWeight = equipment.weightOptions[currentIndex - 1];
-            } else {
-              currentWeight = Math.max(currentWeight - 5, 0); // Fallback: reduce by 5lbs
+            // Reduce weight by 2% using the same technique as progression
+            const twoPercentDecrease = currentWeight / 1.02;
+            const reducedWeight = WorkoutEquipmentTypeService.findNearestWeight(
+              equipment,
+              twoPercentDecrease,
+              'down'
+            );
+            if (reducedWeight !== null) {
+              currentWeight = reducedWeight;
+              // If reducedWeight is null, then keep currentWeight the same
+            } else if (nextSetReps > 5) {
+              // If we can't reduce weight, but we can reduce reps without going too low,
+              // then do that.
+              currentReps = nextSetReps;
             }
-            currentReps = nextSetReps + 6;
           }
 
           const plannedWeight = currentWeight;
