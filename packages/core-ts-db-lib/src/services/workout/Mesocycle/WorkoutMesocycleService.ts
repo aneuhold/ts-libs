@@ -242,8 +242,7 @@ export default class WorkoutMesocycleService {
           calibration,
           equipment,
           microcycleIndex,
-          targetRir,
-          totalAccumulationMicrocycles
+          firstMicrocycleRir: targetRir
         });
 
         // Create sets

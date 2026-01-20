@@ -52,25 +52,16 @@ export default class WorkoutExerciseService {
    * @param params.calibration the workout exercise calibration
    * @param params.equipment the workout equipment type
    * @param params.microcycleIndex the zero-based microcycle index
-   * @param params.targetRir the target RIR (Reps In Reserve)
-   * @param params.totalAccumulationMicrocycles the total number of accumulation microcycles
+   * @param params.firstMicrocycleRir the target RIR for the first microcycle
    */
   static calculateProgressedTargets(params: {
     exercise: WorkoutExercise;
     calibration: WorkoutExerciseCalibration;
     equipment: WorkoutEquipmentType;
     microcycleIndex: number;
-    targetRir: number;
-    totalAccumulationMicrocycles: number;
+    firstMicrocycleRir: number;
   }): { targetWeight: number; targetReps: number } {
-    const {
-      exercise,
-      calibration,
-      equipment,
-      microcycleIndex,
-      targetRir,
-      totalAccumulationMicrocycles
-    } = params;
+    const { exercise, calibration, equipment, microcycleIndex, firstMicrocycleRir } = params;
 
     // Validate equipment has weight options
     if (!equipment.weightOptions || equipment.weightOptions.length === 0) {
@@ -86,10 +77,7 @@ export default class WorkoutExerciseService {
     // For load progression, use max reps
     let baseRepsForWeight: number;
     if (exercise.preferredProgressionType === ExerciseProgressionType.Rep) {
-      // Work backward: final microcycle should hit max reps (before RIR)
-      // Calculate how many reps we'd do at microcycle 0
-      const lastAccumulationIndex = totalAccumulationMicrocycles - 1;
-      baseRepsForWeight = repRange.max - lastAccumulationIndex * 2;
+      baseRepsForWeight = repRange.min + firstMicrocycleRir;
     } else {
       // Load progression uses max reps for initial weight calculation
       baseRepsForWeight = repRange.max;
@@ -117,28 +105,40 @@ export default class WorkoutExerciseService {
     // Calculate target reps based on progression type
     let targetReps: number;
     if (exercise.preferredProgressionType === ExerciseProgressionType.Rep) {
-      // Rep progression: Work backward from final microcycle
-      const lastAccumulationIndex = totalAccumulationMicrocycles - 1;
-      const baseReps = repRange.max - (lastAccumulationIndex - microcycleIndex) * 2;
-      targetReps = baseReps - targetRir;
+      // Rep progression: Add up to max reps, then loop back if needed
+      let currentMicrocycleIndex = 0;
+      targetReps = repRange.min;
+
+      while (currentMicrocycleIndex < microcycleIndex) {
+        targetReps += 2;
+        if (targetReps > repRange.max) {
+          // Different reset amounts based on the rep range
+          switch (exercise.repRange) {
+            case ExerciseRepRange.Heavy:
+              targetReps = targetReps - 4;
+              break;
+            case ExerciseRepRange.Medium:
+              targetReps = targetReps - 6;
+              break;
+            case ExerciseRepRange.Light:
+              targetReps = targetReps - 8;
+              break;
+          }
+          const nextWeight = this.findNextTwoPercentWeight(targetWeight, equipment);
+          if (nextWeight !== null) {
+            targetWeight = nextWeight;
+          }
+        }
+        currentMicrocycleIndex++;
+      }
     } else {
-      // Load progression: Start at max reps minus RIR
-      targetReps = repRange.max - targetRir;
+      // Load progression: Start at max reps
+      targetReps = repRange.max;
     }
 
-    // Apply load progression if applicable
+    // Apply load progression if applicable for the weight
     if (exercise.preferredProgressionType === ExerciseProgressionType.Load && microcycleIndex > 0) {
-      // Load progression: Increase weight by at least 2%
-      const twoPercentIncrease = targetWeight * 1.02;
-
-      // Find the smallest weight >= 2% increase (This is purposefully done from the rounded weight
-      // because the rounded weight will be what the user would have actually lifted previously)
-      const nextWeight = WorkoutEquipmentTypeService.findNearestWeight(
-        equipment,
-        twoPercentIncrease,
-        'up'
-      );
-
+      const nextWeight = this.findNextTwoPercentWeight(targetWeight, equipment);
       if (nextWeight !== null) {
         targetWeight = nextWeight;
       } else {
@@ -148,5 +148,22 @@ export default class WorkoutExerciseService {
     }
 
     return { targetWeight, targetReps };
+  }
+
+  private static findNextTwoPercentWeight(
+    currentWeight: number,
+    equipment: WorkoutEquipmentType
+  ): number | null {
+    // Increase weight by at least 2%
+    const twoPercentIncrease = currentWeight * 1.02;
+
+    // Find the smallest weight >= 2% increase (This is purposefully done from the rounded weight
+    // because the rounded weight will be what the user would have actually lifted previously)
+    const nextWeight = WorkoutEquipmentTypeService.findNearestWeight(
+      equipment,
+      twoPercentIncrease,
+      'up'
+    );
+    return nextWeight;
   }
 }
