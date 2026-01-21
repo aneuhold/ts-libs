@@ -173,10 +173,22 @@ class WorkoutTestUtil {
       console.log(`MICROCYCLE ${microIndex + 1} | ${startDate} → ${endDate}`);
       console.log('▼'.repeat(50));
 
+      // Get previous microcycle for comparison
+      const prevMicrocycle = microIndex > 0 ? microcycles[microIndex - 1] : null;
+      const prevMicroSessions = prevMicrocycle
+        ? sessions.filter((s) => s.workoutMicrocycleId === prevMicrocycle._id)
+        : [];
+
       // Print each session in this microcycle
       microSessions.forEach((session, sessionIndex) => {
         const sessionDate = new Date(session.startTime).toLocaleDateString();
         const sessionExs = sessionExercises.filter((se) => se.workoutSessionId === session._id);
+
+        // Get corresponding previous session
+        const prevSession = prevMicroSessions[sessionIndex];
+        const prevSessionExs = prevSession
+          ? sessionExercises.filter((se) => se.workoutSessionId === prevSession._id)
+          : [];
 
         const sessionHeader = `SESSION ${sessionIndex + 1} - ${sessionDate}`;
         const sessionWidth = sessionHeader.length + 1;
@@ -191,6 +203,12 @@ class WorkoutTestUtil {
           const calibration = calibrations.find((c) => c.workoutExerciseId === exercise?._id);
           const exSets = sets.filter((s) => s.workoutSessionExerciseId === sessionEx._id);
 
+          // Get corresponding previous exercise's sets
+          const prevSessionEx = prevSessionExs[exIndex];
+          const prevExSets = prevSessionEx
+            ? sets.filter((s) => s.workoutSessionExerciseId === prevSessionEx._id)
+            : [];
+
           if (!exercise) return;
 
           console.log(`  │`);
@@ -198,11 +216,11 @@ class WorkoutTestUtil {
             `  │   ${exIndex + 1}. ${exercise.exerciseName} (${exercise.repRange} range)`
           );
           console.log(
-            `  │      Calibration: ${calibration?.weight}lbs × ${calibration?.reps} reps`
+            `  │      Calibration: ${calibration?.weight}lbs × ${calibration?.reps} reps | Progression: ${exercise.preferredProgressionType}`
           );
 
           // Set table header with dynamic width
-          const tableHeader = ' Set │ Weight │ Reps  │ RIR ';
+          const tableHeader = ' Set │ Weight        │ Reps         │ RIR        ';
           const tableWidth = tableHeader.length;
 
           console.log(`  │      ┌${'─'.repeat(tableWidth)}`);
@@ -210,12 +228,27 @@ class WorkoutTestUtil {
           console.log(`  │      ├${'─'.repeat(tableWidth)}`);
 
           exSets.forEach((set, setIndex) => {
-            const weight = set.plannedWeight?.toString().padEnd(6) ?? 'N/A   ';
-            const reps = set.plannedReps?.toString().padEnd(5) ?? 'N/A  ';
-            const rir = set.plannedRir?.toString().padEnd(3) ?? 'N/A';
+            const prevSet = prevExSets[setIndex];
+
+            const weight = set.plannedWeight?.toString() ?? 'N/A';
+            const weightDelta =
+              prevSet && prevSet.plannedWeight !== set.plannedWeight
+                ? ` (${prevSet.plannedWeight})`
+                : '';
+            const weightStr = `${weight}${weightDelta}`.padEnd(13);
+
+            const reps = set.plannedReps?.toString() ?? 'N/A';
+            const repsDelta =
+              prevSet && prevSet.plannedReps !== set.plannedReps ? ` (${prevSet.plannedReps})` : '';
+            const repsStr = `${reps}${repsDelta}`.padEnd(12);
+
+            const rir = set.plannedRir?.toString() ?? 'N/A';
+            const rirDelta =
+              prevSet && prevSet.plannedRir !== set.plannedRir ? ` (${prevSet.plannedRir})` : '';
+            const rirStr = `${rir}${rirDelta}`.padEnd(11);
 
             console.log(
-              `  │      │  ${(setIndex + 1).toString().padEnd(2)} │ ${weight} │ ${reps} │ ${rir} │`
+              `  │      │  ${(setIndex + 1).toString().padEnd(2)} │ ${weightStr} │ ${repsStr} │ ${rirStr} │`
             );
           });
 
