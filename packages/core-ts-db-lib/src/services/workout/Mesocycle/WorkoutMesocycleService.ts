@@ -200,24 +200,23 @@ export default class WorkoutMesocycleService {
         }
 
         // Calculate progressed targets using WorkoutExerciseService
-        const { targetWeight, targetReps } = WorkoutExerciseService.calculateProgressedTargets({
-          exercise,
-          calibration,
-          equipment,
-          microcycleIndex,
-          firstMicrocycleRir
-        });
+        const { targetWeight: firstSetWeight, targetReps: firstSetReps } =
+          WorkoutExerciseService.calculateProgressedTargets({
+            exercise,
+            calibration,
+            equipment,
+            microcycleIndex,
+            firstMicrocycleRir
+          });
 
         // Create sets
-        let currentWeight = targetWeight;
-        let currentReps = targetReps;
+        let currentWeight = firstSetWeight;
+        let currentReps = firstSetReps;
 
         for (let setIndex = 0; setIndex < setCount; setIndex++) {
-          // Drop 2 reps per set within the session (19 -> 17 -> 15, etc.)
-          const nextSetReps = currentReps - 2;
-
-          // Check if next set would go below minimum rep range
-          if (nextSetReps < repRange.min && setIndex > 0) {
+          // Ideally, drop 2 reps per set within the session (19 -> 17 -> 15, etc.)
+          // But if that would go below the min reps, keep it at min reps.
+          if (currentReps - 2 < repRange.min && setIndex > 0) {
             // Reduce weight by 2% using the same technique as progression
             const twoPercentDecrease = currentWeight / 1.02;
             const reducedWeight = WorkoutEquipmentTypeService.findNearestWeight(
@@ -227,12 +226,13 @@ export default class WorkoutMesocycleService {
             );
             if (reducedWeight !== null) {
               currentWeight = reducedWeight;
-              // If reducedWeight is null, then keep currentWeight the same
-            } else if (nextSetReps > 5) {
+            } else if (currentReps - 2 > 5) {
               // If we can't reduce weight, but we can reduce reps without going too low,
               // then do that.
-              currentReps = nextSetReps;
+              currentReps = currentReps - 2;
             }
+          } else if (setIndex > 0) {
+            currentReps = currentReps - 2;
           }
 
           const plannedWeight = currentWeight;
@@ -262,9 +262,6 @@ export default class WorkoutMesocycleService {
 
           sessionExercise.setOrder.push(workoutSet._id);
           sets.push(workoutSet);
-
-          // Update currentReps for next set
-          currentReps = nextSetReps;
         }
 
         sessionExercises.push(sessionExercise);
