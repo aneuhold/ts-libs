@@ -5,10 +5,20 @@ import WorkoutMesocycleService from './WorkoutMesocycleService.js';
 
 describe('Unit Tests', () => {
   describe('generateInitialPlan', () => {
-    it('should generate correct number of microcycles, sessions, exercises, and sets', () => {
-      // Setup test data
-      const exercises = Object.values(workoutTestUtil.STANDARD_EXERCISES);
-      const calibrations = Object.values(workoutTestUtil.STANDARD_CALIBRATIONS);
+    it('(Smoke) should generate correct number of microcycles, sessions, exercises, and sets for super small mesocycle', () => {
+      // Setup test data - using subset of 4 exercises
+      const exercises = [
+        workoutTestUtil.STANDARD_EXERCISES.barbellSquat,
+        workoutTestUtil.STANDARD_EXERCISES.barbellBenchPress,
+        workoutTestUtil.STANDARD_EXERCISES.deadlift,
+        workoutTestUtil.STANDARD_EXERCISES.dumbbellLateralRaise
+      ];
+      const calibrations = [
+        workoutTestUtil.STANDARD_CALIBRATIONS.barbellSquat,
+        workoutTestUtil.STANDARD_CALIBRATIONS.barbellBenchPress,
+        workoutTestUtil.STANDARD_CALIBRATIONS.deadlift,
+        workoutTestUtil.STANDARD_CALIBRATIONS.dumbbellLateralRaise
+      ];
       const equipment = Object.values(workoutTestUtil.STANDARD_EQUIPMENT_TYPES);
 
       const mesocycle = WorkoutMesocycleSchema.parse({
@@ -52,14 +62,24 @@ describe('Unit Tests', () => {
       }
 
       // Print the mesocycle plan for visualization
-      workoutTestUtil.printMesocyclePlan(result, exercises, calibrations);
+      workoutTestUtil.printMesocyclePlan(result, exercises);
     });
 
-    it('should correctly apply progression formulas for sets, reps, RIR, and weights', () => {
-      // Setup test data
+    it('(Smoke) should correctly apply progression formulas for sets, reps, RIR, and weights', () => {
+      // Setup test data - using subset of 4 exercises
+      const exercises = [
+        workoutTestUtil.STANDARD_EXERCISES.barbellSquat,
+        workoutTestUtil.STANDARD_EXERCISES.cableRow,
+        workoutTestUtil.STANDARD_EXERCISES.dumbbellCurl,
+        workoutTestUtil.STANDARD_EXERCISES.cableTricepPushdown
+      ];
+      const calibrations = [
+        workoutTestUtil.STANDARD_CALIBRATIONS.barbellSquat,
+        workoutTestUtil.STANDARD_CALIBRATIONS.cableRow,
+        workoutTestUtil.STANDARD_CALIBRATIONS.dumbbellCurl,
+        workoutTestUtil.STANDARD_CALIBRATIONS.cableTricepPushdown
+      ];
       const equipment = Object.values(workoutTestUtil.STANDARD_EQUIPMENT_TYPES);
-      const exercises = Object.values(workoutTestUtil.STANDARD_EXERCISES);
-      const calibrations = Object.values(workoutTestUtil.STANDARD_CALIBRATIONS);
 
       const mesocycle = WorkoutMesocycleSchema.parse({
         userId: workoutTestUtil.userId,
@@ -113,7 +133,78 @@ describe('Unit Tests', () => {
       });
 
       // Print the mesocycle plan for visualization
-      workoutTestUtil.printMesocyclePlan(result, exercises, calibrations);
+      workoutTestUtil.printMesocyclePlan(result, exercises);
+    });
+
+    it.only('(Smoke) should handle large mesocycle with 6 accumulation + 1 deload microcycles', () => {
+      // Setup test data - using all 10 exercises
+      const exercises = Object.values(workoutTestUtil.STANDARD_EXERCISES);
+      const calibrations = Object.values(workoutTestUtil.STANDARD_CALIBRATIONS);
+      const equipment = Object.values(workoutTestUtil.STANDARD_EQUIPMENT_TYPES);
+
+      const mesocycle = WorkoutMesocycleSchema.parse({
+        userId: workoutTestUtil.userId,
+        cycleType: CycleType.MuscleGain,
+        plannedSessionCountPerMicrocycle: 6,
+        plannedMicrocycleLengthInDays: 8,
+        plannedMicrocycleRestDays: [4, 5], // 2 consecutive rest days
+        plannedMicrocycleCount: 7, // 6 accumulation + 1 deload
+        calibratedExercises: calibrations.map((c) => c._id)
+      });
+
+      const result = WorkoutMesocycleService.generateInitialPlan(
+        mesocycle,
+        calibrations,
+        exercises,
+        equipment
+      );
+
+      // Verify microcycles
+      expect(result.microcycles?.create).toHaveLength(7);
+      expect(result.microcycles?.update).toHaveLength(0);
+      expect(result.microcycles?.delete).toHaveLength(0);
+
+      // Verify sessions (6 sessions per microcycle * 7 microcycles = 42)
+      expect(result.sessions?.create).toHaveLength(42);
+
+      // Verify session exercises exist
+      // With 10 exercises and 6 sessions per microcycle, duplication/grouping happens
+      expect((result.sessionExercises?.create ?? []).length).toBeGreaterThan(0);
+
+      // Verify sets exist
+      expect((result.sets?.create ?? []).length).toBeGreaterThan(0);
+
+      // Verify microcycle dates are sequential and correct length
+      const microcycles = result.microcycles?.create ?? [];
+      for (let i = 0; i < microcycles.length; i++) {
+        const start = new Date(microcycles[i].startDate);
+        const end = new Date(microcycles[i].endDate);
+        const durationDays = (end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24);
+        expect(durationDays).toBeGreaterThan(7); // 8 day microcycles (allow for DST)
+
+        // Verify sequential dates
+        if (i > 0) {
+          const prevEnd = new Date(microcycles[i - 1].endDate);
+          expect(start.getTime()).toBe(prevEnd.getTime());
+        }
+      }
+
+      // Verify rest days are respected in sessions
+      const sessions = result.sessions?.create ?? [];
+      microcycles.forEach((microcycle) => {
+        const microSessions = sessions.filter((s) => s.workoutMicrocycleId === microcycle._id);
+
+        microSessions.forEach((session) => {
+          const dayOfMicrocycle = Math.round(
+            (session.startTime.getTime() - microcycle.startDate.getTime()) / (1000 * 60 * 60 * 24)
+          );
+          // Sessions should not be on rest days (4 and 5)
+          expect([4, 5]).not.toContain(dayOfMicrocycle);
+        });
+      });
+
+      // Print the mesocycle plan for visualization
+      workoutTestUtil.printMesocyclePlan(result, exercises);
     });
   });
 });

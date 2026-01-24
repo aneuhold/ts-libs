@@ -72,6 +72,7 @@ classDiagram
     + preferredProgressionType: ExerciseProgressionType?
     + primaryMuscleGroups: UUID[]
     + secondaryMuscleGroups: UUID[]
+    + initialFatigueGuess: Fatigue
   }
 
   class WorkoutMuscleGroup {
@@ -161,7 +162,7 @@ classDiagram
 
 Model Notes:
 
-- `WorkoutExercise` is meant to be specific to a particular way of doing an exercise. For example there should be separate exercises for Barbell Bench Press (Straight Sets), Barbell Bench Press (Myoreps), Dumbbell Bench Press (Straight Sets, Eccentric Focus, 3s Down, 1s Pause). It needs to be ultra specific, because even a different hand position will result in a different exercise, and should be tracked separately.
+- `WorkoutExercise` is meant to be specific to a particular way of doing an exercise. For example there should be separate exercises for Barbell Bench Press (Straight Sets), Barbell Bench Press (Myoreps), Dumbbell Bench Press (Straight Sets, Eccentric Focus, 3s Down, 1s Pause). It needs to be ultra specific, because even a different hand position will result in a different exercise, and should be tracked separately. This even includes the ExerciseRepRange, when all else would be exactly the same. Because of this, when creating a calibration, the UI should offer to add the same calibration (which would be duplicated), to another exercise.
 - `WorkoutEquipmentType` is used to assist in algorithms where weight needs to be incremented or decremented for a schedule. But also helps dramatically to ease entering data for the user. This will be calculated in a view for the user where they can set a minimum weight (such as the bar) and possible increments, then the possible weights will be generated for them. Otherwise it is just a list of their dumbbell weights.
 - `exerciseProperties` in `WorkoutSet` and `WorkoutExerciseCalibration` are populated from `WorkoutExercise.customProperties` at creation time. Then whenever customProperties are changed, they are changed among every single existing WorkoutSet with that WorkoutExercise linked to it.
 - `calibratedExercises` in `WorkoutMesocycle` is an array of UUIDs referencing `WorkoutExerciseCalibration` documents. This locks which calibration was used for a mesocycle so historical 1RM values remain accurate even if calibrations are changed later. This is purposefully not an object with a reference to both the exercise and the calibration, because you can get the exercise from the calibration.
@@ -524,7 +525,7 @@ Muscle Group Session / Microcycle:
 
 - Smaller muscle groups (biceps / triceps) can be trained more often. Larger muscle groups likely need less.
 - Roughly 2-4 muscle group sessions / microcycle can turn out to be good, but that is a very loose rule of thumb (pg. 143)
-- A simple algorithm, is to start with 2x each muscle group per microcycle. Note the soreness score you get for each muscle group each week. Then at the end of the mesocycle (while following the set progression described elsewhere), look over all sessions and see if you healed just on time each time. If you did, then you can keep that number of sessions If you were never sore in that muscle group, or always healed early, bump it up by 1 session. If the set progression algorithm prevented volume increases, or you didn't recover in time, then consider removing a muscle group session for the next mesocycle. (pg. 145)
+- A simple algorithm, is to start with 2x each muscle group per microcycle. Note the soreness score you get for each muscle group each week. Then at the end of the mesocycle (while following the set progression described elsewhere), look over all sessions and see if you healed just on time each time. If you did, then you can keep that number of sessions If you were never sore in that muscle group, or always healed early, bump it up by 1 session. If the set progression algorithm prevented volume increases, or you didn't recover in time, then consider removing a muscle group session for the next mesocycle. The goal here is to figure out your total effective sets / peak effective sets for each muscle group, which will act as your MRV. (pg. 145)
 
 Sets / Muscle Group / Session:
 
@@ -543,6 +544,8 @@ targetPercentage = 30 + ((targetReps - 5) \* 2.2)
 #### Exercise Selection (pg. 160-161)
 
 Generally choose exercises that are going to give you great Raw Stimulus Magnitude (RSM), and align with your goals. At the end of a mesocycle you can decide if you want to swap one out for another if it is stalling, feeling stale, or hurting you. But if things are going well, don't swap it out! Don't be afraid to hold onto an exercise through mesocycles for a year or more if it keeps working for you, but swap the ones that aren't working out. Just make sure to use an honest assessment. No dogma.
+
+There isn't a definitive part in the book that says this, but it seems implied: Do not do the EXACT same workout twice in the same microcycle. This is to help prevent wear and tear on joints, but also prevent adaptive resistance. This doesn't mean you can't do squats twice in the same week, but what it does mean, is you shouldn't do squats with the same tempo (3 seconds down, 1 second stretch, normal up for example), rep range (heavy / medium / light), and form in the same microcycle. Simply vary something with the workout, and you can do it again.
 
 #### 1 Rep Max Calculations
 

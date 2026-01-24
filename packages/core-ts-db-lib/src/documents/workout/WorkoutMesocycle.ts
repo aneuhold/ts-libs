@@ -26,65 +26,72 @@ export const WorkoutMesocycle_docType = 'workoutMesocycle';
 /**
  * The schema for {@link WorkoutMesocycle} documents.
  */
-export const WorkoutMesocycleSchema = z.object({
-  ...BaseDocumentWithTypeSchema.shape,
-  ...RequiredUserIdSchema.shape,
-  docType: z.literal(WorkoutMesocycle_docType).default(WorkoutMesocycle_docType),
-  /**
-   * An optional title for this mesocycle.
-   */
-  title: z.string().nullish(),
-  /**
-   * The IDs of WorkoutExerciseCalibration documents used for this mesocycle.
-   *
-   * This locks which calibration was used for a mesocycle so historical 1RM
-   * values remain accurate even if calibrations are changed later.
-   */
-  calibratedExercises: z.array(z.uuidv7().transform((val) => val as UUID)).default([]),
-  /**
-   * The type of this mesocycle. See {@link CycleType} for details.
-   */
-  cycleType: z.enum(CycleType),
-  /**
-   * The planned number of workout sessions per microcycle.
-   */
-  plannedSessionCountPerMicrocycle: z.number(),
-  /**
-   * The planned length of each microcycle in days.
-   *
-   * Typically 7 days (one week), but can vary.
-   */
-  plannedMicrocycleLengthInDays: z.number(),
-  /**
-   * The planned rest days within each microcycle, represented as day indices.
-   *
-   * For example, [0, 3] would indicate rest on the first and fourth days of
-   * the microcycle.
-   */
-  plannedMicrocycleRestDays: z.array(z.number()).default([]),
-  /**
-   * The planned total number of microcycles including accumulation and deload.
-   *
-   * Should typically be 5-9 microcycles (4-8 accumulation weeks + 1 deload week).
-   */
-  plannedMicrocycleCount: z.number().min(2).max(20).nullish(),
-  /**
-   * The date this mesocycle was completed.
-   *
-   * This should be set after the user gets a "success" completion screen and
-   * has buttoned up any last prompts. This should guide them into the next
-   * mesocycle.
-   */
-  completedDate: z.date().nullish(),
-  /**
-   * The date this mesocycle was created.
-   */
-  createdDate: z.date().default(() => new Date()),
-  /**
-   * The date this mesocycle was last updated.
-   */
-  lastUpdatedDate: z.date().default(() => new Date())
-});
+export const WorkoutMesocycleSchema = z
+  .object({
+    ...BaseDocumentWithTypeSchema.shape,
+    ...RequiredUserIdSchema.shape,
+    docType: z.literal(WorkoutMesocycle_docType).default(WorkoutMesocycle_docType),
+    /**
+     * An optional title for this mesocycle.
+     */
+    title: z.string().nullish(),
+    /**
+     * The IDs of WorkoutExerciseCalibration documents used for this mesocycle.
+     *
+     * This locks which calibration was used for a mesocycle so historical 1RM
+     * values remain accurate even if calibrations are changed later.
+     */
+    calibratedExercises: z.array(z.uuidv7().transform((val) => val as UUID)).default([]),
+    /**
+     * The type of this mesocycle. See {@link CycleType} for details.
+     */
+    cycleType: z.enum(CycleType),
+    /**
+     * The planned number of workout sessions per microcycle.
+     */
+    plannedSessionCountPerMicrocycle: z.number(),
+    /**
+     * The planned length of each microcycle in days.
+     *
+     * Typically 7 days (one week), but can vary.
+     */
+    plannedMicrocycleLengthInDays: z.number(),
+    /**
+     * The planned rest days within each microcycle, represented as day indices.
+     *
+     * For example, [0, 3] would indicate rest on the first and fourth days of
+     * the microcycle.
+     */
+    plannedMicrocycleRestDays: z.array(z.number()).default([]),
+    /**
+     * The planned total number of microcycles including accumulation and deload.
+     *
+     * Should typically be 5-9 microcycles (4-8 accumulation weeks + 1 deload week).
+     */
+    plannedMicrocycleCount: z.number().min(2).max(20).nullish(),
+    /**
+     * The date this mesocycle was completed.
+     *
+     * This should be set after the user gets a "success" completion screen and
+     * has buttoned up any last prompts. This should guide them into the next
+     * mesocycle.
+     */
+    completedDate: z.date().nullish(),
+    /**
+     * The date this mesocycle was created.
+     */
+    createdDate: z.date().default(() => new Date()),
+    /**
+     * The date this mesocycle was last updated.
+     */
+    lastUpdatedDate: z.date().default(() => new Date())
+  })
+  .refine((data) => data.calibratedExercises.length >= data.plannedSessionCountPerMicrocycle, {
+    message:
+      'Number of calibrated exercises must be at least equal to planned sessions per microcycle.' +
+      ' Create a slight variation of an existing exercise if needed.',
+    path: ['calibratedExercises']
+  });
 
 /**
  * Represents a mesocycle - an organized sequence of microcycles ordered to

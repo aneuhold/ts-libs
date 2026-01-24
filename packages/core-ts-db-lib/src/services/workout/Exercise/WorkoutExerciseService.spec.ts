@@ -28,8 +28,8 @@ describe('Unit Tests', () => {
     describe('Rep Progression', () => {
       it('should start new block with reset reps and increased weight', () => {
         const equipment = workoutTestUtil.STANDARD_EQUIPMENT_TYPES.barbell;
-        const exercise = workoutTestUtil.STANDARD_EXERCISES.romanianDeadlift;
-        const calibration = workoutTestUtil.STANDARD_CALIBRATIONS.romanianDeadlift;
+        const exercise = workoutTestUtil.STANDARD_EXERCISES.deadlift;
+        const calibration = workoutTestUtil.STANDARD_CALIBRATIONS.deadlift;
 
         // Medium range: After hitting max (20), resets by subtracting 6
         // Microcycle 5: 20 reps
@@ -50,16 +50,16 @@ describe('Unit Tests', () => {
           firstMicrocycleRir: 4
         });
 
-        // Reps reset to 16 for block 1 (22 - 6)
-        expect(result6.targetReps).toBe(16);
+        // Reps reset to 15 for block 1 (21 - 6)
+        expect(result6.targetReps).toBe(15);
         // Weight should be at least 2% more
         expect(result6.targetWeight).toBeGreaterThanOrEqual(result5.targetWeight * 1.02);
       });
 
       it('should maintain same weight within a block for rep progression', () => {
         const equipment = workoutTestUtil.STANDARD_EQUIPMENT_TYPES.barbell;
-        const exercise = workoutTestUtil.STANDARD_EXERCISES.romanianDeadlift;
-        const calibration = workoutTestUtil.STANDARD_CALIBRATIONS.romanianDeadlift;
+        const exercise = workoutTestUtil.STANDARD_EXERCISES.deadlift;
+        const calibration = workoutTestUtil.STANDARD_CALIBRATIONS.deadlift;
 
         const result0 = WorkoutExerciseService.calculateProgressedTargets({
           exercise,
@@ -148,9 +148,9 @@ describe('Unit Tests', () => {
         });
 
         // dumbbellLateralRaise is Rep progression, block-based:
-        // Light range (15-30): starts at 15 reps
-        expect(result0.targetReps).toBe(15);
-        expect(result1.targetReps).toBe(17); // 15 + 2
+        // Light range (15-30): starts at midpoint (22) reps
+        expect(result0.targetReps).toBe(22);
+        expect(result1.targetReps).toBe(24); // 22 + 2
       });
     });
 
@@ -232,8 +232,8 @@ describe('Unit Tests', () => {
 
       it('should work with Medium rep range (10-20)', () => {
         const equipment = workoutTestUtil.STANDARD_EQUIPMENT_TYPES.barbell;
-        const exercise = workoutTestUtil.STANDARD_EXERCISES.romanianDeadlift;
-        const calibration = workoutTestUtil.STANDARD_CALIBRATIONS.romanianDeadlift;
+        const exercise = workoutTestUtil.STANDARD_EXERCISES.deadlift;
+        const calibration = workoutTestUtil.STANDARD_CALIBRATIONS.deadlift;
 
         const result = WorkoutExerciseService.calculateProgressedTargets({
           exercise,
@@ -243,8 +243,8 @@ describe('Unit Tests', () => {
           firstMicrocycleRir: 4
         });
 
-        // Rep progression: starts at min (10)
-        expect(result.targetReps).toBe(10);
+        // Rep progression: starts at midpoint (15)
+        expect(result.targetReps).toBe(15);
       });
 
       it('should work with Light rep range (15-30)', () => {
@@ -260,8 +260,8 @@ describe('Unit Tests', () => {
           firstMicrocycleRir: 4
         });
 
-        // Rep progression: starts at min (15)
-        expect(result.targetReps).toBe(15);
+        // Rep progression: starts at midpoint (22)
+        expect(result.targetReps).toBe(22);
       });
     });
   });

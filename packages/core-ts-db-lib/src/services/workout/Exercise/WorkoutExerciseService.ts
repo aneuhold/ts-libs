@@ -40,9 +40,9 @@ export default class WorkoutExerciseService {
    * This method applies either rep-based or load-based progression depending on the exercise's
    * preferred progression type, then rounds the weight to available equipment options.
    *
-   * Rep progression: Works backward from max reps at the final accumulation microcycle.
-   * The weight is calculated based on reps at microcycle 0, and reps increase by 2 per microcycle
-   * to reach max reps at the final accumulation microcycle.
+   * Rep progression: The weight is calculated based on reps at microcycle 0, and reps increase
+   * by 2 per microcycle to reach max reps at the final accumulation microcycle (ideally),
+   * or drop back down and increase weight by 2%.
    *
    * Load progression: Increases weight by at least 2% per microcycle.
    * If weight can't be increased, adds 2 reps instead.
@@ -72,12 +72,13 @@ export default class WorkoutExerciseService {
 
     // Get rep range for this exercise
     const repRange = this.getRepRangeValues(exercise.repRange);
+    const repRangeMidpoint = Math.floor((repRange.min + repRange.max) / 2);
 
     // For rep progression, calculate weight based on reps at microcycle 0
     // For load progression, use max reps
     let baseRepsForWeight: number;
     if (exercise.preferredProgressionType === ExerciseProgressionType.Rep) {
-      baseRepsForWeight = repRange.min + firstMicrocycleRir;
+      baseRepsForWeight = repRangeMidpoint + firstMicrocycleRir;
     } else {
       // Load progression uses max reps for initial weight calculation
       baseRepsForWeight = repRange.max;
@@ -107,7 +108,7 @@ export default class WorkoutExerciseService {
     if (exercise.preferredProgressionType === ExerciseProgressionType.Rep) {
       // Rep progression: Add up to max reps, then loop back if needed
       let currentMicrocycleIndex = 0;
-      targetReps = repRange.min;
+      targetReps = repRangeMidpoint;
 
       while (currentMicrocycleIndex < microcycleIndex) {
         targetReps += 2;
