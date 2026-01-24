@@ -2,6 +2,7 @@ import type { UUID } from 'crypto';
 import { z } from 'zod';
 import { RequiredUserIdSchema } from '../../schemas/required-refs/RequiredUserId.js';
 import { BaseDocumentWithTypeSchema } from '../BaseDocument.js';
+import type { WorkoutExercise } from './WorkoutExercise.js';
 
 /**
  * The docType value for WorkoutExerciseCalibration documents.
@@ -67,3 +68,11 @@ export const WorkoutExerciseCalibrationSchema = z.object({
  * are updated later.
  */
 export type WorkoutExerciseCalibration = z.infer<typeof WorkoutExerciseCalibrationSchema>;
+
+/**
+ * Represents a calibration paired with its associated exercise definition.
+ */
+export type CalibrationExercisePair = {
+  calibration: WorkoutExerciseCalibration;
+  exercise: WorkoutExercise;
+};
