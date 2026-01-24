@@ -34,7 +34,7 @@ describe('Unit Tests', () => {
         // Medium range: After hitting max (20), resets by subtracting 6
         // Microcycle 5: 20 reps
         // Microcycle 6: would be 22, resets to 22 - 6 = 16
-        const result5 = WorkoutExerciseService.calculateProgressedTargets({
+        const result5 = WorkoutExerciseService.calculateTargetRepsAndWeightForFirstSet({
           exercise,
           calibration,
           equipment,
@@ -42,7 +42,7 @@ describe('Unit Tests', () => {
           firstMicrocycleRir: 4
         });
 
-        const result6 = WorkoutExerciseService.calculateProgressedTargets({
+        const result6 = WorkoutExerciseService.calculateTargetRepsAndWeightForFirstSet({
           exercise,
           calibration,
           equipment,
@@ -61,14 +61,14 @@ describe('Unit Tests', () => {
         const exercise = workoutTestUtil.STANDARD_EXERCISES.deadlift;
         const calibration = workoutTestUtil.STANDARD_CALIBRATIONS.deadlift;
 
-        const result0 = WorkoutExerciseService.calculateProgressedTargets({
+        const result0 = WorkoutExerciseService.calculateTargetRepsAndWeightForFirstSet({
           exercise,
           calibration,
           equipment,
           microcycleIndex: 0,
           firstMicrocycleRir: 4
         });
-        const result2 = WorkoutExerciseService.calculateProgressedTargets({
+        const result2 = WorkoutExerciseService.calculateTargetRepsAndWeightForFirstSet({
           exercise,
           calibration,
           equipment,
@@ -86,7 +86,7 @@ describe('Unit Tests', () => {
         const exercise = workoutTestUtil.STANDARD_EXERCISES.barbellSquat;
         const calibration = workoutTestUtil.STANDARD_CALIBRATIONS.barbellSquat;
 
-        const result = WorkoutExerciseService.calculateProgressedTargets({
+        const result = WorkoutExerciseService.calculateTargetRepsAndWeightForFirstSet({
           exercise,
           calibration,
           equipment,
@@ -104,7 +104,7 @@ describe('Unit Tests', () => {
         const exercise = workoutTestUtil.STANDARD_EXERCISES.barbellSquat;
         const calibration = workoutTestUtil.STANDARD_CALIBRATIONS.barbellSquat;
 
-        const result0 = WorkoutExerciseService.calculateProgressedTargets({
+        const result0 = WorkoutExerciseService.calculateTargetRepsAndWeightForFirstSet({
           exercise,
           calibration,
           equipment,
@@ -112,7 +112,7 @@ describe('Unit Tests', () => {
           firstMicrocycleRir: 4
         });
 
-        const result1 = WorkoutExerciseService.calculateProgressedTargets({
+        const result1 = WorkoutExerciseService.calculateTargetRepsAndWeightForFirstSet({
           exercise,
           calibration,
           equipment,
@@ -131,7 +131,7 @@ describe('Unit Tests', () => {
         const exercise = workoutTestUtil.STANDARD_EXERCISES.dumbbellLateralRaise;
         const calibration = workoutTestUtil.STANDARD_CALIBRATIONS.dumbbellLateralRaise;
 
-        const result0 = WorkoutExerciseService.calculateProgressedTargets({
+        const result0 = WorkoutExerciseService.calculateTargetRepsAndWeightForFirstSet({
           exercise,
           calibration,
           equipment,
@@ -139,7 +139,7 @@ describe('Unit Tests', () => {
           firstMicrocycleRir: 4
         });
 
-        const result1 = WorkoutExerciseService.calculateProgressedTargets({
+        const result1 = WorkoutExerciseService.calculateTargetRepsAndWeightForFirstSet({
           exercise,
           calibration,
           equipment,
@@ -160,7 +160,7 @@ describe('Unit Tests', () => {
         const exercise = workoutTestUtil.STANDARD_EXERCISES.barbellSquat;
         const calibration = workoutTestUtil.STANDARD_CALIBRATIONS.barbellSquat;
 
-        const result = WorkoutExerciseService.calculateProgressedTargets({
+        const result = WorkoutExerciseService.calculateTargetRepsAndWeightForFirstSet({
           exercise,
           calibration,
           equipment,
@@ -177,7 +177,7 @@ describe('Unit Tests', () => {
         const exercise = workoutTestUtil.STANDARD_EXERCISES.dumbbellLateralRaise;
         const calibration = workoutTestUtil.STANDARD_CALIBRATIONS.dumbbellLateralRaise;
 
-        const result = WorkoutExerciseService.calculateProgressedTargets({
+        const result = WorkoutExerciseService.calculateTargetRepsAndWeightForFirstSet({
           exercise,
           calibration,
           equipment,
@@ -202,7 +202,7 @@ describe('Unit Tests', () => {
         const calibration = workoutTestUtil.STANDARD_CALIBRATIONS.barbellSquat;
 
         expect(() =>
-          WorkoutExerciseService.calculateProgressedTargets({
+          WorkoutExerciseService.calculateTargetRepsAndWeightForFirstSet({
             exercise,
             calibration,
             equipment,
@@ -219,7 +219,7 @@ describe('Unit Tests', () => {
         const exercise = workoutTestUtil.STANDARD_EXERCISES.barbellSquat;
         const calibration = workoutTestUtil.STANDARD_CALIBRATIONS.barbellSquat;
 
-        const result = WorkoutExerciseService.calculateProgressedTargets({
+        const result = WorkoutExerciseService.calculateTargetRepsAndWeightForFirstSet({
           exercise,
           calibration,
           equipment,
@@ -235,7 +235,7 @@ describe('Unit Tests', () => {
         const exercise = workoutTestUtil.STANDARD_EXERCISES.deadlift;
         const calibration = workoutTestUtil.STANDARD_CALIBRATIONS.deadlift;
 
-        const result = WorkoutExerciseService.calculateProgressedTargets({
+        const result = WorkoutExerciseService.calculateTargetRepsAndWeightForFirstSet({
           exercise,
           calibration,
           equipment,
@@ -252,7 +252,7 @@ describe('Unit Tests', () => {
         const exercise = workoutTestUtil.STANDARD_EXERCISES.dumbbellLateralRaise;
         const calibration = workoutTestUtil.STANDARD_CALIBRATIONS.dumbbellLateralRaise;
 
-        const result = WorkoutExerciseService.calculateProgressedTargets({
+        const result = WorkoutExerciseService.calculateTargetRepsAndWeightForFirstSet({
           exercise,
           calibration,
           equipment,

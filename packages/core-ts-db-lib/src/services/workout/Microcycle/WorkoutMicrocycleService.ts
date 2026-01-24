@@ -23,16 +23,6 @@ import WorkoutSessionService from '../Session/WorkoutSessionService.js';
 export default class WorkoutMicrocycleService {
   /**
    * Generates sessions for a specific microcycle.
-   *
-   * @param mesocycle
-   * @param microcycle
-   * @param microcycleIndex
-   * @param targetRir
-   * @param firstMicrocycleRir
-   * @param isDeloadMicrocycle
-   * @param calibrationMap
-   * @param exerciseMap
-   * @param equipmentMap
    */
   static generateSessionsForMicrocycle(
     mesocycle: WorkoutMesocycle,
@@ -53,8 +43,7 @@ export default class WorkoutMicrocycleService {
     const sessionExercises: WorkoutSessionExercise[] = [];
     const sets: WorkoutSet[] = [];
 
-    // Distribute exercises across sessions
-    const exercisesPerSession = this.distributeExercisesAcrossSessions(
+    const sessionsToExerciseSessionsArray = this.distributeExercisesAcrossSessions(
       mesocycle.plannedSessionCountPerMicrocycle,
       calibrationMap,
       exerciseMap
@@ -75,24 +64,23 @@ export default class WorkoutMicrocycleService {
         break;
       }
 
-      const sessionExerciseList = exercisesPerSession[sessionIndex] || [];
+      const sessionExerciseList = sessionsToExerciseSessionsArray[sessionIndex] || [];
 
       const {
         session,
         sessionExercises: generatedSessionExercises,
         sets: generatedSets
       } = WorkoutSessionService.generateSession({
-        userId: mesocycle.userId,
+        mesocycle,
         workoutMicrocycleId: microcycle._id,
         microcycleIndex,
         sessionIndex,
-        sessionDate: currentSessionDate,
+        sessionStartDate: currentSessionDate,
         sessionExerciseList,
         equipmentMap,
         targetRir,
         firstMicrocycleRir,
-        isDeloadMicrocycle,
-        plannedSessionCountPerMicrocycle: mesocycle.plannedSessionCountPerMicrocycle
+        isDeloadMicrocycle
       });
 
       // Add session to microcycle's session order

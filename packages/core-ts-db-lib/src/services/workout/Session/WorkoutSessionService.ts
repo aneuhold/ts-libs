@@ -1,6 +1,7 @@
 import type { UUID } from 'crypto';
 import type { WorkoutEquipmentType } from '../../../documents/workout/WorkoutEquipmentType.js';
 import type { CalibrationExercisePair } from '../../../documents/workout/WorkoutExerciseCalibration.js';
+import type { WorkoutMesocycle } from '../../../documents/workout/WorkoutMesocycle.js';
 import type { WorkoutSession } from '../../../documents/workout/WorkoutSession.js';
 import { WorkoutSessionSchema } from '../../../documents/workout/WorkoutSession.js';
 import {
@@ -46,29 +47,27 @@ export default class WorkoutSessionService {
    * Generates a session and its associated exercises and sets.
    */
   static generateSession({
-    userId,
+    mesocycle,
     workoutMicrocycleId,
     microcycleIndex,
     sessionIndex,
-    sessionDate,
+    sessionStartDate,
     sessionExerciseList,
     equipmentMap,
     targetRir,
     firstMicrocycleRir,
-    isDeloadMicrocycle,
-    plannedSessionCountPerMicrocycle
+    isDeloadMicrocycle
   }: {
-    userId: UUID;
+    mesocycle: WorkoutMesocycle;
     workoutMicrocycleId: UUID;
     microcycleIndex: number;
     sessionIndex: number;
-    sessionDate: Date;
+    sessionStartDate: Date;
     sessionExerciseList: CalibrationExercisePair[];
     equipmentMap: Map<UUID, WorkoutEquipmentType>;
     targetRir: number;
     firstMicrocycleRir: number;
     isDeloadMicrocycle: boolean;
-    plannedSessionCountPerMicrocycle: number;
   }): {
     session: WorkoutSession;
     sessionExercises: WorkoutSessionExercise[];
@@ -79,10 +78,10 @@ export default class WorkoutSessionService {
 
     // Create session
     const session = WorkoutSessionSchema.parse({
-      userId,
+      userId: mesocycle.userId,
       workoutMicrocycleId,
       title: `Microcycle ${microcycleIndex + 1} - Session ${sessionIndex + 1}`,
-      startTime: sessionDate
+      startTime: sessionStartDate
     });
 
     // Create session exercise groupings and associated sets
@@ -111,7 +110,7 @@ export default class WorkoutSessionService {
       }
 
       const sessionExercise = WorkoutSessionExerciseSchema.parse({
-        userId,
+        userId: mesocycle.userId,
         workoutSessionId: session._id,
         workoutExerciseId: exercise._id
       });
@@ -126,8 +125,7 @@ export default class WorkoutSessionService {
         targetRir,
         firstMicrocycleRir,
         isDeloadMicrocycle,
-        plannedSessionCountPerMicrocycle,
-        userId,
+        plannedSessionCountPerMicrocycle: mesocycle.plannedSessionCountPerMicrocycle,
         sessionId: session._id,
         sessionExerciseId: sessionExercise._id
       });

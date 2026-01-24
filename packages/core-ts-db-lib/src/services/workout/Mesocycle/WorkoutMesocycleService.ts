@@ -49,7 +49,7 @@ export default class WorkoutMesocycleService {
     const totalMicrocycles = mesocycle.plannedMicrocycleCount ?? 6;
     const deloadMicrocycleIndex = totalMicrocycles - 1;
 
-    // First microcycle RIR is always 4 (used for weight calculations)
+    // First microcycle RIR is always 4
     const firstMicrocycleRir = 4;
 
     // Set start date to the current date initially
@@ -72,8 +72,7 @@ export default class WorkoutMesocycleService {
       });
       microcyclesToCreate.push(microcycle);
 
-      // Generate sessions for this microcycle
-      const sessions = WorkoutMicrocycleService.generateSessionsForMicrocycle(
+      const result = WorkoutMicrocycleService.generateSessionsForMicrocycle(
         mesocycle,
         microcycle,
         microcycleIndex,
@@ -85,9 +84,9 @@ export default class WorkoutMesocycleService {
         equipmentMap
       );
 
-      sessionsToCreate.push(...sessions.sessions);
-      sessionExercisesToCreate.push(...sessions.sessionExercises);
-      setsToCreate.push(...sessions.sets);
+      sessionsToCreate.push(...result.sessions);
+      sessionExercisesToCreate.push(...result.sessionExercises);
+      setsToCreate.push(...result.sets);
 
       // Move to next microcycle
       currentDate = new Date(microcycle.endDate);

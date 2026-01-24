@@ -56,15 +56,8 @@ export default class WorkoutExerciseService {
    *
    * Load progression: Increases weight by at least 2% per microcycle.
    * If weight can't be increased, adds 2 reps instead.
-   *
-   * @param params The parameters object.
-   * @param params.exercise the workout exercise
-   * @param params.calibration the workout exercise calibration
-   * @param params.equipment the workout equipment type
-   * @param params.microcycleIndex the zero-based microcycle index
-   * @param params.firstMicrocycleRir the target RIR for the first microcycle
    */
-  static calculateProgressedTargets(params: {
+  static calculateTargetRepsAndWeightForFirstSet(params: {
     exercise: WorkoutExercise;
     calibration: WorkoutExerciseCalibration;
     equipment: WorkoutEquipmentType;
