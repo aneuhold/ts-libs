@@ -4,8 +4,6 @@ import type { RSM } from '../../../../embedded-types/workout/Rsm.js';
 import WorkoutSFRService from './WorkoutSFRService.js';
 
 describe('Unit Tests', () => {
-  const service = new WorkoutSFRService();
-
   describe('getRsmTotal', () => {
     it('should return the sum of RSM components', () => {
       const rsm: RSM = {
@@ -14,19 +12,19 @@ describe('Unit Tests', () => {
         disruption: 1
       };
 
-      const result = service.getRsmTotal(rsm);
+      const result = WorkoutSFRService.getRsmTotal(rsm);
 
       expect(result).toBe(6);
     });
 
     it('should return null when RSM data is not present', () => {
-      const result = service.getRsmTotal(null);
+      const result = WorkoutSFRService.getRsmTotal(null);
 
       expect(result).toBeNull();
     });
 
     it('should return null when RSM data is undefined', () => {
-      const result = service.getRsmTotal(undefined);
+      const result = WorkoutSFRService.getRsmTotal(undefined);
 
       expect(result).toBeNull();
     });
@@ -38,7 +36,7 @@ describe('Unit Tests', () => {
         disruption: 1
       };
 
-      const result = service.getRsmTotal(rsm);
+      const result = WorkoutSFRService.getRsmTotal(rsm);
 
       expect(result).toBeNull();
     });
@@ -52,19 +50,19 @@ describe('Unit Tests', () => {
         unusedMusclePerformance: 1
       };
 
-      const result = service.getFatigueTotal(fatigue);
+      const result = WorkoutSFRService.getFatigueTotal(fatigue);
 
       expect(result).toBe(4);
     });
 
     it('should return null when fatigue data is not present', () => {
-      const result = service.getFatigueTotal(null);
+      const result = WorkoutSFRService.getFatigueTotal(null);
 
       expect(result).toBeNull();
     });
 
     it('should return null when fatigue data is undefined', () => {
-      const result = service.getFatigueTotal(undefined);
+      const result = WorkoutSFRService.getFatigueTotal(undefined);
 
       expect(result).toBeNull();
     });
@@ -76,7 +74,7 @@ describe('Unit Tests', () => {
         unusedMusclePerformance: 1
       };
 
-      const result = service.getFatigueTotal(fatigue);
+      const result = WorkoutSFRService.getFatigueTotal(fatigue);
 
       expect(result).toBeNull();
     });
@@ -95,7 +93,7 @@ describe('Unit Tests', () => {
         unusedMusclePerformance: 1
       };
 
-      const result = service.getSFR(rsm, fatigue);
+      const result = WorkoutSFRService.getSFR(rsm, fatigue);
 
       expect(result).toBe(1.5);
     });
@@ -107,7 +105,7 @@ describe('Unit Tests', () => {
         unusedMusclePerformance: 1
       };
 
-      const result = service.getSFR(null, fatigue);
+      const result = WorkoutSFRService.getSFR(null, fatigue);
 
       expect(result).toBeNull();
     });
@@ -119,7 +117,7 @@ describe('Unit Tests', () => {
         disruption: 1
       };
 
-      const result = service.getSFR(rsm, null);
+      const result = WorkoutSFRService.getSFR(rsm, null);
 
       expect(result).toBeNull();
     });
@@ -136,7 +134,7 @@ describe('Unit Tests', () => {
         unusedMusclePerformance: 0
       };
 
-      const result = service.getSFR(rsm, fatigue);
+      const result = WorkoutSFRService.getSFR(rsm, fatigue);
 
       expect(result).toBe(6);
     });

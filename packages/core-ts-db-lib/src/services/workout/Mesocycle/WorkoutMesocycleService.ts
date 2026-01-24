@@ -16,7 +16,6 @@ import { WorkoutSetSchema } from '../../../documents/workout/WorkoutSet.js';
 import type { DocumentOperations } from '../../DocumentService.js';
 import WorkoutEquipmentTypeService from '../EquipmentType/WorkoutEquipmentTypeService.js';
 import WorkoutExerciseService from '../Exercise/WorkoutExerciseService.js';
-import WorkoutSFRService from '../util/SFR/WorkoutSFRService.js';
 
 /**
  * Represents a calibration paired with its associated exercise definition.
@@ -30,7 +29,6 @@ type CalibrationExercisePair = {
  * A service for handling operations related to {@link WorkoutMesocycle}s.
  */
 export default class WorkoutMesocycleService {
-  private static sfrService = new WorkoutSFRService();
   /**
    * Generates the complete initial workout plan for an entire mesocycle.
    *
@@ -326,7 +324,7 @@ export default class WorkoutMesocycleService {
     const muscleGroupFatigueScores = new Map<UUID, number>();
     for (const [muscleGroupId, muscleGroupExercises] of muscleGroupsMap.entries()) {
       const fatigueScores = muscleGroupExercises.map((pair) =>
-        this.getExerciseFatigueScore(pair.exercise)
+        WorkoutExerciseService.getFatigueScore(pair.exercise)
       );
       const maxFatigue = Math.max(...fatigueScores);
       muscleGroupFatigueScores.set(muscleGroupId, maxFatigue);
@@ -363,7 +361,7 @@ export default class WorkoutMesocycleService {
           const exercisePairs = muscleGroupsMap.get(groupId);
           if (exercisePairs && exercisePairs.length > 0) {
             const fatigueScoresAmongExercises = exercisePairs.map((pair) =>
-              this.getExerciseFatigueScore(pair.exercise)
+              WorkoutExerciseService.getFatigueScore(pair.exercise)
             );
             const groupMax = Math.max(...fatigueScoresAmongExercises);
             if (groupMax > maxFatigue) {
@@ -380,7 +378,8 @@ export default class WorkoutMesocycleService {
           // Pick highest fatigue exercise in this group to be the headliner
           group.sort(
             (a, b) =>
-              this.getExerciseFatigueScore(b.exercise) - this.getExerciseFatigueScore(a.exercise)
+              WorkoutExerciseService.getFatigueScore(b.exercise) -
+              WorkoutExerciseService.getFatigueScore(a.exercise)
           );
           const headliner = group.shift();
           if (headliner) {
@@ -399,7 +398,9 @@ export default class WorkoutMesocycleService {
 
     // Sort remaining by fatigue (High -> Low)
     remainingExercises.sort(
-      (a, b) => this.getExerciseFatigueScore(b.exercise) - this.getExerciseFatigueScore(a.exercise)
+      (a, b) =>
+        WorkoutExerciseService.getFatigueScore(b.exercise) -
+        WorkoutExerciseService.getFatigueScore(a.exercise)
     );
 
     // Distribute round-robin
@@ -427,15 +428,6 @@ export default class WorkoutMesocycleService {
     }
 
     return sessions;
-  }
-
-  /**
-   * Gets the fatigue score for an exercise.
-   *
-   * @param exercise The exercise to get the fatigue score for.
-   */
-  private static getExerciseFatigueScore(exercise: WorkoutExercise): number {
-    return this.sfrService.getFatigueTotal(exercise.initialFatigueGuess) || 0;
   }
 
   /**

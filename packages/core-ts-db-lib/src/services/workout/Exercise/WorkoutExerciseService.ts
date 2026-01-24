@@ -7,6 +7,7 @@ import {
 import type { WorkoutExerciseCalibration } from '../../../documents/workout/WorkoutExerciseCalibration.js';
 import WorkoutEquipmentTypeService from '../EquipmentType/WorkoutEquipmentTypeService.js';
 import WorkoutExerciseCalibrationService from '../ExerciseCalibration/WorkoutExerciseCalibrationService.js';
+import WorkoutSFRService from '../util/SFR/WorkoutSFRService.js';
 
 /**
  * A service for handling operations related to {@link WorkoutExercise}s.
@@ -30,6 +31,15 @@ export default class WorkoutExerciseService {
       case ExerciseRepRange.Light:
         return { min: 15, max: 30 };
     }
+  }
+
+  /**
+   * Gets the fatigue score for an exercise.
+   *
+   * @param exercise The exercise to get the fatigue score for.
+   */
+  static getFatigueScore(exercise: WorkoutExercise): number {
+    return WorkoutSFRService.getFatigueTotal(exercise.initialFatigueGuess) || 0;
   }
 
   /**

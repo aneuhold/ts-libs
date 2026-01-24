@@ -12,7 +12,7 @@ export default class WorkoutSFRService {
    *
    * @param rsm The RSM data.
    */
-  getRsmTotal(rsm: RSM | null | undefined): number | null {
+  static getRsmTotal(rsm: RSM | null | undefined): number | null {
     if (!rsm || rsm.mindMuscleConnection == null || rsm.pump == null || rsm.disruption == null) {
       return null;
     }
@@ -24,7 +24,7 @@ export default class WorkoutSFRService {
    *
    * @param fatigue The fatigue data.
    */
-  getFatigueTotal(fatigue: Fatigue | null | undefined): number | null {
+  static getFatigueTotal(fatigue: Fatigue | null | undefined): number | null {
     if (
       !fatigue ||
       fatigue.jointAndTissueDisruption == null ||
@@ -44,7 +44,7 @@ export default class WorkoutSFRService {
    * @param rsm The RSM data.
    * @param fatigue The fatigue data.
    */
-  getSFR(rsm: RSM | null | undefined, fatigue: Fatigue | null | undefined): number | null {
+  static getSFR(rsm: RSM | null | undefined, fatigue: Fatigue | null | undefined): number | null {
     const rsmTotal = this.getRsmTotal(rsm);
     const fatigueTotal = this.getFatigueTotal(fatigue);
 

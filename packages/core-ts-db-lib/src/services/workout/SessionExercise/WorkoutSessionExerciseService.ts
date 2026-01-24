@@ -5,15 +5,13 @@ import WorkoutSFRService from '../util/SFR/WorkoutSFRService.js';
  * A service for handling operations related to {@link WorkoutSessionExercise}s.
  */
 export default class WorkoutSessionExerciseService {
-  private static sfrService = new WorkoutSFRService();
-
   /**
    * Calculates the total Raw Stimulus Magnitude for a specific exercise within a session.
    *
    * @param sessionExercise The workout session exercise.
    */
   static getRsmTotal(sessionExercise: WorkoutSessionExercise): number | null {
-    return this.sfrService.getRsmTotal(sessionExercise.rsm);
+    return WorkoutSFRService.getRsmTotal(sessionExercise.rsm);
   }
 
   /**
@@ -22,7 +20,7 @@ export default class WorkoutSessionExerciseService {
    * @param sessionExercise The workout session exercise.
    */
   static getFatigueTotal(sessionExercise: WorkoutSessionExercise): number | null {
-    return this.sfrService.getFatigueTotal(sessionExercise.fatigue);
+    return WorkoutSFRService.getFatigueTotal(sessionExercise.fatigue);
   }
 
   /**
@@ -31,6 +29,6 @@ export default class WorkoutSessionExerciseService {
    * @param sessionExercise The workout session exercise.
    */
   static getSFR(sessionExercise: WorkoutSessionExercise): number | null {
-    return this.sfrService.getSFR(sessionExercise.rsm, sessionExercise.fatigue);
+    return WorkoutSFRService.getSFR(sessionExercise.rsm, sessionExercise.fatigue);
   }
 }
