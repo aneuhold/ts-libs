@@ -13,23 +13,22 @@ export default class WorkoutSetService {
    * - Calculating the initial target weight/reps based on microcycle progression.
    * - Handling intra-session fatigue (dropping reps/weight across sets).
    * - Applying Deload phase modifications (cutting volume/intensity).
-   *
-   * @param params The parameters object.
-   * @param params.exercise The exercise being performed.
-   * @param params.calibration The user's calibration for this exercise.
-   * @param params.equipment The equipment being used (for weight increments).
-   * @param params.microcycleIndex The index of the current microcycle (0-based).
-   * @param params.sessionIndex The index of the current session within the microcycle.
-   * @param params.setCount The number of sets to generate.
-   * @param params.targetRir The Reps In Reserve target for this microcycle.
-   * @param params.firstMicrocycleRir The RIR of the first microcycle (usually 4), used for base calculations.
-   * @param params.isDeloadMicrocycle Whether this is a deload week.
-   * @param params.plannedSessionCountPerMicrocycle Total sessions in this microcycle (used for deload splitting).
-   * @param params.userId The ID of the user.
-   * @param params.sessionId The ID of the session these sets belong to.
-   * @param params.sessionExerciseId The ID of the session exercise these sets belong to.
    */
-  static generateSetsForSessionExercise(params: {
+  static generateSetsForSessionExercise({
+    exercise,
+    calibration,
+    equipment,
+    microcycleIndex,
+    sessionIndex,
+    setCount,
+    targetRir,
+    firstMicrocycleRir,
+    isDeloadMicrocycle,
+    plannedSessionCountPerMicrocycle,
+    userId,
+    sessionId,
+    sessionExerciseId
+  }: {
     exercise: WorkoutExercise;
     calibration: WorkoutExerciseCalibration;
     equipment: WorkoutEquipmentType;
@@ -44,22 +43,6 @@ export default class WorkoutSetService {
     sessionId: string;
     sessionExerciseId: string;
   }): WorkoutSet[] {
-    const {
-      exercise,
-      calibration,
-      equipment,
-      microcycleIndex,
-      sessionIndex,
-      setCount,
-      targetRir,
-      firstMicrocycleRir,
-      isDeloadMicrocycle,
-      plannedSessionCountPerMicrocycle,
-      userId,
-      sessionId,
-      sessionExerciseId
-    } = params;
-
     const sets: WorkoutSet[] = [];
 
     // Get rep range for this exercise
