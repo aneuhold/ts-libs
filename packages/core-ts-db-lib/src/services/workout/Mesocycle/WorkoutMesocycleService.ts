@@ -10,6 +10,7 @@ import type { WorkoutSessionExercise } from '../../../documents/workout/WorkoutS
 import type { WorkoutSet } from '../../../documents/workout/WorkoutSet.js';
 import type { DocumentOperations } from '../../DocumentService.js';
 import WorkoutMicrocycleService from '../Microcycle/WorkoutMicrocycleService.js';
+import WorkoutMesocyclePlanContext from './WorkoutMesocyclePlanContext.js';
 
 /**
  * A service for handling operations related to {@link WorkoutMesocycle}s.
@@ -42,22 +43,17 @@ export default class WorkoutMesocycleService {
       return {};
     }
 
-    const microcyclesToCreate: WorkoutMicrocycle[] = [];
-    const sessionsToCreate: WorkoutSession[] = [];
-    const sessionExercisesToCreate: WorkoutSessionExercise[] = [];
-    const setsToCreate: WorkoutSet[] = [];
-
-    // Create lookup maps
-    const calibrationMap = new Map(calibrations.map((c) => [c._id, c]));
-    const exerciseMap = new Map(exercises.map((e) => [e._id, e]));
-    const equipmentMap = new Map(equipmentTypes.map((et) => [et._id, et]));
+    // Create planning context
+    const context = new WorkoutMesocyclePlanContext(
+      mesocycle,
+      calibrations,
+      exercises,
+      equipmentTypes
+    );
 
     // Determine number of microcycles (default to 6 if not specified: 5 accumulation + 1 deload)
     const totalMicrocycles = mesocycle.plannedMicrocycleCount ?? 6;
     const deloadMicrocycleIndex = totalMicrocycles - 1;
-
-    // First microcycle RIR is always 4
-    const firstMicrocycleRir = 4;
 
     // Set start date to the current date initially
     let currentDate = new Date();
@@ -77,23 +73,14 @@ export default class WorkoutMesocycleService {
         startDate: new Date(currentDate),
         endDate: DateService.addDays(currentDate, mesocycle.plannedMicrocycleLengthInDays)
       });
-      microcyclesToCreate.push(microcycle);
+      context.microcyclesToCreate.push(microcycle);
 
-      const result = WorkoutMicrocycleService.generateSessionsForMicrocycle(
-        mesocycle,
-        microcycle,
+      WorkoutMicrocycleService.generateSessionsForMicrocycle({
+        context,
         microcycleIndex,
         targetRir,
-        firstMicrocycleRir,
-        isDeloadMicrocycle,
-        calibrationMap,
-        exerciseMap,
-        equipmentMap
-      );
-
-      sessionsToCreate.push(...result.sessions);
-      sessionExercisesToCreate.push(...result.sessionExercises);
-      setsToCreate.push(...result.sets);
+        isDeloadMicrocycle
+      });
 
       // Move to next microcycle
       currentDate = new Date(microcycle.endDate);
@@ -101,10 +88,10 @@ export default class WorkoutMesocycleService {
 
     return {
       mesocycleUpdate: undefined,
-      microcycles: { create: microcyclesToCreate, update: [], delete: [] },
-      sessions: { create: sessionsToCreate, update: [], delete: [] },
-      sessionExercises: { create: sessionExercisesToCreate, update: [], delete: [] },
-      sets: { create: setsToCreate, update: [], delete: [] }
+      microcycles: { create: context.microcyclesToCreate, update: [], delete: [] },
+      sessions: { create: context.sessionsToCreate, update: [], delete: [] },
+      sessionExercises: { create: context.sessionExercisesToCreate, update: [], delete: [] },
+      sets: { create: context.setsToCreate, update: [], delete: [] }
     };
   }
 }

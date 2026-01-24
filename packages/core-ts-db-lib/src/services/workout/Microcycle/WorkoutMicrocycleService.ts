@@ -1,6 +1,5 @@
 import { DateService } from '@aneuhold/core-ts-lib';
 import type { UUID } from 'crypto';
-import type { WorkoutEquipmentType } from '../../../documents/workout/WorkoutEquipmentType.js';
 import {
   ExerciseRepRange,
   type WorkoutExercise
@@ -9,12 +8,8 @@ import type {
   CalibrationExercisePair,
   WorkoutExerciseCalibration
 } from '../../../documents/workout/WorkoutExerciseCalibration.js';
-import { type WorkoutMesocycle } from '../../../documents/workout/WorkoutMesocycle.js';
-import type { WorkoutMicrocycle } from '../../../documents/workout/WorkoutMicrocycle.js';
-import type { WorkoutSession } from '../../../documents/workout/WorkoutSession.js';
-import type { WorkoutSessionExercise } from '../../../documents/workout/WorkoutSessionExercise.js';
-import type { WorkoutSet } from '../../../documents/workout/WorkoutSet.js';
 import WorkoutExerciseService from '../Exercise/WorkoutExerciseService.js';
+import type WorkoutMesocyclePlanContext from '../Mesocycle/WorkoutMesocyclePlanContext.js';
 import WorkoutSessionService from '../Session/WorkoutSessionService.js';
 
 /**
@@ -24,29 +19,24 @@ export default class WorkoutMicrocycleService {
   /**
    * Generates sessions for a specific microcycle.
    */
-  static generateSessionsForMicrocycle(
-    mesocycle: WorkoutMesocycle,
-    microcycle: WorkoutMicrocycle,
-    microcycleIndex: number,
-    targetRir: number,
-    firstMicrocycleRir: number,
-    isDeloadMicrocycle: boolean,
-    calibrationMap: Map<UUID, WorkoutExerciseCalibration>,
-    exerciseMap: Map<UUID, WorkoutExercise>,
-    equipmentMap: Map<UUID, WorkoutEquipmentType>
-  ): {
-    sessions: WorkoutSession[];
-    sessionExercises: WorkoutSessionExercise[];
-    sets: WorkoutSet[];
-  } {
-    const sessions: WorkoutSession[] = [];
-    const sessionExercises: WorkoutSessionExercise[] = [];
-    const sets: WorkoutSet[] = [];
+  static generateSessionsForMicrocycle({
+    context,
+    microcycleIndex,
+    targetRir,
+    isDeloadMicrocycle
+  }: {
+    context: WorkoutMesocyclePlanContext;
+    microcycleIndex: number;
+    targetRir: number;
+    isDeloadMicrocycle: boolean;
+  }): void {
+    const mesocycle = context.mesocycle;
+    const microcycle = context.microcyclesToCreate[microcycleIndex];
 
     const sessionsToExerciseSessionsArray = this.distributeExercisesAcrossSessions(
       mesocycle.plannedSessionCountPerMicrocycle,
-      calibrationMap,
-      exerciseMap
+      context.calibrationMap,
+      context.exerciseMap
     );
 
     let currentSessionDate = new Date(microcycle.startDate);
@@ -66,35 +56,19 @@ export default class WorkoutMicrocycleService {
 
       const sessionExerciseList = sessionsToExerciseSessionsArray[sessionIndex] || [];
 
-      const {
-        session,
-        sessionExercises: generatedSessionExercises,
-        sets: generatedSets
-      } = WorkoutSessionService.generateSession({
-        mesocycle,
-        workoutMicrocycleId: microcycle._id,
+      WorkoutSessionService.generateSession({
+        context,
         microcycleIndex,
         sessionIndex,
         sessionStartDate: currentSessionDate,
         sessionExerciseList,
-        equipmentMap,
         targetRir,
-        firstMicrocycleRir,
         isDeloadMicrocycle
       });
-
-      // Add session to microcycle's session order
-      microcycle.sessionOrder.push(session._id);
-
-      sessions.push(session);
-      sessionExercises.push(...generatedSessionExercises);
-      sets.push(...generatedSets);
 
       sessionIndex++;
       currentSessionDate = DateService.addDays(currentSessionDate, 1);
     }
-
-    return { sessions, sessionExercises, sets };
   }
 
   /**

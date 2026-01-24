@@ -1,14 +1,8 @@
-import type { UUID } from 'crypto';
-import type { WorkoutEquipmentType } from '../../../documents/workout/WorkoutEquipmentType.js';
 import type { CalibrationExercisePair } from '../../../documents/workout/WorkoutExerciseCalibration.js';
-import type { WorkoutMesocycle } from '../../../documents/workout/WorkoutMesocycle.js';
 import type { WorkoutSession } from '../../../documents/workout/WorkoutSession.js';
 import { WorkoutSessionSchema } from '../../../documents/workout/WorkoutSession.js';
-import {
-  WorkoutSessionExerciseSchema,
-  type WorkoutSessionExercise
-} from '../../../documents/workout/WorkoutSessionExercise.js';
-import type { WorkoutSet } from '../../../documents/workout/WorkoutSet.js';
+import { WorkoutSessionExerciseSchema } from '../../../documents/workout/WorkoutSessionExercise.js';
+import type WorkoutMesocyclePlanContext from '../Mesocycle/WorkoutMesocyclePlanContext.js';
 import WorkoutSetService from '../Set/WorkoutSetService.js';
 import WorkoutSFRService from '../util/SFR/WorkoutSFRService.js';
 
@@ -47,39 +41,29 @@ export default class WorkoutSessionService {
    * Generates a session and its associated exercises and sets.
    */
   static generateSession({
-    mesocycle,
-    workoutMicrocycleId,
+    context,
     microcycleIndex,
     sessionIndex,
     sessionStartDate,
     sessionExerciseList,
-    equipmentMap,
     targetRir,
-    firstMicrocycleRir,
     isDeloadMicrocycle
   }: {
-    mesocycle: WorkoutMesocycle;
-    workoutMicrocycleId: UUID;
+    context: WorkoutMesocyclePlanContext;
     microcycleIndex: number;
     sessionIndex: number;
     sessionStartDate: Date;
     sessionExerciseList: CalibrationExercisePair[];
-    equipmentMap: Map<UUID, WorkoutEquipmentType>;
     targetRir: number;
-    firstMicrocycleRir: number;
     isDeloadMicrocycle: boolean;
-  }): {
-    session: WorkoutSession;
-    sessionExercises: WorkoutSessionExercise[];
-    sets: WorkoutSet[];
-  } {
-    const sessionExercises: WorkoutSessionExercise[] = [];
-    const sets: WorkoutSet[] = [];
+  }): void {
+    const mesocycle = context.mesocycle;
+    const microcycle = context.microcyclesToCreate[microcycleIndex];
 
     // Create session
     const session = WorkoutSessionSchema.parse({
       userId: mesocycle.userId,
-      workoutMicrocycleId,
+      workoutMicrocycleId: microcycle._id,
       title: `Microcycle ${microcycleIndex + 1} - Session ${sessionIndex + 1}`,
       startTime: sessionStartDate
     });
@@ -97,7 +81,7 @@ export default class WorkoutSessionService {
       );
 
       // Get equipment for weight calculations
-      const equipment = equipmentMap.get(exercise.workoutEquipmentTypeId);
+      const equipment = context.equipmentMap.get(exercise.workoutEquipmentTypeId);
       if (!equipment) {
         throw new Error(
           `Equipment type not found for exercise ${exercise._id}, ${exercise.exerciseName}`
@@ -115,28 +99,29 @@ export default class WorkoutSessionService {
         workoutExerciseId: exercise._id
       });
 
-      const generatedSets = WorkoutSetService.generateSetsForSessionExercise({
+      WorkoutSetService.generateSetsForSessionExercise({
+        context,
         exercise,
         calibration,
-        equipment,
+        session,
+        sessionExercise,
         microcycleIndex,
         sessionIndex,
         setCount,
         targetRir,
-        firstMicrocycleRir,
-        isDeloadMicrocycle,
-        plannedSessionCountPerMicrocycle: mesocycle.plannedSessionCountPerMicrocycle,
-        sessionId: session._id,
-        sessionExerciseId: sessionExercise._id
+        isDeloadMicrocycle
       });
 
-      sessionExercise.setOrder.push(...generatedSets.map((s) => s._id));
+      const setsForThisExercise = context.setsToCreate.slice(-setCount);
+
+      sessionExercise.setOrder.push(...setsForThisExercise.map((s) => s._id));
       session.sessionExerciseOrder.push(sessionExercise._id);
-      sessionExercises.push(sessionExercise);
-      sets.push(...generatedSets);
+      context.sessionExercisesToCreate.push(sessionExercise);
     }
 
-    return { session, sessionExercises, sets };
+    // Add session to microcycle's session order and context
+    microcycle.sessionOrder.push(session._id);
+    context.sessionsToCreate.push(session);
   }
 
   /**

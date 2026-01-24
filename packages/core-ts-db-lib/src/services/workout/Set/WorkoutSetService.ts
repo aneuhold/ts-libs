@@ -4,9 +4,12 @@ import type {
   WorkoutExercise
 } from '../../../documents/workout/WorkoutExercise.js';
 import type { WorkoutExerciseCalibration } from '../../../documents/workout/WorkoutExerciseCalibration.js';
+import type { WorkoutSession } from '../../../documents/workout/WorkoutSession.js';
+import type { WorkoutSessionExercise } from '../../../documents/workout/WorkoutSessionExercise.js';
 import { WorkoutSetSchema, type WorkoutSet } from '../../../documents/workout/WorkoutSet.js';
 import WorkoutEquipmentTypeService from '../EquipmentType/WorkoutEquipmentTypeService.js';
 import WorkoutExerciseService from '../Exercise/WorkoutExerciseService.js';
+import type WorkoutMesocyclePlanContext from '../Mesocycle/WorkoutMesocyclePlanContext.js';
 
 export default class WorkoutSetService {
   /**
@@ -18,32 +21,35 @@ export default class WorkoutSetService {
    * - Applying Deload phase modifications (cutting volume/intensity).
    */
   static generateSetsForSessionExercise({
+    context,
     exercise,
     calibration,
-    equipment,
+    session,
+    sessionExercise,
     microcycleIndex,
     sessionIndex,
     setCount,
     targetRir,
-    firstMicrocycleRir,
-    isDeloadMicrocycle,
-    plannedSessionCountPerMicrocycle,
-    sessionId,
-    sessionExerciseId
+    isDeloadMicrocycle
   }: {
+    context: WorkoutMesocyclePlanContext;
     exercise: WorkoutExercise;
     calibration: WorkoutExerciseCalibration;
-    equipment: WorkoutEquipmentType;
+    session: WorkoutSession;
+    sessionExercise: WorkoutSessionExercise;
     microcycleIndex: number;
     sessionIndex: number;
     setCount: number;
     targetRir: number;
-    firstMicrocycleRir: number;
     isDeloadMicrocycle: boolean;
-    plannedSessionCountPerMicrocycle: number;
-    sessionId: string;
-    sessionExerciseId: string;
-  }): WorkoutSet[] {
+  }): void {
+    const equipment = context.equipmentMap.get(exercise.workoutEquipmentTypeId);
+    if (!equipment) {
+      throw new Error(
+        `Equipment type not found for exercise ${exercise._id}, ${exercise.exerciseName}`
+      );
+    }
+
     const sets: WorkoutSet[] = [];
 
     // Calculate progressed targets for the first set
@@ -53,7 +59,7 @@ export default class WorkoutSetService {
         calibration,
         equipment,
         microcycleIndex,
-        firstMicrocycleRir
+        firstMicrocycleRir: context.FIRST_MICROCYCLE_RIR
       });
 
     for (let setIndex = 0; setIndex < setCount; setIndex++) {
@@ -66,15 +72,15 @@ export default class WorkoutSetService {
         {
           isDeloadMicrocycle,
           sessionIndex,
-          plannedSessionCountPerMicrocycle
+          plannedSessionCountPerMicrocycle: context.mesocycle.plannedSessionCountPerMicrocycle
         }
       );
 
       const workoutSet = WorkoutSetSchema.parse({
         userId: exercise.userId,
         workoutExerciseId: exercise._id,
-        workoutSessionId: sessionId,
-        workoutSessionExerciseId: sessionExerciseId,
+        workoutSessionId: session._id,
+        workoutSessionExerciseId: sessionExercise._id,
         plannedReps,
         plannedWeight,
         plannedRir: targetRir,
@@ -84,7 +90,7 @@ export default class WorkoutSetService {
       sets.push(workoutSet);
     }
 
-    return sets;
+    context.setsToCreate.push(...sets);
   }
 
   /**
