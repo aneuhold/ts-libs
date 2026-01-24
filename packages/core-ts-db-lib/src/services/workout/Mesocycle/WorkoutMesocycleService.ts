@@ -2,7 +2,7 @@ import { DateService } from '@aneuhold/core-ts-lib';
 import type { WorkoutEquipmentType } from '../../../documents/workout/WorkoutEquipmentType.js';
 import type { WorkoutExercise } from '../../../documents/workout/WorkoutExercise.js';
 import type { WorkoutExerciseCalibration } from '../../../documents/workout/WorkoutExerciseCalibration.js';
-import type { WorkoutMesocycle } from '../../../documents/workout/WorkoutMesocycle.js';
+import { CycleType, type WorkoutMesocycle } from '../../../documents/workout/WorkoutMesocycle.js';
 import type { WorkoutMicrocycle } from '../../../documents/workout/WorkoutMicrocycle.js';
 import { WorkoutMicrocycleSchema } from '../../../documents/workout/WorkoutMicrocycle.js';
 import type { WorkoutSession } from '../../../documents/workout/WorkoutSession.js';
@@ -35,6 +35,13 @@ export default class WorkoutMesocycleService {
     sessionExercises?: DocumentOperations<WorkoutSessionExercise>;
     sets?: DocumentOperations<WorkoutSet>;
   } {
+    // Free-form mesocycles are intentionally not auto-planned. The user can still log workouts,
+    // but we avoid generating microcycles/sessions/sets because recommendations wouldn't be able
+    // to be done / make any sense.
+    if (mesocycle.cycleType === CycleType.FreeForm) {
+      return {};
+    }
+
     const microcyclesToCreate: WorkoutMicrocycle[] = [];
     const sessionsToCreate: WorkoutSession[] = [];
     const sessionExercisesToCreate: WorkoutSessionExercise[] = [];

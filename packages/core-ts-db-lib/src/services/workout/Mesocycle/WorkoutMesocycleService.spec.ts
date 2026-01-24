@@ -5,6 +5,34 @@ import WorkoutMesocycleService from './WorkoutMesocycleService.js';
 
 describe('Unit Tests', () => {
   describe('generateInitialPlan', () => {
+    it('should not generate any plan documents for FreeForm mesocycles', () => {
+      const exercises = [workoutTestUtil.STANDARD_EXERCISES.barbellSquat];
+      const calibrations = [workoutTestUtil.STANDARD_CALIBRATIONS.barbellSquat];
+      const equipment = Object.values(workoutTestUtil.STANDARD_EQUIPMENT_TYPES);
+
+      const mesocycle = WorkoutMesocycleSchema.parse({
+        userId: workoutTestUtil.userId,
+        cycleType: CycleType.FreeForm,
+        plannedSessionCountPerMicrocycle: 1,
+        plannedMicrocycleLengthInDays: 7,
+        plannedMicrocycleRestDays: [],
+        plannedMicrocycleCount: 3,
+        calibratedExercises: calibrations.map((c) => c._id)
+      });
+
+      const result = WorkoutMesocycleService.generateInitialPlan(
+        mesocycle,
+        calibrations,
+        exercises,
+        equipment
+      );
+
+      expect(result.microcycles?.create).toBeUndefined();
+      expect(result.sessions?.create).toBeUndefined();
+      expect(result.sessionExercises?.create).toBeUndefined();
+      expect(result.sets?.create).toBeUndefined();
+    });
+
     it('(Smoke) should generate correct number of microcycles, sessions, exercises, and sets for super small mesocycle', () => {
       // Setup test data - using subset of 4 exercises
       const exercises = [
@@ -136,7 +164,7 @@ describe('Unit Tests', () => {
       workoutTestUtil.printMesocyclePlan(result, exercises);
     });
 
-    it.only('(Smoke) should handle large mesocycle with 6 accumulation + 1 deload microcycles', () => {
+    it('(Smoke) should handle large mesocycle with 6 accumulation + 1 deload microcycles', () => {
       // Setup test data - using all 10 exercises
       const exercises = Object.values(workoutTestUtil.STANDARD_EXERCISES);
       const calibrations = Object.values(workoutTestUtil.STANDARD_CALIBRATIONS);
