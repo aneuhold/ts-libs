@@ -64,6 +64,7 @@ export default class WorkoutSetService {
 
     for (let setIndex = 0; setIndex < setCount; setIndex++) {
       const { plannedReps, plannedWeight } = this.generateSetRepsAndWeight(
+        // If there is a previous set, base off that, otherwise use first set targets
         sets[setIndex - 1]?.plannedReps || firstSetReps,
         sets[setIndex - 1]?.plannedWeight || firstSetWeight,
         setIndex,
@@ -137,8 +138,8 @@ export default class WorkoutSetService {
       currentReps = firstSetOrPreviousSetReps - 2;
     }
 
-    // Apply deload modifications
-    if (deloadInfo.isDeloadMicrocycle) {
+    // Apply deload modifications, but only if the set is the first in the session
+    if (deloadInfo.isDeloadMicrocycle && setIndex === 0) {
       currentReps = Math.floor(firstSetOrPreviousSetReps / 2);
       // First half of deload microcycle: same weight, half reps/sets
       // Second half: half weight too

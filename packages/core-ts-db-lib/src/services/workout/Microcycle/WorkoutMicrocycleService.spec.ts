@@ -1,0 +1,105 @@
+import { describe, expect, it } from 'vitest';
+import workoutTestUtil from '../../../../test-utils/WorkoutTestUtil.js';
+import { CycleType, WorkoutMesocycleSchema } from '../../../documents/workout/WorkoutMesocycle.js';
+import { WorkoutMicrocycleSchema } from '../../../documents/workout/WorkoutMicrocycle.js';
+import WorkoutMesocyclePlanContext from '../Mesocycle/WorkoutMesocyclePlanContext.js';
+import WorkoutMicrocycleService from './WorkoutMicrocycleService.js';
+
+describe('WorkoutMicrocycleService', () => {
+  describe('generateSessionsForMicrocycle', () => {
+    // Setup
+    const exercises = [
+      // Group A: High Fatigue (e.g. Deadlift ~9)
+      workoutTestUtil.STANDARD_EXERCISES.deadlift,
+      // Group B: Medium Fatigue (e.g. Bench ~6)
+      workoutTestUtil.STANDARD_EXERCISES.barbellBenchPress,
+      // Group C: Low Fatigue (e.g. Curls ~2)
+      workoutTestUtil.STANDARD_EXERCISES.dumbbellCurl
+    ];
+
+    const calibrations = [
+      workoutTestUtil.STANDARD_CALIBRATIONS.deadlift,
+      workoutTestUtil.STANDARD_CALIBRATIONS.barbellBenchPress,
+      workoutTestUtil.STANDARD_CALIBRATIONS.dumbbellCurl
+    ];
+
+    const mesocycle = WorkoutMesocycleSchema.parse({
+      userId: workoutTestUtil.userId,
+      cycleType: CycleType.MuscleGain,
+      plannedMicrocycleLengthInDays: 7,
+      plannedSessionCountPerMicrocycle: 3,
+      plannedMicrocycleRestDays: [1], // Skip day 1 (index 1 = Tuesday if Monday start)
+      calibratedExercises: calibrations.map((c) => c._id)
+    });
+
+    // Need `microcyclesToCreate` pre-populated in context because the service looks it up.
+    const microcycle = WorkoutMicrocycleSchema.parse({
+      userId: workoutTestUtil.userId,
+      workoutMesocycleId: mesocycle._id,
+      startDate: new Date(2024, 0, 1), // Monday Jan 1st - Local Time
+      endDate: new Date(2024, 0, 7)
+    });
+
+    const runGeneration = () => {
+      const context = new WorkoutMesocyclePlanContext(
+        mesocycle,
+        calibrations,
+        exercises,
+        Object.values(workoutTestUtil.STANDARD_EQUIPMENT_TYPES)
+      );
+      context.microcyclesToCreate.push(microcycle);
+
+      WorkoutMicrocycleService.generateSessionsForMicrocycle({
+        context,
+        microcycleIndex: 0,
+        targetRir: 3,
+        isDeloadMicrocycle: false
+      });
+
+      return {
+        sessions: context.sessionsToCreate,
+        sessionExercises: context.sessionExercisesToCreate
+      };
+    };
+
+    it('should sort exercises such that high fatigue groups headline sessions', () => {
+      // We have 3 groups (Back/Quads(Deadlift), Chest(Bench), Biceps(Curl)).
+      // Deadlift is hardest -> Priority 1. Should headline Session 1.
+      // Bench is medium -> Priority 2. Should headline Session 2.
+      // Curl is easy. Should fill in.
+
+      const { sessions, sessionExercises } = runGeneration();
+
+      expect(sessions).toHaveLength(3);
+
+      // Verify Deadlift is in Session 1 (Highest Fatigue)
+      const s1ExerciseIds = sessionExercises
+        .filter((se) => se.workoutSessionId === sessions[0]._id)
+        .map((se) => se.workoutExerciseId);
+      expect(s1ExerciseIds).toContain(workoutTestUtil.STANDARD_EXERCISES.deadlift._id);
+
+      // Verify Bench is in Session 2 (Next Highest)
+      const s2ExIds = sessionExercises
+        .filter((se) => se.workoutSessionId === sessions[1]._id)
+        .map((se) => se.workoutExerciseId);
+      expect(s2ExIds).toContain(workoutTestUtil.STANDARD_EXERCISES.barbellBenchPress._id);
+    });
+
+    it('should assign dates correctly, skipping rest days', () => {
+      // Start: Jan 1 (Mon). Rest Days: [1] (Tue).
+      // Session 1: Jan 1.
+      // Session 2: Jan 3 (Wed). Skipped Jan 2.
+      // Session 3: Jan 4 (Thu).
+
+      const { sessions } = runGeneration();
+
+      const s1Date = new Date(sessions[0].startTime);
+      const s2Date = new Date(sessions[1].startTime);
+      const s3Date = new Date(sessions[2].startTime);
+
+      expect(s1Date.getDate()).toBe(1);
+      expect(s2Date.getDate()).toBe(3); // Skipped 2
+      expect(s3Date.getDate()).toBe(4);
+    });
+  });
+});
