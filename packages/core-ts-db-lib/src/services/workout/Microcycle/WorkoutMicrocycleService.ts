@@ -16,9 +16,8 @@ import { WorkoutSessionSchema } from '../../../documents/workout/WorkoutSession.
 import type { WorkoutSessionExercise } from '../../../documents/workout/WorkoutSessionExercise.js';
 import { WorkoutSessionExerciseSchema } from '../../../documents/workout/WorkoutSessionExercise.js';
 import type { WorkoutSet } from '../../../documents/workout/WorkoutSet.js';
-import { WorkoutSetSchema } from '../../../documents/workout/WorkoutSet.js';
-import WorkoutEquipmentTypeService from '../EquipmentType/WorkoutEquipmentTypeService.js';
 import WorkoutExerciseService from '../Exercise/WorkoutExerciseService.js';
+import WorkoutSetService from '../Set/WorkoutSetService.js';
 
 /**
  * A service for handling operations related to {@link WorkoutMicrocycle}s.
@@ -111,9 +110,6 @@ export default class WorkoutMicrocycleService {
           isDeloadMicrocycle
         );
 
-        // Get rep range for this exercise
-        const repRange = WorkoutExerciseService.getRepRangeValues(exercise.repRange);
-
         // Get equipment for weight calculations
         const equipment = equipmentMap.get(exercise.workoutEquipmentTypeId);
         if (!equipment) {
@@ -127,70 +123,24 @@ export default class WorkoutMicrocycleService {
           );
         }
 
-        // Calculate progressed targets using WorkoutExerciseService
-        const { targetWeight: firstSetWeight, targetReps: firstSetReps } =
-          WorkoutExerciseService.calculateProgressedTargets({
-            exercise,
-            calibration,
-            equipment,
-            microcycleIndex,
-            firstMicrocycleRir
-          });
+        const generatedSets = WorkoutSetService.generateSetsForSessionExercise({
+          exercise,
+          calibration,
+          equipment,
+          microcycleIndex,
+          sessionIndex,
+          setCount,
+          targetRir,
+          firstMicrocycleRir,
+          isDeloadMicrocycle,
+          plannedSessionCountPerMicrocycle: mesocycle.plannedSessionCountPerMicrocycle,
+          userId: mesocycle.userId,
+          sessionId: session._id,
+          sessionExerciseId: sessionExercise._id
+        });
 
-        // Create sets
-        let currentWeight = firstSetWeight;
-        let currentReps = firstSetReps;
-
-        for (let setIndex = 0; setIndex < setCount; setIndex++) {
-          // Ideally, drop 2 reps per set within the session (19 -> 17 -> 15, etc.)
-          // But if that would go below the min reps, keep it at min reps.
-          if (currentReps - 2 < repRange.min && setIndex > 0) {
-            // Reduce weight by 2% using the same technique as progression
-            const twoPercentDecrease = currentWeight / 1.02;
-            const reducedWeight = WorkoutEquipmentTypeService.findNearestWeight(
-              equipment,
-              twoPercentDecrease,
-              'down'
-            );
-            if (reducedWeight !== null) {
-              currentWeight = reducedWeight;
-            } else if (currentReps - 2 > 5) {
-              // If we can't reduce weight, but we can reduce reps without going too low,
-              // then do that.
-              currentReps = currentReps - 2;
-            }
-          } else if (setIndex > 0) {
-            currentReps = currentReps - 2;
-          }
-
-          const plannedWeight = currentWeight;
-
-          // Apply deload modifications
-          let deloadReps = currentReps;
-          let deloadWeight = plannedWeight;
-          if (isDeloadMicrocycle) {
-            deloadReps = Math.floor(currentReps / 2);
-            // First half of deload microcycle: same weight, half reps/sets
-            // Second half: half weight too
-            if (sessionIndex >= Math.floor(mesocycle.plannedSessionCountPerMicrocycle / 2)) {
-              deloadWeight = Math.floor(plannedWeight / 2);
-            }
-          }
-
-          const workoutSet = WorkoutSetSchema.parse({
-            userId: mesocycle.userId,
-            workoutExerciseId: exercise._id,
-            workoutSessionId: session._id,
-            workoutSessionExerciseId: sessionExercise._id,
-            plannedReps: isDeloadMicrocycle ? deloadReps : currentReps,
-            plannedWeight: isDeloadMicrocycle ? deloadWeight : plannedWeight,
-            plannedRir: targetRir,
-            exerciseProperties: calibration.exerciseProperties
-          });
-
-          sessionExercise.setOrder.push(workoutSet._id);
-          sets.push(workoutSet);
-        }
+        sessionExercise.setOrder.push(...generatedSets.map((s) => s._id));
+        sets.push(...generatedSets);
 
         sessionExercises.push(sessionExercise);
       }
