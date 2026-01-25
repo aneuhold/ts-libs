@@ -3,7 +3,10 @@ import { z } from 'zod';
 import { FatigueSchema } from '../../embedded-types/workout/Fatigue.js';
 import { RsmSchema } from '../../embedded-types/workout/Rsm.js';
 import { RequiredUserIdSchema } from '../../schemas/required-refs/RequiredUserId.js';
-import { BaseDocumentWithTypeSchema } from '../BaseDocument.js';
+import {
+  BaseDocumentWithTypeSchema,
+  BaseDocumentWithUpdatedAndCreatedDatesSchema
+} from '../BaseDocument.js';
 
 /**
  * The docType value for WorkoutSession documents.
@@ -16,6 +19,7 @@ export const WorkoutSession_docType = 'workoutSession';
 export const WorkoutSessionSchema = z.object({
   ...BaseDocumentWithTypeSchema.shape,
   ...RequiredUserIdSchema.shape,
+  ...BaseDocumentWithUpdatedAndCreatedDatesSchema.shape,
   docType: z.literal(WorkoutSession_docType).default(WorkoutSession_docType),
   /**
    * The ID of the microcycle this session belongs to.
@@ -63,15 +67,7 @@ export const WorkoutSessionSchema = z.object({
    * The total fatigue score is the sum of all three components (0-9).
    * The Stimulus to Fatigue Ratio (SFR) can be calculated as RSM total / Fatigue total.
    */
-  fatigue: FatigueSchema.nullish(),
-  /**
-   * The date this session was created.
-   */
-  createdDate: z.date().default(() => new Date()),
-  /**
-   * The date this session was last updated.
-   */
-  lastUpdatedDate: z.date().default(() => new Date())
+  fatigue: FatigueSchema.nullish()
 });
 
 /**

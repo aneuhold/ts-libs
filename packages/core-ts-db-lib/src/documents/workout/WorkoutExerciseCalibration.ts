@@ -1,7 +1,10 @@
 import type { UUID } from 'crypto';
 import { z } from 'zod';
 import { RequiredUserIdSchema } from '../../schemas/required-refs/RequiredUserId.js';
-import { BaseDocumentWithTypeSchema } from '../BaseDocument.js';
+import {
+  BaseDocumentWithTypeSchema,
+  BaseDocumentWithUpdatedAndCreatedDatesSchema
+} from '../BaseDocument.js';
 import type { WorkoutExercise } from './WorkoutExercise.js';
 
 /**
@@ -15,6 +18,7 @@ export const WorkoutExerciseCalibration_docType = 'workoutExerciseCalibration';
 export const WorkoutExerciseCalibrationSchema = z.object({
   ...BaseDocumentWithTypeSchema.shape,
   ...RequiredUserIdSchema.shape,
+  ...BaseDocumentWithUpdatedAndCreatedDatesSchema.shape,
   docType: z
     .literal(WorkoutExerciseCalibration_docType)
     .default(WorkoutExerciseCalibration_docType),
@@ -43,15 +47,7 @@ export const WorkoutExerciseCalibrationSchema = z.object({
   /**
    * The date this calibration was recorded.
    */
-  dateRecorded: z.date().default(() => new Date()),
-  /**
-   * The date this calibration was created.
-   */
-  createdDate: z.date().default(() => new Date()),
-  /**
-   * The date this calibration was last updated.
-   */
-  lastUpdatedDate: z.date().default(() => new Date())
+  dateRecorded: z.date().default(() => new Date())
 });
 
 /**

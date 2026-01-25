@@ -3,7 +3,10 @@ import { z } from 'zod';
 import { FatigueSchema } from '../../embedded-types/workout/Fatigue.js';
 import { RsmSchema } from '../../embedded-types/workout/Rsm.js';
 import { RequiredUserIdSchema } from '../../schemas/required-refs/RequiredUserId.js';
-import { BaseDocumentWithTypeSchema } from '../BaseDocument.js';
+import {
+  BaseDocumentWithTypeSchema,
+  BaseDocumentWithUpdatedAndCreatedDatesSchema
+} from '../BaseDocument.js';
 
 /**
  * The docType value for WorkoutSessionExercise documents.
@@ -16,6 +19,7 @@ export const WorkoutSessionExercise_docType = 'workoutSessionExercise';
 export const WorkoutSessionExerciseSchema = z.object({
   ...BaseDocumentWithTypeSchema.shape,
   ...RequiredUserIdSchema.shape,
+  ...BaseDocumentWithUpdatedAndCreatedDatesSchema.shape,
   docType: z.literal(WorkoutSessionExercise_docType).default(WorkoutSessionExercise_docType),
   /**
    * The ID of the workout session this exercise belongs to.
@@ -42,13 +46,23 @@ export const WorkoutSessionExerciseSchema = z.object({
    */
   fatigue: FatigueSchema.nullish(),
   /**
-   * The date this session exercise was created.
+   * The soreness score for this session exercise (0-3).
+   *
+   * - 0: You did not get at all sore in the target muscles
+   * - 1: You got stiff for a few hours after training and had mild soreness that resolved by next session
+   * - 2: You got DOMS that resolved just in time for the next session
+   * - 3: You got DOMS that remained for the next session
    */
-  createdDate: z.date().default(() => new Date()),
+  sorenessScore: z.number().min(0).max(3).nullish(),
   /**
-   * The date this session exercise was last updated.
+   * The performance score for this session exercise (0-3).
+   *
+   * - 0: You hit your target reps, but had to do 2+ more reps than planned to hit target RIR, or hit target reps at 2+ reps before target RIR
+   * - 1: You hit your target reps, but had to do 0-1 more reps than planned to hit target RIR, or hit target reps at 1 rep before target RIR
+   * - 2: You hit your target reps after your target RIR
+   * - 3: You could not match last week's reps at any RIR
    */
-  lastUpdatedDate: z.date().default(() => new Date())
+  performanceScore: z.number().min(0).max(3).nullish()
 });
 
 /**

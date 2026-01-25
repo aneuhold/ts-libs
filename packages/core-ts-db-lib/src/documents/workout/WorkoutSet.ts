@@ -1,7 +1,10 @@
 import type { UUID } from 'crypto';
 import { z } from 'zod';
 import { RequiredUserIdSchema } from '../../schemas/required-refs/RequiredUserId.js';
-import { BaseDocumentWithTypeSchema } from '../BaseDocument.js';
+import {
+  BaseDocumentWithTypeSchema,
+  BaseDocumentWithUpdatedAndCreatedDatesSchema
+} from '../BaseDocument.js';
 
 /**
  * The docType value for WorkoutSet documents.
@@ -14,6 +17,7 @@ export const WorkoutSet_docType = 'workoutSet';
 export const WorkoutSetSchema = z.object({
   ...BaseDocumentWithTypeSchema.shape,
   ...RequiredUserIdSchema.shape,
+  ...BaseDocumentWithUpdatedAndCreatedDatesSchema.shape,
   docType: z.literal(WorkoutSet_docType).default(WorkoutSet_docType),
   /**
    * The ID of the workout exercise this set belongs to.
@@ -66,15 +70,7 @@ export const WorkoutSetSchema = z.object({
    * When customProperties are changed on the exercise, they should be updated
    * on all existing WorkoutSet documents with that WorkoutExercise linked to it.
    */
-  exerciseProperties: z.record(z.string(), z.unknown()).nullish(),
-  /**
-   * The date this set was created.
-   */
-  createdDate: z.date().default(() => new Date()),
-  /**
-   * The date this set was last updated.
-   */
-  lastUpdatedDate: z.date().default(() => new Date())
+  exerciseProperties: z.record(z.string(), z.unknown()).nullish()
 });
 
 /**

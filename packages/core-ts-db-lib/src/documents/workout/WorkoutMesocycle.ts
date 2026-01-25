@@ -1,7 +1,10 @@
 import type { UUID } from 'crypto';
 import { z } from 'zod';
 import { RequiredUserIdSchema } from '../../schemas/required-refs/RequiredUserId.js';
-import { BaseDocumentWithTypeSchema } from '../BaseDocument.js';
+import {
+  BaseDocumentWithTypeSchema,
+  BaseDocumentWithUpdatedAndCreatedDatesSchema
+} from '../BaseDocument.js';
 
 /**
  * The type of mesocycle.
@@ -30,6 +33,7 @@ export const WorkoutMesocycleSchema = z
   .object({
     ...BaseDocumentWithTypeSchema.shape,
     ...RequiredUserIdSchema.shape,
+    ...BaseDocumentWithUpdatedAndCreatedDatesSchema.shape,
     docType: z.literal(WorkoutMesocycle_docType).default(WorkoutMesocycle_docType),
     /**
      * An optional title for this mesocycle.
@@ -76,15 +80,7 @@ export const WorkoutMesocycleSchema = z
      * has buttoned up any last prompts. This should guide them into the next
      * mesocycle.
      */
-    completedDate: z.date().nullish(),
-    /**
-     * The date this mesocycle was created.
-     */
-    createdDate: z.date().default(() => new Date()),
-    /**
-     * The date this mesocycle was last updated.
-     */
-    lastUpdatedDate: z.date().default(() => new Date())
+    completedDate: z.date().nullish()
   })
   .refine((data) => data.calibratedExercises.length >= data.plannedSessionCountPerMicrocycle, {
     message:

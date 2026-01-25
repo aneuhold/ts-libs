@@ -2,7 +2,10 @@ import type { UUID } from 'crypto';
 import { z } from 'zod';
 import { FatigueSchema } from '../../embedded-types/workout/Fatigue.js';
 import { RequiredUserIdSchema } from '../../schemas/required-refs/RequiredUserId.js';
-import { BaseDocumentWithTypeSchema } from '../BaseDocument.js';
+import {
+  BaseDocumentWithTypeSchema,
+  BaseDocumentWithUpdatedAndCreatedDatesSchema
+} from '../BaseDocument.js';
 
 /**
  * The different types of exercise properties.
@@ -68,6 +71,7 @@ export const WorkoutExercise_docType = 'workoutExercise';
 export const WorkoutExerciseSchema = z.object({
   ...BaseDocumentWithTypeSchema.shape,
   ...RequiredUserIdSchema.shape,
+  ...BaseDocumentWithUpdatedAndCreatedDatesSchema.shape,
   docType: z.literal(WorkoutExercise_docType).default(WorkoutExercise_docType),
   /**
    * The name of the exercise.
@@ -127,15 +131,7 @@ export const WorkoutExerciseSchema = z.object({
    *
    * This is needed for scheduling algorithms when empirical data isn't yet available.
    */
-  initialFatigueGuess: FatigueSchema,
-  /**
-   * The date this exercise was created.
-   */
-  createdDate: z.date().default(() => new Date()),
-  /**
-   * The date this exercise was last updated.
-   */
-  lastUpdatedDate: z.date().default(() => new Date())
+  initialFatigueGuess: FatigueSchema
 });
 
 /**

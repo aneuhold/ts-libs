@@ -1,6 +1,9 @@
 import { z } from 'zod';
 import { RequiredUserIdSchema } from '../../schemas/required-refs/RequiredUserId.js';
-import { BaseDocumentWithTypeSchema } from '../BaseDocument.js';
+import {
+  BaseDocumentWithTypeSchema,
+  BaseDocumentWithUpdatedAndCreatedDatesSchema
+} from '../BaseDocument.js';
 
 /**
  * The docType value for WorkoutEquipmentType documents.
@@ -13,6 +16,7 @@ export const WorkoutEquipmentType_docType = 'workoutEquipmentType';
 export const WorkoutEquipmentTypeSchema = z.object({
   ...BaseDocumentWithTypeSchema.shape,
   ...RequiredUserIdSchema.shape,
+  ...BaseDocumentWithUpdatedAndCreatedDatesSchema.shape,
   docType: z.literal(WorkoutEquipmentType_docType).default(WorkoutEquipmentType_docType),
   /**
    * The title of the equipment type.
@@ -27,15 +31,7 @@ export const WorkoutEquipmentTypeSchema = z.object({
    * this can be calculated based on minimum weight (e.g., the bar) and possible
    * increments.
    */
-  weightOptions: z.array(z.number()).nullish(),
-  /**
-   * The date this equipment type was created.
-   */
-  createdDate: z.date().default(() => new Date()),
-  /**
-   * The date this equipment type was last updated.
-   */
-  lastUpdatedDate: z.date().default(() => new Date())
+  weightOptions: z.array(z.number()).nullish()
 });
 
 /**

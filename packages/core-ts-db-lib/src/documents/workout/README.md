@@ -22,8 +22,6 @@ classDiagram
     + startDate: Date
     + endDate: Date
     + sessionOrder: UUID[]
-    + sorenessScore: number?
-    + performanceScore: number?
   }
 
   class WorkoutSession {
@@ -45,6 +43,8 @@ classDiagram
     + setOrder: UUID[]
     + rsm: Rsm?
     + fatigue: Fatigue?
+    + sorenessScore: number?
+    + performanceScore: number?
   }
 
   class WorkoutSet {

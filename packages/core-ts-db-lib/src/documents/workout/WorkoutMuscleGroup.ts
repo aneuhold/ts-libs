@@ -1,6 +1,9 @@
 import { z } from 'zod';
 import { RequiredUserIdSchema } from '../../schemas/required-refs/RequiredUserId.js';
-import { BaseDocumentWithTypeSchema } from '../BaseDocument.js';
+import {
+  BaseDocumentWithTypeSchema,
+  BaseDocumentWithUpdatedAndCreatedDatesSchema
+} from '../BaseDocument.js';
 
 /**
  * The docType value for WorkoutMuscleGroup documents.
@@ -13,6 +16,7 @@ export const WorkoutMuscleGroup_docType = 'workoutMuscleGroup';
 export const WorkoutMuscleGroupSchema = z.object({
   ...BaseDocumentWithTypeSchema.shape,
   ...RequiredUserIdSchema.shape,
+  ...BaseDocumentWithUpdatedAndCreatedDatesSchema.shape,
   docType: z.literal(WorkoutMuscleGroup_docType).default(WorkoutMuscleGroup_docType),
   /**
    * The name of the muscle group.
@@ -21,15 +25,7 @@ export const WorkoutMuscleGroupSchema = z.object({
   /**
    * An optional description of the muscle group.
    */
-  description: z.string().nullish(),
-  /**
-   * The date this muscle group was created.
-   */
-  createdDate: z.date().default(() => new Date()),
-  /**
-   * The date this muscle group was last updated.
-   */
-  lastUpdatedDate: z.date().default(() => new Date())
+  description: z.string().nullish()
 });
 
 /**
