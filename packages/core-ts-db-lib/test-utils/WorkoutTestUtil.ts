@@ -121,6 +121,19 @@ class WorkoutTestUtil {
         unusedMusclePerformance: 1
       }
     }),
+    inclineBenchPress: WorkoutExerciseSchema.parse({
+      userId: this.userId,
+      exerciseName: 'Incline Bench Press',
+      workoutEquipmentTypeId: this.STANDARD_EQUIPMENT_TYPES.barbell._id,
+      repRange: ExerciseRepRange.Heavy,
+      preferredProgressionType: ExerciseProgressionType.Load,
+      primaryMuscleGroups: [this.STANDARD_MUSCLE_GROUPS.chest._id],
+      initialFatigueGuess: {
+        jointAndTissueDisruption: 2,
+        perceivedEffort: 3,
+        unusedMusclePerformance: 1
+      }
+    }),
     deadlift: WorkoutExerciseSchema.parse({
       userId: this.userId,
       exerciseName: 'Deadlift',
@@ -246,6 +259,13 @@ class WorkoutTestUtil {
       workoutExerciseId: this.STANDARD_EXERCISES.barbellBenchPress._id,
       weight: 135,
       reps: 5,
+      exerciseProperties: {}
+    }),
+    inclineBenchPress: WorkoutExerciseCalibrationSchema.parse({
+      userId: this.userId,
+      workoutExerciseId: this.STANDARD_EXERCISES.inclineBenchPress._id,
+      weight: 115,
+      reps: 8,
       exerciseProperties: {}
     }),
     deadlift: WorkoutExerciseCalibrationSchema.parse({

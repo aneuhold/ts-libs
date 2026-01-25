@@ -33,11 +33,18 @@ export default class WorkoutMicrocycleService {
     const mesocycle = context.mesocycle;
     const microcycle = context.microcyclesToCreate[microcycleIndex];
 
-    const sessionsToExerciseSessionsArray = this.distributeExercisesAcrossSessions(
-      mesocycle.plannedSessionCountPerMicrocycle,
-      context.calibrationMap,
-      context.exerciseMap
-    );
+    if (!context.plannedSessionExercisePairs) {
+      throw new Error(
+        'WorkoutMesocyclePlanContext.plannedSessionExercisePairs is not initialized. This should be set during mesocycle planning.'
+      );
+    }
+    if (!context.muscleGroupToExercisePairsMap) {
+      throw new Error(
+        'WorkoutMesocyclePlanContext.muscleGroupToExercisePairsMap is not initialized. This should be derived when the planned session exercise pairs are set.'
+      );
+    }
+
+    const sessionsToExerciseSessionsArray = context.plannedSessionExercisePairs;
 
     let currentSessionDate = new Date(microcycle.startDate);
     let sessionIndex = 0;
@@ -79,7 +86,7 @@ export default class WorkoutMicrocycleService {
    * @param calibrationMap The map of calibration documents.
    * @param exerciseMap The map of exercise documents.
    */
-  private static distributeExercisesAcrossSessions(
+  static distributeExercisesAcrossSessions(
     sessionCount: number,
     calibrationMap: Map<UUID, WorkoutExerciseCalibration>,
     exerciseMap: Map<UUID, WorkoutExercise>

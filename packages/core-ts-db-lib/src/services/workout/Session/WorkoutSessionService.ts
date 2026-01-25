@@ -60,6 +60,12 @@ export default class WorkoutSessionService {
     const mesocycle = context.mesocycle;
     const microcycle = context.microcyclesToCreate[microcycleIndex];
 
+    if (!context.muscleGroupToExercisePairsMap) {
+      throw new Error(
+        'WorkoutMesocyclePlanContext.muscleGroupToExercisePairsMap is not initialized. This should be set during mesocycle planning.'
+      );
+    }
+
     // Create session
     const session = WorkoutSessionSchema.parse({
       userId: mesocycle.userId,
@@ -72,11 +78,34 @@ export default class WorkoutSessionService {
     for (let exerciseIndex = 0; exerciseIndex < sessionExerciseList.length; exerciseIndex++) {
       const { calibration, exercise } = sessionExerciseList[exerciseIndex];
 
+      // Validation: ensure we can find the muscle-group-wide ordering for this exercise
+      const primaryMuscleGroupId = exercise.primaryMuscleGroups[0];
+      if (!primaryMuscleGroupId) {
+        throw new Error(
+          `Exercise ${exercise._id}, ${exercise.exerciseName} has no primary muscle group`
+        );
+      }
+      const muscleGroupExercisePairs =
+        context.muscleGroupToExercisePairsMap.get(primaryMuscleGroupId);
+      if (!muscleGroupExercisePairs || muscleGroupExercisePairs.length === 0) {
+        throw new Error(
+          `No microcycle exercise ordering found for muscle group ${primaryMuscleGroupId} (exercise ${exercise._id}, ${exercise.exerciseName})`
+        );
+      }
+      const exerciseIndexInMuscleGroupForMicrocycle = muscleGroupExercisePairs.findIndex(
+        (pair) => pair.exercise._id === exercise._id
+      );
+      if (exerciseIndexInMuscleGroupForMicrocycle === -1) {
+        throw new Error(
+          `Exercise ${exercise._id}, ${exercise.exerciseName} not found in muscle-group-wide microcycle ordering`
+        );
+      }
+
       // Calculate number of sets for this exercise in this microcycle
       const setCount = this.calculateSetCount(
         microcycleIndex,
-        sessionExerciseList.length,
-        exerciseIndex,
+        muscleGroupExercisePairs.length,
+        exerciseIndexInMuscleGroupForMicrocycle,
         isDeloadMicrocycle
       );
 
@@ -127,44 +156,40 @@ export default class WorkoutSessionService {
   /**
    * Calculates the number of sets for an exercise based on microcycle progression.
    *
-   * Formula: Start at 2 sets per exercise, add 1 total set per microcycle distributed
-   * across all exercises (earlier exercises get priority).
+   * Key rule: set progression is distributed across exercises that share the same primary muscle group
+   * for the entire microcycle, regardless of which session those exercises are in.
    *
-   * - Microcycle 1: Exercise 1 gets 2 sets, Exercise 2 gets 2 sets, etc.
-   * - Microcycle 2: Exercise 1 gets 3 sets (gets the +1), Exercise 2 gets 2 sets
-   * - Microcycle 3 (2 exercises): Exercise 1 gets 3 sets, Exercise 2 gets 3 sets (both get +1)
-   *
-   * @param microcycleIndex The current microcycle index (0-based).
-   * @param totalExercisesInSession Total number of exercises for this muscle group in this session.
-   * @param exerciseIndexInSession The index of this exercise within the session (0-based) for
-   * the current muscle group.
-   * @param isDeloadMicrocycle Whether this is a deload microcycle.
+   * Baseline: 2 sets per exercise in the muscle group.
+   * Progression: add 1 total set per microcycle per muscle group (distributed to earlier exercises
+   * in the muscle-group-wide ordering).
    */
   private static calculateSetCount(
     microcycleIndex: number,
-    totalExercisesInSession: number,
-    exerciseIndexInSession: number,
+    totalExercisesInMuscleGroupForMicrocycle: number,
+    exerciseIndexInMuscleGroupForMicrocycle: number,
     isDeloadMicrocycle: boolean
   ): number {
-    // Deload microcycle: half the sets from the previous microcycle, minimum 1 set
+    // Deload microcycle: half the sets from the previous microcycle, minimum 1 set.
     if (isDeloadMicrocycle) {
       const baselineSets = this.calculateSetCount(
         microcycleIndex - 1,
-        totalExercisesInSession,
-        exerciseIndexInSession,
+        totalExercisesInMuscleGroupForMicrocycle,
+        exerciseIndexInMuscleGroupForMicrocycle,
         false
       );
       return Math.max(1, Math.floor(baselineSets / 2));
     }
 
-    // Total sets to distribute = (2 * number of exercises) + microcycle index
-    const totalSets = 2 * totalExercisesInSession + microcycleIndex;
+    // Total sets to distribute for this muscle group in this microcycle.
+    // For now, add exactly +1 total set per microcycle per muscle group.
+    const totalSets = 2 * totalExercisesInMuscleGroupForMicrocycle + microcycleIndex;
 
-    // Distribute sets evenly, with earlier exercises getting extra sets from remainder
-    const baseSetsPerExercise = Math.floor(totalSets / totalExercisesInSession);
-    const remainder = totalSets % totalExercisesInSession;
+    // Distribute sets evenly, with earlier exercises getting extra sets from the remainder.
+    const baseSetsPerExercise = Math.floor(totalSets / totalExercisesInMuscleGroupForMicrocycle);
+    const remainder = totalSets % totalExercisesInMuscleGroupForMicrocycle;
 
-    // If this exercise's index is less than the remainder, it gets an extra set
-    return exerciseIndexInSession < remainder ? baseSetsPerExercise + 1 : baseSetsPerExercise;
+    return exerciseIndexInMuscleGroupForMicrocycle < remainder
+      ? baseSetsPerExercise + 1
+      : baseSetsPerExercise;
   }
 }

@@ -49,6 +49,14 @@ describe('WorkoutMicrocycleService', () => {
       );
       context.microcyclesToCreate.push(microcycle);
 
+      context.setPlannedSessionExercisePairs(
+        WorkoutMicrocycleService.distributeExercisesAcrossSessions(
+          mesocycle.plannedSessionCountPerMicrocycle,
+          context.calibrationMap,
+          context.exerciseMap
+        )
+      );
+
       WorkoutMicrocycleService.generateSessionsForMicrocycle({
         context,
         microcycleIndex: 0,

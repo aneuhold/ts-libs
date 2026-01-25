@@ -51,6 +51,16 @@ export default class WorkoutMesocycleService {
       equipmentTypes
     );
 
+    // Distribute exercises across sessions once for the entire mesocycle plan.
+    // This session layout is expected to be stable across microcycles.
+    context.setPlannedSessionExercisePairs(
+      WorkoutMicrocycleService.distributeExercisesAcrossSessions(
+        mesocycle.plannedSessionCountPerMicrocycle,
+        context.calibrationMap,
+        context.exerciseMap
+      )
+    );
+
     // Determine number of microcycles (default to 6 if not specified: 5 accumulation + 1 deload)
     const totalMicrocycles = mesocycle.plannedMicrocycleCount ?? 6;
     const deloadMicrocycleIndex = totalMicrocycles - 1;
