@@ -45,6 +45,7 @@ classDiagram
     + fatigue: Fatigue?
     + sorenessScore: number?
     + performanceScore: number?
+    + isRecoveryExercise: boolean
   }
 
   class WorkoutSet {
@@ -549,7 +550,7 @@ There isn't a definitive part in the book that says this, but it seems implied: 
 
 #### 1 Rep Max Calculations
 
-These are exhausting to test, and dangerous. You will be strongest at the end of a resensitization phase, or phase where you are working at MV for an extended period of time. The upsides, are you get an accurate representation of 1RM that you can use, the downsides are the danger and fluctuations. Also testing causes 0 gains on it's own. [Here is a Youtube video from RP that discusses this](https://www.youtube.com/watch?v=4luBPhK-rlE). THe primary reason this information is needed, is for the algorithms.
+These are exhausting to test, and dangerous. You will be strongest at the end of a resensitization phase, or phase where you are working at MV for an extended period of time. The upsides, are you get an accurate representation of 1RM that you can use, the downsides are the danger and fluctuations. Also testing causes 0 gains on it's own. [Here is a Youtube video from RP that discusses this](https://www.youtube.com/watch?v=4luBPhK-rlE). The primary reason this information is needed, is for the algorithms.
 
 [NASM provides a 1-rep max calculator](https://www.nasm.org/resources/one-rep-max-calculator) / algorithm that seems like it is relatively accurate. It comes from a reputable organization so it seems safe to trust them. The algorithm can be done by trying to do the most weight you can for the lowest reps possible (lower reps makes it more accurate) and plug it in to: 1RM = (Weight Lifted x Reps / 30.48) + Weight Lifted.
 
