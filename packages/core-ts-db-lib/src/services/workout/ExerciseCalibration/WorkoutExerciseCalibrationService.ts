@@ -1,0 +1,45 @@
+import type { WorkoutExerciseCalibration } from '../../../documents/workout/WorkoutExerciseCalibration.js';
+
+/**
+ * A service for handling operations related to {@link WorkoutExerciseCalibration}s.
+ */
+export default class WorkoutExerciseCalibrationService {
+  /**
+   * Calculates the 1 Rep Max using the NASM formula.
+   *
+   * Formula: (Weight Lifted × Reps / 30.48) + Weight Lifted
+   *
+   * @param calibration The workout exercise calibration.
+   */
+  static get1RM(calibration: WorkoutExerciseCalibration): number {
+    return (calibration.weight * calibration.reps) / 30.48 + calibration.weight;
+  }
+
+  /**
+   * Calculates the target weight for a set based on target reps and 1RM.
+   *
+   * Returns the calculated weight without rounding. Consumer can use
+   * WorkoutEquipmentTypeService.findNearestWeight() to round if needed.
+   *
+   * @param calibration The workout exercise calibration.
+   * @param targetReps The target number of reps.
+   */
+  static getTargetWeight(calibration: WorkoutExerciseCalibration, targetReps: number): number {
+    const oneRepMax = this.get1RM(calibration);
+    const targetPercentage = this.getTargetPercentage(targetReps);
+    return (targetPercentage / 100) * oneRepMax;
+  }
+
+  /**
+   * Calculates the target percentage of 1RM for a given target rep count.
+   *
+   * Uses the formula: targetPercentage = 30 + ((targetReps - 5) * 2.2)
+   *
+   * This ensures training stays within the 30%-85% 1RM range (30 reps to 5 reps).
+   *
+   * @param targetReps The target number of reps.
+   */
+  private static getTargetPercentage(targetReps: number): number {
+    return 30 + (targetReps - 5) * 2.2;
+  }
+}

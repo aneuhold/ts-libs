@@ -12,7 +12,9 @@ export default [
       // to be double-checked, as there could be network issues that mess up
       // data models, old data models still floating around, or incorrect
       // code in the frontend.
-      '@typescript-eslint/no-unnecessary-condition': 'off'
+      '@typescript-eslint/no-unnecessary-condition': 'off',
+      'jsdoc/require-param-description': 'off',
+      'jsdoc/require-param': 'off'
     }
   }
 ];

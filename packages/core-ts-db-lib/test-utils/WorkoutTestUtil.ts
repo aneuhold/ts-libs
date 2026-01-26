@@ -1,0 +1,435 @@
+import type { UUID } from 'crypto';
+import { WorkoutEquipmentTypeSchema } from '../src/documents/workout/WorkoutEquipmentType.js';
+import type { WorkoutExercise } from '../src/documents/workout/WorkoutExercise.js';
+import {
+  ExerciseProgressionType,
+  ExerciseRepRange,
+  WorkoutExerciseSchema
+} from '../src/documents/workout/WorkoutExercise.js';
+import { WorkoutExerciseCalibrationSchema } from '../src/documents/workout/WorkoutExerciseCalibration.js';
+import { WorkoutMuscleGroupSchema } from '../src/documents/workout/WorkoutMuscleGroup.js';
+import DocumentService from '../src/services/DocumentService.js';
+import WorkoutMesocycleService from '../src/services/workout/Mesocycle/WorkoutMesocycleService.js';
+
+/**
+ * A utility class for creating standardized test data for workout-related tests.
+ */
+class WorkoutTestUtil {
+  /**
+   * Shared user ID for all test data.
+   */
+  public readonly userId: UUID = DocumentService.generateID();
+
+  /**
+   * Pre-defined muscle groups for consistent testing.
+   */
+  public readonly STANDARD_MUSCLE_GROUPS = {
+    quads: WorkoutMuscleGroupSchema.parse({
+      userId: this.userId,
+      name: 'Quadriceps'
+    }),
+    chest: WorkoutMuscleGroupSchema.parse({
+      userId: this.userId,
+      name: 'Chest'
+    }),
+    hamstrings: WorkoutMuscleGroupSchema.parse({
+      userId: this.userId,
+      name: 'Hamstrings'
+    }),
+    shoulders: WorkoutMuscleGroupSchema.parse({
+      userId: this.userId,
+      name: 'Shoulders'
+    }),
+    back: WorkoutMuscleGroupSchema.parse({
+      userId: this.userId,
+      name: 'Back'
+    }),
+    triceps: WorkoutMuscleGroupSchema.parse({
+      userId: this.userId,
+      name: 'Triceps'
+    }),
+    biceps: WorkoutMuscleGroupSchema.parse({
+      userId: this.userId,
+      name: 'Biceps'
+    }),
+    calves: WorkoutMuscleGroupSchema.parse({
+      userId: this.userId,
+      name: 'Calves'
+    }),
+    abs: WorkoutMuscleGroupSchema.parse({
+      userId: this.userId,
+      name: 'Abs'
+    })
+  } as const;
+
+  /**
+   * Pre-defined equipment types for consistent testing.
+   */
+  public readonly STANDARD_EQUIPMENT_TYPES = {
+    barbell: WorkoutEquipmentTypeSchema.parse({
+      userId: this.userId,
+      title: 'Barbell',
+      weightOptions: [
+        45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 95, 100, 110, 120, 130, 140, 150, 160, 170, 180,
+        190, 200, 225, 250, 275, 300, 325
+      ]
+    }),
+    dumbbell: WorkoutEquipmentTypeSchema.parse({
+      userId: this.userId,
+      title: 'Dumbbell',
+      weightOptions: [
+        5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 95, 100
+      ]
+    }),
+    cable: WorkoutEquipmentTypeSchema.parse({
+      userId: this.userId,
+      title: 'Cable Machine',
+      weightOptions: [
+        10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 95, 100, 110, 120, 130,
+        140, 150, 160, 170, 180, 190, 200
+      ]
+    })
+  } as const;
+
+  /**
+   * Pre-defined workout exercises with different rep ranges.
+   */
+  public readonly STANDARD_EXERCISES = {
+    barbellSquat: WorkoutExerciseSchema.parse({
+      userId: this.userId,
+      exerciseName: 'Barbell Squat',
+      workoutEquipmentTypeId: this.STANDARD_EQUIPMENT_TYPES.barbell._id,
+      repRange: ExerciseRepRange.Heavy,
+      preferredProgressionType: ExerciseProgressionType.Load,
+      primaryMuscleGroups: [this.STANDARD_MUSCLE_GROUPS.quads._id],
+      initialFatigueGuess: {
+        jointAndTissueDisruption: 3,
+        perceivedEffort: 3,
+        unusedMusclePerformance: 2
+      }
+    }),
+    barbellBenchPress: WorkoutExerciseSchema.parse({
+      userId: this.userId,
+      exerciseName: 'Barbell Bench Press',
+      workoutEquipmentTypeId: this.STANDARD_EQUIPMENT_TYPES.barbell._id,
+      repRange: ExerciseRepRange.Heavy,
+      preferredProgressionType: ExerciseProgressionType.Load,
+      primaryMuscleGroups: [this.STANDARD_MUSCLE_GROUPS.chest._id],
+      initialFatigueGuess: {
+        jointAndTissueDisruption: 2,
+        perceivedEffort: 3,
+        unusedMusclePerformance: 1
+      }
+    }),
+    inclineBenchPress: WorkoutExerciseSchema.parse({
+      userId: this.userId,
+      exerciseName: 'Incline Bench Press',
+      workoutEquipmentTypeId: this.STANDARD_EQUIPMENT_TYPES.barbell._id,
+      repRange: ExerciseRepRange.Heavy,
+      preferredProgressionType: ExerciseProgressionType.Load,
+      primaryMuscleGroups: [this.STANDARD_MUSCLE_GROUPS.chest._id],
+      initialFatigueGuess: {
+        jointAndTissueDisruption: 2,
+        perceivedEffort: 3,
+        unusedMusclePerformance: 1
+      }
+    }),
+    deadlift: WorkoutExerciseSchema.parse({
+      userId: this.userId,
+      exerciseName: 'Deadlift',
+      workoutEquipmentTypeId: this.STANDARD_EQUIPMENT_TYPES.barbell._id,
+      repRange: ExerciseRepRange.Medium,
+      preferredProgressionType: ExerciseProgressionType.Rep,
+      primaryMuscleGroups: [
+        this.STANDARD_MUSCLE_GROUPS.back._id,
+        this.STANDARD_MUSCLE_GROUPS.quads._id
+      ],
+      initialFatigueGuess: {
+        jointAndTissueDisruption: 3,
+        perceivedEffort: 3,
+        unusedMusclePerformance: 3
+      }
+    }),
+    dumbbellLateralRaise: WorkoutExerciseSchema.parse({
+      userId: this.userId,
+      exerciseName: 'Dumbbell Lateral Raise',
+      workoutEquipmentTypeId: this.STANDARD_EQUIPMENT_TYPES.dumbbell._id,
+      repRange: ExerciseRepRange.Light,
+      preferredProgressionType: ExerciseProgressionType.Rep,
+      primaryMuscleGroups: [this.STANDARD_MUSCLE_GROUPS.shoulders._id],
+      initialFatigueGuess: {
+        jointAndTissueDisruption: 0,
+        perceivedEffort: 1,
+        unusedMusclePerformance: 0
+      }
+    }),
+    barbellOverheadPress: WorkoutExerciseSchema.parse({
+      userId: this.userId,
+      exerciseName: 'Barbell Overhead Press',
+      workoutEquipmentTypeId: this.STANDARD_EQUIPMENT_TYPES.barbell._id,
+      repRange: ExerciseRepRange.Medium,
+      preferredProgressionType: ExerciseProgressionType.Load,
+      primaryMuscleGroups: [this.STANDARD_MUSCLE_GROUPS.shoulders._id],
+      initialFatigueGuess: {
+        jointAndTissueDisruption: 2,
+        perceivedEffort: 2,
+        unusedMusclePerformance: 1
+      }
+    }),
+    cableRow: WorkoutExerciseSchema.parse({
+      userId: this.userId,
+      exerciseName: 'Cable Row',
+      workoutEquipmentTypeId: this.STANDARD_EQUIPMENT_TYPES.cable._id,
+      repRange: ExerciseRepRange.Medium,
+      preferredProgressionType: ExerciseProgressionType.Load,
+      primaryMuscleGroups: [this.STANDARD_MUSCLE_GROUPS.back._id],
+      initialFatigueGuess: {
+        jointAndTissueDisruption: 2,
+        perceivedEffort: 2,
+        unusedMusclePerformance: 1
+      }
+    }),
+    dumbbellCurl: WorkoutExerciseSchema.parse({
+      userId: this.userId,
+      exerciseName: 'Dumbbell Curl',
+      workoutEquipmentTypeId: this.STANDARD_EQUIPMENT_TYPES.dumbbell._id,
+      repRange: ExerciseRepRange.Medium,
+      preferredProgressionType: ExerciseProgressionType.Rep,
+      primaryMuscleGroups: [this.STANDARD_MUSCLE_GROUPS.biceps._id],
+      initialFatigueGuess: {
+        jointAndTissueDisruption: 0,
+        perceivedEffort: 1,
+        unusedMusclePerformance: 0
+      }
+    }),
+    cableTricepPushdown: WorkoutExerciseSchema.parse({
+      userId: this.userId,
+      exerciseName: 'Cable Tricep Pushdown',
+      workoutEquipmentTypeId: this.STANDARD_EQUIPMENT_TYPES.cable._id,
+      repRange: ExerciseRepRange.Medium,
+      preferredProgressionType: ExerciseProgressionType.Rep,
+      primaryMuscleGroups: [this.STANDARD_MUSCLE_GROUPS.triceps._id],
+      initialFatigueGuess: {
+        jointAndTissueDisruption: 0,
+        perceivedEffort: 1,
+        unusedMusclePerformance: 0
+      }
+    }),
+    dumbbellCalfRaise: WorkoutExerciseSchema.parse({
+      userId: this.userId,
+      exerciseName: 'Dumbbell Calf Raise',
+      workoutEquipmentTypeId: this.STANDARD_EQUIPMENT_TYPES.dumbbell._id,
+      repRange: ExerciseRepRange.Light,
+      preferredProgressionType: ExerciseProgressionType.Rep,
+      primaryMuscleGroups: [this.STANDARD_MUSCLE_GROUPS.calves._id],
+      initialFatigueGuess: {
+        jointAndTissueDisruption: 0,
+        perceivedEffort: 1,
+        unusedMusclePerformance: 0
+      }
+    }),
+    cableCrunch: WorkoutExerciseSchema.parse({
+      userId: this.userId,
+      exerciseName: 'Cable Crunch',
+      workoutEquipmentTypeId: this.STANDARD_EQUIPMENT_TYPES.cable._id,
+      repRange: ExerciseRepRange.Light,
+      preferredProgressionType: ExerciseProgressionType.Load,
+      primaryMuscleGroups: [this.STANDARD_MUSCLE_GROUPS.abs._id],
+      initialFatigueGuess: {
+        jointAndTissueDisruption: 0,
+        perceivedEffort: 1,
+        unusedMusclePerformance: 0
+      }
+    })
+  } as const;
+
+  /**
+   * Pre-defined calibrations for the standard exercises.
+   */
+  public readonly STANDARD_CALIBRATIONS = {
+    barbellSquat: WorkoutExerciseCalibrationSchema.parse({
+      userId: this.userId,
+      workoutExerciseId: this.STANDARD_EXERCISES.barbellSquat._id,
+      weight: 185,
+      reps: 10,
+      exerciseProperties: {}
+    }),
+    barbellBenchPress: WorkoutExerciseCalibrationSchema.parse({
+      userId: this.userId,
+      workoutExerciseId: this.STANDARD_EXERCISES.barbellBenchPress._id,
+      weight: 135,
+      reps: 5,
+      exerciseProperties: {}
+    }),
+    inclineBenchPress: WorkoutExerciseCalibrationSchema.parse({
+      userId: this.userId,
+      workoutExerciseId: this.STANDARD_EXERCISES.inclineBenchPress._id,
+      weight: 115,
+      reps: 8,
+      exerciseProperties: {}
+    }),
+    deadlift: WorkoutExerciseCalibrationSchema.parse({
+      userId: this.userId,
+      workoutExerciseId: this.STANDARD_EXERCISES.deadlift._id,
+      weight: 250,
+      reps: 5,
+      exerciseProperties: {}
+    }),
+    dumbbellLateralRaise: WorkoutExerciseCalibrationSchema.parse({
+      userId: this.userId,
+      workoutExerciseId: this.STANDARD_EXERCISES.dumbbellLateralRaise._id,
+      weight: 25,
+      reps: 10,
+      exerciseProperties: {}
+    }),
+    barbellOverheadPress: WorkoutExerciseCalibrationSchema.parse({
+      userId: this.userId,
+      workoutExerciseId: this.STANDARD_EXERCISES.barbellOverheadPress._id,
+      weight: 95,
+      reps: 8,
+      exerciseProperties: {}
+    }),
+    cableRow: WorkoutExerciseCalibrationSchema.parse({
+      userId: this.userId,
+      workoutExerciseId: this.STANDARD_EXERCISES.cableRow._id,
+      weight: 120,
+      reps: 8,
+      exerciseProperties: {}
+    }),
+    dumbbellCurl: WorkoutExerciseCalibrationSchema.parse({
+      userId: this.userId,
+      workoutExerciseId: this.STANDARD_EXERCISES.dumbbellCurl._id,
+      weight: 35,
+      reps: 10,
+      exerciseProperties: {}
+    }),
+    cableTricepPushdown: WorkoutExerciseCalibrationSchema.parse({
+      userId: this.userId,
+      workoutExerciseId: this.STANDARD_EXERCISES.cableTricepPushdown._id,
+      weight: 80,
+      reps: 12,
+      exerciseProperties: {}
+    }),
+    dumbbellCalfRaise: WorkoutExerciseCalibrationSchema.parse({
+      userId: this.userId,
+      workoutExerciseId: this.STANDARD_EXERCISES.dumbbellCalfRaise._id,
+      weight: 50,
+      reps: 15,
+      exerciseProperties: {}
+    }),
+    cableCrunch: WorkoutExerciseCalibrationSchema.parse({
+      userId: this.userId,
+      workoutExerciseId: this.STANDARD_EXERCISES.cableCrunch._id,
+      weight: 90,
+      reps: 20,
+      exerciseProperties: {}
+    })
+  } as const;
+
+  /**
+   * Prints a formatted view of the mesocycle plan showing progression across
+   * microcycles, sessions, exercises, and sets.
+   *
+   * @param planResult The result from generateInitialPlan.
+   * @param exercises The exercises used in the plan.
+   */
+  printMesocyclePlan(
+    planResult: ReturnType<typeof WorkoutMesocycleService.generateInitialPlan>,
+    exercises: WorkoutExercise[]
+  ): void {
+    const colorPalette = [
+      '\u001b[31m',
+      '\u001b[32m',
+      '\u001b[33m',
+      '\u001b[34m',
+      '\u001b[35m',
+      '\u001b[36m'
+    ];
+    const colorReset = '\u001b[0m';
+    const muscleGroupColorMap = new Map<UUID, { name: string; color: string }>();
+
+    Object.values(this.STANDARD_MUSCLE_GROUPS).forEach((group, index) => {
+      muscleGroupColorMap.set(group._id, {
+        name: group.name,
+        color: colorPalette[index % colorPalette.length]
+      });
+    });
+
+    const microcycles = planResult.microcycles?.create ?? [];
+    const sessions = planResult.sessions?.create ?? [];
+    const sessionExercises = planResult.sessionExercises?.create ?? [];
+    const sets = planResult.sets?.create ?? [];
+
+    console.log('\n' + '='.repeat(100));
+    console.log('MESOCYCLE PLAN OVERVIEW');
+    console.log('='.repeat(100));
+    console.log(`Total Microcycles: ${microcycles.length}`);
+    console.log(`Total Sessions: ${sessions.length}`);
+    console.log(`Total Exercises: ${sessionExercises.length}`);
+    console.log(`Total Sets: ${sets.length}`);
+    console.log('='.repeat(100) + '\n');
+
+    // Print each microcycle
+    microcycles.forEach((microcycle, microIndex) => {
+      const microcycleSessions = sessions.filter((s) => s.workoutMicrocycleId === microcycle._id);
+      const startDate = new Date(microcycle.startDate).toLocaleDateString();
+      const endDate = new Date(microcycle.endDate).toLocaleDateString();
+
+      console.log(`\n${'▼'.repeat(50)}`);
+      console.log(`MICROCYCLE ${microIndex + 1} | ${startDate} → ${endDate}`);
+      console.log('▼'.repeat(50));
+
+      // Print each session in this microcycle
+      microcycleSessions.forEach((session, sessionIndex) => {
+        const sessionDate = new Date(session.startTime).toLocaleDateString();
+        const sessionExs = sessionExercises.filter((se) => se.workoutSessionId === session._id);
+
+        console.log(`\n  SESSION ${sessionIndex + 1} - ${sessionDate}`);
+
+        // Print each exercise in this session
+        sessionExs.forEach((sessionEx, exIndex) => {
+          const exercise = exercises.find((e) => e._id === sessionEx.workoutExerciseId);
+          const exSets = sets.filter((s) => s.workoutSessionExerciseId === sessionEx._id);
+
+          if (!exercise) return;
+
+          const muscleGroupNames = exercise.primaryMuscleGroups
+            .map((groupId) => muscleGroupColorMap.get(groupId))
+            .filter((group): group is { name: string; color: string } => Boolean(group))
+            .map((group) => `${group.color}${group.name}${colorReset}`)
+            .join(', ');
+
+          const muscleGroupLabel = muscleGroupNames.length > 0 ? ` - ${muscleGroupNames}` : '';
+
+          const setStrings = exSets.map((set, setIndex) => {
+            const weightStr = set.plannedWeight?.toString() ?? 'N/A';
+            const repsStr = set.plannedReps?.toString() ?? 'N/A';
+            const rirStr = set.plannedRir?.toString() ?? 'N/A';
+
+            return `Set ${setIndex + 1}: ${weightStr}lbs x ${repsStr}reps - ${rirStr}RIR`;
+          });
+
+          console.log(
+            `    ${exIndex + 1}. ${exercise.exerciseName} (${exercise.repRange}) [${
+              exercise.preferredProgressionType
+            }]${muscleGroupLabel}`
+          );
+
+          // Print sets
+          for (let i = 0; i < setStrings.length; i += 1) {
+            console.log(`       ${setStrings[i]}`);
+          }
+        });
+      });
+
+      console.log('\n');
+    });
+
+    console.log('='.repeat(100));
+    console.log('END OF MESOCYCLE PLAN');
+    console.log('='.repeat(100) + '\n');
+  }
+}
+
+const workoutTestUtil = new WorkoutTestUtil();
+export default workoutTestUtil;
