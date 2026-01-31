@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest';
 import workoutTestUtil from '../../../../test-utils/WorkoutTestUtil.js';
 import type { WorkoutExercise } from '../../../documents/workout/WorkoutExercise.js';
 import type { WorkoutExerciseCalibration } from '../../../documents/workout/WorkoutExerciseCalibration.js';
-import type { WorkoutMesocycle } from '../../../documents/workout/WorkoutMesocycle.js';
 import WorkoutSessionService from './WorkoutSessionService.js';
 
 describe('WorkoutSessionService', () => {
@@ -184,14 +183,6 @@ describe('WorkoutSessionService', () => {
         workoutTestUtil.STANDARD_EXERCISES.inclineBenchPress
       ];
 
-      const testMesocycle = workoutTestUtil.createMesocycle({
-        plannedSessionCountPerMicrocycle: 2,
-        calibratedExercises: [
-          workoutTestUtil.STANDARD_CALIBRATIONS.barbellBenchPress._id,
-          workoutTestUtil.STANDARD_CALIBRATIONS.inclineBenchPress._id
-        ]
-      });
-
       // Exercise A (bench press): 8 sets, high SFR (soreness=0, performance=0 -> +2 recommendation)
       // Exercise B (incline): 3 sets, moderate SFR (soreness=1, performance=1 -> +0 recommendation)
       const { result } = calculateSetPlan({
@@ -208,7 +199,6 @@ describe('WorkoutSessionService', () => {
         ],
         microcycleIndex: 1,
         sessionStructure: [[0], [1]], // Exercise A in session 0, Exercise B in session 1
-        mesocycle: testMesocycle,
         historicalMicrocycles: [
           {
             sessionExerciseOverrides: [
@@ -226,6 +216,55 @@ describe('WorkoutSessionService', () => {
       expect(result.exerciseIdToSetCount.get(chestExercises[1]._id)).toBe(5);
     });
 
+    it('should redistribute sets from 2 blocked exercises in same session to 1 exercise in separate session', () => {
+      const chestExercises: WorkoutExercise[] = [
+        workoutTestUtil.STANDARD_EXERCISES.barbellBenchPress,
+        workoutTestUtil.STANDARD_EXERCISES.inclineBenchPress,
+        workoutTestUtil.STANDARD_EXERCISES.dumbbellChestPress
+      ];
+
+      // Exercise A (bench): 8 sets, higher SFR (soreness=0, performance=1 -> +1 recommendation)
+      // Exercise B (incline): 8 sets, higher SFR (soreness=0, performance=1 -> +1 recommendation)
+      // Exercise C (dumbbell): 5 sets, lower SFR (soreness=1, performance=1 -> +0 recommendation)
+      const { result } = calculateSetPlan({
+        exercises: chestExercises,
+        calibrations: [
+          {
+            exercise: chestExercises[0],
+            calibration: workoutTestUtil.STANDARD_CALIBRATIONS.barbellBenchPress
+          },
+          {
+            exercise: chestExercises[1],
+            calibration: workoutTestUtil.STANDARD_CALIBRATIONS.inclineBenchPress
+          },
+          {
+            exercise: chestExercises[2],
+            calibration: workoutTestUtil.STANDARD_CALIBRATIONS.dumbbellChestPress
+          }
+        ],
+        microcycleIndex: 1,
+        sessionStructure: [[0, 1], [2]], // Exercises A and B in session 0, Exercise C in session 1
+        historicalMicrocycles: [
+          {
+            sessionExerciseOverrides: [
+              [
+                { setCount: 5, sorenessScore: 0, performanceScore: 1 }, // Exercise A
+                { setCount: 5, sorenessScore: 0, performanceScore: 1 } // Exercise B
+              ],
+              [{ setCount: 5, sorenessScore: 1, performanceScore: 1 }] // Exercise C
+            ]
+          }
+        ]
+      });
+
+      // Exercises A and B remain at 8 sets (at MAX_SETS_PER_EXERCISE)
+      expect(result.exerciseIdToSetCount.get(chestExercises[0]._id)).toBe(5);
+      expect(result.exerciseIdToSetCount.get(chestExercises[1]._id)).toBe(5);
+
+      // Exercise C gets its own +0 recommendation plus the 2 redistributed from A and B (5 + 0 + 2 = 7)
+      expect(result.exerciseIdToSetCount.get(chestExercises[2]._id)).toBe(7);
+    });
+
     /**
      * Helper to set up context and call calculateSetPlanForMicrocycle
      */
@@ -235,7 +274,6 @@ describe('WorkoutSessionService', () => {
       microcycleIndex?: number;
       isDeload?: boolean;
       sessionStructure?: number[][];
-      mesocycle?: WorkoutMesocycle;
       historicalMicrocycles?: Array<{
         sessionExerciseOverrides?: Array<
           Array<{
@@ -252,9 +290,14 @@ describe('WorkoutSessionService', () => {
         microcycleIndex = 0,
         isDeload = false,
         sessionStructure = [[0, 1]],
-        mesocycle,
         historicalMicrocycles = []
       } = options;
+
+      // Create default mesocycle if not provided, with session count matching sessionStructure
+      const mesocycle = workoutTestUtil.createMesocycle({
+        plannedSessionCountPerMicrocycle: sessionStructure.length,
+        calibratedExercises: calibrations.map((c) => c.calibration._id)
+      });
 
       const context = workoutTestUtil.createContext({
         mesocycle,

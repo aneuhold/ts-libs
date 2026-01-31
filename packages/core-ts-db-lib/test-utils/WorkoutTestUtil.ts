@@ -151,6 +151,19 @@ class WorkoutTestUtil {
         unusedMusclePerformance: 1
       }
     }),
+    dumbbellChestPress: WorkoutExerciseSchema.parse({
+      userId: this.userId,
+      exerciseName: 'Dumbbell Chest Press',
+      workoutEquipmentTypeId: this.STANDARD_EQUIPMENT_TYPES.dumbbell._id,
+      repRange: ExerciseRepRange.Heavy,
+      preferredProgressionType: ExerciseProgressionType.Load,
+      primaryMuscleGroups: [this.STANDARD_MUSCLE_GROUPS.chest._id],
+      initialFatigueGuess: {
+        jointAndTissueDisruption: 2,
+        perceivedEffort: 3,
+        unusedMusclePerformance: 1
+      }
+    }),
     deadlift: WorkoutExerciseSchema.parse({
       userId: this.userId,
       exerciseName: 'Deadlift',
@@ -282,6 +295,13 @@ class WorkoutTestUtil {
       userId: this.userId,
       workoutExerciseId: this.STANDARD_EXERCISES.inclineBenchPress._id,
       weight: 115,
+      reps: 8,
+      exerciseProperties: {}
+    }),
+    dumbbellChestPress: WorkoutExerciseCalibrationSchema.parse({
+      userId: this.userId,
+      workoutExerciseId: this.STANDARD_EXERCISES.dumbbellChestPress._id,
+      weight: 100,
       reps: 8,
       exerciseProperties: {}
     }),
