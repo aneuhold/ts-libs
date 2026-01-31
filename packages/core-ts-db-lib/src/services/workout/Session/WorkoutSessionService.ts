@@ -216,27 +216,42 @@ export default class WorkoutSessionService {
 
     // 2. Resolve historical performance data
     // Return if no previous microcycle
-    const previousMicrocycle = context.microcyclesInOrder[microcycleIndex - 1];
+    let previousMicrocycleIndex = microcycleIndex - 1;
+    let previousMicrocycle = context.microcyclesInOrder[previousMicrocycleIndex];
     if (!previousMicrocycle) return { exerciseIdToSetCount, recoveryExerciseIds };
-
-    // TODO: The below needs to be refactored so it keeps going back microcycles for particular
-    // exercises until it finds one that wasn't a recovery.
 
     // Map previous session exercises
     const exerciseIds = new Set(muscleGroupExercisePairs.map((p) => p.exercise._id));
     const exerciseIdToPrevSessionExercise = new Map<UUID, WorkoutSessionExercise>();
-    // Start with session order
-    for (const sessionId of previousMicrocycle.sessionOrder) {
-      const session = context.sessionMap.get(sessionId);
-      if (!session) continue;
-      // Get the session exercises for this session
-      for (const sessionExerciseId of session.sessionExerciseOrder) {
-        const sessionExercise = context.sessionExerciseMap.get(sessionExerciseId);
-        // Map if in our muscle group
-        if (sessionExercise && exerciseIds.has(sessionExercise.workoutExerciseId)) {
-          exerciseIdToPrevSessionExercise.set(sessionExercise.workoutExerciseId, sessionExercise);
+    const foundExerciseIds = new Set<UUID>();
+    const exercisesThatWerePreviouslyInRecovery = new Set<UUID>();
+    // Loop through each previous microcycle until we find all exercises or run out of microcycles
+    while (exerciseIdToPrevSessionExercise.size < exerciseIds.size && previousMicrocycle) {
+      // Start with session order
+      for (const sessionId of previousMicrocycle.sessionOrder) {
+        const session = context.sessionMap.get(sessionId);
+        if (!session) continue;
+        // Get the session exercises for this session
+        for (const sessionExerciseId of session.sessionExerciseOrder) {
+          const sessionExercise = context.sessionExerciseMap.get(sessionExerciseId);
+          // Map if in our muscle group && it isn't a recovery exercise
+          if (
+            sessionExercise &&
+            exerciseIds.has(sessionExercise.workoutExerciseId) &&
+            !foundExerciseIds.has(sessionExercise.workoutExerciseId) &&
+            !sessionExercise.isRecoveryExercise
+          ) {
+            exerciseIdToPrevSessionExercise.set(sessionExercise.workoutExerciseId, sessionExercise);
+            foundExerciseIds.add(sessionExercise.workoutExerciseId);
+            if (previousMicrocycleIndex < microcycleIndex - 1) {
+              exercisesThatWerePreviouslyInRecovery.add(sessionExercise.workoutExerciseId);
+            }
+          }
         }
       }
+      // Move to earlier microcycle
+      previousMicrocycleIndex = previousMicrocycleIndex - 1;
+      previousMicrocycle = context.microcyclesInOrder[previousMicrocycleIndex];
     }
     if (exerciseIdToPrevSessionExercise.size === 0)
       return { exerciseIdToSetCount, recoveryExerciseIds };
@@ -286,8 +301,19 @@ export default class WorkoutSessionService {
       const previousSessionExercise = exerciseIdToPrevSessionExercise.get(pair.exercise._id);
       if (!previousSessionExercise) return;
 
-      const recommendation =
-        WorkoutSessionExerciseService.getRecommendedSetAdditionsOrRecovery(previousSessionExercise);
+      let recommendation = null;
+      if (!exercisesThatWerePreviouslyInRecovery.has(pair.exercise._id)) {
+        recommendation =
+          WorkoutSessionExerciseService.getRecommendedSetAdditionsOrRecovery(
+            previousSessionExercise
+          );
+      } else {
+        // If previously in recovery, do not recommend adding sets this microcycle. Also, this is
+        // the only thing we are overriding. We still want to use the historical data for
+        // SFR calculations, even though that one was the one that triggered a recovery session.
+        // This should make it so that it is less likely to have sets added to it.
+        recommendation = 0;
+      }
 
       if (recommendation === -1) {
         recoveryExerciseIds.add(pair.exercise._id);
@@ -363,6 +389,7 @@ export default class WorkoutSessionService {
       return maxAddable;
     }
 
+    // Cap the actual sets to add to 3 total
     let setsRemaining = totalSetsToAdd >= 3 ? 3 : totalSetsToAdd;
     for (const candidate of candidates) {
       const added = addSetsToExercise(candidate.exerciseId, setsRemaining);

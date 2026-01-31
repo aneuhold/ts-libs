@@ -23,6 +23,8 @@ import type { WorkoutSessionExercise } from '../src/documents/workout/WorkoutSes
 import { WorkoutSessionExerciseSchema } from '../src/documents/workout/WorkoutSessionExercise.js';
 import type { WorkoutSet } from '../src/documents/workout/WorkoutSet.js';
 import { WorkoutSetSchema } from '../src/documents/workout/WorkoutSet.js';
+import type { Fatigue } from '../src/embedded-types/workout/Fatigue.js';
+import type { RSM } from '../src/embedded-types/workout/Rsm.js';
 import DocumentService from '../src/services/DocumentService.js';
 import WorkoutMesocyclePlanContext from '../src/services/workout/Mesocycle/WorkoutMesocyclePlanContext.js';
 import WorkoutMesocycleService from '../src/services/workout/Mesocycle/WorkoutMesocycleService.js';
@@ -673,6 +675,12 @@ class WorkoutTestUtil {
         sorenessScore?: number;
         /** Performance score 0-3 (default: undefined) */
         performanceScore?: number;
+        /** Whether this exercise should be marked as a recovery exercise (default: false) */
+        isRecovery?: boolean;
+        /** RSM values for SFR calculation */
+        rsm?: RSM;
+        /** Fatigue values for SFR calculation */
+        fatigue?: Fatigue;
       }>
     >;
   }): void {
@@ -744,6 +752,19 @@ class WorkoutTestUtil {
           }
           if (overrides.performanceScore !== undefined) {
             sessionExercise.performanceScore = overrides.performanceScore;
+          }
+
+          // Apply recovery flag
+          if (overrides.isRecovery !== undefined) {
+            sessionExercise.isRecoveryExercise = overrides.isRecovery;
+          }
+
+          // Apply RSM and fatigue for SFR calculation
+          if (overrides.rsm !== undefined) {
+            sessionExercise.rsm = overrides.rsm;
+          }
+          if (overrides.fatigue !== undefined) {
+            sessionExercise.fatigue = overrides.fatigue;
           }
 
           // Apply custom set count if specified

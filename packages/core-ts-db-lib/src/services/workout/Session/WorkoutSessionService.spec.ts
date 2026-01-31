@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest';
 import workoutTestUtil from '../../../../test-utils/WorkoutTestUtil.js';
 import type { WorkoutExercise } from '../../../documents/workout/WorkoutExercise.js';
 import type { WorkoutExerciseCalibration } from '../../../documents/workout/WorkoutExerciseCalibration.js';
+import type { Fatigue } from '../../../embedded-types/workout/Fatigue.js';
+import type { RSM } from '../../../embedded-types/workout/Rsm.js';
 import WorkoutSessionService from './WorkoutSessionService.js';
 
 describe('WorkoutSessionService', () => {
@@ -183,8 +185,8 @@ describe('WorkoutSessionService', () => {
         workoutTestUtil.STANDARD_EXERCISES.inclineBenchPress
       ];
 
-      // Exercise A (bench press): 8 sets, high SFR (soreness=0, performance=0 -> +2 recommendation)
-      // Exercise B (incline): 3 sets, moderate SFR (soreness=1, performance=1 -> +0 recommendation)
+      // Exercise A (bench press): 8 sets, high SFR (rsm=9, fatigue=3 -> SFR=3, soreness=0, performance=0 -> +2 recommendation)
+      // Exercise B (incline): 3 sets, moderate SFR (rsm=6, fatigue=4 -> SFR=1.5, soreness=1, performance=1 -> +0 recommendation)
       const { result } = calculateSetPlan({
         exercises: chestExercises,
         calibrations: [
@@ -202,8 +204,32 @@ describe('WorkoutSessionService', () => {
         historicalMicrocycles: [
           {
             sessionExerciseOverrides: [
-              [{ setCount: 8, sorenessScore: 0, performanceScore: 0 }], // Session 0: Exercise A
-              [{ setCount: 3, sorenessScore: 1, performanceScore: 1 }] // Session 1: Exercise B
+              [
+                {
+                  setCount: 8,
+                  sorenessScore: 0,
+                  performanceScore: 0,
+                  rsm: { mindMuscleConnection: 3, pump: 3, disruption: 3 }, // Total: 9
+                  fatigue: {
+                    jointAndTissueDisruption: 1,
+                    perceivedEffort: 1,
+                    unusedMusclePerformance: 1
+                  } // Total: 3, SFR = 3
+                }
+              ], // Session 0: Exercise A
+              [
+                {
+                  setCount: 3,
+                  sorenessScore: 1,
+                  performanceScore: 1,
+                  rsm: { mindMuscleConnection: 2, pump: 2, disruption: 2 }, // Total: 6
+                  fatigue: {
+                    jointAndTissueDisruption: 1,
+                    perceivedEffort: 2,
+                    unusedMusclePerformance: 1
+                  } // Total: 4, SFR = 1.5
+                }
+              ] // Session 1: Exercise B
             ]
           }
         ]
@@ -223,9 +249,9 @@ describe('WorkoutSessionService', () => {
         workoutTestUtil.STANDARD_EXERCISES.dumbbellChestPress
       ];
 
-      // Exercise A (bench): 8 sets, higher SFR (soreness=0, performance=1 -> +1 recommendation)
-      // Exercise B (incline): 8 sets, higher SFR (soreness=0, performance=1 -> +1 recommendation)
-      // Exercise C (dumbbell): 5 sets, lower SFR (soreness=1, performance=1 -> +0 recommendation)
+      // Exercise A (bench): 5 sets, highest SFR (rsm=9, fatigue=3 -> SFR=3, soreness=0, performance=1 -> +1 recommendation)
+      // Exercise B (incline): 5 sets, second SFR (rsm=8, fatigue=4 -> SFR=2, soreness=0, performance=1 -> +1 recommendation)
+      // Exercise C (dumbbell): 5 sets, lower SFR (rsm=6, fatigue=6 -> SFR=1, soreness=1, performance=1 -> +0 recommendation)
       const { result } = calculateSetPlan({
         exercises: chestExercises,
         calibrations: [
@@ -248,10 +274,42 @@ describe('WorkoutSessionService', () => {
           {
             sessionExerciseOverrides: [
               [
-                { setCount: 5, sorenessScore: 0, performanceScore: 1 }, // Exercise A
-                { setCount: 5, sorenessScore: 0, performanceScore: 1 } // Exercise B
+                {
+                  setCount: 5,
+                  sorenessScore: 0,
+                  performanceScore: 1,
+                  rsm: { mindMuscleConnection: 3, pump: 3, disruption: 3 }, // Total: 9
+                  fatigue: {
+                    jointAndTissueDisruption: 1,
+                    perceivedEffort: 1,
+                    unusedMusclePerformance: 1
+                  } // Total: 3, SFR = 3
+                }, // Exercise A
+                {
+                  setCount: 5,
+                  sorenessScore: 0,
+                  performanceScore: 1,
+                  rsm: { mindMuscleConnection: 3, pump: 3, disruption: 2 }, // Total: 8
+                  fatigue: {
+                    jointAndTissueDisruption: 1,
+                    perceivedEffort: 2,
+                    unusedMusclePerformance: 1
+                  } // Total: 4, SFR = 2
+                } // Exercise B
               ],
-              [{ setCount: 5, sorenessScore: 1, performanceScore: 1 }] // Exercise C
+              [
+                {
+                  setCount: 5,
+                  sorenessScore: 1,
+                  performanceScore: 1,
+                  rsm: { mindMuscleConnection: 2, pump: 2, disruption: 2 }, // Total: 6
+                  fatigue: {
+                    jointAndTissueDisruption: 2,
+                    perceivedEffort: 2,
+                    unusedMusclePerformance: 2
+                  } // Total: 6, SFR = 1
+                }
+              ] // Exercise C
             ]
           }
         ]
@@ -272,9 +330,9 @@ describe('WorkoutSessionService', () => {
         workoutTestUtil.STANDARD_EXERCISES.dumbbellChestPress
       ];
 
-      // Exercise A (bench): 4 sets, highest SFR (soreness=0, performance=1 -> +1 recommendation)
-      // Exercise B (incline): 5 sets, second SFR (soreness=0, performance=1 -> +1 recommendation)
-      // Exercise C (dumbbell): 3 sets, third SFR (soreness=1, performance=0 -> +1 recommendation)
+      // Exercise A (bench): 4 sets, highest SFR (rsm=9, fatigue=3 -> SFR=3, soreness=0, performance=1 -> +1 recommendation)
+      // Exercise B (incline): 5 sets, second SFR (rsm=8, fatigue=4 -> SFR=2, soreness=0, performance=1 -> +1 recommendation)
+      // Exercise C (dumbbell): 3 sets, third SFR (rsm=6, fatigue=6 -> SFR=1, soreness=1, performance=0 -> +1 recommendation)
       // Total sets to add: 3. Session 0 already has 9 sets (4+5), so adding 1 to A caps it at 10.
       // B cannot receive sets due to session cap, so its +1 is redistributed to C.
       const { result } = calculateSetPlan({
@@ -299,10 +357,42 @@ describe('WorkoutSessionService', () => {
           {
             sessionExerciseOverrides: [
               [
-                { setCount: 4, sorenessScore: 0, performanceScore: 1 }, // Exercise A (highest SFR)
-                { setCount: 5, sorenessScore: 0, performanceScore: 1 } // Exercise B (second SFR)
+                {
+                  setCount: 4,
+                  sorenessScore: 0,
+                  performanceScore: 1,
+                  rsm: { mindMuscleConnection: 3, pump: 3, disruption: 3 }, // Total: 9
+                  fatigue: {
+                    jointAndTissueDisruption: 1,
+                    perceivedEffort: 1,
+                    unusedMusclePerformance: 1
+                  } // Total: 3, SFR = 3
+                }, // Exercise A (highest SFR)
+                {
+                  setCount: 5,
+                  sorenessScore: 0,
+                  performanceScore: 1,
+                  rsm: { mindMuscleConnection: 3, pump: 3, disruption: 2 }, // Total: 8
+                  fatigue: {
+                    jointAndTissueDisruption: 1,
+                    perceivedEffort: 2,
+                    unusedMusclePerformance: 1
+                  } // Total: 4, SFR = 2
+                } // Exercise B (second SFR)
               ],
-              [{ setCount: 3, sorenessScore: 1, performanceScore: 0 }] // Exercise C (third SFR)
+              [
+                {
+                  setCount: 3,
+                  sorenessScore: 1,
+                  performanceScore: 0,
+                  rsm: { mindMuscleConnection: 2, pump: 2, disruption: 2 }, // Total: 6
+                  fatigue: {
+                    jointAndTissueDisruption: 2,
+                    perceivedEffort: 2,
+                    unusedMusclePerformance: 2
+                  } // Total: 6, SFR = 1
+                }
+              ] // Exercise C (third SFR)
             ]
           }
         ]
@@ -316,6 +406,105 @@ describe('WorkoutSessionService', () => {
 
       // Exercise C gets its own +1 plus B's redistributed +1 (3 + 1 + 1 = 5)
       expect(result.exerciseIdToSetCount.get(chestExercises[2]._id)).toBe(5);
+    });
+
+    it('should skip recovery exercises and use non-recovery data from previous microcycles', () => {
+      const chestExercises: WorkoutExercise[] = [
+        workoutTestUtil.STANDARD_EXERCISES.barbellBenchPress,
+        workoutTestUtil.STANDARD_EXERCISES.inclineBenchPress
+      ];
+
+      // Microcycle 0: Exercise A has 4 sets with HIGH SFR (rsm=9, fatigue=3 -> SFR=3) but triggers recovery (soreness=3, performance=3)
+      //               Exercise B has 3 sets with LOW SFR (rsm=5, fatigue=5 -> SFR=1) and no recommendation
+      // Microcycle 1: Exercise A is in recovery (isRecoveryExercise=true), has 2 sets
+      // Microcycle 2: Should use 4 sets and HIGH SFR from Microcycle 0 for Exercise A (skip the recovery microcycle)
+      //               Even though Exercise A has higher SFR, it should get 0 sets because it's marked for recovery
+      const { result } = calculateSetPlan({
+        exercises: chestExercises,
+        calibrations: [
+          {
+            exercise: chestExercises[0],
+            calibration: workoutTestUtil.STANDARD_CALIBRATIONS.barbellBenchPress
+          },
+          {
+            exercise: chestExercises[1],
+            calibration: workoutTestUtil.STANDARD_CALIBRATIONS.inclineBenchPress
+          }
+        ],
+        microcycleIndex: 2,
+        sessionStructure: [[0, 1]],
+        historicalMicrocycles: [
+          {
+            // Microcycle 0: Exercise A has high SFR but triggers recovery due to soreness/performance
+            sessionExerciseOverrides: [
+              [
+                {
+                  setCount: 4,
+                  sorenessScore: 3,
+                  performanceScore: 3, // Triggers recovery (-1 recommendation)
+                  rsm: { mindMuscleConnection: 3, pump: 3, disruption: 3 }, // Total: 9
+                  fatigue: {
+                    jointAndTissueDisruption: 1,
+                    perceivedEffort: 1,
+                    unusedMusclePerformance: 1
+                  } // Total: 3, SFR = 3 (HIGH)
+                }, // Exercise A
+                {
+                  setCount: 3,
+                  sorenessScore: 0,
+                  performanceScore: 1, // 1 recommendation
+                  rsm: { mindMuscleConnection: 2, pump: 2, disruption: 1 }, // Total: 5
+                  fatigue: {
+                    jointAndTissueDisruption: 2,
+                    perceivedEffort: 2,
+                    unusedMusclePerformance: 1
+                  } // Total: 5, SFR = 1 (LOW)
+                } // Exercise B
+              ]
+            ]
+          },
+          {
+            // Microcycle 1: Exercise A is in recovery with lower sets
+            sessionExerciseOverrides: [
+              [
+                {
+                  setCount: 2,
+                  sorenessScore: 0,
+                  performanceScore: 0,
+                  isRecovery: true,
+                  rsm: { mindMuscleConnection: 1, pump: 1, disruption: 1 }, // Total: 3
+                  fatigue: {
+                    jointAndTissueDisruption: 1,
+                    perceivedEffort: 1,
+                    unusedMusclePerformance: 2
+                  } // Total: 4, SFR < 1 (but this should be ignored)
+                }, // Exercise A (recovery)
+                {
+                  setCount: 4,
+                  sorenessScore: 0,
+                  performanceScore: 1, // 1 recommendation
+                  rsm: { mindMuscleConnection: 2, pump: 2, disruption: 1 }, // Total: 5
+                  fatigue: {
+                    jointAndTissueDisruption: 2,
+                    perceivedEffort: 2,
+                    unusedMusclePerformance: 1
+                  } // Total: 5, SFR = 1
+                } // Exercise B
+              ]
+            ]
+          }
+        ]
+      });
+
+      // Exercise A should use 4 sets from Microcycle 0 (skipping Microcycle 1's recovery data with 2 sets)
+      // In Microcycle 2, Exercise A is coming back from recovery, so it's not marked as recovery anymore
+      // It should add 1 set because it has a higher SFR, and it is no longer in recovery.
+      expect(result.exerciseIdToSetCount.get(chestExercises[0]._id)).toBe(5);
+      expect(result.recoveryExerciseIds.has(chestExercises[0]._id)).toBe(false);
+
+      // Exercise B should use 4 sets from Microcycle 1 (most recent) and get 0 additional sets
+      expect(result.exerciseIdToSetCount.get(chestExercises[1]._id)).toBe(4);
+      expect(result.recoveryExerciseIds.has(chestExercises[1]._id)).toBe(false);
     });
 
     /**
@@ -333,6 +522,9 @@ describe('WorkoutSessionService', () => {
             setCount?: number;
             sorenessScore?: number;
             performanceScore?: number;
+            isRecovery?: boolean;
+            rsm?: RSM;
+            fatigue?: Fatigue;
           }>
         >;
       }>;
