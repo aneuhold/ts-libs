@@ -234,5 +234,59 @@ describe('Unit Tests', () => {
       // Print the mesocycle plan for visualization
       workoutTestUtil.printMesocyclePlan(result, exercises);
     });
+
+    it('should pass existing documents through without regenerating when all are complete', () => {
+      const exercises = [
+        workoutTestUtil.STANDARD_EXERCISES.barbellSquat,
+        workoutTestUtil.STANDARD_EXERCISES.barbellBenchPress
+      ];
+      const calibrations = [
+        workoutTestUtil.STANDARD_CALIBRATIONS.barbellSquat,
+        workoutTestUtil.STANDARD_CALIBRATIONS.barbellBenchPress
+      ];
+      const equipment = Object.values(workoutTestUtil.STANDARD_EQUIPMENT_TYPES);
+
+      const mesocycle = WorkoutMesocycleSchema.parse({
+        userId: workoutTestUtil.userId,
+        cycleType: CycleType.MuscleGain,
+        plannedSessionCountPerMicrocycle: 2,
+        plannedMicrocycleLengthInDays: 7,
+        plannedMicrocycleRestDays: [],
+        plannedMicrocycleCount: 2,
+        calibratedExercises: calibrations.map((c) => c._id)
+      });
+
+      // Generate initial plan
+      const initialResult = WorkoutMesocycleService.generateOrUpdateMesocycle(
+        mesocycle,
+        calibrations,
+        exercises,
+        equipment
+      );
+
+      // Mark ALL sessions as complete
+      const sessionsAllComplete = (initialResult.sessions?.create ?? []).map((s) => ({
+        ...s,
+        complete: true
+      }));
+
+      // Regenerate - should not create, update, or delete anything
+      const regenResult = WorkoutMesocycleService.generateOrUpdateMesocycle(
+        mesocycle,
+        calibrations,
+        exercises,
+        equipment,
+        initialResult.microcycles?.create ?? [],
+        sessionsAllComplete,
+        initialResult.sessionExercises?.create ?? [],
+        initialResult.sets?.create ?? []
+      );
+
+      // No new microcycles to create (all are already complete)
+      expect(regenResult.microcycles?.create).toHaveLength(0);
+      expect(regenResult.microcycles?.delete).toHaveLength(0);
+      expect(regenResult.sessions?.create).toHaveLength(0);
+      expect(regenResult.sessions?.delete).toHaveLength(0);
+    });
   });
 });

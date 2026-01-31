@@ -31,7 +31,7 @@ export default class WorkoutMicrocycleService {
     isDeloadMicrocycle: boolean;
   }): void {
     const mesocycle = context.mesocycle;
-    const microcycle = context.microcyclesToCreate[microcycleIndex];
+    const microcycle = context.microcyclesInOrder[microcycleIndex];
 
     if (!context.plannedSessionExercisePairs) {
       throw new Error(
