@@ -105,7 +105,7 @@ export default class WorkoutSessionService {
     setPlan: { exerciseIdToSetCount: Map<UUID, number>; recoveryExerciseIds: Set<UUID> };
   }): void {
     const mesocycle = context.mesocycle;
-    const microcycle = context.microcyclesToCreate[microcycleIndex];
+    const microcycle = context.microcyclesInOrder[microcycleIndex];
 
     const resolvedSetPlan = setPlan;
 
