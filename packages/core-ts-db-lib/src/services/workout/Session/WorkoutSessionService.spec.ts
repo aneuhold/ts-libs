@@ -414,11 +414,6 @@ describe('WorkoutSessionService', () => {
         workoutTestUtil.STANDARD_EXERCISES.inclineBenchPress
       ];
 
-      // Microcycle 0: Exercise A has 4 sets with HIGH SFR (rsm=9, fatigue=3 -> SFR=3) but triggers recovery (soreness=3, performance=3)
-      //               Exercise B has 3 sets with LOW SFR (rsm=5, fatigue=5 -> SFR=1) and no recommendation
-      // Microcycle 1: Exercise A is in recovery (isRecoveryExercise=true), has 2 sets
-      // Microcycle 2: Should use 4 sets and HIGH SFR from Microcycle 0 for Exercise A (skip the recovery microcycle)
-      //               Even though Exercise A has higher SFR, it should get 0 sets because it's marked for recovery
       const { result } = calculateSetPlan({
         exercises: chestExercises,
         calibrations: [
@@ -505,6 +500,111 @@ describe('WorkoutSessionService', () => {
       // Exercise B should use 4 sets from Microcycle 1 (most recent) and get 0 additional sets
       expect(result.exerciseIdToSetCount.get(chestExercises[1]._id)).toBe(4);
       expect(result.recoveryExerciseIds.has(chestExercises[1]._id)).toBe(false);
+    });
+
+    it('should cut sets in half (rounded down, min 1) when recovery is required', () => {
+      const chestExercises: WorkoutExercise[] = [
+        workoutTestUtil.STANDARD_EXERCISES.barbellBenchPress,
+        workoutTestUtil.STANDARD_EXERCISES.inclineBenchPress
+      ];
+
+      // Exercise A: 5 sets, triggers recovery (performanceScore=3)
+      // Exercise B: 3 sets, does not trigger recovery
+      const { result } = calculateSetPlan({
+        exercises: chestExercises,
+        calibrations: [
+          {
+            exercise: chestExercises[0],
+            calibration: workoutTestUtil.STANDARD_CALIBRATIONS.barbellBenchPress
+          },
+          {
+            exercise: chestExercises[1],
+            calibration: workoutTestUtil.STANDARD_CALIBRATIONS.inclineBenchPress
+          }
+        ],
+        microcycleIndex: 1,
+        sessionStructure: [[0, 1]],
+        historicalMicrocycles: [
+          {
+            sessionExerciseOverrides: [
+              [
+                {
+                  setCount: 5,
+                  sorenessScore: 0,
+                  performanceScore: 3, // Triggers recovery
+                  rsm: { mindMuscleConnection: 2, pump: 2, disruption: 2 },
+                  fatigue: {
+                    jointAndTissueDisruption: 2,
+                    perceivedEffort: 2,
+                    unusedMusclePerformance: 2
+                  }
+                },
+                {
+                  setCount: 3,
+                  sorenessScore: 0,
+                  performanceScore: 1, // Normal progression
+                  rsm: { mindMuscleConnection: 2, pump: 2, disruption: 2 },
+                  fatigue: {
+                    jointAndTissueDisruption: 1,
+                    perceivedEffort: 1,
+                    unusedMusclePerformance: 1
+                  }
+                }
+              ]
+            ]
+          }
+        ]
+      });
+
+      // Exercise A should be cut in half: floor(5/2) = 2 sets
+      expect(result.exerciseIdToSetCount.get(chestExercises[0]._id)).toBe(2);
+      expect(result.recoveryExerciseIds.has(chestExercises[0]._id)).toBe(true);
+
+      // Exercise B should progress normally (3 + 1 = 4 sets based on recommendation)
+      expect(result.exerciseIdToSetCount.get(chestExercises[1]._id)).toBe(4);
+      expect(result.recoveryExerciseIds.has(chestExercises[1]._id)).toBe(false);
+    });
+
+    it('should enforce minimum of 1 set when recovery cuts below 1', () => {
+      const chestExercises: WorkoutExercise[] = [
+        workoutTestUtil.STANDARD_EXERCISES.barbellBenchPress
+      ];
+
+      // Exercise with only 1 set previously, should remain at 1 when cut in half
+      const { result } = calculateSetPlan({
+        exercises: chestExercises,
+        calibrations: [
+          {
+            exercise: chestExercises[0],
+            calibration: workoutTestUtil.STANDARD_CALIBRATIONS.barbellBenchPress
+          }
+        ],
+        microcycleIndex: 1,
+        sessionStructure: [[0]],
+        historicalMicrocycles: [
+          {
+            sessionExerciseOverrides: [
+              [
+                {
+                  setCount: 1,
+                  sorenessScore: 1,
+                  performanceScore: 3, // Triggers recovery
+                  rsm: { mindMuscleConnection: 1, pump: 1, disruption: 1 },
+                  fatigue: {
+                    jointAndTissueDisruption: 3,
+                    perceivedEffort: 3,
+                    unusedMusclePerformance: 3
+                  }
+                }
+              ]
+            ]
+          }
+        ]
+      });
+
+      // Should be minimum 1 set (floor(1/2) = 0, but min is 1)
+      expect(result.exerciseIdToSetCount.get(chestExercises[0]._id)).toBe(1);
+      expect(result.recoveryExerciseIds.has(chestExercises[0]._id)).toBe(true);
     });
 
     /**

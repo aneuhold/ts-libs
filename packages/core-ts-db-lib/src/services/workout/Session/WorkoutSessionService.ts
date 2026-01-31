@@ -47,7 +47,9 @@ export default class WorkoutSessionService {
       for (const [workoutExerciseId, setCount] of result.exerciseIdToSetCount) {
         exerciseIdToSetCount.set(workoutExerciseId, setCount);
       }
-      recoveryExerciseIds.union(result.recoveryExerciseIds);
+      for (const recoveryExerciseId of result.recoveryExerciseIds) {
+        recoveryExerciseIds.add(recoveryExerciseId);
+      }
     });
 
     return { exerciseIdToSetCount, recoveryExerciseIds };
@@ -317,6 +319,10 @@ export default class WorkoutSessionService {
 
       if (recommendation === -1) {
         recoveryExerciseIds.add(pair.exercise._id);
+        // Cut sets in half (rounded down, minimum 1) for recovery
+        const previousSetCount = previousSessionExercise.setOrder.length;
+        const recoverySets = Math.max(1, Math.floor(previousSetCount / 2));
+        exerciseIdToSetCount.set(pair.exercise._id, recoverySets);
       } else if (recommendation != null && recommendation >= 0) {
         totalSetsToAdd += recommendation;
 
