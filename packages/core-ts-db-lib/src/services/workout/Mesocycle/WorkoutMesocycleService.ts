@@ -17,14 +17,14 @@ import WorkoutMesocyclePlanContext from './WorkoutMesocyclePlanContext.js';
  */
 export default class WorkoutMesocycleService {
   /**
-   * Generates the complete initial workout plan for an entire mesocycle.
+   * Generates the complete workout plan for an entire mesocycle.
    *
    * @param mesocycle The mesocycle configuration.
    * @param calibrations The calibration documents referenced by the mesocycle.
    * @param exercises The exercise definitions for the calibrations.
    * @param equipmentTypes The equipment types for weight increment calculations.
    */
-  static generateInitialPlan(
+  static generateOrUpdateMesocycle(
     mesocycle: WorkoutMesocycle,
     calibrations: WorkoutExerciseCalibration[],
     exercises: WorkoutExercise[],

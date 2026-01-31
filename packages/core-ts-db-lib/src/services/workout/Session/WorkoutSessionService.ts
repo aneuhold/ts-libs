@@ -229,6 +229,14 @@ export default class WorkoutSessionService {
     const exercisesThatWerePreviouslyInRecovery = new Set<UUID>();
     // Loop through each previous microcycle until we find all exercises or run out of microcycles
     while (exerciseIdToPrevSessionExercise.size < exerciseIds.size && previousMicrocycle) {
+      // Check if the previous microcycle is complete; if not, we cannot use its data
+      const lastSessionId =
+        previousMicrocycle.sessionOrder[previousMicrocycle.sessionOrder.length - 1];
+      const microcycleIsComplete = context.sessionMap.get(lastSessionId)?.complete;
+      if (!microcycleIsComplete) {
+        break;
+      }
+
       // Start with session order
       for (const sessionId of previousMicrocycle.sessionOrder) {
         const session = context.sessionMap.get(sessionId);

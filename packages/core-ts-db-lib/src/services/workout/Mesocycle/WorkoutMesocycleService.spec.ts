@@ -4,7 +4,7 @@ import { CycleType, WorkoutMesocycleSchema } from '../../../documents/workout/Wo
 import WorkoutMesocycleService from './WorkoutMesocycleService.js';
 
 describe('Unit Tests', () => {
-  describe('generateInitialPlan', () => {
+  describe('generateOrUpdateMesocycle', () => {
     it('should not generate any plan documents for FreeForm mesocycles', () => {
       const exercises = [workoutTestUtil.STANDARD_EXERCISES.barbellSquat];
       const calibrations = [workoutTestUtil.STANDARD_CALIBRATIONS.barbellSquat];
@@ -20,7 +20,7 @@ describe('Unit Tests', () => {
         calibratedExercises: calibrations.map((c) => c._id)
       });
 
-      const result = WorkoutMesocycleService.generateInitialPlan(
+      const result = WorkoutMesocycleService.generateOrUpdateMesocycle(
         mesocycle,
         calibrations,
         exercises,
@@ -59,7 +59,7 @@ describe('Unit Tests', () => {
         calibratedExercises: calibrations.map((c) => c._id)
       });
 
-      const result = WorkoutMesocycleService.generateInitialPlan(
+      const result = WorkoutMesocycleService.generateOrUpdateMesocycle(
         mesocycle,
         calibrations,
         exercises,
@@ -119,7 +119,7 @@ describe('Unit Tests', () => {
         calibratedExercises: calibrations.map((c) => c._id)
       });
 
-      const result = WorkoutMesocycleService.generateInitialPlan(
+      const result = WorkoutMesocycleService.generateOrUpdateMesocycle(
         mesocycle,
         calibrations,
         exercises,
@@ -180,7 +180,7 @@ describe('Unit Tests', () => {
         calibratedExercises: calibrations.map((c) => c._id)
       });
 
-      const result = WorkoutMesocycleService.generateInitialPlan(
+      const result = WorkoutMesocycleService.generateOrUpdateMesocycle(
         mesocycle,
         calibrations,
         exercises,

@@ -373,7 +373,7 @@ class WorkoutTestUtil {
    * @param exercises The exercises used in the plan.
    */
   printMesocyclePlan(
-    planResult: ReturnType<typeof WorkoutMesocycleService.generateInitialPlan>,
+    planResult: ReturnType<typeof WorkoutMesocycleService.generateOrUpdateMesocycle>,
     exercises: WorkoutExercise[]
   ): void {
     const colorPalette = [
