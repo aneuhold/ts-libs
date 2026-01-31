@@ -1,8 +1,11 @@
+import type { UUID } from 'crypto';
 import type { CalibrationExercisePair } from '../../../documents/workout/WorkoutExerciseCalibration.js';
 import type { WorkoutSession } from '../../../documents/workout/WorkoutSession.js';
 import { WorkoutSessionSchema } from '../../../documents/workout/WorkoutSession.js';
+import type { WorkoutSessionExercise } from '../../../documents/workout/WorkoutSessionExercise.js';
 import { WorkoutSessionExerciseSchema } from '../../../documents/workout/WorkoutSessionExercise.js';
 import type WorkoutMesocyclePlanContext from '../Mesocycle/WorkoutMesocyclePlanContext.js';
+import WorkoutSessionExerciseService from '../SessionExercise/WorkoutSessionExerciseService.js';
 import WorkoutSetService from '../Set/WorkoutSetService.js';
 import WorkoutSFRService from '../util/SFR/WorkoutSFRService.js';
 
@@ -10,6 +13,46 @@ import WorkoutSFRService from '../util/SFR/WorkoutSFRService.js';
  * A service for handling operations related to {@link WorkoutSession}s.
  */
 export default class WorkoutSessionService {
+  private static readonly MAX_SETS_PER_EXERCISE = 8;
+  private static readonly MAX_SETS_PER_MUSCLE_GROUP_PER_SESSION = 10;
+
+  /**
+   * Calculates the set plan for an entire microcycle.
+   *
+   * @param context The mesocycle planning context.
+   * @param microcycleIndex The index of the microcycle being generated.
+   * @param isDeloadMicrocycle Whether the current microcycle is a deload.
+   */
+  static calculateSetPlanForMicrocycle(
+    context: WorkoutMesocyclePlanContext,
+    microcycleIndex: number,
+    isDeloadMicrocycle: boolean
+  ): { exerciseIdToSetCount: Map<UUID, number>; recoveryExerciseIds: Set<UUID> } {
+    if (!context.muscleGroupToExercisePairsMap) {
+      throw new Error(
+        'WorkoutMesocyclePlanContext.muscleGroupToExercisePairsMap is not initialized. This should be set during mesocycle planning.'
+      );
+    }
+
+    const exerciseIdToSetCount = new Map<UUID, number>();
+    const recoveryExerciseIds = new Set<UUID>();
+
+    context.muscleGroupToExercisePairsMap.values().forEach((muscleGroupExercisePairs) => {
+      const result = this.calculateSetCountForEachExerciseInMuscleGroup(
+        context,
+        microcycleIndex,
+        muscleGroupExercisePairs,
+        isDeloadMicrocycle
+      );
+      for (const [workoutExerciseId, setCount] of result.exerciseIdToSetCount) {
+        exerciseIdToSetCount.set(workoutExerciseId, setCount);
+      }
+      recoveryExerciseIds.union(result.recoveryExerciseIds);
+    });
+
+    return { exerciseIdToSetCount, recoveryExerciseIds };
+  }
+
   /**
    * Calculates the total Raw Stimulus Magnitude for a session.
    *
@@ -47,7 +90,8 @@ export default class WorkoutSessionService {
     sessionStartDate,
     sessionExerciseList,
     targetRir,
-    isDeloadMicrocycle
+    isDeloadMicrocycle,
+    setPlan
   }: {
     context: WorkoutMesocyclePlanContext;
     microcycleIndex: number;
@@ -56,15 +100,12 @@ export default class WorkoutSessionService {
     sessionExerciseList: CalibrationExercisePair[];
     targetRir: number;
     isDeloadMicrocycle: boolean;
+    setPlan: { exerciseIdToSetCount: Map<UUID, number>; recoveryExerciseIds: Set<UUID> };
   }): void {
     const mesocycle = context.mesocycle;
     const microcycle = context.microcyclesToCreate[microcycleIndex];
 
-    if (!context.muscleGroupToExercisePairsMap) {
-      throw new Error(
-        'WorkoutMesocyclePlanContext.muscleGroupToExercisePairsMap is not initialized. This should be set during mesocycle planning.'
-      );
-    }
+    const resolvedSetPlan = setPlan;
 
     // Create session
     const session = WorkoutSessionSchema.parse({
@@ -78,36 +119,12 @@ export default class WorkoutSessionService {
     for (let exerciseIndex = 0; exerciseIndex < sessionExerciseList.length; exerciseIndex++) {
       const { calibration, exercise } = sessionExerciseList[exerciseIndex];
 
-      // Validation: ensure we can find the muscle-group-wide ordering for this exercise
-      const primaryMuscleGroupId = exercise.primaryMuscleGroups[0];
-      if (!primaryMuscleGroupId) {
+      const setCountFromPlan = resolvedSetPlan.exerciseIdToSetCount.get(exercise._id);
+      if (setCountFromPlan == null) {
         throw new Error(
-          `Exercise ${exercise._id}, ${exercise.exerciseName} has no primary muscle group`
+          `No set plan found for exercise ${exercise._id}, ${exercise.exerciseName} in microcycle ${microcycleIndex}`
         );
       }
-      const muscleGroupExercisePairs =
-        context.muscleGroupToExercisePairsMap.get(primaryMuscleGroupId);
-      if (!muscleGroupExercisePairs || muscleGroupExercisePairs.length === 0) {
-        throw new Error(
-          `No microcycle exercise ordering found for muscle group ${primaryMuscleGroupId} (exercise ${exercise._id}, ${exercise.exerciseName})`
-        );
-      }
-      const exerciseIndexInMuscleGroupForMicrocycle = muscleGroupExercisePairs.findIndex(
-        (pair) => pair.exercise._id === exercise._id
-      );
-      if (exerciseIndexInMuscleGroupForMicrocycle === -1) {
-        throw new Error(
-          `Exercise ${exercise._id}, ${exercise.exerciseName} not found in muscle-group-wide microcycle ordering`
-        );
-      }
-
-      // Calculate number of sets for this exercise in this microcycle
-      const setCount = this.calculateSetCount(
-        microcycleIndex,
-        muscleGroupExercisePairs.length,
-        exerciseIndexInMuscleGroupForMicrocycle,
-        isDeloadMicrocycle
-      );
 
       // Get equipment for weight calculations
       const equipment = context.equipmentMap.get(exercise.workoutEquipmentTypeId);
@@ -125,7 +142,8 @@ export default class WorkoutSessionService {
       const sessionExercise = WorkoutSessionExerciseSchema.parse({
         userId: mesocycle.userId,
         workoutSessionId: session._id,
-        workoutExerciseId: exercise._id
+        workoutExerciseId: exercise._id,
+        isRecoveryExercise: resolvedSetPlan.recoveryExerciseIds.has(exercise._id)
       });
 
       WorkoutSetService.generateSetsForSessionExercise({
@@ -136,25 +154,217 @@ export default class WorkoutSessionService {
         sessionExercise,
         microcycleIndex,
         sessionIndex,
-        setCount,
+        setCount: setCountFromPlan,
         targetRir,
         isDeloadMicrocycle
       });
 
-      const setsForThisExercise = context.setsToCreate.slice(-setCount);
+      const setsForThisExercise = context.setsToCreate.slice(-setCountFromPlan);
 
       sessionExercise.setOrder.push(...setsForThisExercise.map((s) => s._id));
       session.sessionExerciseOrder.push(sessionExercise._id);
-      context.sessionExercisesToCreate.push(sessionExercise);
+      context.addSessionExercise(sessionExercise);
     }
 
     // Add session to microcycle's session order and context
     microcycle.sessionOrder.push(session._id);
-    context.sessionsToCreate.push(session);
+    context.addSession(session);
   }
 
   /**
-   * Calculates the number of sets for an exercise based on microcycle progression.
+   * Calculates the set count for each exercise in a particular muscle group for this microcycle.
+   *
+   * If there is no previous microcycle data for the muscle group, this falls back to
+   * the baseline progression rules.
+   *
+   * @param context The mesocycle planning context.
+   * @param microcycleIndex The index of the microcycle being generated.
+   * @param muscleGroupExercisePairs The exercise pairs for the current muscle group for the
+   * microcycle.
+   * @param isDeloadMicrocycle Whether the current microcycle is a deload.
+   */
+  private static calculateSetCountForEachExerciseInMuscleGroup(
+    context: WorkoutMesocyclePlanContext,
+    microcycleIndex: number,
+    muscleGroupExercisePairs: CalibrationExercisePair[],
+    isDeloadMicrocycle: boolean
+  ): { exerciseIdToSetCount: Map<UUID, number>; recoveryExerciseIds: Set<UUID> } {
+    const exerciseIdToSetCount = new Map<UUID, number>();
+    const recoveryExerciseIds = new Set<UUID>();
+    const sessionIndexToExerciseIds = new Map<number, UUID[]>();
+
+    // 1. Calculate baselines for all exercises in muscle group
+    muscleGroupExercisePairs.forEach((pair, index) => {
+      const baseline = this.calculateBaselineSetCount(
+        microcycleIndex,
+        muscleGroupExercisePairs.length,
+        index,
+        isDeloadMicrocycle
+      );
+      exerciseIdToSetCount.set(pair.exercise._id, Math.min(baseline, this.MAX_SETS_PER_EXERCISE));
+
+      // Build out the map for session indices to the array of exercise IDs as it pertains to this
+      // muscle group.
+      if (!context.exerciseIdToSessionIndex) return;
+      const exerciseSessionIndex = context.exerciseIdToSessionIndex.get(pair.exercise._id);
+      if (exerciseSessionIndex === undefined) return;
+      const existingExerciseIdsForSession =
+        sessionIndexToExerciseIds.get(exerciseSessionIndex) || [];
+      existingExerciseIdsForSession.push(pair.exercise._id);
+      sessionIndexToExerciseIds.set(exerciseSessionIndex, existingExerciseIdsForSession);
+    });
+
+    // 2. Resolve historical performance data
+    // Return if no previous microcycle
+    const previousMicrocycle = context.microcyclesInOrder[microcycleIndex - 1];
+    if (!previousMicrocycle) return { exerciseIdToSetCount, recoveryExerciseIds };
+
+    // TODO: The below needs to be refactored so it keeps going back microcycles for particular
+    // exercises until it finds one that wasn't a recovery.
+
+    // Map previous session exercises
+    const exerciseIds = new Set(muscleGroupExercisePairs.map((p) => p.exercise._id));
+    const exerciseIdToPrevSessionExercise = new Map<UUID, WorkoutSessionExercise>();
+    // Start with session order
+    for (const sessionId of previousMicrocycle.sessionOrder) {
+      const session = context.sessionMap.get(sessionId);
+      if (!session) continue;
+      // Get the session exercises for this session
+      for (const sessionExerciseId of session.sessionExerciseOrder) {
+        const sessionExercise = context.sessionExerciseMap.get(sessionExerciseId);
+        // Map if in our muscle group
+        if (sessionExercise && exerciseIds.has(sessionExercise.workoutExerciseId)) {
+          exerciseIdToPrevSessionExercise.set(sessionExercise.workoutExerciseId, sessionExercise);
+        }
+      }
+    }
+    if (exerciseIdToPrevSessionExercise.size === 0)
+      return { exerciseIdToSetCount, recoveryExerciseIds };
+
+    /**
+     * Determines if the session for the given exercise is already capped for this muscle group.
+     */
+    function sessionIsCapped(exerciseId: UUID): boolean {
+      if (!context.exerciseIdToSessionIndex) {
+        throw new Error(
+          'WorkoutMesocyclePlanContext.exerciseIdToSessionIndex is not initialized. This should be set during mesocycle planning.'
+        );
+      }
+      const sessionIndex = context.exerciseIdToSessionIndex.get(exerciseId);
+      if (sessionIndex === undefined) return false;
+
+      const exerciseIdsInSession = sessionIndexToExerciseIds.get(sessionIndex);
+      if (!exerciseIdsInSession) return false;
+      let totalSetsInSession = 0;
+      exerciseIdsInSession.forEach((id) => {
+        // Use the sets from the previous microcycle's session exercise
+        totalSetsInSession += exerciseIdToPrevSessionExercise.get(id)?.setOrder.length || 0;
+      });
+      return totalSetsInSession >= WorkoutSessionService.MAX_SETS_PER_MUSCLE_GROUP_PER_SESSION;
+    }
+
+    // 3. Determine sets to add and valid candidates
+    let totalSetsToAdd = 0;
+    const candidates: {
+      exerciseId: UUID;
+      sfr: number;
+      muscleGroupIndex: number;
+      previousSetCount: number;
+    }[] = [];
+    muscleGroupExercisePairs.forEach((pair, muscleGroupIndex) => {
+      const previousSessionExercise = exerciseIdToPrevSessionExercise.get(pair.exercise._id);
+      if (!previousSessionExercise) return;
+
+      const recommendation =
+        WorkoutSessionExerciseService.getRecommendedSetAdditionsOrRecovery(previousSessionExercise);
+
+      if (recommendation === -1) {
+        recoveryExerciseIds.add(pair.exercise._id);
+      } else if (recommendation != null && recommendation > 0) {
+        // Add the sets to the total if we have a suggestion. This is business logic.
+        totalSetsToAdd += recommendation;
+
+        // Only consider as candidate if session is not already capped
+        if (
+          previousSessionExercise.setOrder.length < this.MAX_SETS_PER_EXERCISE &&
+          !sessionIsCapped(pair.exercise._id)
+        ) {
+          candidates.push({
+            exerciseId: pair.exercise._id,
+            // Don't error if SFR is null for now, just treat as very low
+            sfr:
+              WorkoutSessionExerciseService.getSFR(previousSessionExercise) ??
+              Number.NEGATIVE_INFINITY,
+            muscleGroupIndex,
+            previousSetCount: previousSessionExercise.setOrder.length
+          });
+        }
+      }
+    });
+
+    // Return if nothing to add or no candidates
+    if (totalSetsToAdd === 0 || candidates.length === 0) {
+      return { exerciseIdToSetCount, recoveryExerciseIds };
+    }
+
+    // 4. Distribute added sets based on SFR quality
+    // Sort by SFR descending, then by muscleGroupIndex ascending (as tie-breaker)
+    candidates.sort((candidateA, candidateB) =>
+      candidateA.sfr !== candidateB.sfr
+        ? candidateB.sfr - candidateA.sfr
+        : candidateA.muscleGroupIndex - candidateB.muscleGroupIndex
+    );
+
+    /**
+     * Gets the total sets currently planned for a session.
+     */
+    function getSessionTotal(exerciseId: UUID): number {
+      if (!context.exerciseIdToSessionIndex) return 0;
+      const sessionIndex = context.exerciseIdToSessionIndex.get(exerciseId);
+      if (sessionIndex === undefined) return 0;
+
+      const exerciseIdsInSession = sessionIndexToExerciseIds.get(sessionIndex);
+      if (!exerciseIdsInSession) return 0;
+
+      let total = 0;
+      exerciseIdsInSession.forEach((id) => {
+        total += exerciseIdToSetCount.get(id) || 0;
+      });
+      return total;
+    }
+
+    /**
+     * Attempts to add sets to an exercise, respecting all constraints.
+     * Returns the number of sets actually added.
+     */
+    function addSetsToExercise(exerciseId: UUID, setsToAdd: number): number {
+      const currentSets = exerciseIdToSetCount.get(exerciseId) || 0;
+      const sessionTotal = getSessionTotal(exerciseId);
+
+      const maxDueToExerciseLimit = WorkoutSessionService.MAX_SETS_PER_EXERCISE - currentSets;
+      const maxDueToSessionLimit =
+        WorkoutSessionService.MAX_SETS_PER_MUSCLE_GROUP_PER_SESSION - sessionTotal;
+      // Hard limit of 2 to add to a particular exercise at once
+      const maxAddable = Math.min(setsToAdd, maxDueToExerciseLimit, maxDueToSessionLimit, 2);
+
+      if (maxAddable > 0) {
+        exerciseIdToSetCount.set(exerciseId, currentSets + maxAddable);
+      }
+      return maxAddable;
+    }
+
+    let setsRemaining = totalSetsToAdd >= 3 ? 3 : totalSetsToAdd;
+    for (const candidate of candidates) {
+      const added = addSetsToExercise(candidate.exerciseId, setsRemaining);
+      setsRemaining -= added;
+      if (setsRemaining === 0) break;
+    }
+
+    return { exerciseIdToSetCount, recoveryExerciseIds };
+  }
+
+  /**
+   * Calculates the default number of sets for an exercise based on microcycle progression.
    *
    * Key rule: set progression is distributed across exercises that share the same primary muscle group
    * for the entire microcycle, regardless of which session those exercises are in.
@@ -163,7 +373,7 @@ export default class WorkoutSessionService {
    * Progression: add 1 total set per microcycle per muscle group (distributed to earlier exercises
    * in the muscle-group-wide ordering).
    */
-  private static calculateSetCount(
+  private static calculateBaselineSetCount(
     microcycleIndex: number,
     totalExercisesInMuscleGroupForMicrocycle: number,
     exerciseIndexInMuscleGroupForMicrocycle: number,
@@ -171,7 +381,7 @@ export default class WorkoutSessionService {
   ): number {
     // Deload microcycle: half the sets from the previous microcycle, minimum 1 set.
     if (isDeloadMicrocycle) {
-      const baselineSets = this.calculateSetCount(
+      const baselineSets = this.calculateBaselineSetCount(
         microcycleIndex - 1,
         totalExercisesInMuscleGroupForMicrocycle,
         exerciseIndexInMuscleGroupForMicrocycle,

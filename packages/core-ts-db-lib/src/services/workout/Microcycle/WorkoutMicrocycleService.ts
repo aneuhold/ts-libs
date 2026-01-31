@@ -46,6 +46,12 @@ export default class WorkoutMicrocycleService {
 
     const sessionsToExerciseSessionsArray = context.plannedSessionExercisePairs;
 
+    const setPlan = WorkoutSessionService.calculateSetPlanForMicrocycle(
+      context,
+      microcycleIndex,
+      isDeloadMicrocycle
+    );
+
     let currentSessionDate = new Date(microcycle.startDate);
     let sessionIndex = 0;
 
@@ -70,7 +76,8 @@ export default class WorkoutMicrocycleService {
         sessionStartDate: currentSessionDate,
         sessionExerciseList,
         targetRir,
-        isDeloadMicrocycle
+        isDeloadMicrocycle,
+        setPlan
       });
 
       sessionIndex++;

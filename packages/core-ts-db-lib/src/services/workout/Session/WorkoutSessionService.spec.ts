@@ -205,7 +205,9 @@ describe('WorkoutSessionService', () => {
         microcycle: prevMicro,
         title: 'Prev Session'
       });
+      prevMicro.sessionOrder.push(prevSession._id);
       context.existingSessions.push(prevSession);
+      context.sessionMap.set(prevSession._id, prevSession);
 
       exercises.forEach((ex) => {
         const se = workoutTestUtil.createSessionExercise({
@@ -213,7 +215,9 @@ describe('WorkoutSessionService', () => {
           exercise: ex,
           overrides: { setOrder: [] }
         });
+        prevSession.sessionExerciseOrder.push(se._id);
         context.existingSessionExercises.push(se);
+        context.sessionExerciseMap.set(se._id, se);
       });
     };
 
@@ -228,9 +232,6 @@ describe('WorkoutSessionService', () => {
 
       const context = generateContext([exA, exB]);
       setupPreviousSession(context, 1, [exA, exB]);
-
-      // Mock Baseline to 0 to only see added sets
-      vi.spyOn(WorkoutSessionService, 'calculateBaselineSetCount').mockReturnValue(0);
 
       // Mock Recommendation
       vi.spyOn(
@@ -250,33 +251,40 @@ describe('WorkoutSessionService', () => {
       });
 
       const result = WorkoutSessionService.calculateSetPlanForMicrocycle(context, 1, false);
-      const map = result.setCountByExerciseId;
+      const map = result.exerciseIdToSetCount;
 
       vi.restoreAllMocks(); // Cleanup
+
+      // For microcycle 1 with 2 exercises, baseline gives: exA=3, exB=2
+      // (totalSets = 2*2+1=5, distributed as floor(5/2)=2 base, +1 to first = 3,2)
+      const baselineA = 3;
+      const baselineB = 2;
 
       return {
         countA: map.get(exA._id) ?? 0,
         countB: map.get(exB._id) ?? 0,
+        baselineA,
+        baselineB,
         map
       };
     };
 
     it('should choose the exercise that comes first in the microcycle when SFR is equal and 1 set to add', () => {
-      const { countA, countB } = setupAndRun(10, 10, 0.5, 0.5);
-      expect(countA).toBe(1);
-      expect(countB).toBe(0);
+      const { countA, countB, baselineA, baselineB } = setupAndRun(10, 10, 0.5, 0.5);
+      expect(countA).toBe(baselineA + 1); // 3 + 1 = 4
+      expect(countB).toBe(baselineB); // 2 + 0 = 2
     });
 
-    it('should split evenly between the two exercises when SFR is equal and 2 sets to add', () => {
-      const { countA, countB } = setupAndRun(10, 10, 1, 1);
-      expect(countA).toBe(1);
-      expect(countB).toBe(1);
+    it('should add all sets to the top SFR exercise when SFR is equal and 2 sets to add', () => {
+      const { countA, countB, baselineA, baselineB } = setupAndRun(10, 10, 1, 1);
+      expect(countA).toBe(baselineA + 2); // 3 + 2 = 5 (all to top due to equal SFR, tiebreaker picks first)
+      expect(countB).toBe(baselineB); // 2 + 0 = 2
     });
 
     it('should add 2 sets to the higher SFR exercise when SFR is higher and 2 sets to add', () => {
-      const { countA, countB } = setupAndRun(12, 10, 1, 1);
-      expect(countA).toBe(2);
-      expect(countB).toBe(0);
+      const { countA, countB, baselineA, baselineB } = setupAndRun(10, 12, 1, 1);
+      expect(countA).toBe(baselineA);
+      expect(countB).toBe(baselineB + 2);
     });
   });
 });

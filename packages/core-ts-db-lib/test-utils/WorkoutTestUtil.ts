@@ -461,8 +461,6 @@ class WorkoutTestUtil {
 
   /**
    * Creates a workout microcycle with sensible defaults.
-   *
-   * @param options Configuration options.
    */
   createMicrocycle(options: {
     mesocycle?: WorkoutMesocycle;
@@ -483,8 +481,6 @@ class WorkoutTestUtil {
 
   /**
    * Creates a workout session with sensible defaults.
-   *
-   * @param options Configuration options.
    */
   createSession(options: {
     microcycle?: WorkoutMicrocycle;
@@ -505,8 +501,6 @@ class WorkoutTestUtil {
 
   /**
    * Creates a workout session exercise with sensible defaults.
-   *
-   * @param options Configuration options.
    */
   createSessionExercise(options: {
     session?: WorkoutSession;
@@ -525,8 +519,6 @@ class WorkoutTestUtil {
 
   /**
    * Creates a workout exercise with sensible defaults.
-   *
-   * @param overrides Optional partial to override default values.
    */
   createExercise(overrides: Partial<WorkoutExercise> = {}): WorkoutExercise {
     return WorkoutExerciseSchema.parse({
@@ -547,8 +539,6 @@ class WorkoutTestUtil {
 
   /**
    * Creates a workout exercise calibration with sensible defaults.
-   *
-   * @param options Configuration options.
    */
   createCalibration(options: {
     exercise?: WorkoutExercise;
@@ -570,8 +560,6 @@ class WorkoutTestUtil {
 
   /**
    * Creates a workout equipment type with sensible defaults.
-   *
-   * @param overrides Optional partial to override default values.
    */
   createEquipmentType(overrides: Partial<WorkoutEquipmentType> = {}): WorkoutEquipmentType {
     return WorkoutEquipmentTypeSchema.parse({
@@ -584,8 +572,6 @@ class WorkoutTestUtil {
 
   /**
    * Creates a WorkoutMesocyclePlanContext with sensible defaults.
-   *
-   * @param options Configuration options.
    */
   createContext(options: {
     mesocycle?: WorkoutMesocycle;

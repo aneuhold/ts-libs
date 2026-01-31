@@ -83,7 +83,7 @@ export default class WorkoutMesocycleService {
         startDate: new Date(currentDate),
         endDate: DateService.addDays(currentDate, mesocycle.plannedMicrocycleLengthInDays)
       });
-      context.microcyclesToCreate.push(microcycle);
+      context.addMicrocycle(microcycle);
 
       WorkoutMicrocycleService.generateSessionsForMicrocycle({
         context,
