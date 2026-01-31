@@ -9,6 +9,7 @@
     "watch": "tsx scripts/watchAll.ts",
     "unpub": "pnpm -r --stream unpub:local",
     "lint": "pnpm -r --stream lint",
+    "check": "pnpm -r --stream check",
     "test": "pnpm -r --stream test",
     "preparePkg": "pnpm -r --stream --parallel preparePkg && pnpm -r --stream propagateVersion && pnpm i",
     "upgrade:core": "pnpm update '@aneuhold/*' --latest && pnpm -r --stream upgrade:core",

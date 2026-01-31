@@ -13,6 +13,7 @@
     "watch": "nodemon --ignore lib/ -e ts --exec \"pnpm build:withoutClean && local-npm publish\"",
     "unpub:local": "local-npm unpublish || true",
     "lint": "eslint",
+    "check": "tsc --noEmit",
     "test": "vitest run --coverage && pnpm validate:dry",
     "preparePkg": "tb pkg prepare",
     "validate": "tsx ./scripts/validateSchema.ts",

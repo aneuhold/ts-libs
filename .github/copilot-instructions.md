@@ -1,9 +1,10 @@
 ## Overall Project Guidelines
 
 - TypeScript source code with Vitest testing and pnpm package management
-- Make edits directly in files unless asked to create new ones
 - Avoid code duplication; reuse existing code when possible
 - Reference `../docs/ci.md` for the CI/CD process and `../docs/dev-tooling.md` for development tooling details
+- Make sure to run `pnpm check`, `pnpm test`, and `pnpm lint` before considering a task complete if you are making code changes. Run it within the package that is being modified, or at the monorepo root to check all packages.
+- Keep responses and code concise.
 
 ## Code Style
 
@@ -24,6 +25,12 @@
 
 - Order methods by visibility: public, protected, private
 - Within same visibility, order doesn't matter
+- Put static methods before instance methods
+
+### Enums
+
+- Use PascalCase for enum names and values
+- Use TypeScript `enum` (not `const enum` or `type`)
 
 ## File Organization
 
@@ -38,11 +45,6 @@
 - Include `index.ts` at package root exporting all public APIs
 - Exception: CLI tools use `index.ts` for entry point instead of exports
 - Never include `index.ts` elsewhere in package
-
-### Enums
-
-- Use PascalCase for enum names and values
-- Use TypeScript `enum` (not `const enum` or `type`)
 
 ## Testing
 
