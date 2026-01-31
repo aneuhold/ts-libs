@@ -1,8 +1,8 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import workoutTestUtil from '../../../../test-utils/WorkoutTestUtil.js';
 import type { WorkoutExercise } from '../../../documents/workout/WorkoutExercise.js';
-import WorkoutMesocyclePlanContext from '../Mesocycle/WorkoutMesocyclePlanContext.js';
-import WorkoutSessionExerciseService from '../SessionExercise/WorkoutSessionExerciseService.js';
+import type { WorkoutExerciseCalibration } from '../../../documents/workout/WorkoutExerciseCalibration.js';
+import type { WorkoutMesocycle } from '../../../documents/workout/WorkoutMesocycle.js';
 import WorkoutSessionService from './WorkoutSessionService.js';
 
 describe('WorkoutSessionService', () => {
@@ -151,140 +151,148 @@ describe('WorkoutSessionService', () => {
     });
   });
 
-  describe('Set Distribution Logic', () => {
-    const mesocycleLogic = workoutTestUtil.createMesocycle({
-      plannedSessionCountPerMicrocycle: 1,
-      calibratedExercises: [workoutTestUtil.STANDARD_CALIBRATIONS.barbellSquat._id]
+  describe('calculateSetPlanForMicrocycle', () => {
+    it('should calculate baseline set counts for first microcycle without history', () => {
+      const chestExercises: WorkoutExercise[] = [
+        workoutTestUtil.STANDARD_EXERCISES.barbellBenchPress,
+        workoutTestUtil.STANDARD_EXERCISES.inclineBenchPress
+      ];
+
+      const { result } = calculateSetPlan({
+        exercises: chestExercises,
+        calibrations: [
+          {
+            exercise: chestExercises[0],
+            calibration: workoutTestUtil.STANDARD_CALIBRATIONS.barbellBenchPress
+          },
+          {
+            exercise: chestExercises[1],
+            calibration: workoutTestUtil.STANDARD_CALIBRATIONS.inclineBenchPress
+          }
+        ]
+      });
+
+      // Microcycle 0: 2 exercises * 2 sets = 4 total sets
+      expect(result.exerciseIdToSetCount.get(chestExercises[0]._id)).toBe(2);
+      expect(result.exerciseIdToSetCount.get(chestExercises[1]._id)).toBe(2);
+      expect(result.recoveryExerciseIds.size).toBe(0);
     });
 
-    const createWorkoutExercise = (props: Partial<WorkoutExercise> = {}) => {
-      return workoutTestUtil.createExercise({
-        exerciseName: 'Test Exercise',
-        primaryMuscleGroups: [workoutTestUtil.STANDARD_MUSCLE_GROUPS.quads._id],
-        initialFatigueGuess: {
-          jointAndTissueDisruption: 0,
-          perceivedEffort: 0,
-          unusedMusclePerformance: 0
-        },
-        ...props
-      });
-    };
+    it('should prioritize adding sets to lower-set exercise when higher-SFR exercise is at max (8 sets)', () => {
+      const chestExercises: WorkoutExercise[] = [
+        workoutTestUtil.STANDARD_EXERCISES.barbellBenchPress,
+        workoutTestUtil.STANDARD_EXERCISES.inclineBenchPress
+      ];
 
-    const generateContext = (exercises: WorkoutExercise[]) => {
+      const testMesocycle = workoutTestUtil.createMesocycle({
+        plannedSessionCountPerMicrocycle: 2,
+        calibratedExercises: [
+          workoutTestUtil.STANDARD_CALIBRATIONS.barbellBenchPress._id,
+          workoutTestUtil.STANDARD_CALIBRATIONS.inclineBenchPress._id
+        ]
+      });
+
+      // Exercise A (bench press): 8 sets, high SFR (soreness=0, performance=0 -> +2 recommendation)
+      // Exercise B (incline): 3 sets, moderate SFR (soreness=1, performance=1 -> +0 recommendation)
+      const { result } = calculateSetPlan({
+        exercises: chestExercises,
+        calibrations: [
+          {
+            exercise: chestExercises[0],
+            calibration: workoutTestUtil.STANDARD_CALIBRATIONS.barbellBenchPress
+          },
+          {
+            exercise: chestExercises[1],
+            calibration: workoutTestUtil.STANDARD_CALIBRATIONS.inclineBenchPress
+          }
+        ],
+        microcycleIndex: 1,
+        sessionStructure: [[0], [1]], // Exercise A in session 0, Exercise B in session 1
+        mesocycle: testMesocycle,
+        historicalMicrocycles: [
+          {
+            sessionExerciseOverrides: [
+              [{ setCount: 8, sorenessScore: 0, performanceScore: 0 }], // Session 0: Exercise A
+              [{ setCount: 3, sorenessScore: 1, performanceScore: 1 }] // Session 1: Exercise B
+            ]
+          }
+        ]
+      });
+
+      // Exercise A should remain at 8 sets (can't exceed MAX_SETS_PER_EXERCISE)
+      expect(result.exerciseIdToSetCount.get(chestExercises[0]._id)).toBe(8);
+
+      // Exercise B should get the recommended sets that Exercise A couldn't receive (3 + 2 = 5)
+      expect(result.exerciseIdToSetCount.get(chestExercises[1]._id)).toBe(5);
+    });
+
+    /**
+     * Helper to set up context and call calculateSetPlanForMicrocycle
+     */
+    function calculateSetPlan(options: {
+      exercises: WorkoutExercise[];
+      calibrations: { exercise: WorkoutExercise; calibration: WorkoutExerciseCalibration }[];
+      microcycleIndex?: number;
+      isDeload?: boolean;
+      sessionStructure?: number[][];
+      mesocycle?: WorkoutMesocycle;
+      historicalMicrocycles?: Array<{
+        sessionExerciseOverrides?: Array<
+          Array<{
+            setCount?: number;
+            sorenessScore?: number;
+            performanceScore?: number;
+          }>
+        >;
+      }>;
+    }) {
+      const {
+        exercises,
+        calibrations,
+        microcycleIndex = 0,
+        isDeload = false,
+        sessionStructure = [[0, 1]],
+        mesocycle,
+        historicalMicrocycles = []
+      } = options;
+
       const context = workoutTestUtil.createContext({
-        mesocycle: mesocycleLogic,
-        calibrations: [],
+        mesocycle,
+        calibrations: calibrations.map((c) => c.calibration),
         exercises
       });
 
-      const pairs = exercises.map((ex) => ({
-        exercise: ex,
-        calibration: workoutTestUtil.STANDARD_CALIBRATIONS.barbellSquat
-      }));
-      context.setPlannedSessionExercisePairs([pairs]);
-      context.muscleGroupToExercisePairsMap = new Map([
-        [workoutTestUtil.STANDARD_MUSCLE_GROUPS.quads._id, pairs]
-      ]);
+      // Build exercise pairs based on session structure
+      const exercisePairs = sessionStructure.map((sessionExerciseIndices) =>
+        sessionExerciseIndices.map((exerciseIndex) => ({
+          exercise: exercises[exerciseIndex],
+          calibration: calibrations[exerciseIndex].calibration
+        }))
+      );
 
-      return context;
-    };
-
-    const setupPreviousSession = (
-      context: WorkoutMesocyclePlanContext,
-      microcycleIndex: number,
-      exercises: WorkoutExercise[]
-    ) => {
-      const prevMicro = workoutTestUtil.createMicrocycle({
-        mesocycle: mesocycleLogic,
-        startDate: new Date(),
-        endDate: new Date()
-      });
-      context.microcyclesInOrder[microcycleIndex - 1] = prevMicro;
-
-      const prevSession = workoutTestUtil.createSession({
-        microcycle: prevMicro,
-        title: 'Prev Session'
-      });
-      prevMicro.sessionOrder.push(prevSession._id);
-      context.existingSessions.push(prevSession);
-      context.sessionMap.set(prevSession._id, prevSession);
-
-      exercises.forEach((ex) => {
-        const se = workoutTestUtil.createSessionExercise({
-          session: prevSession,
-          exercise: ex,
-          overrides: { setOrder: [] }
+      // Create historical microcycles with performance data
+      historicalMicrocycles.forEach((historicalData) => {
+        workoutTestUtil.createHistoricalMicrocycle({
+          context,
+          exercisePairs,
+          targetRir: 2,
+          isDeloadMicrocycle: false,
+          sessionExerciseOverrides: historicalData.sessionExerciseOverrides
         });
-        prevSession.sessionExerciseOrder.push(se._id);
-        context.existingSessionExercises.push(se);
-        context.sessionExerciseMap.set(se._id, se);
-      });
-    };
-
-    const setupAndRun = (
-      sfrA: number,
-      sfrB: number,
-      recommendedSetAdditionA: number,
-      recommendedSetAdditionB: number
-    ) => {
-      const exA = createWorkoutExercise({ exerciseName: 'Ex A' });
-      const exB = createWorkoutExercise({ exerciseName: 'Ex B' });
-
-      const context = generateContext([exA, exB]);
-      setupPreviousSession(context, 1, [exA, exB]);
-
-      // Mock Recommendation
-      vi.spyOn(
-        WorkoutSessionExerciseService,
-        'getRecommendedSetAdditionsOrRecovery'
-      ).mockImplementation((se) => {
-        if (se.workoutExerciseId === exA._id) return recommendedSetAdditionA;
-        if (se.workoutExerciseId === exB._id) return recommendedSetAdditionB;
-        return 0;
       });
 
-      // Mock SFR
-      vi.spyOn(WorkoutSessionExerciseService, 'getSFR').mockImplementation((se) => {
-        if (se.workoutExerciseId === exA._id) return sfrA;
-        if (se.workoutExerciseId === exB._id) return sfrB;
-        return 0;
-      });
+      // Add the current microcycle being planned
+      context.addMicrocycle(workoutTestUtil.createMicrocycle({ mesocycle }));
 
-      const result = WorkoutSessionService.calculateSetPlanForMicrocycle(context, 1, false);
-      const map = result.exerciseIdToSetCount;
+      context.setPlannedSessionExercisePairs(exercisePairs);
 
-      vi.restoreAllMocks(); // Cleanup
+      const result = WorkoutSessionService.calculateSetPlanForMicrocycle(
+        context,
+        microcycleIndex,
+        isDeload
+      );
 
-      // For microcycle 1 with 2 exercises, baseline gives: exA=3, exB=2
-      // (totalSets = 2*2+1=5, distributed as floor(5/2)=2 base, +1 to first = 3,2)
-      const baselineA = 3;
-      const baselineB = 2;
-
-      return {
-        countA: map.get(exA._id) ?? 0,
-        countB: map.get(exB._id) ?? 0,
-        baselineA,
-        baselineB,
-        map
-      };
-    };
-
-    it('should choose the exercise that comes first in the microcycle when SFR is equal and 1 set to add', () => {
-      const { countA, countB, baselineA, baselineB } = setupAndRun(10, 10, 0.5, 0.5);
-      expect(countA).toBe(baselineA + 1); // 3 + 1 = 4
-      expect(countB).toBe(baselineB); // 2 + 0 = 2
-    });
-
-    it('should add all sets to the top SFR exercise when SFR is equal and 2 sets to add', () => {
-      const { countA, countB, baselineA, baselineB } = setupAndRun(10, 10, 1, 1);
-      expect(countA).toBe(baselineA + 2); // 3 + 2 = 5 (all to top due to equal SFR, tiebreaker picks first)
-      expect(countB).toBe(baselineB); // 2 + 0 = 2
-    });
-
-    it('should add 2 sets to the higher SFR exercise when SFR is higher and 2 sets to add', () => {
-      const { countA, countB, baselineA, baselineB } = setupAndRun(10, 12, 1, 1);
-      expect(countA).toBe(baselineA);
-      expect(countB).toBe(baselineB + 2);
-    });
+      return { context, result };
+    }
   });
 });

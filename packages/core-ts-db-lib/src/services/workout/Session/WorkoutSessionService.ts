@@ -241,6 +241,17 @@ export default class WorkoutSessionService {
     if (exerciseIdToPrevSessionExercise.size === 0)
       return { exerciseIdToSetCount, recoveryExerciseIds };
 
+    // Update baseline with historical set counts when available
+    muscleGroupExercisePairs.forEach((pair) => {
+      const previousSessionExercise = exerciseIdToPrevSessionExercise.get(pair.exercise._id);
+      if (previousSessionExercise) {
+        exerciseIdToSetCount.set(
+          pair.exercise._id,
+          Math.min(previousSessionExercise.setOrder.length, this.MAX_SETS_PER_EXERCISE)
+        );
+      }
+    });
+
     /**
      * Determines if the session for the given exercise is already capped for this muscle group.
      */
@@ -280,11 +291,10 @@ export default class WorkoutSessionService {
 
       if (recommendation === -1) {
         recoveryExerciseIds.add(pair.exercise._id);
-      } else if (recommendation != null && recommendation > 0) {
-        // Add the sets to the total if we have a suggestion. This is business logic.
+      } else if (recommendation != null && recommendation >= 0) {
         totalSetsToAdd += recommendation;
 
-        // Only consider as candidate if session is not already capped
+        // Consider as candidate if session is not already capped
         if (
           previousSessionExercise.setOrder.length < this.MAX_SETS_PER_EXERCISE &&
           !sessionIsCapped(pair.exercise._id)
