@@ -265,6 +265,59 @@ describe('WorkoutSessionService', () => {
       expect(result.exerciseIdToSetCount.get(chestExercises[2]._id)).toBe(7);
     });
 
+    it('should redistribute sets when session cap prevents second-highest SFR exercise from receiving sets', () => {
+      const chestExercises: WorkoutExercise[] = [
+        workoutTestUtil.STANDARD_EXERCISES.barbellBenchPress,
+        workoutTestUtil.STANDARD_EXERCISES.inclineBenchPress,
+        workoutTestUtil.STANDARD_EXERCISES.dumbbellChestPress
+      ];
+
+      // Exercise A (bench): 4 sets, highest SFR (soreness=0, performance=1 -> +1 recommendation)
+      // Exercise B (incline): 5 sets, second SFR (soreness=0, performance=1 -> +1 recommendation)
+      // Exercise C (dumbbell): 3 sets, third SFR (soreness=1, performance=0 -> +1 recommendation)
+      // Total sets to add: 3. Session 0 already has 9 sets (4+5), so adding 1 to A caps it at 10.
+      // B cannot receive sets due to session cap, so its +1 is redistributed to C.
+      const { result } = calculateSetPlan({
+        exercises: chestExercises,
+        calibrations: [
+          {
+            exercise: chestExercises[0],
+            calibration: workoutTestUtil.STANDARD_CALIBRATIONS.barbellBenchPress
+          },
+          {
+            exercise: chestExercises[1],
+            calibration: workoutTestUtil.STANDARD_CALIBRATIONS.inclineBenchPress
+          },
+          {
+            exercise: chestExercises[2],
+            calibration: workoutTestUtil.STANDARD_CALIBRATIONS.dumbbellChestPress
+          }
+        ],
+        microcycleIndex: 1,
+        sessionStructure: [[0, 1], [2]], // Exercises A and B in session 0, Exercise C in session 1
+        historicalMicrocycles: [
+          {
+            sessionExerciseOverrides: [
+              [
+                { setCount: 4, sorenessScore: 0, performanceScore: 1 }, // Exercise A (highest SFR)
+                { setCount: 5, sorenessScore: 0, performanceScore: 1 } // Exercise B (second SFR)
+              ],
+              [{ setCount: 3, sorenessScore: 1, performanceScore: 0 }] // Exercise C (third SFR)
+            ]
+          }
+        ]
+      });
+
+      // Exercise A gets +1 (4 → 5), bringing session 0 to MAX_SETS_PER_MUSCLE_GROUP_PER_SESSION
+      expect(result.exerciseIdToSetCount.get(chestExercises[0]._id)).toBe(5);
+
+      // Exercise B remains at 5 (session is capped)
+      expect(result.exerciseIdToSetCount.get(chestExercises[1]._id)).toBe(5);
+
+      // Exercise C gets its own +1 plus B's redistributed +1 (3 + 1 + 1 = 5)
+      expect(result.exerciseIdToSetCount.get(chestExercises[2]._id)).toBe(5);
+    });
+
     /**
      * Helper to set up context and call calculateSetPlanForMicrocycle
      */
