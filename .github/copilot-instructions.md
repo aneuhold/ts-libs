@@ -17,7 +17,7 @@
 
 ### Documentation & Naming
 
-- Add JSDoc for all methods, functions, and classes (include `@param`, omit `@returns`)
+- Add JSDoc for all methods, functions, and classes (only include `@param` if they are complicated / non-intuitive. If you do add `@param`, it needs to be added for all params, omit `@returns` always)
 - Add JSDoc for public class properties only if complex
 - Never prefix functions/methods with underscores
 
