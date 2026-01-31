@@ -6,35 +6,23 @@ import {
   type WorkoutExercise
 } from '../../../documents/workout/WorkoutExercise.js';
 import type { WorkoutExerciseCalibration } from '../../../documents/workout/WorkoutExerciseCalibration.js';
-import { CycleType, WorkoutMesocycleSchema } from '../../../documents/workout/WorkoutMesocycle.js';
-import { WorkoutSessionSchema } from '../../../documents/workout/WorkoutSession.js';
-import { WorkoutSessionExerciseSchema } from '../../../documents/workout/WorkoutSessionExercise.js';
-import DocumentService from '../../../services/DocumentService.js';
-import WorkoutMesocyclePlanContext from '../Mesocycle/WorkoutMesocyclePlanContext.js';
 import WorkoutSetService from './WorkoutSetService.js';
 
 describe('WorkoutSetService', () => {
   describe('generateSetsForSessionExercise', () => {
     const exercise = workoutTestUtil.STANDARD_EXERCISES.dumbbellLateralRaise; // Light Rep Range (15-30)
 
-    const session = WorkoutSessionSchema.parse({
-      userId: workoutTestUtil.userId,
-      workoutMicrocycleId: DocumentService.generateID(),
-      title: 'Test Session',
-      startTime: new Date()
+    const session = workoutTestUtil.createSession({
+      title: 'Test Session'
     });
 
-    const sessionExercise = WorkoutSessionExerciseSchema.parse({
-      userId: workoutTestUtil.userId,
-      workoutSessionId: session._id,
-      workoutExerciseId: exercise._id,
-      sets: []
+    const sessionExercise = workoutTestUtil.createSessionExercise({
+      session,
+      exercise,
+      overrides: { setOrder: [] }
     });
 
-    const mesocycle = WorkoutMesocycleSchema.parse({
-      userId: workoutTestUtil.userId,
-      cycleType: CycleType.MuscleGain,
-      plannedMicrocycleLengthInDays: 7,
+    const mesocycle = workoutTestUtil.createMesocycle({
       plannedSessionCountPerMicrocycle: 1, // Reduced to pass schema validation with minimal exercises
       calibratedExercises: [workoutTestUtil.STANDARD_CALIBRATIONS.dumbbellLateralRaise._id]
     });
@@ -58,12 +46,11 @@ describe('WorkoutSetService', () => {
       } = params;
 
       // Use all standard equipment so any exercise works
-      const context = new WorkoutMesocyclePlanContext(
+      const context = workoutTestUtil.createContext({
         mesocycle,
-        [currentCalibration],
-        [currentExercise],
-        Object.values(workoutTestUtil.STANDARD_EQUIPMENT_TYPES)
-      );
+        calibrations: [currentCalibration],
+        exercises: [currentExercise]
+      });
 
       WorkoutSetService.generateSetsForSessionExercise({
         context,

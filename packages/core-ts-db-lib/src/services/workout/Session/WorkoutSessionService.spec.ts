@@ -1,16 +1,12 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import workoutTestUtil from '../../../../test-utils/WorkoutTestUtil.js';
 import type { WorkoutExercise } from '../../../documents/workout/WorkoutExercise.js';
-import { CycleType, WorkoutMesocycleSchema } from '../../../documents/workout/WorkoutMesocycle.js';
-import { WorkoutMicrocycleSchema } from '../../../documents/workout/WorkoutMicrocycle.js';
 import WorkoutMesocyclePlanContext from '../Mesocycle/WorkoutMesocyclePlanContext.js';
+import WorkoutSessionExerciseService from '../SessionExercise/WorkoutSessionExerciseService.js';
 import WorkoutSessionService from './WorkoutSessionService.js';
 
 describe('WorkoutSessionService', () => {
-  const mesocycle = WorkoutMesocycleSchema.parse({
-    userId: workoutTestUtil.userId,
-    cycleType: CycleType.MuscleGain,
-    plannedMicrocycleLengthInDays: 7,
+  const mesocycle = workoutTestUtil.createMesocycle({
     plannedSessionCountPerMicrocycle: 4,
     calibratedExercises: [
       workoutTestUtil.STANDARD_CALIBRATIONS.barbellSquat._id,
@@ -32,20 +28,18 @@ describe('WorkoutSessionService', () => {
     isDeload: boolean = false,
     inputExercises: WorkoutExercise[] = exercises
   ) => {
-    const context = new WorkoutMesocyclePlanContext(
+    const context = workoutTestUtil.createContext({
       mesocycle,
-      [workoutTestUtil.STANDARD_CALIBRATIONS.barbellSquat],
-      inputExercises,
-      Object.values(workoutTestUtil.STANDARD_EQUIPMENT_TYPES)
-    );
+      calibrations: [workoutTestUtil.STANDARD_CALIBRATIONS.barbellSquat],
+      exercises: inputExercises
+    });
 
     // Populate dummy microcycles so that when generateSession looks for context.microcyclesToCreate[index], it exists.
     // We need to fill up to microcycleIndex.
     for (let i = 0; i <= microcycleIndex; i++) {
-      context.microcyclesToCreate.push(
-        WorkoutMicrocycleSchema.parse({
-          userId: workoutTestUtil.userId,
-          workoutMesocycleId: mesocycle._id,
+      context.addMicrocycle(
+        workoutTestUtil.createMicrocycle({
+          mesocycle,
           startDate: new Date(),
           endDate: new Date()
         })
@@ -61,6 +55,12 @@ describe('WorkoutSessionService', () => {
     // ordering that microcycle generation would normally provide.
     context.setPlannedSessionExercisePairs([localExerciseList]);
 
+    const setPlan = WorkoutSessionService.calculateSetPlanForMicrocycle(
+      context,
+      microcycleIndex,
+      isDeload
+    );
+
     WorkoutSessionService.generateSession({
       context,
       microcycleIndex,
@@ -68,7 +68,8 @@ describe('WorkoutSessionService', () => {
       sessionStartDate: new Date(),
       sessionExerciseList: localExerciseList,
       targetRir: 2,
-      isDeloadMicrocycle: isDeload
+      isDeloadMicrocycle: isDeload,
+      setPlan
     });
 
     // Count sets generated per exercise
@@ -147,6 +148,135 @@ describe('WorkoutSessionService', () => {
 
       // Check specific logic (min 1 set)
       expect(Object.values(summary).every((s) => s.count >= 1)).toBe(true);
+    });
+  });
+
+  describe('Set Distribution Logic', () => {
+    const mesocycleLogic = workoutTestUtil.createMesocycle({
+      plannedSessionCountPerMicrocycle: 1,
+      calibratedExercises: [workoutTestUtil.STANDARD_CALIBRATIONS.barbellSquat._id]
+    });
+
+    const createWorkoutExercise = (props: Partial<WorkoutExercise> = {}) => {
+      return workoutTestUtil.createExercise({
+        exerciseName: 'Test Exercise',
+        primaryMuscleGroups: [workoutTestUtil.STANDARD_MUSCLE_GROUPS.quads._id],
+        initialFatigueGuess: {
+          jointAndTissueDisruption: 0,
+          perceivedEffort: 0,
+          unusedMusclePerformance: 0
+        },
+        ...props
+      });
+    };
+
+    const generateContext = (exercises: WorkoutExercise[]) => {
+      const context = workoutTestUtil.createContext({
+        mesocycle: mesocycleLogic,
+        calibrations: [],
+        exercises
+      });
+
+      const pairs = exercises.map((ex) => ({
+        exercise: ex,
+        calibration: workoutTestUtil.STANDARD_CALIBRATIONS.barbellSquat
+      }));
+      context.setPlannedSessionExercisePairs([pairs]);
+      context.muscleGroupToExercisePairsMap = new Map([
+        [workoutTestUtil.STANDARD_MUSCLE_GROUPS.quads._id, pairs]
+      ]);
+
+      return context;
+    };
+
+    const setupPreviousSession = (
+      context: WorkoutMesocyclePlanContext,
+      microcycleIndex: number,
+      exercises: WorkoutExercise[]
+    ) => {
+      const prevMicro = workoutTestUtil.createMicrocycle({
+        mesocycle: mesocycleLogic,
+        startDate: new Date(),
+        endDate: new Date()
+      });
+      context.microcyclesInOrder[microcycleIndex - 1] = prevMicro;
+
+      const prevSession = workoutTestUtil.createSession({
+        microcycle: prevMicro,
+        title: 'Prev Session'
+      });
+      context.existingSessions.push(prevSession);
+
+      exercises.forEach((ex) => {
+        const se = workoutTestUtil.createSessionExercise({
+          session: prevSession,
+          exercise: ex,
+          overrides: { setOrder: [] }
+        });
+        context.existingSessionExercises.push(se);
+      });
+    };
+
+    const setupAndRun = (
+      sfrA: number,
+      sfrB: number,
+      recommendedSetAdditionA: number,
+      recommendedSetAdditionB: number
+    ) => {
+      const exA = createWorkoutExercise({ exerciseName: 'Ex A' });
+      const exB = createWorkoutExercise({ exerciseName: 'Ex B' });
+
+      const context = generateContext([exA, exB]);
+      setupPreviousSession(context, 1, [exA, exB]);
+
+      // Mock Baseline to 0 to only see added sets
+      vi.spyOn(WorkoutSessionService, 'calculateBaselineSetCount').mockReturnValue(0);
+
+      // Mock Recommendation
+      vi.spyOn(
+        WorkoutSessionExerciseService,
+        'getRecommendedSetAdditionsOrRecovery'
+      ).mockImplementation((se) => {
+        if (se.workoutExerciseId === exA._id) return recommendedSetAdditionA;
+        if (se.workoutExerciseId === exB._id) return recommendedSetAdditionB;
+        return 0;
+      });
+
+      // Mock SFR
+      vi.spyOn(WorkoutSessionExerciseService, 'getSFR').mockImplementation((se) => {
+        if (se.workoutExerciseId === exA._id) return sfrA;
+        if (se.workoutExerciseId === exB._id) return sfrB;
+        return 0;
+      });
+
+      const result = WorkoutSessionService.calculateSetPlanForMicrocycle(context, 1, false);
+      const map = result.setCountByExerciseId;
+
+      vi.restoreAllMocks(); // Cleanup
+
+      return {
+        countA: map.get(exA._id) ?? 0,
+        countB: map.get(exB._id) ?? 0,
+        map
+      };
+    };
+
+    it('should choose the exercise that comes first in the microcycle when SFR is equal and 1 set to add', () => {
+      const { countA, countB } = setupAndRun(10, 10, 0.5, 0.5);
+      expect(countA).toBe(1);
+      expect(countB).toBe(0);
+    });
+
+    it('should split evenly between the two exercises when SFR is equal and 2 sets to add', () => {
+      const { countA, countB } = setupAndRun(10, 10, 1, 1);
+      expect(countA).toBe(1);
+      expect(countB).toBe(1);
+    });
+
+    it('should add 2 sets to the higher SFR exercise when SFR is higher and 2 sets to add', () => {
+      const { countA, countB } = setupAndRun(12, 10, 1, 1);
+      expect(countA).toBe(2);
+      expect(countB).toBe(0);
     });
   });
 });

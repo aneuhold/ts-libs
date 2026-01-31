@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { WorkoutEquipmentTypeSchema } from '../../../documents/workout/WorkoutEquipmentType.js';
-import DocumentService from '../../../services/DocumentService.js';
+import workoutTestUtil from '../../../../test-utils/WorkoutTestUtil.js';
 import WorkoutEquipmentTypeService from './WorkoutEquipmentTypeService.js';
 
 describe('Unit Tests', () => {
@@ -31,8 +30,7 @@ describe('Unit Tests', () => {
   });
 
   describe('findNearestWeight', () => {
-    const equipmentType = WorkoutEquipmentTypeSchema.parse({
-      userId: DocumentService.generateID(),
+    const equipmentType = workoutTestUtil.createEquipmentType({
       title: 'Test Equipment',
       weightOptions: [10, 15, 20, 25, 30, 35, 40]
     });
@@ -135,8 +133,7 @@ describe('Unit Tests', () => {
       });
 
       it('should return null when no weights are available', () => {
-        const emptyEquipment = WorkoutEquipmentTypeSchema.parse({
-          userId: DocumentService.generateID(),
+        const emptyEquipment = workoutTestUtil.createEquipmentType({
           title: 'Empty Equipment',
           weightOptions: []
         });
@@ -183,8 +180,7 @@ describe('Unit Tests', () => {
       });
 
       it('should return null when no weights are available', () => {
-        const emptyEquipment = WorkoutEquipmentTypeSchema.parse({
-          userId: DocumentService.generateID(),
+        const emptyEquipment = workoutTestUtil.createEquipmentType({
           title: 'Empty Equipment',
           weightOptions: []
         });
@@ -201,8 +197,7 @@ describe('Unit Tests', () => {
 
     describe('edge cases', () => {
       it('should return null when weightOptions is null', () => {
-        const emptyEquipment = WorkoutEquipmentTypeSchema.parse({
-          userId: DocumentService.generateID(),
+        const emptyEquipment = workoutTestUtil.createEquipmentType({
           title: 'Empty Equipment',
           weightOptions: null
         });
@@ -213,8 +208,7 @@ describe('Unit Tests', () => {
       });
 
       it('should return null when weightOptions is empty', () => {
-        const emptyEquipment = WorkoutEquipmentTypeSchema.parse({
-          userId: DocumentService.generateID(),
+        const emptyEquipment = workoutTestUtil.createEquipmentType({
           title: 'Empty Equipment',
           weightOptions: []
         });

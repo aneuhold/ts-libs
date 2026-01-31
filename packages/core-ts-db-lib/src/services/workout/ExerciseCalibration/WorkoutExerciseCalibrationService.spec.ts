@@ -1,14 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { WorkoutExerciseCalibrationSchema } from '../../../documents/workout/WorkoutExerciseCalibration.js';
-import DocumentService from '../../DocumentService.js';
+import workoutTestUtil from '../../../../test-utils/WorkoutTestUtil.js';
 import WorkoutExerciseCalibrationService from './WorkoutExerciseCalibrationService.js';
 
 describe('Unit Tests', () => {
   describe('get1RM', () => {
     it('should calculate 1RM using the NASM formula', () => {
-      const calibration = WorkoutExerciseCalibrationSchema.parse({
-        userId: DocumentService.generateID(),
-        workoutExerciseId: DocumentService.generateID(),
+      const calibration = workoutTestUtil.createCalibration({
         weight: 100,
         reps: 8
       });
@@ -20,9 +17,7 @@ describe('Unit Tests', () => {
     });
 
     it('should handle single rep calibration', () => {
-      const calibration = WorkoutExerciseCalibrationSchema.parse({
-        userId: DocumentService.generateID(),
-        workoutExerciseId: DocumentService.generateID(),
+      const calibration = workoutTestUtil.createCalibration({
         weight: 200,
         reps: 1
       });
@@ -34,9 +29,7 @@ describe('Unit Tests', () => {
     });
 
     it('should handle higher rep calibration', () => {
-      const calibration = WorkoutExerciseCalibrationSchema.parse({
-        userId: DocumentService.generateID(),
-        workoutExerciseId: DocumentService.generateID(),
+      const calibration = workoutTestUtil.createCalibration({
         weight: 50,
         reps: 15
       });
@@ -50,9 +43,7 @@ describe('Unit Tests', () => {
 
   describe('getTargetWeight', () => {
     it('should calculate target weight without rounding', () => {
-      const calibration = WorkoutExerciseCalibrationSchema.parse({
-        userId: DocumentService.generateID(),
-        workoutExerciseId: DocumentService.generateID(),
+      const calibration = workoutTestUtil.createCalibration({
         weight: 100,
         reps: 8
       });
@@ -64,9 +55,7 @@ describe('Unit Tests', () => {
     });
 
     it('should handle different rep targets', () => {
-      const calibration = WorkoutExerciseCalibrationSchema.parse({
-        userId: DocumentService.generateID(),
-        workoutExerciseId: DocumentService.generateID(),
+      const calibration = workoutTestUtil.createCalibration({
         weight: 100,
         reps: 8
       });

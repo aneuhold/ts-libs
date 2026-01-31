@@ -1,8 +1,5 @@
 import { describe, expect, it } from 'vitest';
 import workoutTestUtil from '../../../../test-utils/WorkoutTestUtil.js';
-import { CycleType, WorkoutMesocycleSchema } from '../../../documents/workout/WorkoutMesocycle.js';
-import { WorkoutMicrocycleSchema } from '../../../documents/workout/WorkoutMicrocycle.js';
-import WorkoutMesocyclePlanContext from '../Mesocycle/WorkoutMesocyclePlanContext.js';
 import WorkoutMicrocycleService from './WorkoutMicrocycleService.js';
 
 describe('WorkoutMicrocycleService', () => {
@@ -23,31 +20,26 @@ describe('WorkoutMicrocycleService', () => {
       workoutTestUtil.STANDARD_CALIBRATIONS.dumbbellCurl
     ];
 
-    const mesocycle = WorkoutMesocycleSchema.parse({
-      userId: workoutTestUtil.userId,
-      cycleType: CycleType.MuscleGain,
-      plannedMicrocycleLengthInDays: 7,
+    const mesocycle = workoutTestUtil.createMesocycle({
       plannedSessionCountPerMicrocycle: 3,
       plannedMicrocycleRestDays: [1], // Skip day 1 (index 1 = Tuesday if Monday start)
       calibratedExercises: calibrations.map((c) => c._id)
     });
 
     // Need `microcyclesToCreate` pre-populated in context because the service looks it up.
-    const microcycle = WorkoutMicrocycleSchema.parse({
-      userId: workoutTestUtil.userId,
-      workoutMesocycleId: mesocycle._id,
+    const microcycle = workoutTestUtil.createMicrocycle({
+      mesocycle,
       startDate: new Date(2024, 0, 1), // Monday Jan 1st - Local Time
       endDate: new Date(2024, 0, 7)
     });
 
     const runGeneration = () => {
-      const context = new WorkoutMesocyclePlanContext(
+      const context = workoutTestUtil.createContext({
         mesocycle,
         calibrations,
-        exercises,
-        Object.values(workoutTestUtil.STANDARD_EQUIPMENT_TYPES)
-      );
-      context.microcyclesToCreate.push(microcycle);
+        exercises
+      });
+      context.addMicrocycle(microcycle);
 
       context.setPlannedSessionExercisePairs(
         WorkoutMicrocycleService.distributeExercisesAcrossSessions(

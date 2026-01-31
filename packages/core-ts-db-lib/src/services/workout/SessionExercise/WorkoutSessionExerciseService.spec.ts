@@ -1,18 +1,15 @@
 import { describe, expect, it } from 'vitest';
 import workoutTestUtil from '../../../../test-utils/WorkoutTestUtil.js';
-import { WorkoutSessionExerciseSchema } from '../../../documents/workout/WorkoutSessionExercise.js';
-import DocumentService from '../../../services/DocumentService.js';
 import WorkoutSessionExerciseService from './WorkoutSessionExerciseService.js';
 
 describe('Unit Tests', () => {
   describe('getRecommendedSetAdditionsOrRecovery', () => {
     it('should return null when insufficient data is available', () => {
-      const workoutSessionExercise = WorkoutSessionExerciseSchema.parse({
-        userId: workoutTestUtil.userId,
-        workoutSessionId: DocumentService.generateID(),
-        workoutExerciseId: DocumentService.generateID(),
-        sorenessScore: null,
-        performanceScore: null
+      const workoutSessionExercise = workoutTestUtil.createSessionExercise({
+        overrides: {
+          sorenessScore: null,
+          performanceScore: null
+        }
       });
 
       expect(
@@ -21,12 +18,11 @@ describe('Unit Tests', () => {
     });
 
     it('should return -1 when recovery sessions should be employed', () => {
-      const workoutSessionExercise = WorkoutSessionExerciseSchema.parse({
-        userId: workoutTestUtil.userId,
-        workoutSessionId: DocumentService.generateID(),
-        workoutExerciseId: DocumentService.generateID(),
-        sorenessScore: 0,
-        performanceScore: 3
+      const workoutSessionExercise = workoutTestUtil.createSessionExercise({
+        overrides: {
+          sorenessScore: 0,
+          performanceScore: 3
+        }
       });
 
       expect(
@@ -45,12 +41,11 @@ describe('Unit Tests', () => {
       ];
 
       for (const testCase of cases) {
-        const workoutSessionExercise = WorkoutSessionExerciseSchema.parse({
-          userId: workoutTestUtil.userId,
-          workoutSessionId: DocumentService.generateID(),
-          workoutExerciseId: DocumentService.generateID(),
-          sorenessScore: testCase.sorenessScore,
-          performanceScore: testCase.performanceScore
+        const workoutSessionExercise = workoutTestUtil.createSessionExercise({
+          overrides: {
+            sorenessScore: testCase.sorenessScore,
+            performanceScore: testCase.performanceScore
+          }
         });
 
         expect(

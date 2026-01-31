@@ -1,4 +1,5 @@
 import type { UUID } from 'crypto';
+import type { WorkoutEquipmentType } from '../src/documents/workout/WorkoutEquipmentType.js';
 import { WorkoutEquipmentTypeSchema } from '../src/documents/workout/WorkoutEquipmentType.js';
 import type { WorkoutExercise } from '../src/documents/workout/WorkoutExercise.js';
 import {
@@ -6,9 +7,19 @@ import {
   ExerciseRepRange,
   WorkoutExerciseSchema
 } from '../src/documents/workout/WorkoutExercise.js';
+import type { WorkoutExerciseCalibration } from '../src/documents/workout/WorkoutExerciseCalibration.js';
 import { WorkoutExerciseCalibrationSchema } from '../src/documents/workout/WorkoutExerciseCalibration.js';
+import type { WorkoutMesocycle } from '../src/documents/workout/WorkoutMesocycle.js';
+import { CycleType, WorkoutMesocycleSchema } from '../src/documents/workout/WorkoutMesocycle.js';
+import type { WorkoutMicrocycle } from '../src/documents/workout/WorkoutMicrocycle.js';
+import { WorkoutMicrocycleSchema } from '../src/documents/workout/WorkoutMicrocycle.js';
 import { WorkoutMuscleGroupSchema } from '../src/documents/workout/WorkoutMuscleGroup.js';
+import type { WorkoutSession } from '../src/documents/workout/WorkoutSession.js';
+import { WorkoutSessionSchema } from '../src/documents/workout/WorkoutSession.js';
+import type { WorkoutSessionExercise } from '../src/documents/workout/WorkoutSessionExercise.js';
+import { WorkoutSessionExerciseSchema } from '../src/documents/workout/WorkoutSessionExercise.js';
 import DocumentService from '../src/services/DocumentService.js';
+import WorkoutMesocyclePlanContext from '../src/services/workout/Mesocycle/WorkoutMesocyclePlanContext.js';
 import WorkoutMesocycleService from '../src/services/workout/Mesocycle/WorkoutMesocycleService.js';
 
 /**
@@ -428,6 +439,168 @@ class WorkoutTestUtil {
     console.log('='.repeat(100));
     console.log('END OF MESOCYCLE PLAN');
     console.log('='.repeat(100) + '\n');
+  }
+
+  /**
+   * Creates a workout mesocycle with sensible defaults.
+   *
+   * @param overrides Optional partial to override default values.
+   */
+  createMesocycle(overrides: Partial<WorkoutMesocycle> = {}): WorkoutMesocycle {
+    return WorkoutMesocycleSchema.parse({
+      userId: this.userId,
+      cycleType: CycleType.MuscleGain,
+      plannedMicrocycleLengthInDays: 7,
+      plannedSessionCountPerMicrocycle: 4,
+      plannedMicrocycleRestDays: [],
+      plannedMicrocycleCount: 3,
+      calibratedExercises: [this.STANDARD_CALIBRATIONS.barbellSquat._id],
+      ...overrides
+    });
+  }
+
+  /**
+   * Creates a workout microcycle with sensible defaults.
+   *
+   * @param options Configuration options.
+   */
+  createMicrocycle(options: {
+    mesocycle?: WorkoutMesocycle;
+    startDate?: Date;
+    endDate?: Date;
+    overrides?: Partial<WorkoutMicrocycle>;
+  }): WorkoutMicrocycle {
+    const { mesocycle, startDate, endDate, overrides = {} } = options;
+
+    return WorkoutMicrocycleSchema.parse({
+      userId: this.userId,
+      workoutMesocycleId: mesocycle?._id ?? DocumentService.generateID(),
+      startDate: startDate ?? new Date(2024, 0, 1),
+      endDate: endDate ?? new Date(2024, 0, 7),
+      ...overrides
+    });
+  }
+
+  /**
+   * Creates a workout session with sensible defaults.
+   *
+   * @param options Configuration options.
+   */
+  createSession(options: {
+    microcycle?: WorkoutMicrocycle;
+    title?: string;
+    startTime?: Date;
+    overrides?: Partial<WorkoutSession>;
+  }): WorkoutSession {
+    const { microcycle, title = 'Test Session', startTime, overrides = {} } = options;
+
+    return WorkoutSessionSchema.parse({
+      userId: this.userId,
+      workoutMicrocycleId: microcycle?._id ?? DocumentService.generateID(),
+      title,
+      startTime: startTime ?? new Date(),
+      ...overrides
+    });
+  }
+
+  /**
+   * Creates a workout session exercise with sensible defaults.
+   *
+   * @param options Configuration options.
+   */
+  createSessionExercise(options: {
+    session?: WorkoutSession;
+    exercise?: WorkoutExercise;
+    overrides?: Partial<WorkoutSessionExercise>;
+  }): WorkoutSessionExercise {
+    const { session, exercise, overrides = {} } = options;
+
+    return WorkoutSessionExerciseSchema.parse({
+      userId: this.userId,
+      workoutSessionId: session?._id ?? DocumentService.generateID(),
+      workoutExerciseId: exercise?._id ?? DocumentService.generateID(),
+      ...overrides
+    });
+  }
+
+  /**
+   * Creates a workout exercise with sensible defaults.
+   *
+   * @param overrides Optional partial to override default values.
+   */
+  createExercise(overrides: Partial<WorkoutExercise> = {}): WorkoutExercise {
+    return WorkoutExerciseSchema.parse({
+      userId: this.userId,
+      exerciseName: 'Test Exercise',
+      workoutEquipmentTypeId: this.STANDARD_EQUIPMENT_TYPES.barbell._id,
+      repRange: ExerciseRepRange.Medium,
+      preferredProgressionType: ExerciseProgressionType.Load,
+      primaryMuscleGroups: [this.STANDARD_MUSCLE_GROUPS.chest._id],
+      initialFatigueGuess: {
+        jointAndTissueDisruption: 1,
+        perceivedEffort: 1,
+        unusedMusclePerformance: 1
+      },
+      ...overrides
+    });
+  }
+
+  /**
+   * Creates a workout exercise calibration with sensible defaults.
+   *
+   * @param options Configuration options.
+   */
+  createCalibration(options: {
+    exercise?: WorkoutExercise;
+    weight?: number;
+    reps?: number;
+    overrides?: Partial<WorkoutExerciseCalibration>;
+  }): WorkoutExerciseCalibration {
+    const { exercise, weight = 100, reps = 8, overrides = {} } = options;
+
+    return WorkoutExerciseCalibrationSchema.parse({
+      userId: this.userId,
+      workoutExerciseId: exercise?._id ?? DocumentService.generateID(),
+      weight,
+      reps,
+      exerciseProperties: {},
+      ...overrides
+    });
+  }
+
+  /**
+   * Creates a workout equipment type with sensible defaults.
+   *
+   * @param overrides Optional partial to override default values.
+   */
+  createEquipmentType(overrides: Partial<WorkoutEquipmentType> = {}): WorkoutEquipmentType {
+    return WorkoutEquipmentTypeSchema.parse({
+      userId: this.userId,
+      title: 'Test Equipment',
+      weightOptions: [45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 95, 100],
+      ...overrides
+    });
+  }
+
+  /**
+   * Creates a WorkoutMesocyclePlanContext with sensible defaults.
+   *
+   * @param options Configuration options.
+   */
+  createContext(options: {
+    mesocycle?: WorkoutMesocycle;
+    calibrations?: WorkoutExerciseCalibration[];
+    exercises?: WorkoutExercise[];
+    equipmentTypes?: WorkoutEquipmentType[];
+  }): WorkoutMesocyclePlanContext {
+    const {
+      mesocycle = this.createMesocycle(),
+      calibrations = [this.STANDARD_CALIBRATIONS.barbellSquat],
+      exercises = [this.STANDARD_EXERCISES.barbellSquat],
+      equipmentTypes = Object.values(this.STANDARD_EQUIPMENT_TYPES)
+    } = options;
+
+    return new WorkoutMesocyclePlanContext(mesocycle, calibrations, exercises, equipmentTypes);
   }
 }
 
