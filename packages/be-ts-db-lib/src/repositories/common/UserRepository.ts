@@ -6,6 +6,8 @@ import DashboardNonogramKatanaItemRepository from '../dashboard/DashboardNonogra
 import DashboardNonogramKatanaUpgradeRepository from '../dashboard/DashboardNonogramKatanaUpgradeRepository.js';
 import DashboardTaskRepository from '../dashboard/DashboardTaskRepository.js';
 import DashboardUserConfigRepository from '../dashboard/DashboardUserConfigRepository.js';
+import WorkoutEquipmentTypeRepository from '../workout/WorkoutEquipmentTypeRepository.js';
+import WorkoutMuscleGroupRepository from '../workout/WorkoutMuscleGroupRepository.js';
 import ApiKeyRepository from './ApiKeyRepository.js';
 
 /**
@@ -26,6 +28,8 @@ export default class UserRepository extends BaseRepository<User> {
     this.subscribeToChanges(DashboardTaskRepository.getListenersForUserRepo());
     this.subscribeToChanges(DashboardNonogramKatanaItemRepository.getListenersForUserRepo());
     this.subscribeToChanges(DashboardNonogramKatanaUpgradeRepository.getListenersForUserRepo());
+    this.subscribeToChanges(WorkoutMuscleGroupRepository.getListenersForUserRepo());
+    this.subscribeToChanges(WorkoutEquipmentTypeRepository.getListenersForUserRepo());
   }
 
   /**
