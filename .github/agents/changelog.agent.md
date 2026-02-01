@@ -16,7 +16,6 @@ tools:
     'read/terminalLastCommand',
     'read/terminalSelection',
     'execute/createAndRunTask',
-    'execute/getTaskOutput',
     'execute/runTask',
     'search/usages',
     'vscode/vscodeAPI',

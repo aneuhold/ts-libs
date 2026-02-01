@@ -13,6 +13,7 @@
     "watch": "nodemon --ignore lib/ -e ts --exec \"pnpm build:withoutClean && local-npm publish\"",
     "unpub:local": "local-npm unpublish || true",
     "lint": "eslint",
+    "check": "tsc --noEmit",
     "test": "vitest run",
     "preparePkg": "tb pkg prepare",
     "jsr:validate": "tb pkg validateJsr",

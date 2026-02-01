@@ -12,6 +12,7 @@
     "propagateVersion": "tsx ../../scripts/propagateVersion.ts",
     "watch": "nodemon --ignore lib/ -e ts --exec \"pnpm build:withoutClean\"",
     "lint": "eslint",
+    "check": "tsc --noEmit",
     "test": "vitest run",
     "preparePkg": "tsx ./scripts/bumpVersionAndInitializeChangelog.ts",
     "jsr:validate": "tsx ./scripts/validateJsrPublish.ts",
