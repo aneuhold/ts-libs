@@ -12,7 +12,7 @@ export const RsmSchema = z.object({
    * - 2: You felt a good amount of tension and/or burn in the target muscles
    * - 3: You felt tension and burn close to the limit in your target muscles
    */
-  mindMuscleConnection: z.number().min(0).max(3).nullish(),
+  mindMuscleConnection: z.int().min(0).max(3).nullish(),
   /**
    * Pump score (0-3).
    *
@@ -21,7 +21,7 @@ export const RsmSchema = z.object({
    * - 2: You got a decent pump in the target muscles
    * - 3: You got close to maximal pump in the target muscles
    */
-  pump: z.number().min(0).max(3).nullish(),
+  pump: z.int().min(0).max(3).nullish(),
   /**
    * Muscle disruption score (0-3).
    *
@@ -30,7 +30,7 @@ export const RsmSchema = z.object({
    * - 2: You had weakness and stiffness after the session and experienced soreness the following day
    * - 3: You got much weaker and felt perturbation in the target muscles right after the session and also had soreness for a few days or more
    */
-  disruption: z.number().min(0).max(3).nullish()
+  disruption: z.int().min(0).max(3).nullish()
 });
 
 /**

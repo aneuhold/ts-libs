@@ -34,7 +34,7 @@ export const WorkoutSetSchema = z.object({
   /**
    * The planned number of reps for this set.
    */
-  plannedReps: z.number().nullish(),
+  plannedReps: z.int().positive().nullish(),
   /**
    * The planned weight for this set.
    */
@@ -47,11 +47,11 @@ export const WorkoutSetSchema = z.object({
    *
    * Recommended range is 2-3 RIR on average, with 0-5 RIR being the effective range.
    */
-  plannedRir: z.number().nullish(),
+  plannedRir: z.int().nonnegative().nullish(),
   /**
    * The actual number of reps performed in this set.
    */
-  actualReps: z.number().nullish(),
+  actualReps: z.int().nonnegative().nullish(),
   /**
    * The actual weight used for this set.
    */
@@ -62,7 +62,7 @@ export const WorkoutSetSchema = z.object({
    * This should be recorded to track proximity to failure and adjust future
    * programming.
    */
-  rir: z.number().nullish(),
+  rir: z.int().nullish(),
   /**
    * Custom exercise properties for this set.
    *

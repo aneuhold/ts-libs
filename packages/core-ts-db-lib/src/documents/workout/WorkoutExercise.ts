@@ -100,7 +100,7 @@ export const WorkoutExerciseSchema = z.object({
    * This is used for a timer that will be built into the app for each exercise.
    * No tracking will be done of the timer, it will be purely client-side.
    */
-  restSeconds: z.number().nullish(),
+  restSeconds: z.int().positive().nullish(),
   /**
    * Custom properties for this exercise.
    *

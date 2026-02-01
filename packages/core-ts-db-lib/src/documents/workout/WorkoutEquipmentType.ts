@@ -31,7 +31,7 @@ export const WorkoutEquipmentTypeSchema = z.object({
    * this can be calculated based on minimum weight (e.g., the bar) and possible
    * increments.
    */
-  weightOptions: z.array(z.number()).nullish()
+  weightOptions: z.array(z.number().nonnegative()).nullish()
 });
 
 /**

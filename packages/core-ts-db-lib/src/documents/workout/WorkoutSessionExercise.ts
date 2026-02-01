@@ -53,7 +53,7 @@ export const WorkoutSessionExerciseSchema = z.object({
    * - 2: You got DOMS that resolved just in time for the next session
    * - 3: You got DOMS that remained for the next session
    */
-  sorenessScore: z.number().min(0).max(3).nullish(),
+  sorenessScore: z.int().min(0).max(3).nullish(),
   /**
    * The performance score for this session exercise (0-3).
    *
@@ -62,7 +62,7 @@ export const WorkoutSessionExerciseSchema = z.object({
    * - 2: You hit your target reps after your target RIR
    * - 3: You could not match last week's reps at any RIR
    */
-  performanceScore: z.number().min(0).max(3).nullish(),
+  performanceScore: z.int().min(0).max(3).nullish(),
   /**
    * Determines if this exercise is being used as a recovery exercise, due to high soreness / low
    * performance in the previous microcycle for this exercise.

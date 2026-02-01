@@ -39,7 +39,7 @@ export const WorkoutExerciseCalibrationSchema = z.object({
    * This should be the lowest amount of reps the person can do with the highest
    * amount of weight they can handle for this exercise.
    */
-  reps: z.number(),
+  reps: z.int().positive(),
   /**
    * The weight used for this calibration.
    */

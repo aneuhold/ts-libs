@@ -12,7 +12,7 @@ export const FatigueSchema = z.object({
    * - 2: You had some persistent pain or tightness in your connective tissues that lasted through the following day or several days
    * - 3: You develop chronic pain in the joints and connective tissues that persists across days to weeks or longer
    */
-  jointAndTissueDisruption: z.number().min(0).max(3).nullish(),
+  jointAndTissueDisruption: z.int().min(0).max(3).nullish(),
   /**
    * Perceived effort score (0-3).
    *
@@ -21,7 +21,7 @@ export const FatigueSchema = z.object({
    * - 2: You put a large effort into the training and felt drained through the next day
    * - 3: You put an all-out effort into the training and felt drained for days
    */
-  perceivedEffort: z.number().min(0).max(3).nullish(),
+  perceivedEffort: z.int().min(0).max(3).nullish(),
   /**
    * Unused muscle performance score (0-3).
    *
@@ -30,7 +30,7 @@ export const FatigueSchema = z.object({
    * - 2: Performance on subsequent exercises targeting unused muscles was worse than expected
    * - 3: Your performance on subsequent exercises targeting unused muscles was hugely deteriorated
    */
-  unusedMusclePerformance: z.number().min(0).max(3).nullish()
+  unusedMusclePerformance: z.int().min(0).max(3).nullish()
 });
 
 /**

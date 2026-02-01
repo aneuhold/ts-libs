@@ -53,26 +53,26 @@ export const WorkoutMesocycleSchema = z
     /**
      * The planned number of workout sessions per microcycle.
      */
-    plannedSessionCountPerMicrocycle: z.number(),
+    plannedSessionCountPerMicrocycle: z.int().positive(),
     /**
      * The planned length of each microcycle in days.
      *
      * Typically 7 days (one week), but can vary.
      */
-    plannedMicrocycleLengthInDays: z.number(),
+    plannedMicrocycleLengthInDays: z.int().positive(),
     /**
      * The planned rest days within each microcycle, represented as day indices.
      *
      * For example, [0, 3] would indicate rest on the first and fourth days of
      * the microcycle.
      */
-    plannedMicrocycleRestDays: z.array(z.number()).default([]),
+    plannedMicrocycleRestDays: z.array(z.int().nonnegative()).default([]),
     /**
      * The planned total number of microcycles including accumulation and deload.
      *
      * Should typically be 5-9 microcycles (4-8 accumulation weeks + 1 deload week).
      */
-    plannedMicrocycleCount: z.number().min(2).max(20).nullish(),
+    plannedMicrocycleCount: z.int().min(2).max(20).nullish(),
     /**
      * The date this mesocycle was completed.
      *
