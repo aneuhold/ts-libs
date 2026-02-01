@@ -803,6 +803,14 @@ class WorkoutTestUtil {
         });
       });
     }
+
+    // Mark all sessions in this historical microcycle as complete
+    const sessions = context.sessionsToCreate.filter(
+      (s) => s.workoutMicrocycleId === microcycle._id
+    );
+    sessions.forEach((session) => {
+      session.complete = true;
+    });
   }
 }
 

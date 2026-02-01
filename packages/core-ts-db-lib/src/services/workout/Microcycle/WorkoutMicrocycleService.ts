@@ -11,6 +11,7 @@ import type {
 import WorkoutExerciseService from '../Exercise/WorkoutExerciseService.js';
 import type WorkoutMesocyclePlanContext from '../Mesocycle/WorkoutMesocyclePlanContext.js';
 import WorkoutSessionService from '../Session/WorkoutSessionService.js';
+import WorkoutVolumePlanningService from '../util/VolumePlanning/WorkoutVolumePlanningService.js';
 
 /**
  * A service for handling operations related to {@link WorkoutMicrocycle}s.
@@ -46,7 +47,7 @@ export default class WorkoutMicrocycleService {
 
     const sessionsToExerciseSessionsArray = context.plannedSessionExercisePairs;
 
-    const setPlan = WorkoutSessionService.calculateSetPlanForMicrocycle(
+    const setPlan = WorkoutVolumePlanningService.calculateSetPlanForMicrocycle(
       context,
       microcycleIndex,
       isDeloadMicrocycle
