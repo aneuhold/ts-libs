@@ -39,87 +39,21 @@ export default class WorkoutMesocycleValidator extends IValidator<WorkoutMesocyc
     super(WorkoutMesocycleSchema, WorkoutMesocycleSchema.partial());
   }
 
-  protected async validateNewObjectBusinessLogic(newMesocycle: WorkoutMesocycle): Promise<void> {
-    const errors: string[] = [];
-
-    // Validate phase count
-    if (newMesocycle.numPhases < 1) {
-      errors.push('Number of phases must be at least 1.');
-    }
-
-    // Validate weeks per phase
-    if (newMesocycle.weeksPerPhase < 1) {
-      errors.push('Weeks per phase must be at least 1.');
-    }
-
-    // Validate deload weeks
-    if (newMesocycle.deloadWeeks < 0) {
-      errors.push('Deload weeks cannot be negative.');
-    }
-
-    // Validate RIR progression
-    if (newMesocycle.rirProgression) {
-      if (newMesocycle.rirProgression.length === 0) {
-        errors.push('RIR progression must have at least one value.');
-      }
-
-      // Validate all RIR values are valid (0-10)
-      for (const rir of newMesocycle.rirProgression) {
-        if (rir < 0 || rir > 10) {
-          errors.push(`RIR values must be between 0 and 10. Found: ${rir}`);
-        }
-      }
-    }
-
-    if (errors.length > 0) {
-      throw new Error(errors.join(', '));
-    }
+  protected validateNewObjectBusinessLogic(): Promise<void> {
+    return Promise.resolve();
   }
 
-  protected async validateUpdateObjectBusinessLogic(
+  protected validateUpdateObjectBusinessLogic(
     updatedMesocycle: Partial<WorkoutMesocycle>
   ): Promise<void> {
-    const errors: string[] = [];
-
     if (!updatedMesocycle._id) {
-      errors.push('No _id defined for WorkoutMesocycle update.');
+      ErrorUtils.throwError('No _id defined for WorkoutMesocycle update.', updatedMesocycle);
     }
-
-    // Validate phase count if being updated
-    if (updatedMesocycle.numPhases !== undefined && updatedMesocycle.numPhases < 1) {
-      errors.push('Number of phases must be at least 1.');
-    }
-
-    // Validate weeks per phase if being updated
-    if (updatedMesocycle.weeksPerPhase !== undefined && updatedMesocycle.weeksPerPhase < 1) {
-      errors.push('Weeks per phase must be at least 1.');
-    }
-
-    // Validate deload weeks if being updated
-    if (updatedMesocycle.deloadWeeks !== undefined && updatedMesocycle.deloadWeeks < 0) {
-      errors.push('Deload weeks cannot be negative.');
-    }
-
-    // Validate RIR progression if being updated
-    if (updatedMesocycle.rirProgression !== undefined) {
-      if (updatedMesocycle.rirProgression.length === 0) {
-        errors.push('RIR progression must have at least one value.');
-      }
-
-      for (const rir of updatedMesocycle.rirProgression) {
-        if (rir < 0 || rir > 10) {
-          errors.push(`RIR values must be between 0 and 10. Found: ${rir}`);
-        }
-      }
-    }
-
-    if (errors.length > 0) {
-      throw new Error(errors.join(', '));
-    }
+    return Promise.resolve();
   }
 
-  async validateRepositoryInDb(dryRun: boolean): Promise<void> {
-    // Could add validation to check for orphaned microcycles
+  validateRepositoryInDb(): Promise<void> {
+    return Promise.resolve();
   }
 }
 ```
@@ -129,9 +63,9 @@ export default class WorkoutMesocycleValidator extends IValidator<WorkoutMesocyc
 **Path**: `src/repositories/workout/WorkoutMesocycleRepository.ts`
 
 ```typescript
-import type { WorkoutMesocycle } from '@aneuhold/core-ts-db-lib';
+import type { User, WorkoutMesocycle } from '@aneuhold/core-ts-db-lib';
 import { WorkoutMesocycle_docType } from '@aneuhold/core-ts-db-lib';
-import CleanDocument from '../../util/DocumentCleaner.js';
+import type { RepoListeners } from '../../services/RepoSubscriptionService.js';
 import WorkoutMesocycleValidator from '../../validators/workout/MesocycleValidator.js';
 import WorkoutBaseWithUserIdRepository from './WorkoutBaseWithUserIdRepository.js';
 import WorkoutMicrocycleRepository from './WorkoutMicrocycleRepository.js';
@@ -142,32 +76,40 @@ import WorkoutMicrocycleRepository from './WorkoutMicrocycleRepository.js';
 export default class WorkoutMesocycleRepository extends WorkoutBaseWithUserIdRepository<WorkoutMesocycle> {
   private static singletonInstance?: WorkoutMesocycleRepository;
 
-  /**
-   * Private constructor to enforce singleton pattern.
-   */
   private constructor() {
     super(WorkoutMesocycle_docType, new WorkoutMesocycleValidator());
   }
 
-  protected setupSubscribers(): void {
-    // Subscribe to delete events to cascade to microcycles
-    this.deleteSubject.subscribe(async (metadata) => {
-      const microcycleRepo = WorkoutMicrocycleRepository.getRepo();
-      const microcycles = await microcycleRepo.getAll({
-        mesocycleId: metadata.documentId
-      });
-
-      for (const microcycle of microcycles) {
-        await microcycleRepo.delete(microcycle._id);
+  static getListenersForUserRepo(): RepoListeners<User> {
+    const mesocycleRepo = WorkoutMesocycleRepository.getRepo();
+    return {
+      deleteOne: async (userId, meta) => {
+        await (
+          await mesocycleRepo.getCollection()
+        ).deleteMany({
+          userId,
+          docType: WorkoutMesocycle_docType
+        });
+        meta?.recordDocTypeTouched(WorkoutMesocycle_docType);
+        meta?.addAffectedUserIds([userId]);
+      },
+      deleteList: async (userIds, meta) => {
+        await (
+          await mesocycleRepo.getCollection()
+        ).deleteMany({
+          userId: { $in: userIds },
+          docType: WorkoutMesocycle_docType
+        });
+        meta?.recordDocTypeTouched(WorkoutMesocycle_docType);
+        meta?.addAffectedUserIds(userIds);
       }
-    });
+    };
   }
 
-  /**
-   * Gets the singleton instance of the {@link WorkoutMesocycleRepository}.
-   *
-   * @returns The singleton instance of the repository.
-   */
+  protected setupSubscribers(): void {
+    this.subscribeToChanges(WorkoutMicrocycleRepository.getListenersForUserRepo());
+  }
+
   public static getRepo(): WorkoutMesocycleRepository {
     if (!WorkoutMesocycleRepository.singletonInstance) {
       WorkoutMesocycleRepository.singletonInstance = new WorkoutMesocycleRepository();
@@ -206,34 +148,14 @@ export default class WorkoutMicrocycleValidator extends IValidator<WorkoutMicroc
   }
 
   protected async validateNewObjectBusinessLogic(newMicrocycle: WorkoutMicrocycle): Promise<void> {
-    const errors: string[] = [];
-
-    // Validate mesocycle reference
-    const mesocycle = await WorkoutMesocycleRepository.getRepo().get({
-      _id: newMicrocycle.mesocycleId
-    });
-
+    // Validate that the mesocycle exists
+    const mesocycleRepo = WorkoutMesocycleRepository.getRepo();
+    const mesocycle = await mesocycleRepo.get({ _id: newMicrocycle.mesocycleId });
     if (!mesocycle) {
-      errors.push(`Mesocycle with ID ${newMicrocycle.mesocycleId} does not exist.`);
-    } else if (mesocycle.userId !== newMicrocycle.userId) {
-      errors.push('Mesocycle must belong to the same user as the microcycle.');
-    } else {
-      // Validate phase and week numbers
-      if (newMicrocycle.phaseNumber < 1 || newMicrocycle.phaseNumber > mesocycle.numPhases) {
-        errors.push(
-          `Phase number must be between 1 and ${mesocycle.numPhases} (mesocycle's numPhases).`
-        );
-      }
-
-      if (newMicrocycle.weekNumber < 1 || newMicrocycle.weekNumber > mesocycle.weeksPerPhase) {
-        errors.push(
-          `Week number must be between 1 and ${mesocycle.weeksPerPhase} (mesocycle's weeksPerPhase).`
-        );
-      }
-    }
-
-    if (errors.length > 0) {
-      ErrorUtils.throwErrorList(errors, newMicrocycle);
+      ErrorUtils.throwError(
+        `Mesocycle with ID ${newMicrocycle.mesocycleId} does not exist`,
+        newMicrocycle
+      );
     }
   }
 
@@ -246,59 +168,24 @@ export default class WorkoutMicrocycleValidator extends IValidator<WorkoutMicroc
       errors.push('No _id defined for WorkoutMicrocycle update.');
     }
 
-    // Get existing microcycle to access mesocycleId
-    if (updatedMicrocycle._id) {
-      const existing = await WorkoutMicrocycleRepository.getRepo().get({
-        _id: updatedMicrocycle._id
-      });
-
-      if (!existing) {
-        errors.push('Microcycle not found.');
-        throw new Error(errors.join(', '));
-      }
-
-      const mesocycle = await WorkoutMesocycleRepository.getRepo().get({
-        _id: existing.mesocycleId
-      });
-
+    // Validate mesocycle if being updated
+    if (updatedMicrocycle.mesocycleId) {
+      const mesocycleRepo = WorkoutMesocycleRepository.getRepo();
+      const mesocycle = await mesocycleRepo.get({ _id: updatedMicrocycle.mesocycleId });
       if (!mesocycle) {
-        errors.push('Parent mesocycle not found.');
-      } else {
-        // Validate phase number if being updated
-        if (
-          updatedMicrocycle.phaseNumber !== undefined &&
-          (updatedMicrocycle.phaseNumber < 1 || updatedMicrocycle.phaseNumber > mesocycle.numPhases)
-        ) {
-          errors.push(
-            `Phase number must be between 1 and ${mesocycle.numPhases} (mesocycle's numPhases).`
-          );
-        }
-
-        // Validate week number if being updated
-        if (
-          updatedMicrocycle.weekNumber !== undefined &&
-          (updatedMicrocycle.weekNumber < 1 ||
-            updatedMicrocycle.weekNumber > mesocycle.weeksPerPhase)
-        ) {
-          errors.push(
-            `Week number must be between 1 and ${mesocycle.weeksPerPhase} (mesocycle's weeksPerPhase).`
-          );
-        }
+        errors.push(`Mesocycle with ID ${updatedMicrocycle.mesocycleId} does not exist`);
       }
     }
 
     if (errors.length > 0) {
-      throw new Error(errors.join(', '));
+      ErrorUtils.throwErrorList(errors, updatedMicrocycle);
     }
   }
 
-  async validateRepositoryInDb(dryRun: boolean): Promise<void> {
-    // Could add validation to check for orphaned microcycles
+  validateRepositoryInDb(): Promise<void> {
+    return Promise.resolve();
   }
 }
-
-// Import to avoid circular dependency
-import WorkoutMicrocycleRepository from '../../repositories/workout/WorkoutMicrocycleRepository.js';
 ```
 
 ### 2.2 WorkoutMicrocycleRepository
@@ -342,6 +229,64 @@ export default class WorkoutMicrocycleRepository extends WorkoutBaseWithUserIdRe
    *
    * @returns The singleton instance of the repository.
    */
+  public static getRepo(): WorkoutMicrocycleRepository {
+    if (!WorkoutMicrocycleRepository.singletonInstance) {
+      WorkoutMicrocycleRepository.singletonInstance = new WorkoutMicrocycleRepository();
+    }
+    return WorkoutMicrocycleRepository.singletonInstance;
+  }
+}
+```
+
+### 2.2 WorkoutMicrocycleRepository
+
+**Path**: `src/repositories/workout/WorkoutMicrocycleRepository.ts`
+
+```typescript
+import type { User, WorkoutMicrocycle } from '@aneuhold/core-ts-db-lib';
+import { WorkoutMicrocycle_docType } from '@aneuhold/core-ts-db-lib';
+import type { RepoListeners } from '../../services/RepoSubscriptionService.js';
+import WorkoutMicrocycleValidator from '../../validators/workout/MicrocycleValidator.js';
+import WorkoutBaseWithUserIdRepository from './WorkoutBaseWithUserIdRepository.js';
+
+/**
+ * The repository that contains {@link WorkoutMicrocycle} documents.
+ */
+export default class WorkoutMicrocycleRepository extends WorkoutBaseWithUserIdRepository<WorkoutMicrocycle> {
+  private static singletonInstance?: WorkoutMicrocycleRepository;
+
+  private constructor() {
+    super(WorkoutMicrocycle_docType, new WorkoutMicrocycleValidator());
+  }
+
+  static getListenersForUserRepo(): RepoListeners<User> {
+    const microcycleRepo = WorkoutMicrocycleRepository.getRepo();
+    return {
+      deleteOne: async (userId, meta) => {
+        await (
+          await microcycleRepo.getCollection()
+        ).deleteMany({
+          userId,
+          docType: WorkoutMicrocycle_docType
+        });
+        meta?.recordDocTypeTouched(WorkoutMicrocycle_docType);
+        meta?.addAffectedUserIds([userId]);
+      },
+      deleteList: async (userIds, meta) => {
+        await (
+          await microcycleRepo.getCollection()
+        ).deleteMany({
+          userId: { $in: userIds },
+          docType: WorkoutMicrocycle_docType
+        });
+        meta?.recordDocTypeTouched(WorkoutMicrocycle_docType);
+        meta?.addAffectedUserIds(userIds);
+      }
+    };
+  }
+
+  protected setupSubscribers(): void {}
+
   public static getRepo(): WorkoutMicrocycleRepository {
     if (!WorkoutMicrocycleRepository.singletonInstance) {
       WorkoutMicrocycleRepository.singletonInstance = new WorkoutMicrocycleRepository();

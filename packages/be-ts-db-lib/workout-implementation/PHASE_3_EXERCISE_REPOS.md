@@ -43,35 +43,25 @@ export default class WorkoutExerciseValidator extends IValidator<WorkoutExercise
   protected async validateNewObjectBusinessLogic(newExercise: WorkoutExercise): Promise<void> {
     const errors: string[] = [];
 
-    // Validate muscle group references
-    if (newExercise.primaryMuscleGroups && newExercise.primaryMuscleGroups.length > 0) {
-      await this.validateMuscleGroupReferences(
-        newExercise.primaryMuscleGroups,
-        newExercise.userId,
-        'Primary muscle groups',
-        errors
-      );
+    // Validate muscle groups exist
+    if (newExercise.muscleGroups.length > 0) {
+      const muscleGroupRepo = WorkoutMuscleGroupRepository.getRepo();
+      const muscleGroups = await muscleGroupRepo.getList(newExercise.muscleGroups);
+      if (muscleGroups.length !== newExercise.muscleGroups.length) {
+        errors.push(
+          `Not all muscle groups exist. Found: ${muscleGroups.length}, expected: ${newExercise.muscleGroups.length}`
+        );
+      }
     }
 
-    if (newExercise.secondaryMuscleGroups && newExercise.secondaryMuscleGroups.length > 0) {
-      await this.validateMuscleGroupReferences(
-        newExercise.secondaryMuscleGroups,
-        newExercise.userId,
-        'Secondary muscle groups',
-        errors
-      );
-    }
-
-    // Validate equipment reference if provided
-    if (newExercise.equipmentId) {
-      const equipment = await WorkoutEquipmentTypeRepository.getRepo().get({
-        _id: newExercise.equipmentId
-      });
-
-      if (!equipment) {
-        errors.push(`Equipment with ID ${newExercise.equipmentId} does not exist.`);
-      } else if (equipment.userId !== newExercise.userId) {
-        errors.push('Equipment must belong to the same user as the exercise.');
+    // Validate equipment types exist if provided
+    if (newExercise.equipmentTypes && newExercise.equipmentTypes.length > 0) {
+      const equipmentRepo = WorkoutEquipmentTypeRepository.getRepo();
+      const equipmentTypes = await equipmentRepo.getList(newExercise.equipmentTypes);
+      if (equipmentTypes.length !== newExercise.equipmentTypes.length) {
+        errors.push(
+          `Not all equipment types exist. Found: ${equipmentTypes.length}, expected: ${newExercise.equipmentTypes.length}`
+        );
       }
     }
 
@@ -89,49 +79,25 @@ export default class WorkoutExerciseValidator extends IValidator<WorkoutExercise
       errors.push('No _id defined for WorkoutExercise update.');
     }
 
-    // Get existing exercise to access userId
-    if (updatedExercise._id) {
-      const existing = await WorkoutExerciseRepository.getRepo().get({
-        _id: updatedExercise._id
-      });
-
-      if (!existing) {
-        errors.push('Exercise not found.');
-        throw new Error(errors.join(', '));
-      }
-
-      const userId = existing.userId;
-
-      // Validate muscle group references if being updated
-      if (updatedExercise.primaryMuscleGroups !== undefined) {
-        await this.validateMuscleGroupReferences(
-          updatedExercise.primaryMuscleGroups,
-          userId,
-          'Primary muscle groups',
-          errors
+    // Validate muscle groups if being updated
+    if (updatedExercise.muscleGroups && updatedExercise.muscleGroups.length > 0) {
+      const muscleGroupRepo = WorkoutMuscleGroupRepository.getRepo();
+      const muscleGroups = await muscleGroupRepo.getList(updatedExercise.muscleGroups);
+      if (muscleGroups.length !== updatedExercise.muscleGroups.length) {
+        errors.push(
+          `Not all muscle groups exist. Found: ${muscleGroups.length}, expected: ${updatedExercise.muscleGroups.length}`
         );
       }
+    }
 
-      if (updatedExercise.secondaryMuscleGroups !== undefined) {
-        await this.validateMuscleGroupReferences(
-          updatedExercise.secondaryMuscleGroups,
-          userId,
-          'Secondary muscle groups',
-          errors
+    // Validate equipment types if being updated
+    if (updatedExercise.equipmentTypes && updatedExercise.equipmentTypes.length > 0) {
+      const equipmentRepo = WorkoutEquipmentTypeRepository.getRepo();
+      const equipmentTypes = await equipmentRepo.getList(updatedExercise.equipmentTypes);
+      if (equipmentTypes.length !== updatedExercise.equipmentTypes.length) {
+        errors.push(
+          `Not all equipment types exist. Found: ${equipmentTypes.length}, expected: ${updatedExercise.equipmentTypes.length}`
         );
-      }
-
-      // Validate equipment reference if being updated
-      if (updatedExercise.equipmentId !== undefined && updatedExercise.equipmentId !== null) {
-        const equipment = await WorkoutEquipmentTypeRepository.getRepo().get({
-          _id: updatedExercise.equipmentId
-        });
-
-        if (!equipment) {
-          errors.push(`Equipment with ID ${updatedExercise.equipmentId} does not exist.`);
-        } else if (equipment.userId !== userId) {
-          errors.push('Equipment must belong to the same user as the exercise.');
-        }
       }
     }
 
@@ -140,30 +106,10 @@ export default class WorkoutExerciseValidator extends IValidator<WorkoutExercise
     }
   }
 
-  private async validateMuscleGroupReferences(
-    muscleGroupIds: string[],
-    userId: string,
-    fieldName: string,
-    errors: string[]
-  ): Promise<void> {
-    for (const mgId of muscleGroupIds) {
-      const muscleGroup = await WorkoutMuscleGroupRepository.getRepo().get({ _id: mgId });
-
-      if (!muscleGroup) {
-        errors.push(`${fieldName}: Muscle group with ID ${mgId} does not exist.`);
-      } else if (muscleGroup.userId !== userId) {
-        errors.push(`${fieldName}: Muscle group must belong to the same user as the exercise.`);
-      }
-    }
-  }
-
-  async validateRepositoryInDb(dryRun: boolean): Promise<void> {
-    // Could add validation to check for orphaned references
+  validateRepositoryInDb(): Promise<void> {
+    return Promise.resolve();
   }
 }
-
-// Import the repository to avoid circular dependency issues
-import WorkoutExerciseRepository from '../../repositories/workout/WorkoutExerciseRepository.js';
 ```
 
 ### 1.2 WorkoutExerciseRepository
@@ -171,9 +117,9 @@ import WorkoutExerciseRepository from '../../repositories/workout/WorkoutExercis
 **Path**: `src/repositories/workout/WorkoutExerciseRepository.ts`
 
 ```typescript
-import type { WorkoutExercise } from '@aneuhold/core-ts-db-lib';
+import type { User, WorkoutExercise } from '@aneuhold/core-ts-db-lib';
 import { WorkoutExercise_docType } from '@aneuhold/core-ts-db-lib';
-import CleanDocument from '../../util/DocumentCleaner.js';
+import type { RepoListeners } from '../../services/RepoSubscriptionService.js';
 import WorkoutExerciseValidator from '../../validators/workout/ExerciseValidator.js';
 import WorkoutBaseWithUserIdRepository from './WorkoutBaseWithUserIdRepository.js';
 import WorkoutExerciseCalibrationRepository from './WorkoutExerciseCalibrationRepository.js';
@@ -184,33 +130,40 @@ import WorkoutExerciseCalibrationRepository from './WorkoutExerciseCalibrationRe
 export default class WorkoutExerciseRepository extends WorkoutBaseWithUserIdRepository<WorkoutExercise> {
   private static singletonInstance?: WorkoutExerciseRepository;
 
-  /**
-   * Private constructor to enforce singleton pattern.
-   */
   private constructor() {
     super(WorkoutExercise_docType, new WorkoutExerciseValidator());
   }
 
-  protected setupSubscribers(): void {
-    // Subscribe to delete events to cascade to calibrations
-    this.deleteSubject.subscribe(async (metadata) => {
-      // When an exercise is deleted, also delete its calibrations
-      const calibrationRepo = WorkoutExerciseCalibrationRepository.getRepo();
-      const calibrations = await calibrationRepo.getAll({
-        exerciseId: metadata.documentId
-      });
-
-      for (const calibration of calibrations) {
-        await calibrationRepo.delete(calibration._id);
+  static getListenersForUserRepo(): RepoListeners<User> {
+    const exerciseRepo = WorkoutExerciseRepository.getRepo();
+    return {
+      deleteOne: async (userId, meta) => {
+        await (
+          await exerciseRepo.getCollection()
+        ).deleteMany({
+          userId,
+          docType: WorkoutExercise_docType
+        });
+        meta?.recordDocTypeTouched(WorkoutExercise_docType);
+        meta?.addAffectedUserIds([userId]);
+      },
+      deleteList: async (userIds, meta) => {
+        await (
+          await exerciseRepo.getCollection()
+        ).deleteMany({
+          userId: { $in: userIds },
+          docType: WorkoutExercise_docType
+        });
+        meta?.recordDocTypeTouched(WorkoutExercise_docType);
+        meta?.addAffectedUserIds(userIds);
       }
-    });
+    };
   }
 
-  /**
-   * Gets the singleton instance of the {@link WorkoutExerciseRepository}.
-   *
-   * @returns The singleton instance of the repository.
-   */
+  protected setupSubscribers(): void {
+    this.subscribeToChanges(WorkoutExerciseCalibrationRepository.getListenersForUserRepo());
+  }
+
   public static getRepo(): WorkoutExerciseRepository {
     if (!WorkoutExerciseRepository.singletonInstance) {
       WorkoutExerciseRepository.singletonInstance = new WorkoutExerciseRepository();
@@ -264,26 +217,14 @@ export default class WorkoutExerciseCalibrationValidator extends IValidator<Work
   protected async validateNewObjectBusinessLogic(
     newCalibration: WorkoutExerciseCalibration
   ): Promise<void> {
-    const errors: string[] = [];
-
-    // Validate exercise reference
-    const exercise = await WorkoutExerciseRepository.getRepo().get({
-      _id: newCalibration.exerciseId
-    });
-
+    // Validate that the exercise exists
+    const exerciseRepo = WorkoutExerciseRepository.getRepo();
+    const exercise = await exerciseRepo.get({ _id: newCalibration.exerciseId });
     if (!exercise) {
-      errors.push(`Exercise with ID ${newCalibration.exerciseId} does not exist.`);
-    } else if (exercise.userId !== newCalibration.userId) {
-      errors.push('Exercise must belong to the same user as the calibration.');
-    }
-
-    // Validate actual1RM is positive
-    if (newCalibration.actual1RM <= 0) {
-      errors.push('Actual 1RM must be a positive number.');
-    }
-
-    if (errors.length > 0) {
-      ErrorUtils.throwErrorList(errors, newCalibration);
+      ErrorUtils.throwError(
+        `Exercise with ID ${newCalibration.exerciseId} does not exist`,
+        newCalibration
+      );
     }
   }
 
@@ -296,21 +237,22 @@ export default class WorkoutExerciseCalibrationValidator extends IValidator<Work
       errors.push('No _id defined for WorkoutExerciseCalibration update.');
     }
 
-    // Validate actual1RM if being updated
-    if (updatedCalibration.actual1RM !== undefined && updatedCalibration.actual1RM <= 0) {
-      errors.push('Actual 1RM must be a positive number.');
+    // Validate exercise if being updated
+    if (updatedCalibration.exerciseId) {
+      const exerciseRepo = WorkoutExerciseRepository.getRepo();
+      const exercise = await exerciseRepo.get({ _id: updatedCalibration.exerciseId });
+      if (!exercise) {
+        errors.push(`Exercise with ID ${updatedCalibration.exerciseId} does not exist`);
+      }
     }
 
-    // Note: exerciseId should not be changed after creation
-    // If needed, create a new calibration instead
-
     if (errors.length > 0) {
-      throw new Error(errors.join(', '));
+      ErrorUtils.throwErrorList(errors, updatedCalibration);
     }
   }
 
-  async validateRepositoryInDb(dryRun: boolean): Promise<void> {
-    // Could add validation to check for orphaned calibrations
+  validateRepositoryInDb(): Promise<void> {
+    return Promise.resolve();
   }
 }
 ```
@@ -320,9 +262,9 @@ export default class WorkoutExerciseCalibrationValidator extends IValidator<Work
 **Path**: `src/repositories/workout/WorkoutExerciseCalibrationRepository.ts`
 
 ```typescript
-import type { WorkoutExerciseCalibration } from '@aneuhold/core-ts-db-lib';
+import type { User, WorkoutExerciseCalibration } from '@aneuhold/core-ts-db-lib';
 import { WorkoutExerciseCalibration_docType } from '@aneuhold/core-ts-db-lib';
-import CleanDocument from '../../util/DocumentCleaner.js';
+import type { RepoListeners } from '../../services/RepoSubscriptionService.js';
 import WorkoutExerciseCalibrationValidator from '../../validators/workout/ExerciseCalibrationValidator.js';
 import WorkoutBaseWithUserIdRepository from './WorkoutBaseWithUserIdRepository.js';
 
@@ -332,29 +274,38 @@ import WorkoutBaseWithUserIdRepository from './WorkoutBaseWithUserIdRepository.j
 export default class WorkoutExerciseCalibrationRepository extends WorkoutBaseWithUserIdRepository<WorkoutExerciseCalibration> {
   private static singletonInstance?: WorkoutExerciseCalibrationRepository;
 
-  /**
-   * Private constructor to enforce singleton pattern.
-   */
   private constructor() {
     super(WorkoutExerciseCalibration_docType, new WorkoutExerciseCalibrationValidator());
   }
 
-  protected setupSubscribers(): void {
-    // No subscribers needed for calibrations
+  static getListenersForUserRepo(): RepoListeners<User> {
+    const calibrationRepo = WorkoutExerciseCalibrationRepository.getRepo();
+    return {
+      deleteOne: async (userId, meta) => {
+        await (
+          await calibrationRepo.getCollection()
+        ).deleteMany({
+          userId,
+          docType: WorkoutExerciseCalibration_docType
+        });
+        meta?.recordDocTypeTouched(WorkoutExerciseCalibration_docType);
+        meta?.addAffectedUserIds([userId]);
+      },
+      deleteList: async (userIds, meta) => {
+        await (
+          await calibrationRepo.getCollection()
+        ).deleteMany({
+          userId: { $in: userIds },
+          docType: WorkoutExerciseCalibration_docType
+        });
+        meta?.recordDocTypeTouched(WorkoutExerciseCalibration_docType);
+        meta?.addAffectedUserIds(userIds);
+      }
+    };
   }
 
-  /**
-   * Gets all calibrations for a specific exercise.
-   */
-  async getAllForExercise(exerciseId: string): Promise<WorkoutExerciseCalibration[]> {
-    return this.getAll({ exerciseId });
-  }
+  protected setupSubscribers(): void {}
 
-  /**
-   * Gets the singleton instance of the {@link WorkoutExerciseCalibrationRepository}.
-   *
-   * @returns The singleton instance of the repository.
-   */
   public static getRepo(): WorkoutExerciseCalibrationRepository {
     if (!WorkoutExerciseCalibrationRepository.singletonInstance) {
       WorkoutExerciseCalibrationRepository.singletonInstance =

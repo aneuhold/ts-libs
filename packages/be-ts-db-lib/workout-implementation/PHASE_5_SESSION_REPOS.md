@@ -43,28 +43,16 @@ export default class WorkoutSessionValidator extends IValidator<WorkoutSession> 
   }
 
   protected async validateNewObjectBusinessLogic(newSession: WorkoutSession): Promise<void> {
-    const errors: string[] = [];
-
-    // Validate microcycle reference if provided
+    // Validate that the microcycle exists if provided
     if (newSession.microcycleId) {
-      const microcycle = await WorkoutMicrocycleRepository.getRepo().get({
-        _id: newSession.microcycleId
-      });
-
+      const microcycleRepo = WorkoutMicrocycleRepository.getRepo();
+      const microcycle = await microcycleRepo.get({ _id: newSession.microcycleId });
       if (!microcycle) {
-        errors.push(`Microcycle with ID ${newSession.microcycleId} does not exist.`);
-      } else if (microcycle.userId !== newSession.userId) {
-        errors.push('Microcycle must belong to the same user as the session.');
+        ErrorUtils.throwError(
+          `Microcycle with ID ${newSession.microcycleId} does not exist`,
+          newSession
+        );
       }
-    }
-
-    // Validate sessionDate
-    if (newSession.sessionDate && !(newSession.sessionDate instanceof Date)) {
-      errors.push('Session date must be a valid Date object.');
-    }
-
-    if (errors.length > 0) {
-      ErrorUtils.throwErrorList(errors, newSession);
     }
   }
 
@@ -77,23 +65,12 @@ export default class WorkoutSessionValidator extends IValidator<WorkoutSession> 
       errors.push('No _id defined for WorkoutSession update.');
     }
 
-    // Validate microcycle reference if being updated
-    if (updatedSession.microcycleId !== undefined) {
-      const microcycle = await WorkoutMicrocycleRepository.getRepo().get({
-        _id: updatedSession.microcycleId
-      });
-
+    // Validate microcycle if being updated
+    if (updatedSession.microcycleId) {
+      const microcycleRepo = WorkoutMicrocycleRepository.getRepo();
+      const microcycle = await microcycleRepo.get({ _id: updatedSession.microcycleId });
       if (!microcycle) {
-        errors.push(`Microcycle with ID ${updatedSession.microcycleId} does not exist.`);
-      } else {
-        // Get existing session to validate user ownership
-        const existing = await WorkoutSessionRepository.getRepo().get({
-          _id: updatedSession._id
-        });
-
-        if (existing && microcycle.userId !== existing.userId) {
-          errors.push('Microcycle must belong to the same user as the session.');
-        }
+        errors.push(`Microcycle with ID ${updatedSession.microcycleId} does not exist`);
       }
     }
 
@@ -102,13 +79,10 @@ export default class WorkoutSessionValidator extends IValidator<WorkoutSession> 
     }
   }
 
-  async validateRepositoryInDb(dryRun: boolean): Promise<void> {
-    // Could add validation to check for orphaned sessions
+  validateRepositoryInDb(): Promise<void> {
+    return Promise.resolve();
   }
 }
-
-// Import to avoid circular dependency
-import WorkoutSessionRepository from '../../repositories/workout/WorkoutSessionRepository.js';
 ```
 
 ### 1.2 WorkoutSessionRepository
@@ -116,9 +90,9 @@ import WorkoutSessionRepository from '../../repositories/workout/WorkoutSessionR
 **Path**: `src/repositories/workout/WorkoutSessionRepository.ts`
 
 ```typescript
-import type { WorkoutSession } from '@aneuhold/core-ts-db-lib';
+import type { User, WorkoutSession } from '@aneuhold/core-ts-db-lib';
 import { WorkoutSession_docType } from '@aneuhold/core-ts-db-lib';
-import CleanDocument from '../../util/DocumentCleaner.js';
+import type { RepoListeners } from '../../services/RepoSubscriptionService.js';
 import WorkoutSessionValidator from '../../validators/workout/SessionValidator.js';
 import WorkoutBaseWithUserIdRepository from './WorkoutBaseWithUserIdRepository.js';
 import WorkoutSessionExerciseRepository from './WorkoutSessionExerciseRepository.js';
@@ -129,40 +103,40 @@ import WorkoutSessionExerciseRepository from './WorkoutSessionExerciseRepository
 export default class WorkoutSessionRepository extends WorkoutBaseWithUserIdRepository<WorkoutSession> {
   private static singletonInstance?: WorkoutSessionRepository;
 
-  /**
-   * Private constructor to enforce singleton pattern.
-   */
   private constructor() {
     super(WorkoutSession_docType, new WorkoutSessionValidator());
   }
 
-  protected setupSubscribers(): void {
-    // Subscribe to delete events to cascade to session exercises
-    this.deleteSubject.subscribe(async (metadata) => {
-      const sessionExerciseRepo = WorkoutSessionExerciseRepository.getRepo();
-      const sessionExercises = await sessionExerciseRepo.getAll({
-        sessionId: metadata.documentId
-      });
-
-      for (const sessionExercise of sessionExercises) {
-        // This will trigger cascading deletes to sets
-        await sessionExerciseRepo.delete(sessionExercise._id);
+  static getListenersForUserRepo(): RepoListeners<User> {
+    const sessionRepo = WorkoutSessionRepository.getRepo();
+    return {
+      deleteOne: async (userId, meta) => {
+        await (
+          await sessionRepo.getCollection()
+        ).deleteMany({
+          userId,
+          docType: WorkoutSession_docType
+        });
+        meta?.recordDocTypeTouched(WorkoutSession_docType);
+        meta?.addAffectedUserIds([userId]);
+      },
+      deleteList: async (userIds, meta) => {
+        await (
+          await sessionRepo.getCollection()
+        ).deleteMany({
+          userId: { $in: userIds },
+          docType: WorkoutSession_docType
+        });
+        meta?.recordDocTypeTouched(WorkoutSession_docType);
+        meta?.addAffectedUserIds(userIds);
       }
-    });
+    };
   }
 
-  /**
-   * Gets all sessions for a specific microcycle.
-   */
-  async getAllForMicrocycle(microcycleId: string): Promise<WorkoutSession[]> {
-    return this.getAll({ microcycleId });
+  protected setupSubscribers(): void {
+    this.subscribeToChanges(WorkoutSessionExerciseRepository.getListenersForUserRepo());
   }
 
-  /**
-   * Gets the singleton instance of the {@link WorkoutSessionRepository}.
-   *
-   * @returns The singleton instance of the repository.
-   */
   public static getRepo(): WorkoutSessionRepository {
     if (!WorkoutSessionRepository.singletonInstance) {
       WorkoutSessionRepository.singletonInstance = new WorkoutSessionRepository();
@@ -207,30 +181,17 @@ export default class WorkoutSessionExerciseValidator extends IValidator<WorkoutS
     const errors: string[] = [];
 
     // Validate session reference
-    const session = await WorkoutSessionRepository.getRepo().get({
-      _id: newSessionExercise.sessionId
-    });
-
+    const sessionRepo = WorkoutSessionRepository.getRepo();
+    const session = await sessionRepo.get({ _id: newSessionExercise.sessionId });
     if (!session) {
-      errors.push(`Session with ID ${newSessionExercise.sessionId} does not exist.`);
-    } else if (session.userId !== newSessionExercise.userId) {
-      errors.push('Session must belong to the same user as the session exercise.');
+      errors.push(`Session with ID ${newSessionExercise.sessionId} does not exist`);
     }
 
     // Validate exercise reference
-    const exercise = await WorkoutExerciseRepository.getRepo().get({
-      _id: newSessionExercise.exerciseId
-    });
-
+    const exerciseRepo = WorkoutExerciseRepository.getRepo();
+    const exercise = await exerciseRepo.get({ _id: newSessionExercise.exerciseId });
     if (!exercise) {
-      errors.push(`Exercise with ID ${newSessionExercise.exerciseId} does not exist.`);
-    } else if (exercise.userId !== newSessionExercise.userId) {
-      errors.push('Exercise must belong to the same user as the session exercise.');
-    }
-
-    // Validate order number
-    if (newSessionExercise.orderNumber < 0) {
-      errors.push('Order number cannot be negative.');
+      errors.push(`Exercise with ID ${newSessionExercise.exerciseId} does not exist`);
     }
 
     if (errors.length > 0) {
@@ -241,27 +202,16 @@ export default class WorkoutSessionExerciseValidator extends IValidator<WorkoutS
   protected async validateUpdateObjectBusinessLogic(
     updatedSessionExercise: Partial<WorkoutSessionExercise>
   ): Promise<void> {
-    const errors: string[] = [];
-
     if (!updatedSessionExercise._id) {
-      errors.push('No _id defined for WorkoutSessionExercise update.');
-    }
-
-    // Validate order number if being updated
-    if (
-      updatedSessionExercise.orderNumber !== undefined &&
-      updatedSessionExercise.orderNumber < 0
-    ) {
-      errors.push('Order number cannot be negative.');
-    }
-
-    if (errors.length > 0) {
-      ErrorUtils.throwErrorList(errors, updatedSessionExercise);
+      ErrorUtils.throwError(
+        'No _id defined for WorkoutSessionExercise update.',
+        updatedSessionExercise
+      );
     }
   }
 
-  async validateRepositoryInDb(dryRun: boolean): Promise<void> {
-    // Could add validation to check for orphaned session exercises
+  validateRepositoryInDb(): Promise<void> {
+    return Promise.resolve();
   }
 }
 ```
@@ -271,9 +221,9 @@ export default class WorkoutSessionExerciseValidator extends IValidator<WorkoutS
 **Path**: `src/repositories/workout/WorkoutSessionExerciseRepository.ts`
 
 ```typescript
-import type { WorkoutSessionExercise } from '@aneuhold/core-ts-db-lib';
+import type { User, WorkoutSessionExercise } from '@aneuhold/core-ts-db-lib';
 import { WorkoutSessionExercise_docType } from '@aneuhold/core-ts-db-lib';
-import CleanDocument from '../../util/DocumentCleaner.js';
+import type { RepoListeners } from '../../services/RepoSubscriptionService.js';
 import WorkoutSessionExerciseValidator from '../../validators/workout/SessionExerciseValidator.js';
 import WorkoutBaseWithUserIdRepository from './WorkoutBaseWithUserIdRepository.js';
 import WorkoutSetRepository from './WorkoutSetRepository.js';
@@ -284,41 +234,40 @@ import WorkoutSetRepository from './WorkoutSetRepository.js';
 export default class WorkoutSessionExerciseRepository extends WorkoutBaseWithUserIdRepository<WorkoutSessionExercise> {
   private static singletonInstance?: WorkoutSessionExerciseRepository;
 
-  /**
-   * Private constructor to enforce singleton pattern.
-   */
   private constructor() {
     super(WorkoutSessionExercise_docType, new WorkoutSessionExerciseValidator());
   }
 
-  protected setupSubscribers(): void {
-    // Subscribe to delete events to cascade to sets
-    this.deleteSubject.subscribe(async (metadata) => {
-      const setRepo = WorkoutSetRepository.getRepo();
-      const sets = await setRepo.getAll({
-        sessionExerciseId: metadata.documentId
-      });
-
-      for (const set of sets) {
-        await setRepo.delete(set._id);
+  static getListenersForUserRepo(): RepoListeners<User> {
+    const sessionExerciseRepo = WorkoutSessionExerciseRepository.getRepo();
+    return {
+      deleteOne: async (userId, meta) => {
+        await (
+          await sessionExerciseRepo.getCollection()
+        ).deleteMany({
+          userId,
+          docType: WorkoutSessionExercise_docType
+        });
+        meta?.recordDocTypeTouched(WorkoutSessionExercise_docType);
+        meta?.addAffectedUserIds([userId]);
+      },
+      deleteList: async (userIds, meta) => {
+        await (
+          await sessionExerciseRepo.getCollection()
+        ).deleteMany({
+          userId: { $in: userIds },
+          docType: WorkoutSessionExercise_docType
+        });
+        meta?.recordDocTypeTouched(WorkoutSessionExercise_docType);
+        meta?.addAffectedUserIds(userIds);
       }
-    });
+    };
   }
 
-  /**
-   * Gets all session exercises for a specific session.
-   */
-  async getAllForSession(sessionId: string): Promise<WorkoutSessionExercise[]> {
-    const exercises = await this.getAll({ sessionId });
-    // Sort by order number
-    return exercises.sort((a, b) => a.orderNumber - b.orderNumber);
+  protected setupSubscribers(): void {
+    this.subscribeToChanges(WorkoutSetRepository.getListenersForUserRepo());
   }
 
-  /**
-   * Gets the singleton instance of the {@link WorkoutSessionExerciseRepository}.
-   *
-   * @returns The singleton instance of the repository.
-   */
   public static getRepo(): WorkoutSessionExerciseRepository {
     if (!WorkoutSessionExerciseRepository.singletonInstance) {
       WorkoutSessionExerciseRepository.singletonInstance = new WorkoutSessionExerciseRepository();
@@ -357,84 +306,26 @@ export default class WorkoutSetValidator extends IValidator<WorkoutSet> {
   }
 
   protected async validateNewObjectBusinessLogic(newSet: WorkoutSet): Promise<void> {
-    const errors: string[] = [];
-
-    // Validate session exercise reference
-    const sessionExercise = await WorkoutSessionExerciseRepository.getRepo().get({
-      _id: newSet.sessionExerciseId
-    });
-
+    // Validate that the session exercise exists
+    const sessionExerciseRepo = WorkoutSessionExerciseRepository.getRepo();
+    const sessionExercise = await sessionExerciseRepo.get({ _id: newSet.sessionExerciseId });
     if (!sessionExercise) {
-      errors.push(`Session exercise with ID ${newSet.sessionExerciseId} does not exist.`);
-    } else if (sessionExercise.userId !== newSet.userId) {
-      errors.push('Session exercise must belong to the same user as the set.');
-    }
-
-    // Validate set number
-    if (newSet.setNumber < 1) {
-      errors.push('Set number must be at least 1.');
-    }
-
-    // Validate weight if provided
-    if (newSet.weight !== undefined && newSet.weight !== null && newSet.weight < 0) {
-      errors.push('Weight cannot be negative.');
-    }
-
-    // Validate reps if provided
-    if (newSet.reps !== undefined && newSet.reps !== null && newSet.reps < 0) {
-      errors.push('Reps cannot be negative.');
-    }
-
-    // Validate RIR if provided
-    if (newSet.rir !== undefined && newSet.rir !== null && (newSet.rir < 0 || newSet.rir > 10)) {
-      errors.push('RIR must be between 0 and 10.');
-    }
-
-    if (errors.length > 0) {
-      ErrorUtils.throwErrorList(errors, newSet);
+      ErrorUtils.throwError(
+        `Session exercise with ID ${newSet.sessionExerciseId} does not exist`,
+        newSet
+      );
     }
   }
 
-  protected async validateUpdateObjectBusinessLogic(
-    updatedSet: Partial<WorkoutSet>
-  ): Promise<void> {
-    const errors: string[] = [];
-
+  protected validateUpdateObjectBusinessLogic(updatedSet: Partial<WorkoutSet>): Promise<void> {
     if (!updatedSet._id) {
-      errors.push('No _id defined for WorkoutSet update.');
+      ErrorUtils.throwError('No _id defined for WorkoutSet update.', updatedSet);
     }
-
-    // Validate set number if being updated
-    if (updatedSet.setNumber !== undefined && updatedSet.setNumber < 1) {
-      errors.push('Set number must be at least 1.');
-    }
-
-    // Validate weight if being updated
-    if (updatedSet.weight !== undefined && updatedSet.weight !== null && updatedSet.weight < 0) {
-      errors.push('Weight cannot be negative.');
-    }
-
-    // Validate reps if being updated
-    if (updatedSet.reps !== undefined && updatedSet.reps !== null && updatedSet.reps < 0) {
-      errors.push('Reps cannot be negative.');
-    }
-
-    // Validate RIR if being updated
-    if (
-      updatedSet.rir !== undefined &&
-      updatedSet.rir !== null &&
-      (updatedSet.rir < 0 || updatedSet.rir > 10)
-    ) {
-      errors.push('RIR must be between 0 and 10.');
-    }
-
-    if (errors.length > 0) {
-      ErrorUtils.throwErrorList(errors, updatedSet);
-    }
+    return Promise.resolve();
   }
 
-  async validateRepositoryInDb(dryRun: boolean): Promise<void> {
-    // Could add validation to check for orphaned sets
+  validateRepositoryInDb(): Promise<void> {
+    return Promise.resolve();
   }
 }
 ```
@@ -444,9 +335,9 @@ export default class WorkoutSetValidator extends IValidator<WorkoutSet> {
 **Path**: `src/repositories/workout/WorkoutSetRepository.ts`
 
 ```typescript
-import type { WorkoutSet } from '@aneuhold/core-ts-db-lib';
+import type { User, WorkoutSet } from '@aneuhold/core-ts-db-lib';
 import { WorkoutSet_docType } from '@aneuhold/core-ts-db-lib';
-import CleanDocument from '../../util/DocumentCleaner.js';
+import type { RepoListeners } from '../../services/RepoSubscriptionService.js';
 import WorkoutSetValidator from '../../validators/workout/SetValidator.js';
 import WorkoutBaseWithUserIdRepository from './WorkoutBaseWithUserIdRepository.js';
 
@@ -456,35 +347,38 @@ import WorkoutBaseWithUserIdRepository from './WorkoutBaseWithUserIdRepository.j
 export default class WorkoutSetRepository extends WorkoutBaseWithUserIdRepository<WorkoutSet> {
   private static singletonInstance?: WorkoutSetRepository;
 
-  /**
-   * Private constructor to enforce singleton pattern.
-   */
   private constructor() {
-    super(WorkoutSet_docType, new WorkoutSetValidator(), (set: Partial<WorkoutSet>) => {
-      const docCopy = CleanDocument.userId(set);
-      delete docCopy.createdDate;
-      return docCopy;
-    });
+    super(WorkoutSet_docType, new WorkoutSetValidator());
   }
 
-  protected setupSubscribers(): void {
-    // No subscribers needed for sets (leaf node in hierarchy)
+  static getListenersForUserRepo(): RepoListeners<User> {
+    const setRepo = WorkoutSetRepository.getRepo();
+    return {
+      deleteOne: async (userId, meta) => {
+        await (
+          await setRepo.getCollection()
+        ).deleteMany({
+          userId,
+          docType: WorkoutSet_docType
+        });
+        meta?.recordDocTypeTouched(WorkoutSet_docType);
+        meta?.addAffectedUserIds([userId]);
+      },
+      deleteList: async (userIds, meta) => {
+        await (
+          await setRepo.getCollection()
+        ).deleteMany({
+          userId: { $in: userIds },
+          docType: WorkoutSet_docType
+        });
+        meta?.recordDocTypeTouched(WorkoutSet_docType);
+        meta?.addAffectedUserIds(userIds);
+      }
+    };
   }
 
-  /**
-   * Gets all sets for a specific session exercise.
-   */
-  async getAllForSessionExercise(sessionExerciseId: string): Promise<WorkoutSet[]> {
-    const sets = await this.getAll({ sessionExerciseId });
-    // Sort by set number
-    return sets.sort((a, b) => a.setNumber - b.setNumber);
-  }
+  protected setupSubscribers(): void {}
 
-  /**
-   * Gets the singleton instance of the {@link WorkoutSetRepository}.
-   *
-   * @returns The singleton instance of the repository.
-   */
   public static getRepo(): WorkoutSetRepository {
     if (!WorkoutSetRepository.singletonInstance) {
       WorkoutSetRepository.singletonInstance = new WorkoutSetRepository();

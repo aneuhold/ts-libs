@@ -68,8 +68,6 @@ protected setupSubscribers(): void {
   // Existing subscribers...
 
   // Subscribe to workout repositories for user deletion cleanup
-  // Each workout repository provides getListenersForUserRepo() which returns
-  // the appropriate listeners for user-related events
   this.subscribeToChanges(WorkoutMuscleGroupRepository.getListenersForUserRepo());
   this.subscribeToChanges(WorkoutEquipmentTypeRepository.getListenersForUserRepo());
   this.subscribeToChanges(WorkoutExerciseRepository.getListenersForUserRepo());
@@ -96,55 +94,7 @@ import WorkoutSessionExerciseRepository from '../workout/WorkoutSessionExerciseR
 import WorkoutSetRepository from '../workout/WorkoutSetRepository.js';
 ```
 
-### 2.2 Add getListenersForUserRepo to all Workout Repositories
-
-Each workout repository needs a static `getListenersForUserRepo()` method. Add this method to each repository class:
-
-**Pattern to add to each repository (e.g., WorkoutMuscleGroupRepository.ts)**:
-
-```typescript
-  /**
-   * Gets listeners that respond to UserRepository events for cleanup.
-   */
-  public static getListenersForUserRepo() {
-    const repo = WorkoutMuscleGroupRepository.getRepo();
-    return [
-      {
-        documentType: 'user',
-        operationType: 'delete' as const,
-        listener: async (userId: UUID) => {
-          await repo.deleteAllForUser(userId);
-        }
-      }
-    ];
-  }
-```
-
-Apply this same pattern to all 9 workout repositories:
-
-- WorkoutMuscleGroupRepository
-- WorkoutEquipmentTypeRepository
-- WorkoutExerciseRepository
-- WorkoutExerciseCalibrationRepository
-- WorkoutMesocycleRepository
-- WorkoutMicrocycleRepository
-- WorkoutSessionRepository
-- WorkoutSessionExerciseRepository
-- WorkoutSetRepository
-
-**Path**: `src/repositories/workout/index.ts`
-
-```typescript
-export { default as WorkoutMuscleGroupRepository } from './WorkoutMuscleGroupRepository.js';
-export { default as WorkoutEquipmentTypeRepository } from './WorkoutEquipmentTypeRepository.js';
-export { default as WorkoutExerciseRepository } from './WorkoutExerciseRepository.js';
-export { default as WorkoutExerciseCalibrationRepository } from './WorkoutExerciseCalibrationRepository.js';
-export { default as WorkoutMesocycleRepository } from './WorkoutMesocycleRepository.js';
-export { default as WorkoutMicrocycleRepository } from './WorkoutMicrocycleRepository.js';
-export { default as WorkoutSessionRepository } from './WorkoutSessionRepository.js';
-export { default as WorkoutSessionExerciseRepository } from './WorkoutSessionExerciseRepository.js';
-export { default as WorkoutSetRepository } from './WorkoutSetRepository.js';
-```
+**Note**: Each workout repository already has `getListenersForUserRepo()` implemented following the pattern from WorkoutMuscleGroupRepository and WorkoutEquipmentTypeRepository (see Phases 1-5).
 
 ---
 
