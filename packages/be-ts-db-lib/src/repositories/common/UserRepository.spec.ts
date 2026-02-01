@@ -1,8 +1,7 @@
 import type { User } from '@aneuhold/core-ts-db-lib';
 import { UserSchema } from '@aneuhold/core-ts-db-lib';
-import { afterAll, describe, expect, it } from 'vitest';
-import { cleanupDoc, expectToThrow, getTestUserName } from '../../tests/testsUtil.js';
-import DocumentDb from '../../util/DocumentDb.js';
+import { describe, expect, it } from 'vitest';
+import { cleanupDoc, expectToThrow, getTestUserName } from '../../../test-util/testsUtil.js';
 import ApiKeyRepository from './ApiKeyRepository.js';
 import UserRepository from './UserRepository.js';
 
@@ -186,8 +185,4 @@ describe('Update operations', () => {
 
     await cleanupDoc(userRepo, newUser);
   });
-});
-
-afterAll(async () => {
-  await DocumentDb.closeDbConnection();
 });

@@ -1,8 +1,7 @@
 import { UserSchema } from '@aneuhold/core-ts-db-lib';
 import crypto from 'crypto';
-import { afterAll, describe, expect, it } from 'vitest';
-import { cleanupDoc, getTestUserName } from '../../tests/testsUtil.js';
-import DocumentDb from '../../util/DocumentDb.js';
+import { describe, expect, it } from 'vitest';
+import { cleanupDoc, getTestUserName } from '../../../test-util/testsUtil.js';
 import UserRepository from '../common/UserRepository.js';
 import DashboardUserConfigRepository from './DashboardUserConfigRepository.js';
 
@@ -115,10 +114,6 @@ describe('Update operations', () => {
     await cleanupDoc(userRepo, newUser2);
     await cleanupDoc(userRepo, newUser3);
   }, 10000);
-});
-
-afterAll(async () => {
-  return DocumentDb.closeDbConnection();
 });
 
 /**

@@ -6,8 +6,8 @@ import {
 import type { UUID } from 'crypto';
 import crypto from 'crypto';
 import { afterAll, expect, it } from 'vitest';
+import { cleanupDoc, getTestUserName } from '../../test-util/testsUtil.js';
 import DemoAccountsService from '../services/DemoAccountsService/DemoAccountsService.js';
-import { cleanupDoc, getTestUserName } from '../tests/testsUtil.js';
 import DocumentDb from '../util/DocumentDb.js';
 import UserRepository from './common/UserRepository.js';
 import DashboardTaskRepository from './dashboard/DashboardTaskRepository.js';

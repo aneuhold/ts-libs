@@ -1,10 +1,9 @@
 import type { User } from '@aneuhold/core-ts-db-lib';
 import { DashboardTaskSchema, UserSchema } from '@aneuhold/core-ts-db-lib';
 import crypto from 'crypto';
-import { afterAll, describe, expect, it } from 'vitest';
-import { cleanupDoc, getTestUserName } from '../../tests/testsUtil.js';
+import { describe, expect, it } from 'vitest';
+import { cleanupDoc, getTestUserName } from '../../../test-util/testsUtil.js';
 import DbOperationMetaData from '../../util/DbOperationMetaData.js';
-import DocumentDb from '../../util/DocumentDb.js';
 import UserRepository from '../common/UserRepository.js';
 import DashboardTaskRepository from './DashboardTaskRepository.js';
 import DashboardUserConfigRepository from './DashboardUserConfigRepository.js';
@@ -130,10 +129,6 @@ describe('DbOperationMetaData tracking', () => {
     expect(meta.getAffectedUserIds().has(newUser._id)).toBe(true);
     await Promise.all([cleanupDoc(userRepo, newUser), cleanupDoc(userRepo, sharedUser)]);
   });
-});
-
-afterAll(async () => {
-  return DocumentDb.closeDbConnection();
 });
 
 /**

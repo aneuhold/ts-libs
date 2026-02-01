@@ -1,8 +1,8 @@
 import type { BaseDocument } from '@aneuhold/core-ts-db-lib';
 import crypto from 'crypto';
 import { expect } from 'vitest';
-import BaseRepository from '../repositories/BaseRepository.js';
-import { TEST_USER_NAME_PREFIX } from './globalTestVariables.js';
+import type BaseRepository from '../src/repositories/BaseRepository.js';
+import { TEST_USER_NAME_PREFIX } from '../src/util/globalTestVariables.js';
 
 /**
  * Asserts that the provided asynchronous function throws an error.
