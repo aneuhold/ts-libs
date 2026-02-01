@@ -1,17 +1,21 @@
-import type { BaseDocumentWithType, RequiredUserId } from '@aneuhold/core-ts-db-lib';
+import type {
+  BaseDocumentWithType,
+  BaseDocumentWithUpdatedAndCreatedDates,
+  RequiredUserId
+} from '@aneuhold/core-ts-db-lib';
 import type { UUID } from 'crypto';
 import type { BulkWriteResult, DeleteResult, Filter, UpdateResult } from 'mongodb';
 import type DbOperationMetaData from '../../util/DbOperationMetaData.js';
 import CleanDocument from '../../util/DocumentCleaner.js';
 import type IValidator from '../../validators/BaseValidator.js';
-import DashboardBaseRepository from './DashboardBaseRepository.js';
+import WorkoutBaseRepository from './WorkoutBaseRepository.js';
 
 /**
- * A base repository for the `dashboard` collection that requires a `userId`.
+ * A base repository for the `workout` collection that requires a `userId`.
  */
-export default abstract class DashboardBaseWithUserIdRepository<
-  TBaseType extends BaseDocumentWithType & RequiredUserId
-> extends DashboardBaseRepository<TBaseType> {
+export default abstract class WorkoutBaseWithUserIdRepository<
+  TBaseType extends BaseDocumentWithType & BaseDocumentWithUpdatedAndCreatedDates & RequiredUserId
+> extends WorkoutBaseRepository<TBaseType> {
   constructor(
     docType: string,
     validator: IValidator<TBaseType>,
@@ -25,7 +29,7 @@ export default abstract class DashboardBaseWithUserIdRepository<
   /**
    * Gets all items for a given user.
    *
-   * @param userId The ID of the user to get items for.
+   * @param userId - The user ID to get items for.
    */
   async getAllForUser(userId: UUID): Promise<TBaseType[]> {
     const filter = {
@@ -59,7 +63,6 @@ export default abstract class DashboardBaseWithUserIdRepository<
     meta?: DbOperationMetaData
   ): Promise<UpdateResult> {
     if (meta && updatedDoc._id) {
-      // We get the doc again, because it shouldn't include userId in the update doc.
       const docs = await this.fetchAndCacheDocsForMeta([updatedDoc._id], meta);
       if (docs.length > 0) {
         meta.addAffectedUserIds([docs[0].userId]);
@@ -91,10 +94,27 @@ export default abstract class DashboardBaseWithUserIdRepository<
   }
 
   override async deleteList(docIds: UUID[], meta?: DbOperationMetaData): Promise<DeleteResult> {
-    if (meta && docIds.length > 0) {
+    if (meta) {
       const cachedDocs = await this.fetchAndCacheDocsForMeta(docIds, meta);
       meta.addAffectedUserIds(cachedDocs.map((doc) => doc.userId));
     }
     return super.deleteList(docIds, meta);
+  }
+
+  /**
+   * Deletes all documents for a specific user.
+   *
+   * @param userId - The user ID to delete documents for.
+   * @param meta - Tracks database operation metadata for a single request.
+   */
+  async deleteAllForUser(userId: UUID, meta?: DbOperationMetaData): Promise<DeleteResult> {
+    // This does mean we are retrieving all documents twice, because deleteList also fetches them.
+    // That isn't very efficient, but at the moment of writing this, it seemed fine because this
+    // operation shouldn't be used very often at all.
+    const docsForUser = await this.getAllForUser(userId);
+    meta?.recordDocTypeTouched(this.docType);
+    meta?.addAffectedUserIds([userId]);
+    const docIds = docsForUser.map((doc) => doc._id);
+    return this.deleteList(docIds, meta);
   }
 }

@@ -1,4 +1,9 @@
-import type { BaseDocument, BaseDocumentWithType, RequiredUserId } from '@aneuhold/core-ts-db-lib';
+import type {
+  BaseDocument,
+  BaseDocumentWithType,
+  BaseDocumentWithUpdatedAndCreatedDates,
+  RequiredUserId
+} from '@aneuhold/core-ts-db-lib';
 
 /**
  * A class which contains some standard methods for cleaning update documents
@@ -20,6 +25,14 @@ export default class CleanDocument {
   static docType<TDocType extends BaseDocumentWithType>(updateDoc: Partial<TDocType>) {
     const docCopy = { ...updateDoc };
     delete docCopy.docType;
+    return docCopy;
+  }
+
+  static createdDate<TDocType extends BaseDocumentWithUpdatedAndCreatedDates>(
+    updateDoc: Partial<TDocType>
+  ) {
+    const docCopy = { ...updateDoc };
+    delete docCopy.createdDate;
     return docCopy;
   }
 }
