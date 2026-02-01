@@ -1,5 +1,13 @@
-import type { BaseDocument, BaseDocumentWithType } from './documents/BaseDocument.js';
-import { BaseDocumentSchema, BaseDocumentWithTypeSchema } from './documents/BaseDocument.js';
+import type {
+  BaseDocument,
+  BaseDocumentWithType,
+  BaseDocumentWithUpdatedAndCreatedDates
+} from './documents/BaseDocument.js';
+import {
+  BaseDocumentSchema,
+  BaseDocumentWithTypeSchema,
+  BaseDocumentWithUpdatedAndCreatedDatesSchema
+} from './documents/BaseDocument.js';
 import type { ApiKey } from './documents/common/ApiKey.js';
 import { ApiKeySchema } from './documents/common/ApiKey.js';
 import type { User, UserCTO } from './documents/common/User.js';
@@ -155,6 +163,7 @@ export {
   ApiKeySchema,
   BaseDocumentSchema,
   BaseDocumentWithTypeSchema,
+  BaseDocumentWithUpdatedAndCreatedDatesSchema,
   CycleType,
   DashboardTagSettingSchema,
   DashboardTagSettingsSchema,
@@ -237,6 +246,7 @@ export type {
   ApiKey,
   BaseDocument,
   BaseDocumentWithType,
+  BaseDocumentWithUpdatedAndCreatedDates,
   CalibrationExercisePair,
   DashboardTagSetting,
   DashboardTagSettings,

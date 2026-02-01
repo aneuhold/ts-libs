@@ -42,3 +42,10 @@ export type BaseDocument = z.infer<typeof BaseDocumentSchema>;
  * Base document type with a `docType` field.
  */
 export type BaseDocumentWithType = z.infer<typeof BaseDocumentWithTypeSchema>;
+
+/**
+ * Base document type with `createdDate` and `lastUpdatedDate` fields.
+ */
+export type BaseDocumentWithUpdatedAndCreatedDates = z.infer<
+  typeof BaseDocumentWithUpdatedAndCreatedDatesSchema
+>;
