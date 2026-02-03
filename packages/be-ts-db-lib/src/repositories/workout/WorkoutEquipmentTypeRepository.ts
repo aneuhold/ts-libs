@@ -18,24 +18,10 @@ export default class WorkoutEquipmentTypeRepository extends WorkoutBaseWithUserI
     const equipmentTypeRepo = WorkoutEquipmentTypeRepository.getRepo();
     return {
       deleteOne: async (userId, meta) => {
-        await (
-          await equipmentTypeRepo.getCollection()
-        ).deleteMany({
-          userId,
-          docType: WorkoutEquipmentType_docType
-        });
-        meta?.recordDocTypeTouched(WorkoutEquipmentType_docType);
-        meta?.addAffectedUserIds([userId]);
+        await equipmentTypeRepo.deleteAllForUser(userId, meta);
       },
       deleteList: async (userIds, meta) => {
-        await (
-          await equipmentTypeRepo.getCollection()
-        ).deleteMany({
-          userId: { $in: userIds },
-          docType: WorkoutEquipmentType_docType
-        });
-        meta?.recordDocTypeTouched(WorkoutEquipmentType_docType);
-        meta?.addAffectedUserIds(userIds);
+        await equipmentTypeRepo.deleteAllForUsers(userIds, meta);
       }
     };
   }

@@ -19,24 +19,10 @@ export default class WorkoutExerciseRepository extends WorkoutBaseWithUserIdRepo
     const exerciseRepo = WorkoutExerciseRepository.getRepo();
     return {
       deleteOne: async (userId, meta) => {
-        await (
-          await exerciseRepo.getCollection()
-        ).deleteMany({
-          userId,
-          docType: WorkoutExercise_docType
-        });
-        meta?.recordDocTypeTouched(WorkoutExercise_docType);
-        meta?.addAffectedUserIds([userId]);
+        await exerciseRepo.deleteAllForUser(userId, meta);
       },
       deleteList: async (userIds, meta) => {
-        await (
-          await exerciseRepo.getCollection()
-        ).deleteMany({
-          userId: { $in: userIds },
-          docType: WorkoutExercise_docType
-        });
-        meta?.recordDocTypeTouched(WorkoutExercise_docType);
-        meta?.addAffectedUserIds(userIds);
+        await exerciseRepo.deleteAllForUsers(userIds, meta);
       }
     };
   }

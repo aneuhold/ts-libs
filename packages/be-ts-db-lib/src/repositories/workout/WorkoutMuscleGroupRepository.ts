@@ -21,24 +21,10 @@ export default class WorkoutMuscleGroupRepository extends WorkoutBaseWithUserIdR
     const muscleGroupRepo = WorkoutMuscleGroupRepository.getRepo();
     return {
       deleteOne: async (userId, meta) => {
-        await (
-          await muscleGroupRepo.getCollection()
-        ).deleteMany({
-          userId,
-          docType: WorkoutMuscleGroup_docType
-        });
-        meta?.recordDocTypeTouched(WorkoutMuscleGroup_docType);
-        meta?.addAffectedUserIds([userId]);
+        await muscleGroupRepo.deleteAllForUser(userId, meta);
       },
       deleteList: async (userIds, meta) => {
-        await (
-          await muscleGroupRepo.getCollection()
-        ).deleteMany({
-          userId: { $in: userIds },
-          docType: WorkoutMuscleGroup_docType
-        });
-        meta?.recordDocTypeTouched(WorkoutMuscleGroup_docType);
-        meta?.addAffectedUserIds(userIds);
+        await muscleGroupRepo.deleteAllForUsers(userIds, meta);
       }
     };
   }

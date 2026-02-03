@@ -32,8 +32,12 @@ export default abstract class WorkoutBaseWithUserIdRepository<
    * @param userId - The user ID to get items for.
    */
   async getAllForUser(userId: UUID): Promise<TBaseType[]> {
+    return this.getAllForUsers([userId]);
+  }
+
+  async getAllForUsers(userIds: UUID[]): Promise<TBaseType[]> {
     const filter = {
-      userId
+      userId: { $in: userIds }
     } as Filter<TBaseType>;
     return this.getListWithFilter(filter);
   }
@@ -108,13 +112,23 @@ export default abstract class WorkoutBaseWithUserIdRepository<
    * @param meta - Tracks database operation metadata for a single request.
    */
   async deleteAllForUser(userId: UUID, meta?: DbOperationMetaData): Promise<DeleteResult> {
+    return this.deleteAllForUsers([userId], meta);
+  }
+
+  /**
+   * Deletes all documents for specific users.
+   *
+   * @param userIds - The user IDs to delete documents for.
+   * @param meta - Tracks database operation metadata for a single request.
+   */
+  async deleteAllForUsers(userIds: UUID[], meta?: DbOperationMetaData): Promise<DeleteResult> {
     // This does mean we are retrieving all documents twice, because deleteList also fetches them.
     // That isn't very efficient, but at the moment of writing this, it seemed fine because this
     // operation shouldn't be used very often at all.
-    const docsForUser = await this.getAllForUser(userId);
+    const docsForUsers = await this.getAllForUsers(userIds);
     meta?.recordDocTypeTouched(this.docType);
-    meta?.addAffectedUserIds([userId]);
-    const docIds = docsForUser.map((doc) => doc._id);
+    meta?.addAffectedUserIds(userIds);
+    const docIds = docsForUsers.map((doc) => doc._id);
     return this.deleteList(docIds, meta);
   }
 }
