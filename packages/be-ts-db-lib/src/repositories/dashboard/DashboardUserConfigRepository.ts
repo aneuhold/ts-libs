@@ -30,29 +30,10 @@ export default class DashboardUserConfigRepository extends DashboardBaseWithUser
     const userConfigRepo = DashboardUserConfigRepository.getRepo();
     return {
       deleteOne: async (userId, meta) => {
-        const collection = await userConfigRepo.getCollection();
-        await collection.deleteOne({ userId, docType: DashboardUserConfig_docType });
-        await collection.updateMany(
-          { collaborators: userId, docType: DashboardUserConfig_docType },
-          { $pull: { collaborators: userId } }
-        );
-        meta?.recordDocTypeTouched(DashboardUserConfig_docType);
-        meta?.addAffectedUserIds([userId]);
+        await userConfigRepo.deleteConfigAndCleanupCollaborators(userId, meta);
       },
       deleteList: async (userIds, meta) => {
-        const collection = await userConfigRepo.getCollection();
-        await collection.deleteMany({
-          userId: { $in: userIds },
-          docType: DashboardUserConfig_docType
-        });
-        await collection.updateMany(
-          { collaborators: { $in: userIds }, docType: DashboardUserConfig_docType },
-          {
-            $pull: { collaborators: { $in: userIds } }
-          }
-        );
-        meta?.recordDocTypeTouched(DashboardUserConfig_docType);
-        meta?.addAffectedUserIds(userIds);
+        await userConfigRepo.deleteConfigsAndCleanupCollaborators(userIds, meta);
       },
       insertNew: async (user, meta) => {
         if (user.projectAccess.dashboard) {
@@ -255,5 +236,41 @@ export default class DashboardUserConfigRepository extends DashboardBaseWithUser
       const collection = await this.getCollection();
       await collection.bulkWrite(bulkOps);
     }
+  }
+
+  /**
+   * Deletes a user config and removes the user from collaborators lists.
+   *
+   * @param userId - The user ID to delete config for.
+   * @param meta - Tracks database operation metadata for a single request.
+   */
+  async deleteConfigAndCleanupCollaborators(
+    userId: UUID,
+    meta?: DbOperationMetaData
+  ): Promise<void> {
+    await this.deleteConfigsAndCleanupCollaborators([userId], meta);
+  }
+
+  /**
+   * Deletes user configs and removes the users from collaborators lists.
+   *
+   * @param userIds - The user IDs to delete configs for.
+   * @param meta - Tracks database operation metadata for a single request.
+   */
+  async deleteConfigsAndCleanupCollaborators(
+    userIds: UUID[],
+    meta?: DbOperationMetaData
+  ): Promise<void> {
+    const collection = await this.getCollection();
+
+    await Promise.all([
+      // Delete the configs
+      this.deleteAllForUsers(userIds, meta),
+      // Remove users from collaborators lists
+      collection.updateMany(
+        { collaborators: { $in: userIds }, docType: DashboardUserConfig_docType },
+        { $pull: { collaborators: { $in: userIds } } }
+      )
+    ]);
   }
 }
