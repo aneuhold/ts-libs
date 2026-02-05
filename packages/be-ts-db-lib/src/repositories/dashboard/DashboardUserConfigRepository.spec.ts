@@ -1,7 +1,7 @@
 import { UserSchema } from '@aneuhold/core-ts-db-lib';
 import crypto from 'crypto';
 import { describe, expect, it } from 'vitest';
-import { cleanupDoc, getTestUserName } from '../../../test-util/testsUtil.js';
+import { getTestUserName } from '../../../test-util/testsUtil.js';
 import UserRepository from '../common/UserRepository.js';
 import DashboardUserConfigRepository from './DashboardUserConfigRepository.js';
 
@@ -17,8 +17,6 @@ describe('Create operations', () => {
     if (!newConfig) {
       return;
     }
-
-    await cleanupDoc(userRepo, newUser);
   });
 });
 
@@ -35,8 +33,6 @@ describe('Update operations', () => {
     await configRepo.update(newConfig);
     const updatedConfig = await configRepo.get({ _id: newConfig._id });
     expect(updatedConfig?.enableDevMode).toBe(true);
-
-    await cleanupDoc(userRepo, newUser);
   });
 
   it('can add collaborators to an existing user config', async () => {
@@ -53,12 +49,10 @@ describe('Update operations', () => {
     let updatedConfig = await configRepo.get({ _id: newConfig._id });
     expect(updatedConfig?.collaborators).toContain(newCollaborator._id);
 
-    await cleanupDoc(userRepo, newCollaborator);
+    await userRepo.delete(newCollaborator._id);
     // Ensure the collaborator is deleted automatically when the user is deleted
     updatedConfig = await configRepo.get({ _id: newConfig._id });
     expect(updatedConfig?.collaborators).not.toContain(newCollaborator._id);
-
-    await cleanupDoc(userRepo, newUser);
   });
 
   /**
@@ -109,10 +103,6 @@ describe('Update operations', () => {
     updatedConfig2 = await configRepo.get({ _id: newConfig2._id });
     expect(updatedConfig2?.collaborators).toContainEqual(newUser1._id);
     expect(updatedConfig2?.collaborators).not.toContain(newUser3._id);
-
-    await cleanupDoc(userRepo, newUser1);
-    await cleanupDoc(userRepo, newUser2);
-    await cleanupDoc(userRepo, newUser3);
   }, 10000);
 });
 

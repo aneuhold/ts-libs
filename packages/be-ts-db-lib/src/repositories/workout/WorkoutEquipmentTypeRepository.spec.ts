@@ -5,7 +5,7 @@ import {
 } from '@aneuhold/core-ts-db-lib';
 import crypto from 'crypto';
 import { describe, expect, it } from 'vitest';
-import { cleanupDoc, getTestUserName } from '../../../test-util/testsUtil.js';
+import { getTestUserName } from '../../../test-util/testsUtil.js';
 import UserRepository from '../common/UserRepository.js';
 import WorkoutEquipmentTypeRepository from './WorkoutEquipmentTypeRepository.js';
 
@@ -35,7 +35,6 @@ describe('WorkoutEquipmentTypeRepository', () => {
 
       // Cleanup
       await repo.delete(result._id);
-      await cleanupDoc(userRepo, testUser);
     });
 
     it('should insert equipment type without weight options', async () => {
@@ -54,7 +53,6 @@ describe('WorkoutEquipmentTypeRepository', () => {
 
       // Cleanup
       await repo.delete(result._id);
-      await cleanupDoc(userRepo, testUser);
     });
 
     it('should update equipment type and modify weight options', async () => {
@@ -85,7 +83,6 @@ describe('WorkoutEquipmentTypeRepository', () => {
 
       // Cleanup
       await repo.delete(equipment._id);
-      await cleanupDoc(userRepo, testUser);
     });
   });
 
@@ -101,7 +98,6 @@ describe('WorkoutEquipmentTypeRepository', () => {
       await expect(
         repo.insertNew(invalidEquipment as unknown as WorkoutEquipmentType)
       ).rejects.toThrow('Schema validation failed');
-      await cleanupDoc(userRepo, testUser);
     });
 
     it('should reject update without _id', async () => {
@@ -135,7 +131,6 @@ describe('WorkoutEquipmentTypeRepository', () => {
 
       // Cleanup
       await repo.delete(equipment._id);
-      await cleanupDoc(userRepo, testUser);
     });
   });
 });

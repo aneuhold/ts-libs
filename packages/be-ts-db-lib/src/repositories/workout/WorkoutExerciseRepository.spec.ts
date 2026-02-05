@@ -9,7 +9,7 @@ import {
 } from '@aneuhold/core-ts-db-lib';
 import crypto from 'crypto';
 import { describe, expect, it } from 'vitest';
-import { cleanupDoc, getTestUserName } from '../../../test-util/testsUtil.js';
+import { getTestUserName } from '../../../test-util/testsUtil.js';
 import UserRepository from '../common/UserRepository.js';
 import WorkoutEquipmentTypeRepository from './WorkoutEquipmentTypeRepository.js';
 import WorkoutExerciseCalibrationRepository from './WorkoutExerciseCalibrationRepository.js';
@@ -48,9 +48,6 @@ describe('WorkoutExerciseRepository', () => {
       expect(result.createdDate).toBeInstanceOf(Date);
       expect(result.lastUpdatedDate).toBeInstanceOf(Date);
       expect(result.docType).toBe('workoutExercise');
-
-      // Cleanup
-      await cleanupDoc(userRepo, testUser);
     });
 
     it('should insert a new exercise without secondary muscle groups', async () => {
@@ -65,9 +62,6 @@ describe('WorkoutExerciseRepository', () => {
       expect(result.exerciseName).toBe('Plank');
       expect(result.primaryMuscleGroups).toHaveLength(1);
       expect(result.secondaryMuscleGroups).toHaveLength(0);
-
-      // Cleanup
-      await cleanupDoc(userRepo, testUser);
     });
 
     it('should get all exercises for a user', async () => {
@@ -90,9 +84,6 @@ describe('WorkoutExerciseRepository', () => {
       const ids = allExercises.map((ex) => ex._id);
       expect(ids).toContain(exercise1._id);
       expect(ids).toContain(exercise2._id);
-
-      // Cleanup
-      await cleanupDoc(userRepo, testUser);
     });
 
     it('should update an exercise', async () => {
@@ -116,9 +107,6 @@ describe('WorkoutExerciseRepository', () => {
       }
 
       expect(updated.exerciseName).toBe('Weighted Pull Up');
-
-      // Cleanup
-      await cleanupDoc(userRepo, testUser);
     });
 
     it('should delete an exercise', async () => {
@@ -135,7 +123,6 @@ describe('WorkoutExerciseRepository', () => {
 
       const retrieved = await repo.get({ _id: exercise._id });
       expect(retrieved).toBeNull();
-      await cleanupDoc(userRepo, testUser);
     });
   });
 
@@ -159,8 +146,6 @@ describe('WorkoutExerciseRepository', () => {
       await expect(repo.insertNew(newExercise)).rejects.toThrow(
         'Not all muscle groups exist. Found: 0, expected: 1'
       );
-
-      await cleanupDoc(userRepo, testUser);
     });
 
     it('should reject exercise with non-existent equipment type', async () => {
@@ -181,8 +166,6 @@ describe('WorkoutExerciseRepository', () => {
       await expect(repo.insertNew(newExercise)).rejects.toThrow(
         `Equipment type with ID ${fakeEquipmentId} does not exist`
       );
-
-      await cleanupDoc(userRepo, testUser);
     });
 
     it('should reject invalid exercise on creation', async () => {
@@ -196,8 +179,6 @@ describe('WorkoutExerciseRepository', () => {
       await expect(repo.insertNew(invalidExercise as unknown as WorkoutExercise)).rejects.toThrow(
         'Schema validation failed'
       );
-
-      await cleanupDoc(userRepo, testUser);
     });
 
     it('should reject update without _id', async () => {
@@ -243,8 +224,6 @@ describe('WorkoutExerciseRepository', () => {
       // Verify calibration is also deleted
       const deletedCalibration = await calibrationRepo.get({ _id: calibration._id });
       expect(deletedCalibration).toBeNull();
-
-      await cleanupDoc(userRepo, testUser);
     });
   });
 });

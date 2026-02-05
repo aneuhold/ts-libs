@@ -9,7 +9,7 @@ import {
 } from '@aneuhold/core-ts-db-lib';
 import crypto, { type UUID } from 'crypto';
 import { describe, expect, it } from 'vitest';
-import { cleanupDoc, getTestUserName } from '../../../test-util/testsUtil.js';
+import { getTestUserName } from '../../../test-util/testsUtil.js';
 import UserRepository from '../common/UserRepository.js';
 import WorkoutEquipmentTypeRepository from './WorkoutEquipmentTypeRepository.js';
 import WorkoutExerciseCalibrationRepository from './WorkoutExerciseCalibrationRepository.js';
@@ -52,9 +52,6 @@ describe('WorkoutExerciseCalibrationRepository', () => {
       expect(result.createdDate).toBeInstanceOf(Date);
       expect(result.lastUpdatedDate).toBeInstanceOf(Date);
       expect(result.docType).toBe('workoutExerciseCalibration');
-
-      // Cleanup
-      await cleanupDoc(userRepo, testUser);
     });
 
     it('should get all calibrations for a user', async () => {
@@ -100,9 +97,6 @@ describe('WorkoutExerciseCalibrationRepository', () => {
       const ids = allCalibrations.map((cal) => cal._id);
       expect(ids).toContain(calibration1._id);
       expect(ids).toContain(calibration2._id);
-
-      // Cleanup
-      await cleanupDoc(userRepo, testUser);
     });
 
     it('should update a calibration', async () => {
@@ -144,9 +138,6 @@ describe('WorkoutExerciseCalibrationRepository', () => {
       }
 
       expect(updated.weight).toBe(335);
-
-      // Cleanup
-      await cleanupDoc(userRepo, testUser);
     });
 
     it('should delete a calibration', async () => {
@@ -176,7 +167,6 @@ describe('WorkoutExerciseCalibrationRepository', () => {
 
       const retrieved = await repo.get({ _id: calibration._id });
       expect(retrieved).toBeNull();
-      await cleanupDoc(userRepo, testUser);
     });
   });
 
@@ -195,8 +185,6 @@ describe('WorkoutExerciseCalibrationRepository', () => {
       await expect(repo.insertNew(newCalibration)).rejects.toThrow(
         `Exercise with ID ${fakeExerciseId} does not exist`
       );
-
-      await cleanupDoc(userRepo, testUser);
     });
 
     it('should reject invalid calibration on creation', async () => {
@@ -210,8 +198,6 @@ describe('WorkoutExerciseCalibrationRepository', () => {
       await expect(
         repo.insertNew(invalidCalibration as unknown as WorkoutExerciseCalibration)
       ).rejects.toThrow('Schema validation failed');
-
-      await cleanupDoc(userRepo, testUser);
     });
 
     it('should reject update without _id', async () => {
@@ -252,8 +238,6 @@ describe('WorkoutExerciseCalibrationRepository', () => {
           workoutExerciseId: fakeExerciseId
         })
       ).rejects.toThrow(`Exercise with ID ${fakeExerciseId} does not exist`);
-
-      await cleanupDoc(userRepo, testUser);
     });
   });
 
@@ -294,9 +278,6 @@ describe('WorkoutExerciseCalibrationRepository', () => {
         throw new Error('Calibration should still exist');
       }
       expect(retrievedCalibration.workoutExerciseId).toBe(exercise._id);
-
-      // Cleanup
-      await cleanupDoc(userRepo, testUser);
     });
   });
 });

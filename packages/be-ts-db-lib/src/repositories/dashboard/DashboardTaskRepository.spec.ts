@@ -2,7 +2,7 @@ import type { User } from '@aneuhold/core-ts-db-lib';
 import { DashboardTaskSchema, UserSchema } from '@aneuhold/core-ts-db-lib';
 import crypto from 'crypto';
 import { describe, expect, it } from 'vitest';
-import { cleanupDoc, getTestUserName } from '../../../test-util/testsUtil.js';
+import { getTestUserName } from '../../../test-util/testsUtil.js';
 import DbOperationMetaData from '../../util/DbOperationMetaData.js';
 import UserRepository from '../common/UserRepository.js';
 import DashboardTaskRepository from './DashboardTaskRepository.js';
@@ -24,7 +24,7 @@ describe('Create operations', () => {
       return;
     }
 
-    await cleanupDoc(userRepo, newUser);
+    await userRepo.delete(newUser._id);
     // Task should be deleted
     const deletedTask = await taskRepo.get({ _id: newTask._id });
     expect(deletedTask).toBeFalsy();
@@ -46,8 +46,6 @@ describe('Get operations', () => {
     const tasks = await taskRepo.getAllForUser(newUser._id);
     expect(tasks.length).toBe(1);
     expect(tasks[0]._id).toEqual(newTask._id);
-
-    await Promise.all([cleanupDoc(userRepo, newUser), cleanupDoc(userRepo, otherUser)]);
   });
 
   it('can get a set of tasks for a user, including tasks shared with that user', async () => {
@@ -76,8 +74,6 @@ describe('Get operations', () => {
     expect(tasks.length).toBe(2);
     expect(tasks[0]._id).toEqual(newTask._id);
     expect(tasks[1]._id).toEqual(otherUserTask._id);
-
-    await Promise.all([cleanupDoc(userRepo, newUser), cleanupDoc(userRepo, otherUser)]);
   });
 });
 
@@ -94,7 +90,6 @@ describe('DbOperationMetaData tracking', () => {
 
     expect(meta.getAffectedUserIds().has(sharedUser._id)).toBe(true);
     expect(meta.getAffectedUserIds().has(newUser._id)).toBe(true);
-    await Promise.all([cleanupDoc(userRepo, newUser), cleanupDoc(userRepo, sharedUser)]);
   });
 
   it('tracks affected users on update', async () => {
@@ -111,7 +106,6 @@ describe('DbOperationMetaData tracking', () => {
 
     expect(meta.getAffectedUserIds().has(sharedUser._id)).toBe(true);
     expect(meta.getAffectedUserIds().has(newUser._id)).toBe(true);
-    await Promise.all([cleanupDoc(userRepo, newUser), cleanupDoc(userRepo, sharedUser)]);
   });
 
   it('tracks affected users on delete', async () => {
@@ -127,7 +121,6 @@ describe('DbOperationMetaData tracking', () => {
 
     expect(meta.getAffectedUserIds().has(sharedUser._id)).toBe(true);
     expect(meta.getAffectedUserIds().has(newUser._id)).toBe(true);
-    await Promise.all([cleanupDoc(userRepo, newUser), cleanupDoc(userRepo, sharedUser)]);
   });
 });
 

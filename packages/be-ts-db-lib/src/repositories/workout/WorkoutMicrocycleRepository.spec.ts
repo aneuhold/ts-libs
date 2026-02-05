@@ -9,7 +9,7 @@ import {
 import type { UUID } from 'crypto';
 import crypto from 'crypto';
 import { describe, expect, it } from 'vitest';
-import { cleanupDoc, getTestUserName } from '../../../test-util/testsUtil.js';
+import { getTestUserName } from '../../../test-util/testsUtil.js';
 import UserRepository from '../common/UserRepository.js';
 import WorkoutMesocycleRepository from './WorkoutMesocycleRepository.js';
 import WorkoutMicrocycleRepository from './WorkoutMicrocycleRepository.js';
@@ -35,8 +35,6 @@ describe('WorkoutMicrocycleRepository', () => {
       expect(result.createdDate).toBeInstanceOf(Date);
       expect(result.lastUpdatedDate).toBeInstanceOf(Date);
       expect(result.docType).toBe('workoutMicrocycle');
-
-      await cleanupDoc(userRepo, testUser);
     });
 
     it('should get all microcycles for a user', async () => {
@@ -52,8 +50,6 @@ describe('WorkoutMicrocycleRepository', () => {
       const ids = allMicrocycles.map((m) => m._id);
       expect(ids).toContain(microcycle1._id);
       expect(ids).toContain(microcycle2._id);
-
-      await cleanupDoc(userRepo, testUser);
     });
 
     it('should update a microcycle', async () => {
@@ -76,8 +72,6 @@ describe('WorkoutMicrocycleRepository', () => {
       }
 
       expect(updated.startDate.getTime()).toBe(newStartDate.getTime());
-
-      await cleanupDoc(userRepo, testUser);
     });
 
     it('should delete a microcycle', async () => {
@@ -90,7 +84,6 @@ describe('WorkoutMicrocycleRepository', () => {
 
       const retrieved = await repo.get({ _id: microcycle._id });
       expect(retrieved).toBeNull();
-      await cleanupDoc(userRepo, testUser);
     });
   });
 
@@ -116,8 +109,6 @@ describe('WorkoutMicrocycleRepository', () => {
 
       expect(microcycle1Retrieved).toBeNull();
       expect(microcycle2Retrieved).toBeNull();
-
-      await cleanupDoc(userRepo, testUser);
     });
 
     it('should delete all microcycles when user is deleted', async () => {
@@ -159,8 +150,6 @@ describe('WorkoutMicrocycleRepository', () => {
       await expect(repo.insertNew(newMicrocycle)).rejects.toThrow(
         `Mesocycle with ID ${fakeMesocycleId} does not exist`
       );
-
-      await cleanupDoc(userRepo, testUser);
     });
 
     it('should reject invalid microcycle on creation', async () => {
@@ -174,20 +163,14 @@ describe('WorkoutMicrocycleRepository', () => {
       await expect(
         repo.insertNew(invalidMicrocycle as unknown as WorkoutMicrocycle)
       ).rejects.toThrow('Schema validation failed');
-
-      await cleanupDoc(userRepo, testUser);
     });
 
     it('should reject update without _id', async () => {
-      const testUser = await createNewTestUser();
-
       await expect(
         repo.update({
           startDate: new Date()
         } as Partial<WorkoutMicrocycle>)
       ).rejects.toThrow('No _id defined for WorkoutMicrocycle update.');
-
-      await cleanupDoc(userRepo, testUser);
     });
 
     it('should reject update with non-existent mesocycle', async () => {
@@ -203,8 +186,6 @@ describe('WorkoutMicrocycleRepository', () => {
           workoutMesocycleId: fakeMesocycleId
         })
       ).rejects.toThrow(`Mesocycle with ID ${fakeMesocycleId} does not exist`);
-
-      await cleanupDoc(userRepo, testUser);
     });
   });
 });

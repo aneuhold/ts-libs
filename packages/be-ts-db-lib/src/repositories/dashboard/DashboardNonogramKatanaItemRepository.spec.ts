@@ -5,7 +5,7 @@ import {
 } from '@aneuhold/core-ts-db-lib';
 import crypto from 'crypto';
 import { describe, expect, it } from 'vitest';
-import { cleanupDoc, getTestUserName } from '../../../test-util/testsUtil.js';
+import { getTestUserName } from '../../../test-util/testsUtil.js';
 import UserRepository from '../common/UserRepository.js';
 import DashboardNonogramKatanaItemRepository from './DashboardNonogramKatanaItemRepository.js';
 
@@ -24,8 +24,6 @@ describe('Create operations', () => {
 
     const newItemFromDb = await itemRepo.get({ _id: newItem._id });
     expect(newItemFromDb).toBeTruthy();
-
-    await cleanupDoc(userRepo, newUser);
   });
 });
 

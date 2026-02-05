@@ -5,7 +5,7 @@ import {
 } from '@aneuhold/core-ts-db-lib';
 import crypto from 'crypto';
 import { describe, expect, it } from 'vitest';
-import { cleanupDoc, getTestUserName } from '../../../test-util/testsUtil.js';
+import { getTestUserName } from '../../../test-util/testsUtil.js';
 import UserRepository from '../common/UserRepository.js';
 import WorkoutMuscleGroupRepository from './WorkoutMuscleGroupRepository.js';
 
@@ -36,7 +36,6 @@ describe('WorkoutMuscleGroupRepository', () => {
 
       // Cleanup
       await repo.delete(result._id);
-      await cleanupDoc(userRepo, testUser);
     });
 
     it('should get all muscle groups for a user', async () => {
@@ -69,7 +68,6 @@ describe('WorkoutMuscleGroupRepository', () => {
       // Cleanup
       await repo.delete(muscleGroup1._id);
       await repo.delete(muscleGroup2._id);
-      await cleanupDoc(userRepo, testUser);
     });
 
     it('should update a muscle group', async () => {
@@ -99,7 +97,6 @@ describe('WorkoutMuscleGroupRepository', () => {
 
       // Cleanup
       await repo.delete(muscleGroup._id);
-      await cleanupDoc(userRepo, testUser);
     });
 
     it('should delete a muscle group', async () => {
@@ -119,7 +116,6 @@ describe('WorkoutMuscleGroupRepository', () => {
 
       const retrieved = await repo.get({ _id: muscleGroup._id });
       expect(retrieved).toBeNull();
-      await cleanupDoc(userRepo, testUser);
     });
   });
 
@@ -135,7 +131,6 @@ describe('WorkoutMuscleGroupRepository', () => {
       await expect(
         repo.insertNew(invalidMuscleGroup as unknown as WorkoutMuscleGroup)
       ).rejects.toThrow('Schema validation failed');
-      await cleanupDoc(userRepo, testUser);
     });
 
     it('should reject update without _id', async () => {
@@ -172,7 +167,6 @@ describe('WorkoutMuscleGroupRepository', () => {
 
       // Cleanup
       await repo.delete(muscleGroup._id);
-      await cleanupDoc(userRepo, testUser);
     });
   });
 });

@@ -9,7 +9,7 @@ import {
 import type { UUID } from 'crypto';
 import crypto from 'crypto';
 import { describe, expect, it } from 'vitest';
-import { cleanupDoc, getTestUserName } from '../../../test-util/testsUtil.js';
+import { getTestUserName } from '../../../test-util/testsUtil.js';
 import UserRepository from '../common/UserRepository.js';
 import WorkoutMesocycleRepository from './WorkoutMesocycleRepository.js';
 import WorkoutMicrocycleRepository from './WorkoutMicrocycleRepository.js';
@@ -33,8 +33,6 @@ describe('WorkoutMesocycleRepository', () => {
       expect(result.createdDate).toBeInstanceOf(Date);
       expect(result.lastUpdatedDate).toBeInstanceOf(Date);
       expect(result.docType).toBe('workoutMesocycle');
-
-      await cleanupDoc(userRepo, testUser);
     });
 
     it('should get all mesocycles for a user', async () => {
@@ -50,8 +48,6 @@ describe('WorkoutMesocycleRepository', () => {
       const ids = allMesocycles.map((m) => m._id);
       expect(ids).toContain(mesocycle1._id);
       expect(ids).toContain(mesocycle2._id);
-
-      await cleanupDoc(userRepo, testUser);
     });
 
     it('should update a mesocycle', async () => {
@@ -70,8 +66,6 @@ describe('WorkoutMesocycleRepository', () => {
       }
 
       expect(updated.title).toBe('Updated Name');
-
-      await cleanupDoc(userRepo, testUser);
     });
 
     it('should delete a mesocycle', async () => {
@@ -83,7 +77,6 @@ describe('WorkoutMesocycleRepository', () => {
 
       const retrieved = await repo.get({ _id: mesocycle._id });
       expect(retrieved).toBeNull();
-      await cleanupDoc(userRepo, testUser);
     });
   });
 
@@ -110,8 +103,6 @@ describe('WorkoutMesocycleRepository', () => {
 
       expect(microcycle1Retrieved).toBeNull();
       expect(microcycle2Retrieved).toBeNull();
-
-      await cleanupDoc(userRepo, testUser);
     });
 
     it('should delete all mesocycles when user is deleted', async () => {
@@ -145,8 +136,6 @@ describe('WorkoutMesocycleRepository', () => {
       await expect(repo.insertNew(invalidMesocycle as unknown as WorkoutMesocycle)).rejects.toThrow(
         'Schema validation failed'
       );
-
-      await cleanupDoc(userRepo, testUser);
     });
 
     it('should reject update without _id', async () => {
@@ -157,8 +146,6 @@ describe('WorkoutMesocycleRepository', () => {
           title: 'Updated Name'
         } as Partial<WorkoutMesocycle>)
       ).rejects.toThrow('No _id defined for WorkoutMesocycle update.');
-
-      await cleanupDoc(userRepo, testUser);
     });
   });
 });
