@@ -1,8 +1,10 @@
 import type { WorkoutExercise } from '@aneuhold/core-ts-db-lib';
 import { WorkoutExerciseSchema } from '@aneuhold/core-ts-db-lib';
-import { ErrorUtils } from '@aneuhold/core-ts-lib';
+import { DR, ErrorUtils } from '@aneuhold/core-ts-lib';
 import type { UUID } from 'crypto';
+import UserRepository from '../../repositories/common/UserRepository.js';
 import WorkoutEquipmentTypeRepository from '../../repositories/workout/WorkoutEquipmentTypeRepository.js';
+import WorkoutExerciseRepository from '../../repositories/workout/WorkoutExerciseRepository.js';
 import WorkoutMuscleGroupRepository from '../../repositories/workout/WorkoutMuscleGroupRepository.js';
 import IValidator from '../BaseValidator.js';
 
@@ -88,7 +90,67 @@ export default class WorkoutExerciseValidator extends IValidator<WorkoutExercise
     }
   }
 
-  validateRepositoryInDb(): Promise<void> {
-    return Promise.resolve();
+  async validateRepositoryInDb(dryRun: boolean): Promise<void> {
+    const exerciseRepo = WorkoutExerciseRepository.getRepo();
+    const allExercises = await exerciseRepo.getAll();
+    const allUserIds = await UserRepository.getRepo().getAllIdsAsHash();
+    const allEquipmentTypeIds = await WorkoutEquipmentTypeRepository.getRepo().getAllIdsAsHash();
+    const allMuscleGroupIds = await WorkoutMuscleGroupRepository.getRepo().getAllIdsAsHash();
+
+    await this.runStandardValidationForRepository({
+      dryRun,
+      docName: 'Workout Exercise',
+      allDocs: allExercises,
+      shouldDelete: (exercise: WorkoutExercise) => {
+        if (!allUserIds[exercise.userId]) {
+          DR.logger.error(
+            `Workout Exercise with ID: ${exercise._id} has no valid associated user.`
+          );
+          return true;
+        }
+        return false;
+      },
+      additionalValidation: (exercise: WorkoutExercise) => {
+        const updatedDoc = { ...exercise };
+        const errors: string[] = [];
+
+        // Check equipment type
+        if (!allEquipmentTypeIds[exercise.workoutEquipmentTypeId]) {
+          errors.push(`Equipment type with ID: ${exercise.workoutEquipmentTypeId} does not exist.`);
+        }
+
+        // Check primary muscle groups
+        const invalidPrimaryMuscleGroups = exercise.primaryMuscleGroups.filter(
+          (id) => !allMuscleGroupIds[id]
+        );
+        if (invalidPrimaryMuscleGroups.length > 0) {
+          errors.push(`Invalid primary muscle groups: ${invalidPrimaryMuscleGroups.join(', ')}`);
+          updatedDoc.primaryMuscleGroups = exercise.primaryMuscleGroups.filter(
+            (id) => allMuscleGroupIds[id]
+          );
+        }
+
+        // Check secondary muscle groups
+        const invalidSecondaryMuscleGroups = exercise.secondaryMuscleGroups.filter(
+          (id) => !allMuscleGroupIds[id]
+        );
+        if (invalidSecondaryMuscleGroups.length > 0) {
+          errors.push(
+            `Invalid secondary muscle groups: ${invalidSecondaryMuscleGroups.join(', ')}`
+          );
+          updatedDoc.secondaryMuscleGroups = exercise.secondaryMuscleGroups.filter(
+            (id) => allMuscleGroupIds[id]
+          );
+        }
+
+        return { updatedDoc, errors };
+      },
+      deletionFunction: async (docIdsToDelete: UUID[]) => {
+        await exerciseRepo.deleteList(docIdsToDelete);
+      },
+      updateFunction: async (docsToUpdate: WorkoutExercise[]) => {
+        await exerciseRepo.updateMany(docsToUpdate);
+      }
+    });
   }
 }

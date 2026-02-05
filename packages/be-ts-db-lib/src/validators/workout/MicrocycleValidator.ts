@@ -1,7 +1,10 @@
 import type { WorkoutMicrocycle } from '@aneuhold/core-ts-db-lib';
 import { WorkoutMicrocycleSchema } from '@aneuhold/core-ts-db-lib';
-import { ErrorUtils } from '@aneuhold/core-ts-lib';
+import { DR, ErrorUtils } from '@aneuhold/core-ts-lib';
+import type { UUID } from 'crypto';
+import UserRepository from '../../repositories/common/UserRepository.js';
 import WorkoutMesocycleRepository from '../../repositories/workout/WorkoutMesocycleRepository.js';
+import WorkoutMicrocycleRepository from '../../repositories/workout/WorkoutMicrocycleRepository.js';
 import IValidator from '../BaseValidator.js';
 
 export default class WorkoutMicrocycleValidator extends IValidator<WorkoutMicrocycle> {
@@ -46,7 +49,43 @@ export default class WorkoutMicrocycleValidator extends IValidator<WorkoutMicroc
     }
   }
 
-  validateRepositoryInDb(): Promise<void> {
-    return Promise.resolve();
+  async validateRepositoryInDb(dryRun: boolean): Promise<void> {
+    const microcycleRepo = WorkoutMicrocycleRepository.getRepo();
+    const allMicrocycles = await microcycleRepo.getAll();
+    const allUserIds = await UserRepository.getRepo().getAllIdsAsHash();
+    const allMesocycleIds = await WorkoutMesocycleRepository.getRepo().getAllIdsAsHash();
+
+    await this.runStandardValidationForRepository({
+      dryRun,
+      docName: 'Workout Microcycle',
+      allDocs: allMicrocycles,
+      shouldDelete: (microcycle: WorkoutMicrocycle) => {
+        if (!allUserIds[microcycle.userId]) {
+          DR.logger.error(
+            `Workout Microcycle with ID: ${microcycle._id} has no valid associated user.`
+          );
+          return true;
+        }
+        return false;
+      },
+      additionalValidation: (microcycle: WorkoutMicrocycle) => {
+        const updatedDoc = { ...microcycle };
+        const errors: string[] = [];
+
+        // Check mesocycle if it exists
+        if (microcycle.workoutMesocycleId && !allMesocycleIds[microcycle.workoutMesocycleId]) {
+          errors.push(`Mesocycle with ID: ${microcycle.workoutMesocycleId} does not exist.`);
+          updatedDoc.workoutMesocycleId = null;
+        }
+
+        return { updatedDoc, errors };
+      },
+      deletionFunction: async (docIdsToDelete: UUID[]) => {
+        await microcycleRepo.deleteList(docIdsToDelete);
+      },
+      updateFunction: async (docsToUpdate: WorkoutMicrocycle[]) => {
+        await microcycleRepo.updateMany(docsToUpdate);
+      }
+    });
   }
 }

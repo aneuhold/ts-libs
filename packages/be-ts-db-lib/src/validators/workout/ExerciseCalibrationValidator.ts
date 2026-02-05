@@ -1,6 +1,9 @@
 import type { WorkoutExerciseCalibration } from '@aneuhold/core-ts-db-lib';
 import { WorkoutExerciseCalibrationSchema } from '@aneuhold/core-ts-db-lib';
-import { ErrorUtils } from '@aneuhold/core-ts-lib';
+import { DR, ErrorUtils } from '@aneuhold/core-ts-lib';
+import type { UUID } from 'crypto';
+import UserRepository from '../../repositories/common/UserRepository.js';
+import WorkoutExerciseCalibrationRepository from '../../repositories/workout/WorkoutExerciseCalibrationRepository.js';
 import WorkoutExerciseRepository from '../../repositories/workout/WorkoutExerciseRepository.js';
 import IValidator from '../BaseValidator.js';
 
@@ -46,7 +49,37 @@ export default class WorkoutExerciseCalibrationValidator extends IValidator<Work
     }
   }
 
-  validateRepositoryInDb(): Promise<void> {
-    return Promise.resolve();
+  async validateRepositoryInDb(dryRun: boolean): Promise<void> {
+    const calibrationRepo = WorkoutExerciseCalibrationRepository.getRepo();
+    const allCalibrations = await calibrationRepo.getAll();
+    const allUserIds = await UserRepository.getRepo().getAllIdsAsHash();
+    const allExerciseIds = await WorkoutExerciseRepository.getRepo().getAllIdsAsHash();
+
+    await this.runStandardValidationForRepository({
+      dryRun,
+      docName: 'Workout Exercise Calibration',
+      allDocs: allCalibrations,
+      shouldDelete: (calibration: WorkoutExerciseCalibration) => {
+        if (!allUserIds[calibration.userId]) {
+          DR.logger.error(
+            `Workout Exercise Calibration with ID: ${calibration._id} has no valid associated user.`
+          );
+          return true;
+        }
+        if (!allExerciseIds[calibration.workoutExerciseId]) {
+          DR.logger.error(
+            `Workout Exercise Calibration with ID: ${calibration._id} has no valid associated exercise.`
+          );
+          return true;
+        }
+        return false;
+      },
+      deletionFunction: async (docIdsToDelete: UUID[]) => {
+        await calibrationRepo.deleteList(docIdsToDelete);
+      },
+      updateFunction: async (docsToUpdate: WorkoutExerciseCalibration[]) => {
+        await calibrationRepo.updateMany(docsToUpdate);
+      }
+    });
   }
 }
