@@ -106,6 +106,20 @@ describe('Update operations', () => {
   }, 10000);
 });
 
+describe('Lifecycle with User', () => {
+  it('deletes the user config when the associated user is deleted', async () => {
+    const newUser = await createNewTestUser();
+
+    const userConfigBefore = await configRepo.get({ userId: newUser._id });
+    expect(userConfigBefore).toBeTruthy();
+
+    await userRepo.delete(newUser._id);
+
+    const userConfigAfter = await configRepo.get({ userId: newUser._id });
+    expect(userConfigAfter).toBeNull();
+  });
+});
+
 /**
  * Create a new test user
  *
