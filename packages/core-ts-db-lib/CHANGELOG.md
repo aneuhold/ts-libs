@@ -8,16 +8,19 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## 🔖 [4.0.5] (2026-02-06)
 
 ### ✅ Added
+
 - Added workout document types and schemas (e.g., `WorkoutExercise`, `WorkoutMesocycle`, `WorkoutMicrocycle`, `WorkoutSession`, `WorkoutSet`, and related embedded types).
 - Added new workout services and utilities (`WorkoutExerciseService`, `WorkoutSessionService`, `WorkoutSetService`, `WorkoutMesocycleService`, `WorkoutMicrocycleService`, `WorkoutSFRService`, `WorkoutVolumePlanningService`, and `WorkoutEquipmentTypeService`).
 - Added comprehensive unit tests and a `WorkoutTestUtil` to improve test coverage for workout logic.
 
 ### 🏗️ Changed
+
 - Strengthened validation and schema updates (including updates to User schema and validators) to make validation more strict and robust.
 - Refactored exports and `src/browser.ts` for improved API surface and maintainability.
 - Added `check` script (`tsc --noEmit`) to package.json to enable TypeScript checks.
 
 ### 🩹 Fixed
+
 - Fixed bugs in set planning and set reps calculation and various fixes across the workout scheduling algorithm and related services.
 
 ### 🔥 Removed
@@ -25,14 +28,15 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## 🔖 [4.0.4] (2025-12-14)
 
 ### 🏗️ Changed
+
 - Updated `DashboardTaskListFilterSettingsSchema.startDate` to default to `{ showFutureTasks: true }`.
 - Updated dependencies: now requires `@aneuhold/core-ts-lib@^2.3.16` and `@aneuhold/local-npm-registry@^0.2.23`.
 
 ## 🔖 [4.0.3] (2025-12-14)
 
 ### 🏗️ Changed
-- Updated dependencies for compatibility
 
+- Updated dependencies for compatibility
 
 ## 🔖 [4.0.2] (2025-12-13)
 
@@ -201,6 +205,7 @@ Updated dependency: now requires `@aneuhold/core-ts-lib@^2.3.11`.
 - Updated workflow permissions to allow repository write access
 
 <!-- Link References -->
+
 [4.0.5]: https://github.com/aneuhold/ts-libs/compare/core-ts-db-lib-v4.0.4...core-ts-db-lib-v4.0.5
 [4.0.4]: https://github.com/aneuhold/ts-libs/compare/core-ts-db-lib-v4.0.3...core-ts-db-lib-v4.0.4
 [4.0.3]: https://github.com/aneuhold/ts-libs/compare/core-ts-db-lib-v4.0.2...core-ts-db-lib-v4.0.3

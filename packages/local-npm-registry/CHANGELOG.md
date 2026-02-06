@@ -8,9 +8,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## 🔖 [0.2.24] (2026-02-06)
 
 ### ✅ Added
+
 - Added `check` script (`tsc --noEmit`) to enable TypeScript checks locally and in CI.
 
 ### 🏗️ Changed
+
 - Bumped package version to `0.2.24` and updated dev scripts for type checking.
 
 ### 🩹 Fixed
@@ -20,13 +22,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## 🔖 [0.2.23] (2025-12-14)
 
 ### 🏗️ Changed
+
 - Updated dependency: now requires `@aneuhold/core-ts-lib@^2.3.16`.
 
 ## 🔖 [0.2.22] (2025-12-14)
 
 ### 🏗️ Changed
-- Updated dependencies for compatibility
 
+- Updated dependencies for compatibility
 
 ## 🔖 [0.2.21] (2025-12-07)
 
@@ -152,6 +155,7 @@ No direct code changes; version bump for compatibility.
 - Updated workflow permissions to allow repository write access
 
 <!-- Link References -->
+
 [0.2.24]: https://github.com/aneuhold/ts-libs/compare/local-npm-registry-v0.2.23...local-npm-registry-v0.2.24
 [0.2.23]: https://github.com/aneuhold/ts-libs/compare/local-npm-registry-v0.2.22...local-npm-registry-v0.2.23
 [0.2.22]: https://github.com/aneuhold/ts-libs/compare/local-npm-registry-v0.2.21...local-npm-registry-v0.2.22
