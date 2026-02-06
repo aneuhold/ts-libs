@@ -3,9 +3,8 @@ import {
   NonogramKatanaItemSchema,
   UserSchema
 } from '@aneuhold/core-ts-db-lib';
-import crypto from 'crypto';
 import { describe, expect, it } from 'vitest';
-import { cleanupDoc, getTestUserName } from '../../tests/testsUtil.js';
+import { getTestUserName } from '../../../test-util/testsUtil.js';
 import UserRepository from '../common/UserRepository.js';
 import DashboardNonogramKatanaItemRepository from './DashboardNonogramKatanaItemRepository.js';
 
@@ -24,8 +23,6 @@ describe('Create operations', () => {
 
     const newItemFromDb = await itemRepo.get({ _id: newItem._id });
     expect(newItemFromDb).toBeTruthy();
-
-    await cleanupDoc(userRepo, newUser);
   });
 });
 
@@ -46,7 +43,7 @@ it.skip('can delete all items', async () => {
  */
 async function createNewTestUser() {
   const newUser = UserSchema.parse({
-    userName: getTestUserName(`${crypto.randomUUID()}nonogramKatanaItemTest`)
+    userName: getTestUserName(`nonogramKatanaItemTest`)
   });
   newUser.projectAccess.dashboard = true;
   const insertResult = await userRepo.insertNew(newUser);

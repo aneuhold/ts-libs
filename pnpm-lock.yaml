@@ -42,13 +42,13 @@ importers:
   packages/be-ts-db-lib:
     dependencies:
       '@aneuhold/be-ts-lib':
-        specifier: ^3.0.9
+        specifier: ^3.0.10
         version: link:../be-ts-lib
       '@aneuhold/core-ts-db-lib':
-        specifier: ^4.0.4
+        specifier: ^4.1.0
         version: link:../core-ts-db-lib
       '@aneuhold/core-ts-lib':
-        specifier: ^2.3.16
+        specifier: ^2.3.17
         version: link:../core-ts-lib
       bson:
         specifier: ^7.0.0
@@ -64,7 +64,7 @@ importers:
         version: 4.1.13
     devDependencies:
       '@aneuhold/local-npm-registry':
-        specifier: ^0.2.23
+        specifier: ^0.2.24
         version: link:../local-npm-registry
       '@aneuhold/main-scripts':
         specifier: ^2.8.0
@@ -109,10 +109,10 @@ importers:
   packages/be-ts-lib:
     dependencies:
       '@aneuhold/core-ts-api-lib':
-        specifier: ^3.0.9
+        specifier: ^3.0.10
         version: link:../core-ts-api-lib
       '@aneuhold/core-ts-lib':
-        specifier: ^2.3.16
+        specifier: ^2.3.17
         version: link:../core-ts-lib
       dotenv:
         specifier: ^17.2.3
@@ -128,7 +128,7 @@ importers:
         version: 5.0.5
     devDependencies:
       '@aneuhold/local-npm-registry':
-        specifier: ^0.2.23
+        specifier: ^0.2.24
         version: link:../local-npm-registry
       '@aneuhold/main-scripts':
         specifier: ^2.8.0
@@ -164,17 +164,17 @@ importers:
   packages/core-ts-api-lib:
     dependencies:
       '@aneuhold/core-ts-db-lib':
-        specifier: ^4.0.4
+        specifier: ^4.1.0
         version: link:../core-ts-db-lib
       '@aneuhold/core-ts-lib':
-        specifier: ^2.3.16
+        specifier: ^2.3.17
         version: link:../core-ts-lib
       bson:
         specifier: ^7.0.0
         version: 7.0.0
     devDependencies:
       '@aneuhold/local-npm-registry':
-        specifier: ^0.2.23
+        specifier: ^0.2.24
         version: link:../local-npm-registry
       '@aneuhold/main-scripts':
         specifier: ^2.8.0
@@ -207,7 +207,7 @@ importers:
   packages/core-ts-db-lib:
     dependencies:
       '@aneuhold/core-ts-lib':
-        specifier: ^2.3.16
+        specifier: ^2.3.17
         version: link:../core-ts-lib
       uuid:
         specifier: ^13.0.0
@@ -217,7 +217,7 @@ importers:
         version: 4.1.13
     devDependencies:
       '@aneuhold/local-npm-registry':
-        specifier: ^0.2.23
+        specifier: ^0.2.24
         version: link:../local-npm-registry
       '@aneuhold/main-scripts':
         specifier: ^2.8.0
@@ -280,7 +280,7 @@ importers:
   packages/local-npm-registry:
     dependencies:
       '@aneuhold/core-ts-lib':
-        specifier: ^2.3.16
+        specifier: ^2.3.17
         version: link:../core-ts-lib
       commander:
         specifier: ^14.0.2
@@ -4555,6 +4555,7 @@ packages:
   tar@7.5.2:
     resolution: {integrity: sha512-7NyxrTE4Anh8km8iEy7o0QYPs+0JKBTj5ZaqHg6B39erLg0qYXN3BijtShwbsNSvQ+LN75+KV+C4QR/f6Gwnpg==}
     engines: {node: '>=18'}
+    deprecated: Old versions of tar are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
 
   text-decoder@1.2.3:
     resolution: {integrity: sha512-3/o9z3X0X0fTupwsYvR03pJ/DjWuqqrfwBgTQzdWDiQSm9KitAyz/9WqsT2JQW7KV2m+bC2ol/zqpW37NHxLaA==}

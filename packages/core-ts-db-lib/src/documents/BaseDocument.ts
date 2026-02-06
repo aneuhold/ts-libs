@@ -22,6 +22,17 @@ export const BaseDocumentWithTypeSchema = BaseDocumentSchema.extend({
   docType: z.string()
 });
 
+export const BaseDocumentWithUpdatedAndCreatedDatesSchema = z.object({
+  /**
+   * The date this document was created.
+   */
+  createdDate: z.date().default(() => new Date()),
+  /**
+   * The date this document was last updated.
+   */
+  lastUpdatedDate: z.date().default(() => new Date())
+});
+
 /**
  * Base document type for all documents stored in a document database.
  */
@@ -31,3 +42,10 @@ export type BaseDocument = z.infer<typeof BaseDocumentSchema>;
  * Base document type with a `docType` field.
  */
 export type BaseDocumentWithType = z.infer<typeof BaseDocumentWithTypeSchema>;
+
+/**
+ * Base document type with `createdDate` and `lastUpdatedDate` fields.
+ */
+export type BaseDocumentWithUpdatedAndCreatedDates = z.infer<
+  typeof BaseDocumentWithUpdatedAndCreatedDatesSchema
+>;

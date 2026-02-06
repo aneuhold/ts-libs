@@ -179,6 +179,18 @@ export default abstract class BaseRepository<TBaseType extends BaseDocument> {
   }
 
   /**
+   * Gets a list of documents matching the given filter. This will and it together with the
+   * default filter.
+   *
+   * @param filter - The filter to apply.
+   */
+  async getListWithFilter(filter: Filter<TBaseType>): Promise<TBaseType[]> {
+    const collection = await this.getCollection();
+    const result = await collection.find(this.getFilterWithDefault(filter)).toArray();
+    return result as TBaseType[];
+  }
+
+  /**
    * Deletes a document by its ID.
    *
    * @param docId - The ID of the document to delete.
@@ -314,7 +326,7 @@ export default abstract class BaseRepository<TBaseType extends BaseDocument> {
   }
 
   /**
-   * Gets the filter with the default filter applied if there is one.
+   * Gets the filter with the default filter applied if there is one. This will "and" them together.
    *
    * @param filter - The filter to apply.
    * @returns The filter with the default filter applied.
@@ -323,6 +335,7 @@ export default abstract class BaseRepository<TBaseType extends BaseDocument> {
     if (!this.defaultFilter) {
       return filter;
     }
+    // Two merged filters is the same as using `$and`
     return { ...filter, ...this.defaultFilter };
   }
 

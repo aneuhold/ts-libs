@@ -6,8 +6,8 @@ import {
 import type { UUID } from 'crypto';
 import crypto from 'crypto';
 import { afterAll, expect, it } from 'vitest';
+import { getTestUserName } from '../../test-util/testsUtil.js';
 import DemoAccountsService from '../services/DemoAccountsService/DemoAccountsService.js';
-import { cleanupDoc, getTestUserName } from '../tests/testsUtil.js';
 import DocumentDb from '../util/DocumentDb.js';
 import UserRepository from './common/UserRepository.js';
 import DashboardTaskRepository from './dashboard/DashboardTaskRepository.js';
@@ -18,8 +18,6 @@ it('can create a new document and delete it', async () => {
   const newUser = UserSchema.parse({ userName: getTestUserName() });
   const createResult = await userRepository.insertNew(newUser);
   expect(createResult).toBeTruthy();
-
-  await cleanupDoc(userRepository, newUser);
 }, 10000);
 
 // -- Manual Database Operations Section -- //

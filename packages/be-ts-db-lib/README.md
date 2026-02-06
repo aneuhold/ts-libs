@@ -53,6 +53,7 @@ Possible next tasks:
 
 1. Copy an existing one over
 1. Create an associated validator
+1. Make sure the validator is registered in the DbSchemaUpdater so the DB can be validated when needed.
 
 ## Schema Validation for DB
 

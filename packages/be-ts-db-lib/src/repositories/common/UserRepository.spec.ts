@@ -1,8 +1,7 @@
 import type { User } from '@aneuhold/core-ts-db-lib';
 import { UserSchema } from '@aneuhold/core-ts-db-lib';
-import { afterAll, describe, expect, it } from 'vitest';
-import { cleanupDoc, expectToThrow, getTestUserName } from '../../tests/testsUtil.js';
-import DocumentDb from '../../util/DocumentDb.js';
+import { describe, expect, it } from 'vitest';
+import { expectToThrow, getTestUserName } from '../../../test-util/testsUtil.js';
 import ApiKeyRepository from './ApiKeyRepository.js';
 import UserRepository from './UserRepository.js';
 
@@ -13,8 +12,6 @@ describe('Create operations', () => {
     const newUser = UserSchema.parse({ userName: getTestUserName() });
     const insertResult = await userRepo.insertNew(newUser);
     expect(insertResult).toBeTruthy();
-
-    await cleanupDoc(userRepo, newUser);
   });
 
   it('can create a new user and the new user gets an API key', async () => {
@@ -26,7 +23,7 @@ describe('Create operations', () => {
     });
     expect(apiKey).toBeTruthy();
 
-    await cleanupDoc(userRepo, newUser);
+    await userRepo.delete(newUser._id);
     const apiKeyThatShouldNotExist = await ApiKeyRepository.getRepo().get({
       userId: newUser._id
     });
@@ -44,8 +41,6 @@ describe('Create operations', () => {
     await expectToThrow(async () => {
       await userRepo.insertNew(newUser2);
     });
-
-    await cleanupDoc(userRepo, newUser1);
   });
 });
 
@@ -63,8 +58,6 @@ describe('Update operations', () => {
     newUser.userName = userName2;
     const updateResult = await userRepo.update(newUser);
     expect(updateResult.acknowledged).toBeTruthy();
-
-    await cleanupDoc(userRepo, newUser);
   });
 
   it('throws if no id is defined', async () => {
@@ -92,8 +85,6 @@ describe('Update operations', () => {
     await expectToThrow(async () => {
       await userRepo.update(newUser);
     });
-
-    await Promise.all([cleanupDoc(userRepo, newUser), cleanupDoc(userRepo, userWithOtherUserName)]);
   });
 
   it('throws if the user doesnt exist', async () => {
@@ -125,8 +116,6 @@ describe('Update operations', () => {
     // Verify the update worked
     const updatedUser = await userRepo.get({ _id: newUser._id });
     expect(updatedUser?.userName).toBe(userName2);
-
-    await cleanupDoc(userRepo, newUser);
   });
 
   it('can update with a partial object containing only _id', async () => {
@@ -143,8 +132,6 @@ describe('Update operations', () => {
     };
     const updateResult = await userRepo.update(partialUpdate);
     expect(updateResult.acknowledged).toBeTruthy();
-
-    await cleanupDoc(userRepo, newUser);
   });
 
   it('does not clear nullish fields when not included in partial update, but clears when explicitly set to null', async () => {
@@ -183,11 +170,5 @@ describe('Update operations', () => {
     // Verify email is now cleared
     userInDb = await userRepo.get({ _id: newUser._id });
     expect(userInDb?.email).toBeNull();
-
-    await cleanupDoc(userRepo, newUser);
   });
-});
-
-afterAll(async () => {
-  await DocumentDb.closeDbConnection();
 });

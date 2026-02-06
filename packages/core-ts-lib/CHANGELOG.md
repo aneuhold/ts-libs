@@ -5,16 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## 🔖 [2.3.17] (2026-02-06)
+
+### ✅ Added
+
+- Added `check` script (`tsc --noEmit`) to validate TypeScript types locally and in CI.
+
+### 🏗️ Changed
+
+- Bumped package version to `2.3.17`.
+
 ## 🔖 [2.3.16] (2025-12-14)
 
 ### ✅ Added
+
 - Added `DateService.reviveDatesRecursive()` to recursively revive dates in objects.
 
 ## 🔖 [2.3.15] (2025-12-14)
 
 ### 🏗️ Changed
-- Updated dependencies for compatibility
 
+- Updated dependencies for compatibility
 
 ## 🔖 [2.3.14] (2025-12-07)
 
@@ -169,6 +180,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Updated workflow permissions to allow repository write access
 
 <!-- Link References -->
+
+[2.3.17]: https://github.com/aneuhold/ts-libs/compare/core-ts-lib-v2.3.16...core-ts-lib-v2.3.17
 [2.3.16]: https://github.com/aneuhold/ts-libs/compare/core-ts-lib-v2.3.15...core-ts-lib-v2.3.16
 [2.3.15]: https://github.com/aneuhold/ts-libs/compare/core-ts-lib-v2.3.14...core-ts-lib-v2.3.15
 [2.3.14]: https://github.com/aneuhold/ts-libs/compare/core-ts-lib-v2.3.13...core-ts-lib-v2.3.14

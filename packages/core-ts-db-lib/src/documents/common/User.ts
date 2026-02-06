@@ -21,10 +21,12 @@ export const UserSchema = UserCTOSchema.extend({
     .default({}),
   projectAccess: z
     .object({
-      dashboard: z.boolean().default(true)
+      dashboard: z.boolean().default(false),
+      workout: z.boolean().default(true)
     })
     .default({
-      dashboard: true
+      dashboard: false,
+      workout: true
     })
 });
 

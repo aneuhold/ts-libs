@@ -37,53 +37,10 @@ export default class DashboardTaskRepository extends DashboardBaseWithUserIdRepo
     const taskRepo = DashboardTaskRepository.getRepo();
     return {
       deleteOne: async (userId, meta) => {
-        const taskCollection = await taskRepo.getCollection();
-
-        // Get all tasks owned by the user to report sharedWith users
-        if (meta) {
-          const tasksOwnedByUser = await taskCollection
-            .find({ userId, docType: DashboardTask_docType })
-            .toArray();
-          tasksOwnedByUser.forEach((task) => {
-            meta.addAffectedUserIds(task.sharedWith);
-          });
-        }
-
-        // Remove all tasks for the user
-        await taskCollection.deleteMany({ userId, docType: DashboardTask_docType });
-        // Remove all assignedTo references for the user
-        await taskCollection.updateMany(
-          { assignedTo: userId, docType: DashboardTask_docType },
-          { $set: { assignedTo: undefined } }
-        );
-        meta?.recordDocTypeTouched(DashboardTask_docType);
-        meta?.addAffectedUserIds([userId]);
+        await taskRepo.deleteAllForUserWithCleanup(userId, meta);
       },
       deleteList: async (userIds, meta) => {
-        const taskCollection = await taskRepo.getCollection();
-
-        // Get all tasks owned by the users to report sharedWith users
-        if (meta) {
-          const tasksOwnedByUsers = await taskCollection
-            .find({ userId: { $in: userIds }, docType: DashboardTask_docType })
-            .toArray();
-          tasksOwnedByUsers.forEach((task) => {
-            meta.addAffectedUserIds(task.sharedWith);
-          });
-        }
-
-        // Remove all tasks for the users
-        await taskCollection.deleteMany({
-          userId: { $in: userIds },
-          docType: DashboardTask_docType
-        });
-        // Remove all assignedTo references for the users
-        await taskCollection.updateMany(
-          { assignedTo: { $in: userIds }, docType: DashboardTask_docType },
-          { $set: { assignedTo: undefined } }
-        );
-        meta?.recordDocTypeTouched(DashboardTask_docType);
-        meta?.addAffectedUserIds(userIds);
+        await taskRepo.deleteAllForUsersWithCleanup(userIds, meta);
       }
     };
   }
@@ -245,5 +202,44 @@ export default class DashboardTaskRepository extends DashboardBaseWithUserIdRepo
     const allUserTasks = await this.getAllForUser(initialTask.userId);
     const childrenIds = DashboardTaskService.getChildrenIds(allUserTasks, taskIds);
     return [...taskIds, ...childrenIds];
+  }
+
+  /**
+   * Deletes all tasks for a user and cleans up assignedTo references.
+   *
+   * @param userId - The user ID to delete tasks for.
+   * @param meta - Tracks database operation metadata for a single request.
+   */
+  async deleteAllForUserWithCleanup(userId: UUID, meta?: DbOperationMetaData): Promise<void> {
+    await this.deleteAllForUsersWithCleanup([userId], meta);
+  }
+
+  /**
+   * Deletes all tasks for users and cleans up assignedTo references.
+   *
+   * @param userIds - The user IDs to delete tasks for.
+   * @param meta - Tracks database operation metadata for a single request.
+   */
+  async deleteAllForUsersWithCleanup(userIds: UUID[], meta?: DbOperationMetaData): Promise<void> {
+    const taskCollection = await this.getCollection();
+
+    // Get all tasks owned by the users to report sharedWith users
+    if (meta) {
+      const tasksOwnedByUsers = await taskCollection
+        .find({ userId: { $in: userIds }, docType: DashboardTask_docType })
+        .toArray();
+      tasksOwnedByUsers.forEach((task) => {
+        meta.addAffectedUserIds(task.sharedWith);
+      });
+    }
+
+    // Delete all tasks for the users
+    await this.deleteAllForUsers(userIds, meta);
+
+    // Remove all assignedTo references for the users
+    await taskCollection.updateMany(
+      { assignedTo: { $in: userIds }, docType: DashboardTask_docType },
+      { $set: { assignedTo: undefined } }
+    );
   }
 }

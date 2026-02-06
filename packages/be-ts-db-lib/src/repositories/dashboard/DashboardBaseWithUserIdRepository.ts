@@ -28,12 +28,22 @@ export default abstract class DashboardBaseWithUserIdRepository<
    * @param userId The ID of the user to get items for.
    */
   async getAllForUser(userId: UUID): Promise<TBaseType[]> {
-    const collection = await this.getCollection();
     const filter = {
-      $and: [this.getFilterWithDefault(), { userId }]
+      userId
     } as Filter<TBaseType>;
-    const result = await collection.find(filter).toArray();
-    return result as TBaseType[];
+    return this.getListWithFilter(filter);
+  }
+
+  /**
+   * Gets all items for given users.
+   *
+   * @param userIds - The user IDs to get items for.
+   */
+  async getAllForUsers(userIds: UUID[]): Promise<TBaseType[]> {
+    const filter = {
+      userId: { $in: userIds }
+    } as Filter<TBaseType>;
+    return this.getListWithFilter(filter);
   }
 
   override async insertNew(
@@ -61,6 +71,7 @@ export default abstract class DashboardBaseWithUserIdRepository<
     meta?: DbOperationMetaData
   ): Promise<UpdateResult> {
     if (meta && updatedDoc._id) {
+      // We get the doc again, because it shouldn't include userId in the update doc.
       const docs = await this.fetchAndCacheDocsForMeta([updatedDoc._id], meta);
       if (docs.length > 0) {
         meta.addAffectedUserIds([docs[0].userId]);
@@ -97,5 +108,29 @@ export default abstract class DashboardBaseWithUserIdRepository<
       meta.addAffectedUserIds(cachedDocs.map((doc) => doc.userId));
     }
     return super.deleteList(docIds, meta);
+  }
+
+  /**
+   * Deletes all documents for a specific user.
+   *
+   * @param userId - The user ID to delete documents for.
+   * @param meta - Tracks database operation metadata for a single request.
+   */
+  async deleteAllForUser(userId: UUID, meta?: DbOperationMetaData): Promise<DeleteResult> {
+    return this.deleteAllForUsers([userId], meta);
+  }
+
+  /**
+   * Deletes all documents for specific users.
+   *
+   * @param userIds - The user IDs to delete documents for.
+   * @param meta - Tracks database operation metadata for a single request.
+   */
+  async deleteAllForUsers(userIds: UUID[], meta?: DbOperationMetaData): Promise<DeleteResult> {
+    const docsForUsers = await this.getAllForUsers(userIds);
+    meta?.recordDocTypeTouched(this.docType);
+    meta?.addAffectedUserIds(userIds);
+    const docIds = docsForUsers.map((doc) => doc._id);
+    return this.deleteList(docIds, meta);
   }
 }

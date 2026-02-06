@@ -22,7 +22,7 @@ export const NonogramKatanaUpgradeSchema = z.object({
   /**
    * Priority, where the higher the number, the higher up the list it is.
    */
-  priority: z.int().default(0)
+  priority: z.number().default(0)
 });
 
 /**

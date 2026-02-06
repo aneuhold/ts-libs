@@ -3,7 +3,7 @@ import { UserSchema } from '@aneuhold/core-ts-db-lib';
 import { DR, ErrorUtils } from '@aneuhold/core-ts-lib';
 import type { UUID } from 'crypto';
 import UserRepository from '../../repositories/common/UserRepository.js';
-import { TEST_USER_NAME_PREFIX } from '../../tests/globalTestVariables.js';
+import { TEST_USER_NAME_PREFIX } from '../../util/globalTestVariables.js';
 import IValidator from '../BaseValidator.js';
 
 /**

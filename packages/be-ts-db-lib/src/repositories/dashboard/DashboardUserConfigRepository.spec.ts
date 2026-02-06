@@ -1,8 +1,6 @@
 import { UserSchema } from '@aneuhold/core-ts-db-lib';
-import crypto from 'crypto';
-import { afterAll, describe, expect, it } from 'vitest';
-import { cleanupDoc, getTestUserName } from '../../tests/testsUtil.js';
-import DocumentDb from '../../util/DocumentDb.js';
+import { describe, expect, it } from 'vitest';
+import { getTestUserName } from '../../../test-util/testsUtil.js';
 import UserRepository from '../common/UserRepository.js';
 import DashboardUserConfigRepository from './DashboardUserConfigRepository.js';
 
@@ -18,8 +16,6 @@ describe('Create operations', () => {
     if (!newConfig) {
       return;
     }
-
-    await cleanupDoc(userRepo, newUser);
   });
 });
 
@@ -36,8 +32,6 @@ describe('Update operations', () => {
     await configRepo.update(newConfig);
     const updatedConfig = await configRepo.get({ _id: newConfig._id });
     expect(updatedConfig?.enableDevMode).toBe(true);
-
-    await cleanupDoc(userRepo, newUser);
   });
 
   it('can add collaborators to an existing user config', async () => {
@@ -54,12 +48,10 @@ describe('Update operations', () => {
     let updatedConfig = await configRepo.get({ _id: newConfig._id });
     expect(updatedConfig?.collaborators).toContain(newCollaborator._id);
 
-    await cleanupDoc(userRepo, newCollaborator);
+    await userRepo.delete(newCollaborator._id);
     // Ensure the collaborator is deleted automatically when the user is deleted
     updatedConfig = await configRepo.get({ _id: newConfig._id });
     expect(updatedConfig?.collaborators).not.toContain(newCollaborator._id);
-
-    await cleanupDoc(userRepo, newUser);
   });
 
   /**
@@ -110,15 +102,21 @@ describe('Update operations', () => {
     updatedConfig2 = await configRepo.get({ _id: newConfig2._id });
     expect(updatedConfig2?.collaborators).toContainEqual(newUser1._id);
     expect(updatedConfig2?.collaborators).not.toContain(newUser3._id);
-
-    await cleanupDoc(userRepo, newUser1);
-    await cleanupDoc(userRepo, newUser2);
-    await cleanupDoc(userRepo, newUser3);
   }, 10000);
 });
 
-afterAll(async () => {
-  return DocumentDb.closeDbConnection();
+describe('Lifecycle with User', () => {
+  it('deletes the user config when the associated user is deleted', async () => {
+    const newUser = await createNewTestUser();
+
+    const userConfigBefore = await configRepo.get({ userId: newUser._id });
+    expect(userConfigBefore).toBeTruthy();
+
+    await userRepo.delete(newUser._id);
+
+    const userConfigAfter = await configRepo.get({ userId: newUser._id });
+    expect(userConfigAfter).toBeNull();
+  });
 });
 
 /**
@@ -128,7 +126,7 @@ afterAll(async () => {
  */
 async function createNewTestUser() {
   const newUser = UserSchema.parse({
-    userName: getTestUserName(`${crypto.randomUUID()}userconfigtest`)
+    userName: getTestUserName(`userconfigtest`)
   });
   newUser.projectAccess.dashboard = true;
   const insertResult = await userRepo.insertNew(newUser);
