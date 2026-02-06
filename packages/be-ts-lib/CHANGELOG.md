@@ -9,7 +9,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### ✅ Added
 
+- Added `check` script (`tsc --noEmit`) to run TypeScript checks locally and in CI.
+
 ### 🏗️ Changed
+
+- Bumped package version to `3.0.10` and updated dev scripts for type checking.
 
 ### 🩹 Fixed
 
@@ -151,6 +155,7 @@ No direct code changes; version bump for compatibility with new major versions o
 - Updated workflow permissions to allow repository write access
 
 <!-- Link References -->
+
 [3.0.10]: https://github.com/aneuhold/ts-libs/compare/be-ts-lib-v3.0.9...be-ts-lib-v3.0.10
 [3.0.9]: https://github.com/aneuhold/ts-libs/compare/be-ts-lib-v3.0.8...be-ts-lib-v3.0.9
 [3.0.8]: https://github.com/aneuhold/ts-libs/compare/be-ts-lib-v3.0.7...be-ts-lib-v3.0.8

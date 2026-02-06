@@ -8,10 +8,17 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## 🔖 [4.0.5] (2026-02-06)
 
 ### ✅ Added
+- Added workout document types and schemas (e.g., `WorkoutExercise`, `WorkoutMesocycle`, `WorkoutMicrocycle`, `WorkoutSession`, `WorkoutSet`, and related embedded types).
+- Added new workout services and utilities (`WorkoutExerciseService`, `WorkoutSessionService`, `WorkoutSetService`, `WorkoutMesocycleService`, `WorkoutMicrocycleService`, `WorkoutSFRService`, `WorkoutVolumePlanningService`, and `WorkoutEquipmentTypeService`).
+- Added comprehensive unit tests and a `WorkoutTestUtil` to improve test coverage for workout logic.
 
 ### 🏗️ Changed
+- Strengthened validation and schema updates (including updates to User schema and validators) to make validation more strict and robust.
+- Refactored exports and `src/browser.ts` for improved API surface and maintainability.
+- Added `check` script (`tsc --noEmit`) to package.json to enable TypeScript checks.
 
 ### 🩹 Fixed
+- Fixed bugs in set planning and set reps calculation and various fixes across the workout scheduling algorithm and related services.
 
 ### 🔥 Removed
 

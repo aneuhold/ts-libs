@@ -8,8 +8,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## 🔖 [0.2.24] (2026-02-06)
 
 ### ✅ Added
+- Added `check` script (`tsc --noEmit`) to enable TypeScript checks locally and in CI.
 
 ### 🏗️ Changed
+- Bumped package version to `0.2.24` and updated dev scripts for type checking.
 
 ### 🩹 Fixed
 
