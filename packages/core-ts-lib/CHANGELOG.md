@@ -15,10 +15,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - Bumped package version to `2.3.17`.
 
-### 🩹 Fixed
-
-### 🔥 Removed
-
 ## 🔖 [2.3.16] (2025-12-14)
 
 ### ✅ Added
