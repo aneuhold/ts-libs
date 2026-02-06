@@ -1,5 +1,4 @@
-import type { BaseDocument } from '@aneuhold/core-ts-db-lib';
-import crypto from 'crypto';
+import { DocumentService, type BaseDocument } from '@aneuhold/core-ts-db-lib';
 import { expect } from 'vitest';
 import type BaseRepository from '../src/repositories/BaseRepository.js';
 import { TEST_USER_NAME_PREFIX } from '../src/util/globalTestVariables.js';
@@ -27,8 +26,7 @@ export async function expectToThrow(func: () => Promise<void>) {
  * @returns The test user name.
  */
 export function getTestUserName(username?: string): string {
-  if (!username) return `${TEST_USER_NAME_PREFIX}-${crypto.randomUUID()}`;
-  return `${TEST_USER_NAME_PREFIX}-${username}`;
+  return `${TEST_USER_NAME_PREFIX}-${DocumentService.generateID()}-${username}`;
 }
 
 /**

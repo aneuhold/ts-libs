@@ -139,8 +139,6 @@ describe('WorkoutMesocycleRepository', () => {
     });
 
     it('should reject update without _id', async () => {
-      const testUser = await createNewTestUser();
-
       await expect(
         repo.update({
           title: 'Updated Name'

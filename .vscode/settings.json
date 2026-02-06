@@ -23,5 +23,6 @@
   // otherwise. Unless I learn something new in the future on how to handle that.
   "javascript.preferences.importModuleSpecifier": "project-relative",
   "typescript.preferences.importModuleSpecifier": "project-relative",
-  "github.copilot.chat.cli.customAgents.enabled": true
+  "github.copilot.chat.cli.customAgents.enabled": true,
+  "github.copilot.chat.askQuestions.enabled": true
 }

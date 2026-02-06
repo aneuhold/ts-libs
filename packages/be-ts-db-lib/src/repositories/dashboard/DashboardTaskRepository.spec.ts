@@ -1,6 +1,5 @@
 import type { User } from '@aneuhold/core-ts-db-lib';
 import { DashboardTaskSchema, UserSchema } from '@aneuhold/core-ts-db-lib';
-import crypto from 'crypto';
 import { describe, expect, it } from 'vitest';
 import { getTestUserName } from '../../../test-util/testsUtil.js';
 import DbOperationMetaData from '../../util/DbOperationMetaData.js';
@@ -131,7 +130,7 @@ describe('DbOperationMetaData tracking', () => {
  */
 async function createNewTestUser(): Promise<User> {
   const newUser = UserSchema.parse({
-    userName: getTestUserName(`${crypto.randomUUID()}dashboardTaskTest`)
+    userName: getTestUserName(`dashboardTaskTest`)
   });
   const insertResult = await userRepo.insertNew(newUser);
   expect(insertResult).toBeTruthy();
