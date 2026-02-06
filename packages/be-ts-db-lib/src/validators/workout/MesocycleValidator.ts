@@ -12,7 +12,13 @@ export default class WorkoutMesocycleValidator extends IValidator<WorkoutMesocyc
     super(WorkoutMesocycleSchema, WorkoutMesocycleSchema.partial());
   }
 
-  protected validateNewObjectBusinessLogic(): Promise<void> {
+  protected validateNewObjectBusinessLogic(mesocycle: WorkoutMesocycle): Promise<void> {
+    if (mesocycle.calibratedExercises.length < mesocycle.plannedSessionCountPerMicrocycle) {
+      throw new Error(
+        'Number of calibrated exercises must be at least equal to planned sessions per microcycle.' +
+          ' Create a slight variation of an existing exercise if needed.'
+      );
+    }
     return Promise.resolve();
   }
 
