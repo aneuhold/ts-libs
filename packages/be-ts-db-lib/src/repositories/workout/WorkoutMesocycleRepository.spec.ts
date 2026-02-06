@@ -7,7 +7,6 @@ import {
   type WorkoutMesocycle
 } from '@aneuhold/core-ts-db-lib';
 import type { UUID } from 'crypto';
-import crypto from 'crypto';
 import { describe, expect, it } from 'vitest';
 import { getTestUserName } from '../../../test-util/testsUtil.js';
 import UserRepository from '../common/UserRepository.js';
@@ -153,7 +152,7 @@ describe('WorkoutMesocycleRepository', () => {
  */
 async function createNewTestUser() {
   const newUser = UserSchema.parse({
-    userName: getTestUserName(`${crypto.randomUUID()}mesocycle`)
+    userName: getTestUserName(`mesocycle`)
   });
   const insertResult = await userRepo.insertNew(newUser);
   expect(insertResult).toBeTruthy();

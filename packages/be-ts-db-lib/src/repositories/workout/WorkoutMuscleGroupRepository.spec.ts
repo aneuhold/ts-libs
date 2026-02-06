@@ -3,7 +3,6 @@ import {
   WorkoutMuscleGroupSchema,
   type WorkoutMuscleGroup
 } from '@aneuhold/core-ts-db-lib';
-import crypto from 'crypto';
 import { describe, expect, it } from 'vitest';
 import { getTestUserName } from '../../../test-util/testsUtil.js';
 import UserRepository from '../common/UserRepository.js';
@@ -178,7 +177,7 @@ describe('WorkoutMuscleGroupRepository', () => {
  */
 async function createNewTestUser() {
   const newUser = UserSchema.parse({
-    userName: getTestUserName(`${crypto.randomUUID()}musclegroup`)
+    userName: getTestUserName(`musclegroup`)
   });
   const insertResult = await userRepo.insertNew(newUser);
   expect(insertResult).toBeTruthy();

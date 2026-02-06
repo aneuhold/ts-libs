@@ -10,6 +10,9 @@ import WorkoutExerciseValidator from '../validators/workout/ExerciseValidator.js
 import WorkoutMesocycleValidator from '../validators/workout/MesocycleValidator.js';
 import WorkoutMicrocycleValidator from '../validators/workout/MicrocycleValidator.js';
 import WorkoutMuscleGroupValidator from '../validators/workout/MuscleGroupValidator.js';
+import WorkoutSessionExerciseValidator from '../validators/workout/SessionExerciseValidator.js';
+import WorkoutSessionValidator from '../validators/workout/SessionValidator.js';
+import WorkoutSetValidator from '../validators/workout/SetValidator.js';
 
 /**
  * A class that can be used to validate and update the DB and all repositories.
@@ -33,5 +36,8 @@ export default class DbSchemaUpdater {
     await new WorkoutMesocycleValidator().validateRepositoryInDb(dryRun);
     await new WorkoutMicrocycleValidator().validateRepositoryInDb(dryRun);
     await new WorkoutMuscleGroupValidator().validateRepositoryInDb(dryRun);
+    await new WorkoutSessionExerciseValidator().validateRepositoryInDb(dryRun);
+    await new WorkoutSessionValidator().validateRepositoryInDb(dryRun);
+    await new WorkoutSetValidator().validateRepositoryInDb(dryRun);
   }
 }

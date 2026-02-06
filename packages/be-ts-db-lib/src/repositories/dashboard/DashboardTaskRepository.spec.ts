@@ -130,7 +130,8 @@ describe('DbOperationMetaData tracking', () => {
  */
 async function createNewTestUser(): Promise<User> {
   const newUser = UserSchema.parse({
-    userName: getTestUserName(`dashboardTaskTest`)
+    userName: getTestUserName(`dashboardTaskTest`),
+    projectAccess: { dashboard: true, workout: true }
   });
   const insertResult = await userRepo.insertNew(newUser);
   expect(insertResult).toBeTruthy();

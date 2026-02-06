@@ -5,6 +5,7 @@ import type { RepoListeners } from '../../services/RepoSubscriptionService.js';
 import type DbOperationMetaData from '../../util/DbOperationMetaData.js';
 import WorkoutMicrocycleValidator from '../../validators/workout/MicrocycleValidator.js';
 import WorkoutBaseWithUserIdRepository from './WorkoutBaseWithUserIdRepository.js';
+import WorkoutSessionRepository from './WorkoutSessionRepository.js';
 
 /**
  * The repository that contains {@link WorkoutMicrocycle} documents.
@@ -40,7 +41,9 @@ export default class WorkoutMicrocycleRepository extends WorkoutBaseWithUserIdRe
     };
   }
 
-  protected setupSubscribers(): void {}
+  protected setupSubscribers(): void {
+    this.subscribeToChanges(WorkoutSessionRepository.getListenersForMicrocycleRepo());
+  }
 
   /**
    * Deletes all microcycles for a specific mesocycle.
