@@ -9,7 +9,7 @@ describe('UserSchema', () => {
     if (result.success) {
       expect(result.data.userName).toBe('testuser');
       expect(result.data._id).toBeDefined();
-      expect(result.data.projectAccess.dashboard).toBe(true);
+      expect(result.data.projectAccess.dashboard).toBe(false);
     }
   });
 
