@@ -17,7 +17,9 @@ import type { Translation, Translations } from './types/Translations.js';
 import type {
   DashboardWebSocketClientToServerEvents,
   DashboardWebSocketServerToClientEvents,
-  WebSocketHandshakeAuth
+  WebSocketHandshakeAuth,
+  WorkoutWebSocketClientToServerEvents,
+  WorkoutWebSocketServerToClientEvents
 } from './types/WebSocket.js';
 
 // Export all browser-safe functions and classes from this library
@@ -41,5 +43,7 @@ export type {
   ProjectWorkoutPrimaryOutput,
   Translation,
   Translations,
-  WebSocketHandshakeAuth
+  WebSocketHandshakeAuth,
+  WorkoutWebSocketClientToServerEvents,
+  WorkoutWebSocketServerToClientEvents
 };
