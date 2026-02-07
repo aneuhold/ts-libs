@@ -7,13 +7,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## 🔖 [4.1.1] (2026-02-06)
 
-### ✅ Added
-
 ### 🏗️ Changed
+
+- Relaxed validation in `WorkoutMesocycleSchema`: removed minimum length check for `calibratedExercises` array.
 
 ### 🩹 Fixed
 
-### 🔥 Removed
+- No other direct code changes; version bump for compatibility with new major versions of dependencies.
 
 ## 🔖 [4.1.0] (2026-02-06)
 
@@ -213,6 +213,7 @@ Updated dependency: now requires `@aneuhold/core-ts-lib@^2.3.11`.
 - Updated workflow permissions to allow repository write access
 
 <!-- Link References -->
+
 [4.1.1]: https://github.com/aneuhold/ts-libs/compare/core-ts-db-lib-v4.1.0...core-ts-db-lib-v4.1.1
 [4.1.0]: https://github.com/aneuhold/ts-libs/compare/core-ts-db-lib-v4.0.4...core-ts-db-lib-v4.1.0
 [4.0.4]: https://github.com/aneuhold/ts-libs/compare/core-ts-db-lib-v4.0.3...core-ts-db-lib-v4.0.4
