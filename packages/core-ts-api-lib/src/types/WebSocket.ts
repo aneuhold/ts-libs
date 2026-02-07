@@ -1,5 +1,5 @@
 import type { UUID } from 'crypto';
-import type { ProjectDashboardOutput } from './ProjectDashboard.js';
+import type { ProjectDashboardOutput } from './project/dashboard/ProjectDashboard.js';
 
 /**
  * The data each client is expected to send over with a request. For example on the client side:

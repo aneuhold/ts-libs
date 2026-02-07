@@ -1,8 +1,8 @@
 import type { ApiKey, User } from '@aneuhold/core-ts-db-lib';
-import type { DashboardConfig } from './DashboardConfig.js';
+import type { DashboardConfig } from './project/dashboard/DashboardConfig.js';
 
 /**
- * Interface representing the input to the AuthValidateUser function.
+ * Interface representing the input to the AuthValidateUser endpoint.
  */
 export interface AuthValidateUserInput {
   /**
@@ -16,7 +16,7 @@ export interface AuthValidateUserInput {
 }
 
 /**
- * Interface representing the output of the AuthValidateUser function.
+ * Interface representing the output of the AuthValidateUser endpoint.
  */
 export interface AuthValidateUserOutput {
   /**

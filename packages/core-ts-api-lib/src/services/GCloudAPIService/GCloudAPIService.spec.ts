@@ -1,7 +1,7 @@
 import type { UUID } from 'crypto';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { AuthValidateUserInput } from '../../types/AuthValidateUser.js';
-import type { ProjectDashboardInput } from '../../types/ProjectDashboard.js';
+import type { ProjectDashboardInput } from '../../types/project/dashboard/ProjectDashboard.js';
 import GCloudAPIService from './GCloudAPIService.js';
 
 describe('Unit Tests', () => {

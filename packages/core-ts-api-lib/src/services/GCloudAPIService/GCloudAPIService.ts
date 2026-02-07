@@ -7,7 +7,7 @@ import type {
 import type {
   ProjectDashboardInput,
   ProjectDashboardOutput
-} from '../../types/ProjectDashboard.js';
+} from '../../types/project/dashboard/ProjectDashboard.js';
 
 /**
  * A service for interacting with the Google Cloud API service for personal projects.

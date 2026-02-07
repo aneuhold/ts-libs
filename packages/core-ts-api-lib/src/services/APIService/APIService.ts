@@ -6,7 +6,7 @@ import type {
 import type {
   ProjectDashboardInput,
   ProjectDashboardOutput
-} from '../../types/ProjectDashboard.js';
+} from '../../types/project/dashboard/ProjectDashboard.js';
 import GCloudAPIService from '../GCloudAPIService/GCloudAPIService.js';
 
 /**
