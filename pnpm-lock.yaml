@@ -109,7 +109,7 @@ importers:
   packages/be-ts-lib:
     dependencies:
       '@aneuhold/core-ts-api-lib':
-        specifier: ^3.0.11
+        specifier: ^3.0.12
         version: link:../core-ts-api-lib
       '@aneuhold/core-ts-lib':
         specifier: ^2.3.17
