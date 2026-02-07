@@ -98,7 +98,7 @@ export default abstract class BaseRepository<TBaseType extends BaseDocument> {
    */
   async insertNew(newDoc: TBaseType, meta?: DbOperationMetaData): Promise<TBaseType | null> {
     const collection = await this.getCollection();
-    await this.validator.validateNewObject(newDoc);
+    await this.validator.validateNewObject(newDoc, meta);
     const insertResult = await collection.insertOne(newDoc as OptionalUnlessRequiredId<TBaseType>);
     if (!insertResult.acknowledged) {
       return null;
@@ -116,7 +116,7 @@ export default abstract class BaseRepository<TBaseType extends BaseDocument> {
    */
   async insertMany(newDocs: TBaseType[], meta?: DbOperationMetaData): Promise<TBaseType[]> {
     const collection = await this.getCollection();
-    await Promise.all(newDocs.map((doc) => this.validator.validateNewObject(doc)));
+    await Promise.all(newDocs.map((doc) => this.validator.validateNewObject(doc, meta)));
     const insertResult = await collection.insertMany(
       newDocs as OptionalUnlessRequiredId<TBaseType>[]
     );
@@ -240,7 +240,7 @@ export default abstract class BaseRepository<TBaseType extends BaseDocument> {
    */
   async update(updatedDoc: Partial<TBaseType>, meta?: DbOperationMetaData): Promise<UpdateResult> {
     const collection = await this.getCollection();
-    await this.validator.validateUpdateObject(updatedDoc);
+    await this.validator.validateUpdateObject(updatedDoc, meta);
 
     const docId = updatedDoc._id;
 
@@ -267,7 +267,7 @@ export default abstract class BaseRepository<TBaseType extends BaseDocument> {
     meta?: DbOperationMetaData
   ): Promise<BulkWriteResult> {
     const collection = await this.getCollection();
-    await Promise.all(updatedDocs.map((doc) => this.validator.validateUpdateObject(doc)));
+    await Promise.all(updatedDocs.map((doc) => this.validator.validateUpdateObject(doc, meta)));
 
     const bulkOps = updatedDocs.map((doc) => {
       const docId = doc._id;
