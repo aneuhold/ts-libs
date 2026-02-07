@@ -9,11 +9,23 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### ✅ Added
 
+- Added new workout API types and endpoint: `ProjectWorkoutPrimaryInput`, `ProjectWorkoutPrimaryOutput`, and related types under `src/types/project/workout/`.
+- Added `APIService.callWorkoutAPI()` and `GCloudAPIService.projectWorkout()` for workout endpoint integration.
+- Added WebSocket types for workout events: `WorkoutWebSocketClientToServerEvents`, `WorkoutWebSocketServerToClientEvents`.
+
 ### 🏗️ Changed
+
+- Refactored dashboard types: moved `DashboardConfig` and `ProjectDashboard` types to `src/types/project/dashboard/`.
+- Updated all imports and exports to use new dashboard/workout type locations for improved organization.
+- Updated API and GCloudAPI services to use new type paths and support workout endpoint.
 
 ### 🩹 Fixed
 
+- Fixed type references and imports for dashboard and workout types throughout the codebase.
+
 ### 🔥 Removed
+
+- Removed old dashboard type files from root of `src/types` (now under `project/dashboard/`).
 
 ## 🔖 [3.0.11] (2026-02-06)
 
@@ -221,6 +233,7 @@ No direct code changes; version bump for compatibility.
 - Updated workflow permissions to allow repository write access
 
 <!-- Link References -->
+
 [3.0.12]: https://github.com/aneuhold/ts-libs/compare/core-ts-api-lib-v3.0.11...core-ts-api-lib-v3.0.12
 [3.0.11]: https://github.com/aneuhold/ts-libs/compare/core-ts-api-lib-v3.0.10...core-ts-api-lib-v3.0.11
 [3.0.10]: https://github.com/aneuhold/ts-libs/compare/core-ts-api-lib-v3.0.9...core-ts-api-lib-v3.0.10
