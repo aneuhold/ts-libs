@@ -5,6 +5,7 @@ import type { UUID } from 'crypto';
 import UserRepository from '../../repositories/common/UserRepository.js';
 import WorkoutMesocycleRepository from '../../repositories/workout/WorkoutMesocycleRepository.js';
 import WorkoutMicrocycleRepository from '../../repositories/workout/WorkoutMicrocycleRepository.js';
+import type DbOperationMetaData from '../../util/DbOperationMetaData.js';
 import IValidator from '../BaseValidator.js';
 
 export default class WorkoutMicrocycleValidator extends IValidator<WorkoutMicrocycle> {
@@ -12,22 +13,30 @@ export default class WorkoutMicrocycleValidator extends IValidator<WorkoutMicroc
     super(WorkoutMicrocycleSchema, WorkoutMicrocycleSchema.partial());
   }
 
-  protected async validateNewObjectBusinessLogic(newMicrocycle: WorkoutMicrocycle): Promise<void> {
+  protected async validateNewObjectBusinessLogic(
+    newMicrocycle: WorkoutMicrocycle,
+    meta?: DbOperationMetaData
+  ): Promise<void> {
     // Validate that the mesocycle exists if workoutMesocycleId is provided
     if (newMicrocycle.workoutMesocycleId) {
-      const mesocycleRepo = WorkoutMesocycleRepository.getRepo();
-      const mesocycle = await mesocycleRepo.get({ _id: newMicrocycle.workoutMesocycleId });
-      if (!mesocycle) {
-        ErrorUtils.throwError(
-          `Mesocycle with ID ${newMicrocycle.workoutMesocycleId} does not exist`,
-          newMicrocycle
-        );
+      const isPendingMesocycle = meta?.hasPendingDoc(newMicrocycle.workoutMesocycleId);
+
+      if (!isPendingMesocycle) {
+        const mesocycleRepo = WorkoutMesocycleRepository.getRepo();
+        const mesocycle = await mesocycleRepo.get({ _id: newMicrocycle.workoutMesocycleId });
+        if (!mesocycle) {
+          ErrorUtils.throwError(
+            `Mesocycle with ID ${newMicrocycle.workoutMesocycleId} does not exist`,
+            newMicrocycle
+          );
+        }
       }
     }
   }
 
   protected async validateUpdateObjectBusinessLogic(
-    updatedMicrocycle: Partial<WorkoutMicrocycle>
+    updatedMicrocycle: Partial<WorkoutMicrocycle>,
+    meta?: DbOperationMetaData
   ): Promise<void> {
     const errors: string[] = [];
 
@@ -37,10 +46,14 @@ export default class WorkoutMicrocycleValidator extends IValidator<WorkoutMicroc
 
     // Validate mesocycle if being updated
     if (updatedMicrocycle.workoutMesocycleId) {
-      const mesocycleRepo = WorkoutMesocycleRepository.getRepo();
-      const mesocycle = await mesocycleRepo.get({ _id: updatedMicrocycle.workoutMesocycleId });
-      if (!mesocycle) {
-        errors.push(`Mesocycle with ID ${updatedMicrocycle.workoutMesocycleId} does not exist`);
+      const isPendingMesocycle = meta?.hasPendingDoc(updatedMicrocycle.workoutMesocycleId);
+
+      if (!isPendingMesocycle) {
+        const mesocycleRepo = WorkoutMesocycleRepository.getRepo();
+        const mesocycle = await mesocycleRepo.get({ _id: updatedMicrocycle.workoutMesocycleId });
+        if (!mesocycle) {
+          errors.push(`Mesocycle with ID ${updatedMicrocycle.workoutMesocycleId} does not exist`);
+        }
       }
     }
 

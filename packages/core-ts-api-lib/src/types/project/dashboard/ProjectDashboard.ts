@@ -6,7 +6,7 @@ import type {
   UserCTO
 } from '@aneuhold/core-ts-db-lib';
 import type { UUID } from 'crypto';
-import type { Translations } from './Translations.js';
+import type { Translations } from '../../Translations.js';
 
 /**
  * Options for configuring the project dashboard.

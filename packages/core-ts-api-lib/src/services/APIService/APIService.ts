@@ -6,7 +6,11 @@ import type {
 import type {
   ProjectDashboardInput,
   ProjectDashboardOutput
-} from '../../types/ProjectDashboard.js';
+} from '../../types/project/dashboard/ProjectDashboard.js';
+import type {
+  ProjectWorkoutPrimaryInput,
+  ProjectWorkoutPrimaryOutput
+} from '../../types/project/workout/ProjectWorkout.js';
 import GCloudAPIService from '../GCloudAPIService/GCloudAPIService.js';
 
 /**
@@ -38,6 +42,18 @@ export default class APIService {
     input: ProjectDashboardInput
   ): Promise<APIResponse<ProjectDashboardOutput>> {
     return GCloudAPIService.projectDashboard(input);
+  }
+
+  /**
+   * Calls the workout API and returns the result.
+   *
+   * @param input - The input for the workout API call.
+   * @returns A promise that resolves to the result of the workout API call.
+   */
+  static async callWorkoutAPI(
+    input: ProjectWorkoutPrimaryInput
+  ): Promise<APIResponse<ProjectWorkoutPrimaryOutput>> {
+    return GCloudAPIService.projectWorkout(input);
   }
 
   /**

@@ -6,6 +6,7 @@ import UserRepository from '../../repositories/common/UserRepository.js';
 import WorkoutEquipmentTypeRepository from '../../repositories/workout/WorkoutEquipmentTypeRepository.js';
 import WorkoutExerciseRepository from '../../repositories/workout/WorkoutExerciseRepository.js';
 import WorkoutMuscleGroupRepository from '../../repositories/workout/WorkoutMuscleGroupRepository.js';
+import type DbOperationMetaData from '../../util/DbOperationMetaData.js';
 import IValidator from '../BaseValidator.js';
 
 export default class WorkoutExerciseValidator extends IValidator<WorkoutExercise> {
@@ -13,7 +14,10 @@ export default class WorkoutExerciseValidator extends IValidator<WorkoutExercise
     super(WorkoutExerciseSchema, WorkoutExerciseSchema.partial());
   }
 
-  protected async validateNewObjectBusinessLogic(newExercise: WorkoutExercise): Promise<void> {
+  protected async validateNewObjectBusinessLogic(
+    newExercise: WorkoutExercise,
+    meta?: DbOperationMetaData
+  ): Promise<void> {
     const errors: string[] = [];
 
     // Collect all muscle group IDs
@@ -24,20 +28,29 @@ export default class WorkoutExerciseValidator extends IValidator<WorkoutExercise
 
     // Validate muscle groups exist
     if (allMuscleGroupIds.length > 0) {
-      const muscleGroupRepo = WorkoutMuscleGroupRepository.getRepo();
-      const muscleGroups = await muscleGroupRepo.getList(allMuscleGroupIds);
-      if (muscleGroups.length !== allMuscleGroupIds.length) {
-        errors.push(
-          `Not all muscle groups exist. Found: ${muscleGroups.length}, expected: ${allMuscleGroupIds.length}`
-        );
+      // Filter out muscle groups that are pending creation
+      const muscleGroupIdsToCheck = allMuscleGroupIds.filter((id) => !meta?.hasPendingDoc(id));
+
+      if (muscleGroupIdsToCheck.length > 0) {
+        const muscleGroupRepo = WorkoutMuscleGroupRepository.getRepo();
+        const muscleGroups = await muscleGroupRepo.getList(muscleGroupIdsToCheck);
+        if (muscleGroups.length !== muscleGroupIdsToCheck.length) {
+          errors.push(
+            `Not all muscle groups exist. Found: ${muscleGroups.length}, expected: ${muscleGroupIdsToCheck.length}`
+          );
+        }
       }
     }
 
     // Validate equipment type exists
-    const equipmentRepo = WorkoutEquipmentTypeRepository.getRepo();
-    const equipment = await equipmentRepo.get({ _id: newExercise.workoutEquipmentTypeId });
-    if (!equipment) {
-      errors.push(`Equipment type with ID ${newExercise.workoutEquipmentTypeId} does not exist`);
+    const isPendingEquipmentType = meta?.hasPendingDoc(newExercise.workoutEquipmentTypeId);
+
+    if (!isPendingEquipmentType) {
+      const equipmentRepo = WorkoutEquipmentTypeRepository.getRepo();
+      const equipment = await equipmentRepo.get({ _id: newExercise.workoutEquipmentTypeId });
+      if (!equipment) {
+        errors.push(`Equipment type with ID ${newExercise.workoutEquipmentTypeId} does not exist`);
+      }
     }
 
     if (errors.length > 0) {
@@ -46,7 +59,8 @@ export default class WorkoutExerciseValidator extends IValidator<WorkoutExercise
   }
 
   protected async validateUpdateObjectBusinessLogic(
-    updatedExercise: Partial<WorkoutExercise>
+    updatedExercise: Partial<WorkoutExercise>,
+    meta?: DbOperationMetaData
   ): Promise<void> {
     const errors: string[] = [];
 
@@ -65,23 +79,32 @@ export default class WorkoutExerciseValidator extends IValidator<WorkoutExercise
 
     // Validate muscle groups if being updated
     if (allMuscleGroupIds.length > 0) {
-      const muscleGroupRepo = WorkoutMuscleGroupRepository.getRepo();
-      const muscleGroups = await muscleGroupRepo.getList(allMuscleGroupIds);
-      if (muscleGroups.length !== allMuscleGroupIds.length) {
-        errors.push(
-          `Not all muscle groups exist. Found: ${muscleGroups.length}, expected: ${allMuscleGroupIds.length}`
-        );
+      // Filter out muscle groups that are pending creation
+      const muscleGroupIdsToCheck = allMuscleGroupIds.filter((id) => !meta?.hasPendingDoc(id));
+
+      if (muscleGroupIdsToCheck.length > 0) {
+        const muscleGroupRepo = WorkoutMuscleGroupRepository.getRepo();
+        const muscleGroups = await muscleGroupRepo.getList(muscleGroupIdsToCheck);
+        if (muscleGroups.length !== muscleGroupIdsToCheck.length) {
+          errors.push(
+            `Not all muscle groups exist. Found: ${muscleGroups.length}, expected: ${muscleGroupIdsToCheck.length}`
+          );
+        }
       }
     }
 
     // Validate equipment type if being updated
     if (updatedExercise.workoutEquipmentTypeId) {
-      const equipmentRepo = WorkoutEquipmentTypeRepository.getRepo();
-      const equipment = await equipmentRepo.get({ _id: updatedExercise.workoutEquipmentTypeId });
-      if (!equipment) {
-        errors.push(
-          `Equipment type with ID ${updatedExercise.workoutEquipmentTypeId} does not exist`
-        );
+      const isPendingEquipmentType = meta?.hasPendingDoc(updatedExercise.workoutEquipmentTypeId);
+
+      if (!isPendingEquipmentType) {
+        const equipmentRepo = WorkoutEquipmentTypeRepository.getRepo();
+        const equipment = await equipmentRepo.get({ _id: updatedExercise.workoutEquipmentTypeId });
+        if (!equipment) {
+          errors.push(
+            `Equipment type with ID ${updatedExercise.workoutEquipmentTypeId} does not exist`
+          );
+        }
       }
     }
 
