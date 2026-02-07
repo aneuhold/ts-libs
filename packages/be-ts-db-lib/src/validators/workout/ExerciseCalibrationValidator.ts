@@ -5,6 +5,7 @@ import type { UUID } from 'crypto';
 import UserRepository from '../../repositories/common/UserRepository.js';
 import WorkoutExerciseCalibrationRepository from '../../repositories/workout/WorkoutExerciseCalibrationRepository.js';
 import WorkoutExerciseRepository from '../../repositories/workout/WorkoutExerciseRepository.js';
+import type DbOperationMetaData from '../../util/DbOperationMetaData.js';
 import IValidator from '../BaseValidator.js';
 
 export default class WorkoutExerciseCalibrationValidator extends IValidator<WorkoutExerciseCalibration> {
@@ -13,21 +14,28 @@ export default class WorkoutExerciseCalibrationValidator extends IValidator<Work
   }
 
   protected async validateNewObjectBusinessLogic(
-    newCalibration: WorkoutExerciseCalibration
+    newCalibration: WorkoutExerciseCalibration,
+    meta?: DbOperationMetaData
   ): Promise<void> {
-    // Validate that the exercise exists
-    const exerciseRepo = WorkoutExerciseRepository.getRepo();
-    const exercise = await exerciseRepo.get({ _id: newCalibration.workoutExerciseId });
-    if (!exercise) {
-      ErrorUtils.throwError(
-        `Exercise with ID ${newCalibration.workoutExerciseId} does not exist`,
-        newCalibration
-      );
+    // Check if exercise is pending creation
+    const isPendingExercise = meta?.hasPendingDoc(newCalibration.workoutExerciseId);
+
+    if (!isPendingExercise) {
+      // Validate that the exercise exists
+      const exerciseRepo = WorkoutExerciseRepository.getRepo();
+      const exercise = await exerciseRepo.get({ _id: newCalibration.workoutExerciseId });
+      if (!exercise) {
+        ErrorUtils.throwError(
+          `Exercise with ID ${newCalibration.workoutExerciseId} does not exist`,
+          newCalibration
+        );
+      }
     }
   }
 
   protected async validateUpdateObjectBusinessLogic(
-    updatedCalibration: Partial<WorkoutExerciseCalibration>
+    updatedCalibration: Partial<WorkoutExerciseCalibration>,
+    meta?: DbOperationMetaData
   ): Promise<void> {
     const errors: string[] = [];
 
@@ -37,10 +45,14 @@ export default class WorkoutExerciseCalibrationValidator extends IValidator<Work
 
     // Validate exercise if being updated
     if (updatedCalibration.workoutExerciseId) {
-      const exerciseRepo = WorkoutExerciseRepository.getRepo();
-      const exercise = await exerciseRepo.get({ _id: updatedCalibration.workoutExerciseId });
-      if (!exercise) {
-        errors.push(`Exercise with ID ${updatedCalibration.workoutExerciseId} does not exist`);
+      const isPendingExercise = meta?.hasPendingDoc(updatedCalibration.workoutExerciseId);
+
+      if (!isPendingExercise) {
+        const exerciseRepo = WorkoutExerciseRepository.getRepo();
+        const exercise = await exerciseRepo.get({ _id: updatedCalibration.workoutExerciseId });
+        if (!exercise) {
+          errors.push(`Exercise with ID ${updatedCalibration.workoutExerciseId} does not exist`);
+        }
       }
     }
 

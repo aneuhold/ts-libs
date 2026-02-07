@@ -5,6 +5,7 @@ import type { UUID } from 'crypto';
 import UserRepository from '../../repositories/common/UserRepository.js';
 import WorkoutMicrocycleRepository from '../../repositories/workout/WorkoutMicrocycleRepository.js';
 import WorkoutSessionRepository from '../../repositories/workout/WorkoutSessionRepository.js';
+import type DbOperationMetaData from '../../util/DbOperationMetaData.js';
 import IValidator from '../BaseValidator.js';
 
 export default class WorkoutSessionValidator extends IValidator<WorkoutSession> {
@@ -12,22 +13,30 @@ export default class WorkoutSessionValidator extends IValidator<WorkoutSession> 
     super(WorkoutSessionSchema, WorkoutSessionSchema.partial());
   }
 
-  protected async validateNewObjectBusinessLogic(newSession: WorkoutSession): Promise<void> {
+  protected async validateNewObjectBusinessLogic(
+    newSession: WorkoutSession,
+    meta?: DbOperationMetaData
+  ): Promise<void> {
     // Validate that the microcycle exists if workoutMicrocycleId is provided
     if (newSession.workoutMicrocycleId) {
-      const microcycleRepo = WorkoutMicrocycleRepository.getRepo();
-      const microcycle = await microcycleRepo.get({ _id: newSession.workoutMicrocycleId });
-      if (!microcycle) {
-        ErrorUtils.throwError(
-          `Microcycle with ID ${newSession.workoutMicrocycleId} does not exist`,
-          newSession
-        );
+      const isPendingMicrocycle = meta?.hasPendingDoc(newSession.workoutMicrocycleId);
+
+      if (!isPendingMicrocycle) {
+        const microcycleRepo = WorkoutMicrocycleRepository.getRepo();
+        const microcycle = await microcycleRepo.get({ _id: newSession.workoutMicrocycleId });
+        if (!microcycle) {
+          ErrorUtils.throwError(
+            `Microcycle with ID ${newSession.workoutMicrocycleId} does not exist`,
+            newSession
+          );
+        }
       }
     }
   }
 
   protected async validateUpdateObjectBusinessLogic(
-    updatedSession: Partial<WorkoutSession>
+    updatedSession: Partial<WorkoutSession>,
+    meta?: DbOperationMetaData
   ): Promise<void> {
     const errors: string[] = [];
 
@@ -37,10 +46,14 @@ export default class WorkoutSessionValidator extends IValidator<WorkoutSession> 
 
     // Validate microcycle if being updated
     if (updatedSession.workoutMicrocycleId) {
-      const microcycleRepo = WorkoutMicrocycleRepository.getRepo();
-      const microcycle = await microcycleRepo.get({ _id: updatedSession.workoutMicrocycleId });
-      if (!microcycle) {
-        errors.push(`Microcycle with ID ${updatedSession.workoutMicrocycleId} does not exist`);
+      const isPendingMicrocycle = meta?.hasPendingDoc(updatedSession.workoutMicrocycleId);
+
+      if (!isPendingMicrocycle) {
+        const microcycleRepo = WorkoutMicrocycleRepository.getRepo();
+        const microcycle = await microcycleRepo.get({ _id: updatedSession.workoutMicrocycleId });
+        if (!microcycle) {
+          errors.push(`Microcycle with ID ${updatedSession.workoutMicrocycleId} does not exist`);
+        }
       }
     }
 

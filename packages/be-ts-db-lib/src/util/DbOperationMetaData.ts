@@ -1,3 +1,4 @@
+import type { BaseDocument } from '@aneuhold/core-ts-db-lib';
 import type { UUID } from 'crypto';
 
 /**
@@ -10,6 +11,7 @@ export default class DbOperationMetaData {
   private readonly docTypesTouched = new Set<string>();
   private readonly affectedUserIds = new Set<UUID>();
   private readonly docCache = new Map<UUID, unknown>();
+  private readonly pendingDocsToCreate = new Map<UUID, BaseDocument>();
 
   /**
    * Records that a doc type was touched by an operation during this request.
@@ -61,5 +63,35 @@ export default class DbOperationMetaData {
    */
   getCachedDoc<T>(docId: UUID): T | undefined {
     return this.docCache.get(docId) as T | undefined;
+  }
+
+  /**
+   * Registers a document that will be created during this request.
+   *
+   * @param doc - The document to register.
+   */
+  registerPendingDoc<T extends BaseDocument>(doc: T): void {
+    this.pendingDocsToCreate.set(doc._id, doc);
+  }
+
+  /**
+   * Registers multiple documents that will be created during this request.
+   *
+   * @param docs - The documents to register.
+   */
+  registerPendingDocs<T extends BaseDocument>(docs: T[]): void {
+    docs.forEach((doc) => {
+      this.registerPendingDoc(doc);
+    });
+  }
+
+  /**
+   * Checks if a document with the given ID exists in pending docs.
+   *
+   * @param docId - The ID of the document to check.
+   * @returns True if the document is pending creation, false otherwise.
+   */
+  hasPendingDoc(docId: UUID): boolean {
+    return this.pendingDocsToCreate.has(docId);
   }
 }

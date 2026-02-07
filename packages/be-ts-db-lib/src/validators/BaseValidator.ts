@@ -2,6 +2,7 @@ import type { BaseDocument } from '@aneuhold/core-ts-db-lib';
 import { DR } from '@aneuhold/core-ts-lib';
 import type { UUID } from 'crypto';
 import type { ZodType } from 'zod';
+import type DbOperationMetaData from '../util/DbOperationMetaData.js';
 
 export enum ObjectSchemaState {
   Valid,
@@ -30,8 +31,9 @@ export default abstract class IValidator<TBaseType extends BaseDocument> {
    * is correct. This includes both schema validation and business logic validation.
    *
    * @param object - The object to validate.
+   * @param meta - Optional metadata about the current operation, including pending documents.
    */
-  async validateNewObject(object: TBaseType): Promise<void> {
+  async validateNewObject(object: TBaseType, meta?: DbOperationMetaData): Promise<void> {
     // First validate schema with Zod
     const parseResult = this.schema.safeParse(object);
     if (!parseResult.success) {
@@ -41,7 +43,7 @@ export default abstract class IValidator<TBaseType extends BaseDocument> {
       throw new Error(`Schema validation failed: ${errorMessage}`);
     }
     // Then run business logic validation
-    await this.validateNewObjectBusinessLogic(object);
+    await this.validateNewObjectBusinessLogic(object, meta);
   }
 
   /**
@@ -49,8 +51,12 @@ export default abstract class IValidator<TBaseType extends BaseDocument> {
    * Override this method to add custom validation logic.
    *
    * @param object - The object to validate.
+   * @param meta - Optional metadata about the current operation, including pending documents.
    */
-  protected abstract validateNewObjectBusinessLogic(object: TBaseType): Promise<void>;
+  protected abstract validateNewObjectBusinessLogic(
+    object: TBaseType,
+    meta?: DbOperationMetaData
+  ): Promise<void>;
 
   /**
    * Validates an object that is supposed to be updated in the database.
@@ -59,8 +65,12 @@ export default abstract class IValidator<TBaseType extends BaseDocument> {
    * At this point, the fields that do not change should already be stripped.
    *
    * @param partialObject - The partial object to validate.
+   * @param meta - Optional metadata about the current operation, including pending documents.
    */
-  async validateUpdateObject(partialObject: Partial<TBaseType>): Promise<void> {
+  async validateUpdateObject(
+    partialObject: Partial<TBaseType>,
+    meta?: DbOperationMetaData
+  ): Promise<void> {
     // First validate schema with Zod using partial schema
     const parseResult = this.partialSchema.safeParse(partialObject);
     if (!parseResult.success) {
@@ -70,7 +80,7 @@ export default abstract class IValidator<TBaseType extends BaseDocument> {
       throw new Error(`Schema validation failed: ${errorMessage}`);
     }
     // Then run business logic validation
-    await this.validateUpdateObjectBusinessLogic(partialObject);
+    await this.validateUpdateObjectBusinessLogic(partialObject, meta);
   }
 
   /**
@@ -78,9 +88,11 @@ export default abstract class IValidator<TBaseType extends BaseDocument> {
    * Override this method to add custom validation logic.
    *
    * @param partialObject - The partial object to validate.
+   * @param meta - Optional metadata about the current operation, including pending documents.
    */
   protected abstract validateUpdateObjectBusinessLogic(
-    partialObject: Partial<TBaseType>
+    partialObject: Partial<TBaseType>,
+    meta?: DbOperationMetaData
   ): Promise<void>;
 
   /**

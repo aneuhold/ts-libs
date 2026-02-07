@@ -5,6 +5,7 @@ import type { UUID } from 'crypto';
 import UserRepository from '../../repositories/common/UserRepository.js';
 import WorkoutSessionExerciseRepository from '../../repositories/workout/WorkoutSessionExerciseRepository.js';
 import WorkoutSetRepository from '../../repositories/workout/WorkoutSetRepository.js';
+import type DbOperationMetaData from '../../util/DbOperationMetaData.js';
 import IValidator from '../BaseValidator.js';
 
 export default class WorkoutSetValidator extends IValidator<WorkoutSet> {
@@ -12,22 +13,31 @@ export default class WorkoutSetValidator extends IValidator<WorkoutSet> {
     super(WorkoutSetSchema, WorkoutSetSchema.partial());
   }
 
-  protected async validateNewObjectBusinessLogic(newSet: WorkoutSet): Promise<void> {
-    // Validate that the session exercise exists
-    const sessionExerciseRepo = WorkoutSessionExerciseRepository.getRepo();
-    const sessionExercise = await sessionExerciseRepo.get({
-      _id: newSet.workoutSessionExerciseId
-    });
-    if (!sessionExercise) {
-      ErrorUtils.throwError(
-        `Session exercise with ID ${newSet.workoutSessionExerciseId} does not exist`,
-        newSet
-      );
+  protected async validateNewObjectBusinessLogic(
+    newSet: WorkoutSet,
+    meta?: DbOperationMetaData
+  ): Promise<void> {
+    // Check if session exercise is pending creation
+    const isPendingSessionExercise = meta?.hasPendingDoc(newSet.workoutSessionExerciseId);
+
+    if (!isPendingSessionExercise) {
+      // Validate that the session exercise exists
+      const sessionExerciseRepo = WorkoutSessionExerciseRepository.getRepo();
+      const sessionExercise = await sessionExerciseRepo.get({
+        _id: newSet.workoutSessionExerciseId
+      });
+      if (!sessionExercise) {
+        ErrorUtils.throwError(
+          `Session exercise with ID ${newSet.workoutSessionExerciseId} does not exist`,
+          newSet
+        );
+      }
     }
   }
 
   protected async validateUpdateObjectBusinessLogic(
-    updatedSet: Partial<WorkoutSet>
+    updatedSet: Partial<WorkoutSet>,
+    meta?: DbOperationMetaData
   ): Promise<void> {
     const errors: string[] = [];
 
@@ -37,14 +47,18 @@ export default class WorkoutSetValidator extends IValidator<WorkoutSet> {
 
     // Validate session exercise if being updated
     if (updatedSet.workoutSessionExerciseId) {
-      const sessionExerciseRepo = WorkoutSessionExerciseRepository.getRepo();
-      const sessionExercise = await sessionExerciseRepo.get({
-        _id: updatedSet.workoutSessionExerciseId
-      });
-      if (!sessionExercise) {
-        errors.push(
-          `Session exercise with ID ${updatedSet.workoutSessionExerciseId} does not exist`
-        );
+      const isPendingSessionExercise = meta?.hasPendingDoc(updatedSet.workoutSessionExerciseId);
+
+      if (!isPendingSessionExercise) {
+        const sessionExerciseRepo = WorkoutSessionExerciseRepository.getRepo();
+        const sessionExercise = await sessionExerciseRepo.get({
+          _id: updatedSet.workoutSessionExerciseId
+        });
+        if (!sessionExercise) {
+          errors.push(
+            `Session exercise with ID ${updatedSet.workoutSessionExerciseId} does not exist`
+          );
+        }
       }
     }
 

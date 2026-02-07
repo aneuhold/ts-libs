@@ -6,6 +6,7 @@ import UserRepository from '../../repositories/common/UserRepository.js';
 import WorkoutExerciseRepository from '../../repositories/workout/WorkoutExerciseRepository.js';
 import WorkoutSessionExerciseRepository from '../../repositories/workout/WorkoutSessionExerciseRepository.js';
 import WorkoutSessionRepository from '../../repositories/workout/WorkoutSessionRepository.js';
+import type DbOperationMetaData from '../../util/DbOperationMetaData.js';
 import IValidator from '../BaseValidator.js';
 
 export default class WorkoutSessionExerciseValidator extends IValidator<WorkoutSessionExercise> {
@@ -14,22 +15,31 @@ export default class WorkoutSessionExerciseValidator extends IValidator<WorkoutS
   }
 
   protected async validateNewObjectBusinessLogic(
-    newSessionExercise: WorkoutSessionExercise
+    newSessionExercise: WorkoutSessionExercise,
+    meta?: DbOperationMetaData
   ): Promise<void> {
     const errors: string[] = [];
 
     // Validate that the session exists
-    const sessionRepo = WorkoutSessionRepository.getRepo();
-    const session = await sessionRepo.get({ _id: newSessionExercise.workoutSessionId });
-    if (!session) {
-      errors.push(`Session with ID ${newSessionExercise.workoutSessionId} does not exist`);
+    const isPendingSession = meta?.hasPendingDoc(newSessionExercise.workoutSessionId);
+
+    if (!isPendingSession) {
+      const sessionRepo = WorkoutSessionRepository.getRepo();
+      const session = await sessionRepo.get({ _id: newSessionExercise.workoutSessionId });
+      if (!session) {
+        errors.push(`Session with ID ${newSessionExercise.workoutSessionId} does not exist`);
+      }
     }
 
     // Validate that the exercise exists
-    const exerciseRepo = WorkoutExerciseRepository.getRepo();
-    const exercise = await exerciseRepo.get({ _id: newSessionExercise.workoutExerciseId });
-    if (!exercise) {
-      errors.push(`Exercise with ID ${newSessionExercise.workoutExerciseId} does not exist`);
+    const isPendingExercise = meta?.hasPendingDoc(newSessionExercise.workoutExerciseId);
+
+    if (!isPendingExercise) {
+      const exerciseRepo = WorkoutExerciseRepository.getRepo();
+      const exercise = await exerciseRepo.get({ _id: newSessionExercise.workoutExerciseId });
+      if (!exercise) {
+        errors.push(`Exercise with ID ${newSessionExercise.workoutExerciseId} does not exist`);
+      }
     }
 
     if (errors.length > 0) {
@@ -38,7 +48,8 @@ export default class WorkoutSessionExerciseValidator extends IValidator<WorkoutS
   }
 
   protected async validateUpdateObjectBusinessLogic(
-    updatedSessionExercise: Partial<WorkoutSessionExercise>
+    updatedSessionExercise: Partial<WorkoutSessionExercise>,
+    meta?: DbOperationMetaData
   ): Promise<void> {
     const errors: string[] = [];
 
@@ -48,19 +59,29 @@ export default class WorkoutSessionExerciseValidator extends IValidator<WorkoutS
 
     // Validate session if being updated
     if (updatedSessionExercise.workoutSessionId) {
-      const sessionRepo = WorkoutSessionRepository.getRepo();
-      const session = await sessionRepo.get({ _id: updatedSessionExercise.workoutSessionId });
-      if (!session) {
-        errors.push(`Session with ID ${updatedSessionExercise.workoutSessionId} does not exist`);
+      const isPendingSession = meta?.hasPendingDoc(updatedSessionExercise.workoutSessionId);
+
+      if (!isPendingSession) {
+        const sessionRepo = WorkoutSessionRepository.getRepo();
+        const session = await sessionRepo.get({ _id: updatedSessionExercise.workoutSessionId });
+        if (!session) {
+          errors.push(`Session with ID ${updatedSessionExercise.workoutSessionId} does not exist`);
+        }
       }
     }
 
     // Validate exercise if being updated
     if (updatedSessionExercise.workoutExerciseId) {
-      const exerciseRepo = WorkoutExerciseRepository.getRepo();
-      const exercise = await exerciseRepo.get({ _id: updatedSessionExercise.workoutExerciseId });
-      if (!exercise) {
-        errors.push(`Exercise with ID ${updatedSessionExercise.workoutExerciseId} does not exist`);
+      const isPendingExercise = meta?.hasPendingDoc(updatedSessionExercise.workoutExerciseId);
+
+      if (!isPendingExercise) {
+        const exerciseRepo = WorkoutExerciseRepository.getRepo();
+        const exercise = await exerciseRepo.get({ _id: updatedSessionExercise.workoutExerciseId });
+        if (!exercise) {
+          errors.push(
+            `Exercise with ID ${updatedSessionExercise.workoutExerciseId} does not exist`
+          );
+        }
       }
     }
 
