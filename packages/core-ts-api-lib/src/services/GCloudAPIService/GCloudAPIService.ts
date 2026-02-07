@@ -8,6 +8,10 @@ import type {
   ProjectDashboardInput,
   ProjectDashboardOutput
 } from '../../types/project/dashboard/ProjectDashboard.js';
+import type {
+  ProjectWorkoutPrimaryInput,
+  ProjectWorkoutPrimaryOutput
+} from '../../types/project/workout/ProjectWorkout.js';
 
 /**
  * A service for interacting with the Google Cloud API service for personal projects.
@@ -59,6 +63,20 @@ export default class GCloudAPIService {
     input: ProjectDashboardInput
   ): Promise<APIResponse<ProjectDashboardOutput>> {
     return this.call<ProjectDashboardInput, ProjectDashboardOutput>('project/dashboard', input);
+  }
+
+  /**
+   * Calls the project workout endpoint to get, insert, update, or delete workout data.
+   *
+   * @param input - The input for the project workout function.
+   */
+  static async projectWorkout(
+    input: ProjectWorkoutPrimaryInput
+  ): Promise<APIResponse<ProjectWorkoutPrimaryOutput>> {
+    return this.call<ProjectWorkoutPrimaryInput, ProjectWorkoutPrimaryOutput>(
+      'project/workout',
+      input
+    );
   }
 
   /**
