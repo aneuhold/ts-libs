@@ -53,36 +53,42 @@ export default class WorkoutMicrocycleService {
       isDeloadMicrocycle
     );
 
-    let currentSessionDate = new Date(microcycle.startDate);
-    let sessionIndex = 0;
-
+    // Build list of non-rest day dates
+    const nonRestDayDates: Date[] = [];
+    let currentDate = new Date(microcycle.startDate);
     for (let day = 0; day < mesocycle.plannedMicrocycleLengthInDays; day++) {
-      // Skip rest days
-      if (mesocycle.plannedMicrocycleRestDays.includes(day)) {
-        currentSessionDate = DateService.addDays(currentSessionDate, 1);
-        continue;
+      if (!mesocycle.plannedMicrocycleRestDays.includes(day)) {
+        nonRestDayDates.push(new Date(currentDate));
       }
+      currentDate = DateService.addDays(currentDate, 1);
+    }
 
-      // Stop if we've created all planned sessions
-      if (sessionIndex >= mesocycle.plannedSessionCountPerMicrocycle) {
-        break;
+    // Distribute sessions across non-rest days chronologically. If there are
+    // more sessions than non-rest days, the earliest days get extra sessions.
+    const totalSessions = mesocycle.plannedSessionCountPerMicrocycle;
+    const dayCount = nonRestDayDates.length;
+    const basePerDay = Math.floor(totalSessions / dayCount);
+    const remainder = totalSessions % dayCount;
+
+    let sessionIndex = 0;
+    for (let dayIndex = 0; dayIndex < dayCount; dayIndex++) {
+      const sessionsOnThisDay = basePerDay + (dayIndex < remainder ? 1 : 0);
+      for (let s = 0; s < sessionsOnThisDay; s++) {
+        const sessionExerciseList = sessionsToExerciseSessionsArray[sessionIndex] || [];
+
+        WorkoutSessionService.generateSession({
+          context,
+          microcycleIndex,
+          sessionIndex,
+          sessionStartDate: nonRestDayDates[dayIndex],
+          sessionExerciseList,
+          targetRir,
+          isDeloadMicrocycle,
+          setPlan
+        });
+
+        sessionIndex++;
       }
-
-      const sessionExerciseList = sessionsToExerciseSessionsArray[sessionIndex] || [];
-
-      WorkoutSessionService.generateSession({
-        context,
-        microcycleIndex,
-        sessionIndex,
-        sessionStartDate: currentSessionDate,
-        sessionExerciseList,
-        targetRir,
-        isDeloadMicrocycle,
-        setPlan
-      });
-
-      sessionIndex++;
-      currentSessionDate = DateService.addDays(currentSessionDate, 1);
     }
   }
 
