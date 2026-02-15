@@ -29,6 +29,54 @@ describe('Unit Tests', () => {
     });
   });
 
+  describe('generatePlateWeightOptions', () => {
+    it('should generate weights from a single plate type', () => {
+      const result = WorkoutEquipmentTypeService.generatePlateWeightOptions(45, [
+        { weight: 45, pairs: 2 }
+      ]);
+
+      expect(result).toEqual([45, 135, 225]);
+    });
+
+    it('should generate all combinations from multiple plate types', () => {
+      const result = WorkoutEquipmentTypeService.generatePlateWeightOptions(45, [
+        { weight: 25, pairs: 1 },
+        { weight: 10, pairs: 1 }
+      ]);
+
+      // bar only: 45
+      // +25 pair: 45 + 50 = 95
+      // +10 pair: 45 + 20 = 65
+      // +25 pair +10 pair: 45 + 50 + 20 = 115
+      expect(result).toEqual([45, 65, 95, 115]);
+    });
+
+    it('should return just bar weight when plates array is empty', () => {
+      const result = WorkoutEquipmentTypeService.generatePlateWeightOptions(45, []);
+
+      expect(result).toEqual([45]);
+    });
+
+    it('should skip plates with zero or negative weight', () => {
+      const result = WorkoutEquipmentTypeService.generatePlateWeightOptions(45, [
+        { weight: 0, pairs: 2 },
+        { weight: -5, pairs: 1 },
+        { weight: 10, pairs: 1 }
+      ]);
+
+      expect(result).toEqual([45, 65]);
+    });
+
+    it('should skip plates with zero or negative pairs', () => {
+      const result = WorkoutEquipmentTypeService.generatePlateWeightOptions(45, [
+        { weight: 10, pairs: 0 },
+        { weight: 25, pairs: 1 }
+      ]);
+
+      expect(result).toEqual([45, 95]);
+    });
+  });
+
   describe('findNearestWeight', () => {
     const equipmentType = workoutTestUtil.createEquipmentType({
       title: 'Test Equipment',

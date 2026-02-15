@@ -10,9 +10,6 @@ export default class WorkoutEquipmentTypeService {
    * Starts at minWeight (e.g., the bar weight), increments by increment (e.g., 2.5, 5, 10 lbs),
    * and continues until maxWeight is reached or exceeded.
    *
-   * This may be refactored / maybe a new method will be created in the future to handle a given
-   * set of weight plates to generate all possible combinations.
-   *
    * @param minWeight The minimum weight (e.g., bar weight).
    * @param increment The weight increment.
    * @param maxWeight The maximum weight.
@@ -27,6 +24,41 @@ export default class WorkoutEquipmentTypeService {
     }
 
     return weights;
+  }
+
+  /**
+   * Generates all achievable weights from a bar weight and a set of plate pairs.
+   *
+   * Each plate entry specifies a plate weight and the number of pairs available.
+   * Plates are added in pairs (both sides of the bar), so each plate adds
+   * `weight * 2` to the total. All combinations of plates are computed to
+   * produce the full set of achievable weights.
+   *
+   * @param barWeight The weight of the bar alone.
+   * @param plates Array of plate entries, each with a `weight` and `pairs` count.
+   * @returns Sorted, deduplicated array of all achievable weights.
+   */
+  static generatePlateWeightOptions(
+    barWeight: number,
+    plates: Array<{ weight: number; pairs: number }>
+  ): number[] {
+    let additions = new Set<number>([0]);
+    for (const plate of plates) {
+      if (plate.weight <= 0 || plate.pairs <= 0) continue;
+      const expanded: number[] = [];
+      for (const existing of additions) {
+        for (let count = 1; count <= plate.pairs; count++) {
+          expanded.push(existing + plate.weight * 2 * count);
+        }
+      }
+      additions = new Set([...additions, ...expanded]);
+      if (additions.size > 1000) break;
+    }
+    const weights = [...additions]
+      .map((a) => barWeight + a)
+      .filter((w) => w >= 0)
+      .sort((a, b) => a - b);
+    return [...new Set(weights)];
   }
 
   /**
