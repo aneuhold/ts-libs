@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## 🔖 [4.1.2] (2026-02-15)
+
+### ✅ Added
+
+- Added `generatePlateWeightOptions()` method to `WorkoutEquipmentTypeService` to generate all achievable weight combinations from a bar and plate pairs.
+- Added `get1RMRaw()` static method to `WorkoutExerciseCalibrationService` for calculating 1RM from weight and reps.
+
+### 🏗️ Changed
+
+- Refactored `generateSessionsForMicrocycle()` in `WorkoutMicrocycleService` to support creating more sessions than available non-rest days by distributing sessions chronologically across days.
+
 ## 🔖 [4.1.1] (2026-02-06)
 
 ### 🏗️ Changed
@@ -214,6 +225,7 @@ Updated dependency: now requires `@aneuhold/core-ts-lib@^2.3.11`.
 
 <!-- Link References -->
 
+[4.1.2]: https://github.com/aneuhold/ts-libs/compare/core-ts-db-lib-v4.1.1...core-ts-db-lib-v4.1.2
 [4.1.1]: https://github.com/aneuhold/ts-libs/compare/core-ts-db-lib-v4.1.0...core-ts-db-lib-v4.1.1
 [4.1.0]: https://github.com/aneuhold/ts-libs/compare/core-ts-db-lib-v4.0.4...core-ts-db-lib-v4.1.0
 [4.0.4]: https://github.com/aneuhold/ts-libs/compare/core-ts-db-lib-v4.0.3...core-ts-db-lib-v4.0.4

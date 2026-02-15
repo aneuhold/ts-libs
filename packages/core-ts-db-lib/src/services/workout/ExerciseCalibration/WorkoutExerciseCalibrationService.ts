@@ -12,7 +12,17 @@ export default class WorkoutExerciseCalibrationService {
    * @param calibration The workout exercise calibration.
    */
   static get1RM(calibration: WorkoutExerciseCalibration): number {
-    return (calibration.weight * calibration.reps) / 30.48 + calibration.weight;
+    return this.get1RMRaw(calibration.weight, calibration.reps);
+  }
+
+  /**
+   * Calculates the 1 Rep Max using the NASM formula based on provided weight and reps.
+   *
+   * @param weight The weight lifted.
+   * @param reps The number of reps performed.
+   */
+  static get1RMRaw(weight: number, reps: number): number {
+    return (weight * reps) / 30.48 + weight;
   }
 
   /**

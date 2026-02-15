@@ -85,6 +85,58 @@ describe('WorkoutMicrocycleService', () => {
       expect(s2ExIds).toContain(workoutTestUtil.STANDARD_EXERCISES.barbellBenchPress._id);
     });
 
+    it('should create more sessions than non-rest days by cycling through dates', () => {
+      // 7-day microcycle with rest days [0, 6] = 5 non-rest days (days 1-5)
+      // But we want 6 sessions, so the 6th session should wrap to the first non-rest day
+      const meso = workoutTestUtil.createMesocycle({
+        plannedSessionCountPerMicrocycle: 6,
+        plannedMicrocycleRestDays: [0, 6],
+        calibratedExercises: calibrations.map((c) => c._id)
+      });
+
+      const micro = workoutTestUtil.createMicrocycle({
+        mesocycle: meso,
+        startDate: new Date(2024, 0, 1), // Monday Jan 1st
+        endDate: new Date(2024, 0, 7)
+      });
+
+      const ctx = workoutTestUtil.createContext({
+        mesocycle: meso,
+        calibrations,
+        exercises
+      });
+      ctx.addMicrocycle(micro);
+
+      ctx.setPlannedSessionExercisePairs(
+        WorkoutMicrocycleService.distributeExercisesAcrossSessions(
+          meso.plannedSessionCountPerMicrocycle,
+          ctx.calibrationMap,
+          ctx.exerciseMap
+        )
+      );
+
+      WorkoutMicrocycleService.generateSessionsForMicrocycle({
+        context: ctx,
+        microcycleIndex: 0,
+        targetRir: 3,
+        isDeloadMicrocycle: false
+      });
+
+      // All 6 sessions should be created
+      expect(ctx.sessionsToCreate).toHaveLength(6);
+
+      // Non-rest days are indices 1-5: Jan 2, 3, 4, 5, 6
+      // 6 sessions across 5 days = first day gets 2 sessions, rest get 1
+      // Sessions are ordered chronologically: indices 0,1 on day 1, then 2,3,4,5
+      const dates = ctx.sessionsToCreate.map((s) => new Date(s.startTime).getDate());
+      expect(dates[0]).toBe(2); // Session 0: Day 1 (first non-rest day)
+      expect(dates[1]).toBe(2); // Session 1: Day 1 (second session on same day)
+      expect(dates[2]).toBe(3); // Session 2: Day 2
+      expect(dates[3]).toBe(4); // Session 3: Day 3
+      expect(dates[4]).toBe(5); // Session 4: Day 4
+      expect(dates[5]).toBe(6); // Session 5: Day 5
+    });
+
     it('should assign dates correctly, skipping rest days', () => {
       // Start: Jan 1 (Mon). Rest Days: [1] (Tue).
       // Session 1: Jan 1.
