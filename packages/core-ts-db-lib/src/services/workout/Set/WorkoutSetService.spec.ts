@@ -9,6 +9,75 @@ import type { WorkoutExerciseCalibration } from '../../../documents/workout/Work
 import WorkoutSetService from './WorkoutSetService.js';
 
 describe('WorkoutSetService', () => {
+  describe('isCompleted', () => {
+    it('should return true when actualReps, actualWeight, and rir are all set', () => {
+      const set = workoutTestUtil.createSet({
+        overrides: {
+          plannedReps: 10,
+          plannedWeight: 100,
+          plannedRir: 2,
+          actualReps: 10,
+          actualWeight: 100,
+          rir: 2
+        }
+      });
+      expect(WorkoutSetService.isCompleted(set)).toBe(true);
+    });
+
+    it('should return false when actualReps is null', () => {
+      const set = workoutTestUtil.createSet({
+        overrides: {
+          plannedReps: 10,
+          plannedWeight: 100,
+          plannedRir: 2,
+          actualWeight: 100,
+          rir: 2
+        }
+      });
+      expect(WorkoutSetService.isCompleted(set)).toBe(false);
+    });
+
+    it('should return false when actualWeight is null', () => {
+      const set = workoutTestUtil.createSet({
+        overrides: {
+          plannedReps: 10,
+          plannedWeight: 100,
+          plannedRir: 2,
+          actualReps: 10,
+          rir: 2
+        }
+      });
+      expect(WorkoutSetService.isCompleted(set)).toBe(false);
+    });
+
+    it('should return false when rir is null but plannedRir is set', () => {
+      const set = workoutTestUtil.createSet({
+        overrides: {
+          plannedReps: 10,
+          plannedWeight: 100,
+          plannedRir: 2,
+          actualReps: 10,
+          actualWeight: 100
+        }
+      });
+      expect(WorkoutSetService.isCompleted(set)).toBe(false);
+    });
+
+    it('should return true for deload sets (plannedRir null, rir null)', () => {
+      const set = workoutTestUtil.createSet({
+        overrides: {
+          plannedReps: 5,
+          plannedWeight: 50,
+          plannedRir: null,
+          actualReps: 5,
+          actualWeight: 50,
+          rir: null
+        }
+      });
+      expect(WorkoutSetService.isCompleted(set)).toBe(true);
+    });
+  });
+
   describe('generateSetsForSessionExercise', () => {
     const exercise = workoutTestUtil.STANDARD_EXERCISES.dumbbellLateralRaise; // Light Rep Range (15-30)
 

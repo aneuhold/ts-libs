@@ -95,6 +95,19 @@ export default class WorkoutSetService {
   }
 
   /**
+   * Returns true if the set has been logged (has actual performance data).
+   * A set is considered completed when actualReps and actualWeight are recorded,
+   * and either rir is recorded or no plannedRir was expected (deload sets).
+   */
+  static isCompleted(set: WorkoutSet): boolean {
+    return (
+      set.actualReps != null &&
+      set.actualWeight != null &&
+      (set.rir != null || set.plannedRir == null)
+    );
+  }
+
+  /**
    * Generates the planned reps and weight for a specific set within a session exercise, only
    * taking into account simple -2 reps drop per set logic, and deload modifications.
    *

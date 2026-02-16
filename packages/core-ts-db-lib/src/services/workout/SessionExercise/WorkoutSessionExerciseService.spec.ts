@@ -3,6 +3,102 @@ import workoutTestUtil from '../../../../test-utils/WorkoutTestUtil.js';
 import WorkoutSessionExerciseService from './WorkoutSessionExerciseService.js';
 
 describe('Unit Tests', () => {
+  describe('isDeloadExercise', () => {
+    it('should return true when all sets have plannedRir == null', () => {
+      const sets = [
+        workoutTestUtil.createSet({ overrides: { plannedRir: null } }),
+        workoutTestUtil.createSet({ overrides: { plannedRir: null } })
+      ];
+      expect(WorkoutSessionExerciseService.isDeloadExercise(sets)).toBe(true);
+    });
+
+    it('should return false when any set has plannedRir set', () => {
+      const sets = [
+        workoutTestUtil.createSet({ overrides: { plannedRir: null } }),
+        workoutTestUtil.createSet({ overrides: { plannedRir: 2 } })
+      ];
+      expect(WorkoutSessionExerciseService.isDeloadExercise(sets)).toBe(false);
+    });
+
+    it('should return false for empty sets array', () => {
+      expect(WorkoutSessionExerciseService.isDeloadExercise([])).toBe(false);
+    });
+  });
+
+  describe('needsReview', () => {
+    it('should return false for deload exercises', () => {
+      const se = workoutTestUtil.createSessionExercise({
+        overrides: { sorenessScore: null }
+      });
+      const deloadSets = [workoutTestUtil.createSet({ overrides: { plannedRir: null } })];
+      expect(WorkoutSessionExerciseService.needsReview(se, deloadSets)).toBe(false);
+    });
+
+    it('should return true when disruption is null', () => {
+      const se = workoutTestUtil.createSessionExercise({
+        overrides: {
+          rsm: { mindMuscleConnection: 2, pump: 2, disruption: null },
+          fatigue: {
+            jointAndTissueDisruption: 1,
+            perceivedEffort: 1,
+            unusedMusclePerformance: 1
+          },
+          sorenessScore: 1
+        }
+      });
+      const sets = [workoutTestUtil.createSet({ overrides: { plannedRir: 2 } })];
+      expect(WorkoutSessionExerciseService.needsReview(se, sets)).toBe(true);
+    });
+
+    it('should return true when unusedMusclePerformance is null', () => {
+      const se = workoutTestUtil.createSessionExercise({
+        overrides: {
+          rsm: { mindMuscleConnection: 2, pump: 2, disruption: 2 },
+          fatigue: {
+            jointAndTissueDisruption: 1,
+            perceivedEffort: 1,
+            unusedMusclePerformance: null
+          },
+          sorenessScore: 1
+        }
+      });
+      const sets = [workoutTestUtil.createSet({ overrides: { plannedRir: 2 } })];
+      expect(WorkoutSessionExerciseService.needsReview(se, sets)).toBe(true);
+    });
+
+    it('should return true when sorenessScore is null', () => {
+      const se = workoutTestUtil.createSessionExercise({
+        overrides: {
+          rsm: { mindMuscleConnection: 2, pump: 2, disruption: 2 },
+          fatigue: {
+            jointAndTissueDisruption: 1,
+            perceivedEffort: 1,
+            unusedMusclePerformance: 1
+          },
+          sorenessScore: null
+        }
+      });
+      const sets = [workoutTestUtil.createSet({ overrides: { plannedRir: 2 } })];
+      expect(WorkoutSessionExerciseService.needsReview(se, sets)).toBe(true);
+    });
+
+    it('should return false when all late fields are filled', () => {
+      const se = workoutTestUtil.createSessionExercise({
+        overrides: {
+          rsm: { mindMuscleConnection: 2, pump: 2, disruption: 2 },
+          fatigue: {
+            jointAndTissueDisruption: 1,
+            perceivedEffort: 1,
+            unusedMusclePerformance: 1
+          },
+          sorenessScore: 1
+        }
+      });
+      const sets = [workoutTestUtil.createSet({ overrides: { plannedRir: 2 } })];
+      expect(WorkoutSessionExerciseService.needsReview(se, sets)).toBe(false);
+    });
+  });
+
   describe('getRecommendedSetAdditionsOrRecovery', () => {
     it('should return null when insufficient data is available', () => {
       const workoutSessionExercise = workoutTestUtil.createSessionExercise({
