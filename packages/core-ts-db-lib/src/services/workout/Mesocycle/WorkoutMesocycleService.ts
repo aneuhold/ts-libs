@@ -132,7 +132,7 @@ export default class WorkoutMesocycleService {
 
       // Calculate RIR for this microcycle (4 -> 3 -> 2 -> 1 -> 0, capped at microcycle 5)
       const rirForMicrocycle = Math.min(microcycleIndex, 4);
-      const targetRir = 4 - rirForMicrocycle;
+      const targetRir = isDeloadMicrocycle ? null : 4 - rirForMicrocycle;
 
       // Create microcycle
       const microcycle = WorkoutMicrocycleSchema.parse({

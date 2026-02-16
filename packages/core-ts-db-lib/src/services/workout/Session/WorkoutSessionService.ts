@@ -61,7 +61,7 @@ export default class WorkoutSessionService {
     sessionIndex: number;
     sessionStartDate: Date;
     sessionExerciseList: CalibrationExercisePair[];
-    targetRir: number;
+    targetRir: number | null;
     isDeloadMicrocycle: boolean;
     setPlan: { exerciseIdToSetCount: Map<UUID, number>; recoveryExerciseIds: Set<UUID> };
   }): void {

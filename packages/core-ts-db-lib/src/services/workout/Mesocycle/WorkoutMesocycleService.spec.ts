@@ -135,9 +135,10 @@ describe('Unit Tests', () => {
       expect(sessions.length).toBe(9); // 3 sessions * 3 microcycles
       expect(sets.length).toBeGreaterThan(0); // At least some sets created
 
-      // Test RIR progression (4 -> 3 -> 2 across microcycles 0-2)
+      // Test RIR progression (4 -> 3 across accumulation microcycles, null for deload)
+      const deloadIndex = microcycles.length - 1;
       for (let microcycleIndex = 0; microcycleIndex < 3; microcycleIndex++) {
-        const expectedRir = 4 - microcycleIndex;
+        const expectedRir = microcycleIndex === deloadIndex ? null : 4 - microcycleIndex;
         const microcycleId = microcycles[microcycleIndex]._id;
         const microcycleSessions = sessions.filter((s) => s.workoutMicrocycleId === microcycleId);
         const firstSessionId = microcycleSessions[0]._id;

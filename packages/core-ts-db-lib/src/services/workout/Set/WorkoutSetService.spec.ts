@@ -32,7 +32,7 @@ describe('WorkoutSetService', () => {
       currentExercise: WorkoutExercise;
       currentCalibration: WorkoutExerciseCalibration;
       microcycleIndex?: number;
-      targetRir?: number;
+      targetRir?: number | null;
       isDeload?: boolean;
       setCountOverride?: number;
     }) => {
@@ -141,6 +141,7 @@ describe('WorkoutSetService', () => {
         currentExercise: testExercise,
         currentCalibration: testCalibration,
         isDeload: true,
+        targetRir: null,
         setCountOverride: 3
       });
 

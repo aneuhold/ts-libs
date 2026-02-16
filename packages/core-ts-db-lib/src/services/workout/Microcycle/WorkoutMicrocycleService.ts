@@ -28,7 +28,7 @@ export default class WorkoutMicrocycleService {
   }: {
     context: WorkoutMesocyclePlanContext;
     microcycleIndex: number;
-    targetRir: number;
+    targetRir: number | null;
     isDeloadMicrocycle: boolean;
   }): void {
     const mesocycle = context.mesocycle;

@@ -40,7 +40,7 @@ export default class WorkoutSetService {
     microcycleIndex: number;
     sessionIndex: number;
     setCount: number;
-    targetRir: number;
+    targetRir: number | null;
     isDeloadMicrocycle: boolean;
   }): void {
     const equipment = context.equipmentMap.get(exercise.workoutEquipmentTypeId);
