@@ -3,6 +3,8 @@ import type { CalibrationExercisePair } from '../../../documents/workout/Workout
 import type { WorkoutSession } from '../../../documents/workout/WorkoutSession.js';
 import { WorkoutSessionSchema } from '../../../documents/workout/WorkoutSession.js';
 import { WorkoutSessionExerciseSchema } from '../../../documents/workout/WorkoutSessionExercise.js';
+import type { WorkoutSessionExercise } from '../../../documents/workout/WorkoutSessionExercise.js';
+import type { WorkoutSet } from '../../../documents/workout/WorkoutSet.js';
 import type WorkoutMesocyclePlanContext from '../Mesocycle/WorkoutMesocyclePlanContext.js';
 import WorkoutSetService from '../Set/WorkoutSetService.js';
 import WorkoutSFRService from '../util/SFR/WorkoutSFRService.js';
@@ -44,6 +46,60 @@ export default class WorkoutSessionService {
   }
 
   /**
+   * Finds the in-progress session and the next-up session in a single pass.
+   * - In-progress: complete === false, at least one set has actualReps != null
+   * - Next-up: first complete === false session with no logged sets (after any in-progress)
+   *
+   * Sessions should be in microcycle order (as returned by getAssociatedDocsForMesocycle).
+   * Only checks sets for incomplete sessions, skipping completed ones entirely.
+   *
+   * @param sessions Ordered sessions for the mesocycle.
+   * @param sessionExerciseMap Map of session exercise ID to WorkoutSessionExercise.
+   * @param setMap Map of set ID to WorkoutSet.
+   */
+  static getActiveAndNextSessions(
+    sessions: WorkoutSession[],
+    sessionExerciseMap: Map<UUID, WorkoutSessionExercise>,
+    setMap: Map<UUID, WorkoutSet>
+  ): { inProgressSession: WorkoutSession | null; nextUpSession: WorkoutSession | null } {
+    let inProgressSession: WorkoutSession | null = null;
+    let nextUpSession: WorkoutSession | null = null;
+
+    for (const session of sessions) {
+      if (session.complete) continue;
+
+      if (this.sessionHasLoggedSets(session, sessionExerciseMap, setMap)) {
+        if (!inProgressSession) inProgressSession = session;
+      } else {
+        if (!nextUpSession) nextUpSession = session;
+      }
+      if (inProgressSession && nextUpSession) break;
+    }
+
+    return { inProgressSession, nextUpSession };
+  }
+
+  /**
+   * Returns true if any set in the session has actualReps != null.
+   * Traverses session → sessionExercises → sets via order arrays and map lookups.
+   */
+  private static sessionHasLoggedSets(
+    session: WorkoutSession,
+    sessionExerciseMap: Map<UUID, WorkoutSessionExercise>,
+    setMap: Map<UUID, WorkoutSet>
+  ): boolean {
+    for (const seId of session.sessionExerciseOrder) {
+      const se = sessionExerciseMap.get(seId);
+      if (!se) continue;
+      for (const setId of se.setOrder) {
+        const set = setMap.get(setId);
+        if (set?.actualReps != null) return true;
+      }
+    }
+    return false;
+  }
+
+  /**
    * Generates a session and its associated exercises and sets.
    */
   static generateSession({
@@ -61,7 +117,7 @@ export default class WorkoutSessionService {
     sessionIndex: number;
     sessionStartDate: Date;
     sessionExerciseList: CalibrationExercisePair[];
-    targetRir: number;
+    targetRir: number | null;
     isDeloadMicrocycle: boolean;
     setPlan: { exerciseIdToSetCount: Map<UUID, number>; recoveryExerciseIds: Set<UUID> };
   }): void {

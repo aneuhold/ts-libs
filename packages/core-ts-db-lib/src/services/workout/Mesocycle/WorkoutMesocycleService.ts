@@ -38,6 +38,8 @@ export default class WorkoutMesocycleService {
    * @param existingSessions Existing session documents.
    * @param existingSessionExercises Existing session exercise documents.
    * @param existingSets Existing set documents.
+   * @param startDate Optional start date for the first microcycle. Defaults to
+   *   the current date when not provided.
    */
   static generateOrUpdateMesocycle(
     mesocycle: WorkoutMesocycle,
@@ -47,7 +49,8 @@ export default class WorkoutMesocycleService {
     existingMicrocycles: WorkoutMicrocycle[] = [],
     existingSessions: WorkoutSession[] = [],
     existingSessionExercises: WorkoutSessionExercise[] = [],
-    existingSets: WorkoutSet[] = []
+    existingSets: WorkoutSet[] = [],
+    startDate?: Date
   ): {
     mesocycleUpdate?: Partial<WorkoutMesocycle>;
     microcycles?: DocumentOperations<WorkoutMicrocycle>;
@@ -114,8 +117,7 @@ export default class WorkoutMesocycleService {
     let currentDate: Date;
 
     if (startMicrocycleIndex === 0) {
-      // No existing microcycles, start from current date
-      currentDate = new Date();
+      currentDate = startDate ? new Date(startDate) : new Date();
     } else {
       // Continue from where the last existing microcycle ended
       const lastExistingMicrocycle = context.microcyclesInOrder[startMicrocycleIndex - 1];
@@ -132,7 +134,7 @@ export default class WorkoutMesocycleService {
 
       // Calculate RIR for this microcycle (4 -> 3 -> 2 -> 1 -> 0, capped at microcycle 5)
       const rirForMicrocycle = Math.min(microcycleIndex, 4);
-      const targetRir = 4 - rirForMicrocycle;
+      const targetRir = isDeloadMicrocycle ? null : 4 - rirForMicrocycle;
 
       // Create microcycle
       const microcycle = WorkoutMicrocycleSchema.parse({

@@ -1,4 +1,5 @@
 import type { WorkoutSessionExercise } from '../../../documents/workout/WorkoutSessionExercise.js';
+import type { WorkoutSet } from '../../../documents/workout/WorkoutSet.js';
 import WorkoutSFRService from '../util/SFR/WorkoutSFRService.js';
 
 /**
@@ -73,5 +74,25 @@ export default class WorkoutSessionExerciseService {
     ];
 
     return table[sorenessScore]?.[performanceScore] ?? null;
+  }
+
+  /**
+   * Returns true if the exercise is a deload exercise (all sets have plannedRir == null).
+   */
+  static isDeloadExercise(exerciseSets: WorkoutSet[]): boolean {
+    return exerciseSets.length > 0 && exerciseSets.every((s) => s.plannedRir == null);
+  }
+
+  /**
+   * Returns true if the session exercise needs review (complete session but missing late fields).
+   * Deload exercises never need review.
+   */
+  static needsReview(sessionExercise: WorkoutSessionExercise, exerciseSets: WorkoutSet[]): boolean {
+    if (WorkoutSessionExerciseService.isDeloadExercise(exerciseSets)) return false;
+    return (
+      sessionExercise.rsm?.disruption == null ||
+      sessionExercise.fatigue?.unusedMusclePerformance == null ||
+      sessionExercise.sorenessScore == null
+    );
   }
 }

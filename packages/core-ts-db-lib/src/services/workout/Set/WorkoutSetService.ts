@@ -40,7 +40,7 @@ export default class WorkoutSetService {
     microcycleIndex: number;
     sessionIndex: number;
     setCount: number;
-    targetRir: number;
+    targetRir: number | null;
     isDeloadMicrocycle: boolean;
   }): void {
     const equipment = context.equipmentMap.get(exercise.workoutEquipmentTypeId);
@@ -92,6 +92,19 @@ export default class WorkoutSetService {
     }
 
     context.setsToCreate.push(...sets);
+  }
+
+  /**
+   * Returns true if the set has been logged (has actual performance data).
+   * A set is considered completed when actualReps and actualWeight are recorded,
+   * and either rir is recorded or no plannedRir was expected (deload sets).
+   */
+  static isCompleted(set: WorkoutSet): boolean {
+    return (
+      set.actualReps != null &&
+      set.actualWeight != null &&
+      (set.rir != null || set.plannedRir == null)
+    );
   }
 
   /**

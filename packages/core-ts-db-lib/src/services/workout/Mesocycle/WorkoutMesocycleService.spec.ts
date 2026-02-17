@@ -135,9 +135,10 @@ describe('Unit Tests', () => {
       expect(sessions.length).toBe(9); // 3 sessions * 3 microcycles
       expect(sets.length).toBeGreaterThan(0); // At least some sets created
 
-      // Test RIR progression (4 -> 3 -> 2 across microcycles 0-2)
+      // Test RIR progression (4 -> 3 across accumulation microcycles, null for deload)
+      const deloadIndex = microcycles.length - 1;
       for (let microcycleIndex = 0; microcycleIndex < 3; microcycleIndex++) {
-        const expectedRir = 4 - microcycleIndex;
+        const expectedRir = microcycleIndex === deloadIndex ? null : 4 - microcycleIndex;
         const microcycleId = microcycles[microcycleIndex]._id;
         const microcycleSessions = sessions.filter((s) => s.workoutMicrocycleId === microcycleId);
         const firstSessionId = microcycleSessions[0]._id;
@@ -543,6 +544,94 @@ describe('Unit Tests', () => {
           initialResult.sets?.create ?? []
         );
       }).toThrow(/has started but is not complete/);
+    });
+
+    it('should use provided startDate for first microcycle when given', () => {
+      const exercises = [
+        workoutTestUtil.STANDARD_EXERCISES.barbellSquat,
+        workoutTestUtil.STANDARD_EXERCISES.barbellBenchPress
+      ];
+      const calibrations = [
+        workoutTestUtil.STANDARD_CALIBRATIONS.barbellSquat,
+        workoutTestUtil.STANDARD_CALIBRATIONS.barbellBenchPress
+      ];
+      const equipment = Object.values(workoutTestUtil.STANDARD_EQUIPMENT_TYPES);
+
+      const mesocycle = WorkoutMesocycleSchema.parse({
+        userId: workoutTestUtil.userId,
+        cycleType: CycleType.MuscleGain,
+        plannedSessionCountPerMicrocycle: 2,
+        plannedMicrocycleLengthInDays: 7,
+        plannedMicrocycleRestDays: [],
+        plannedMicrocycleCount: 3,
+        calibratedExercises: calibrations.map((c) => c._id)
+      });
+
+      const customStartDate = new Date('2026-03-01T00:00:00.000Z');
+
+      const result = WorkoutMesocycleService.generateOrUpdateMesocycle(
+        mesocycle,
+        calibrations,
+        exercises,
+        equipment,
+        [],
+        [],
+        [],
+        [],
+        customStartDate
+      );
+
+      const microcycles = result.microcycles?.create ?? [];
+      expect(microcycles).toHaveLength(3);
+
+      // First microcycle should start at the provided date
+      expect(new Date(microcycles[0].startDate).getTime()).toBe(customStartDate.getTime());
+
+      // Subsequent microcycles should chain sequentially
+      for (let i = 1; i < microcycles.length; i++) {
+        const prevEnd = new Date(microcycles[i - 1].endDate);
+        const currentStart = new Date(microcycles[i].startDate);
+        expect(currentStart.getTime()).toBe(prevEnd.getTime());
+      }
+    });
+
+    it('should default to current date when startDate is not provided', () => {
+      const exercises = [
+        workoutTestUtil.STANDARD_EXERCISES.barbellSquat,
+        workoutTestUtil.STANDARD_EXERCISES.barbellBenchPress
+      ];
+      const calibrations = [
+        workoutTestUtil.STANDARD_CALIBRATIONS.barbellSquat,
+        workoutTestUtil.STANDARD_CALIBRATIONS.barbellBenchPress
+      ];
+      const equipment = Object.values(workoutTestUtil.STANDARD_EQUIPMENT_TYPES);
+
+      const mesocycle = WorkoutMesocycleSchema.parse({
+        userId: workoutTestUtil.userId,
+        cycleType: CycleType.MuscleGain,
+        plannedSessionCountPerMicrocycle: 2,
+        plannedMicrocycleLengthInDays: 7,
+        plannedMicrocycleRestDays: [],
+        plannedMicrocycleCount: 2,
+        calibratedExercises: calibrations.map((c) => c._id)
+      });
+
+      const before = Date.now();
+      const result = WorkoutMesocycleService.generateOrUpdateMesocycle(
+        mesocycle,
+        calibrations,
+        exercises,
+        equipment
+      );
+      const after = Date.now();
+
+      const microcycles = result.microcycles?.create ?? [];
+      expect(microcycles).toHaveLength(2);
+
+      // First microcycle's start date should be approximately now
+      const firstStart = new Date(microcycles[0].startDate).getTime();
+      expect(firstStart).toBeGreaterThanOrEqual(before);
+      expect(firstStart).toBeLessThanOrEqual(after);
     });
 
     it('should clean up all associated documents when deleting incomplete microcycles', () => {

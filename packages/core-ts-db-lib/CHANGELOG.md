@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## 🔖 [4.1.3] (2026-02-17)
+
+### ✅ Added
+
+- Added `getActiveAndNextSessions()` method to `WorkoutSessionService` for efficiently finding in-progress and next-up sessions.
+- Added `isDeloadExercise()` method to `WorkoutSessionExerciseService` to identify deload exercises.
+- Added `needsReview()` method to `WorkoutSessionExerciseService` to check if late session fields are missing.
+- Added `isCompleted()` method to `WorkoutSetService` to verify if a set has been fully logged.
+- Added comprehensive unit tests for workout session, exercise, and set services.
+
+### 🏗️ Changed
+
+- Updated deload microcycle handling: `targetRir` is now `null` for deload microcycles instead of using a numeric value.
+- Refactored method signatures to support `targetRir: number | null` across workout services.
+
 ## 🔖 [4.1.2] (2026-02-15)
 
 ### ✅ Added
@@ -225,6 +240,7 @@ Updated dependency: now requires `@aneuhold/core-ts-lib@^2.3.11`.
 
 <!-- Link References -->
 
+[4.1.3]: https://github.com/aneuhold/ts-libs/compare/core-ts-db-lib-v4.1.2...core-ts-db-lib-v4.1.3
 [4.1.2]: https://github.com/aneuhold/ts-libs/compare/core-ts-db-lib-v4.1.1...core-ts-db-lib-v4.1.2
 [4.1.1]: https://github.com/aneuhold/ts-libs/compare/core-ts-db-lib-v4.1.0...core-ts-db-lib-v4.1.1
 [4.1.0]: https://github.com/aneuhold/ts-libs/compare/core-ts-db-lib-v4.0.4...core-ts-db-lib-v4.1.0
