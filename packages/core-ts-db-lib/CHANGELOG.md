@@ -9,11 +9,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### ✅ Added
 
+- Added optional `description` field to `WorkoutEquipmentType` for additional equipment details.
+- Added `startDate` field to `WorkoutMesocycle` to track when a user explicitly begins training.
+- Added `completedDate` field to `WorkoutMicrocycle` to mark completion and indicate regeneration state.
+
 ### 🏗️ Changed
 
-### 🩹 Fixed
-
-### 🔥 Removed
+- Updated `WorkoutMesocycleService` to preserve microcycles with `completedDate` set during mesocycle regeneration, even when sessions are incomplete.
 
 ## 🔖 [4.1.3] (2026-02-17)
 
@@ -249,6 +251,7 @@ Updated dependency: now requires `@aneuhold/core-ts-lib@^2.3.11`.
 - Updated workflow permissions to allow repository write access
 
 <!-- Link References -->
+
 [4.1.4]: https://github.com/aneuhold/ts-libs/compare/core-ts-db-lib-v4.1.3...core-ts-db-lib-v4.1.4
 [4.1.3]: https://github.com/aneuhold/ts-libs/compare/core-ts-db-lib-v4.1.2...core-ts-db-lib-v4.1.3
 [4.1.2]: https://github.com/aneuhold/ts-libs/compare/core-ts-db-lib-v4.1.1...core-ts-db-lib-v4.1.2
