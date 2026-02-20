@@ -23,6 +23,10 @@ export const WorkoutEquipmentTypeSchema = z.object({
    */
   title: z.string(),
   /**
+   * An optional description of the equipment type.
+   */
+  description: z.string().nullish(),
+  /**
    * The available weight options for this equipment type.
    *
    * This is used to assist in algorithms where weight needs to be incremented

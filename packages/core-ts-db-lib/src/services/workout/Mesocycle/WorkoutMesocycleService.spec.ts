@@ -482,6 +482,64 @@ describe('Unit Tests', () => {
       expect(regenResult.microcycles?.create).toHaveLength(1);
     });
 
+    it('should preserve microcycles with completedDate set even when sessions are not all complete', () => {
+      const exercises = [
+        workoutTestUtil.STANDARD_EXERCISES.barbellSquat,
+        workoutTestUtil.STANDARD_EXERCISES.barbellBenchPress
+      ];
+      const calibrations = [
+        workoutTestUtil.STANDARD_CALIBRATIONS.barbellSquat,
+        workoutTestUtil.STANDARD_CALIBRATIONS.barbellBenchPress
+      ];
+      const equipment = Object.values(workoutTestUtil.STANDARD_EQUIPMENT_TYPES);
+
+      const mesocycle = WorkoutMesocycleSchema.parse({
+        userId: workoutTestUtil.userId,
+        cycleType: CycleType.MuscleGain,
+        plannedSessionCountPerMicrocycle: 2,
+        plannedMicrocycleLengthInDays: 7,
+        plannedMicrocycleRestDays: [],
+        plannedMicrocycleCount: 3,
+        calibratedExercises: calibrations.map((c) => c._id)
+      });
+
+      // Generate initial plan
+      const initialResult = WorkoutMesocycleService.generateOrUpdateMesocycle(
+        mesocycle,
+        calibrations,
+        exercises,
+        equipment
+      );
+
+      const initialMicrocycles = initialResult.microcycles?.create ?? [];
+
+      // Set completedDate on first microcycle WITHOUT marking sessions complete
+      initialMicrocycles[0].completedDate = new Date();
+
+      // Regenerate — microcycle 0 should be preserved thanks to completedDate,
+      // microcycles 1 and 2 (no completedDate, sessions incomplete) should be cleaned up
+      const regenResult = WorkoutMesocycleService.generateOrUpdateMesocycle(
+        mesocycle,
+        calibrations,
+        exercises,
+        equipment,
+        initialMicrocycles,
+        initialResult.sessions?.create ?? [],
+        initialResult.sessionExercises?.create ?? [],
+        initialResult.sets?.create ?? []
+      );
+
+      // Microcycle 0 should NOT be deleted
+      const deletedIds = regenResult.microcycles?.delete ?? [];
+      expect(deletedIds).not.toContain(initialMicrocycles[0]._id);
+
+      // Microcycles 1 and 2 should be deleted and regenerated
+      expect(deletedIds).toHaveLength(2);
+      expect(deletedIds).toContain(initialMicrocycles[1]._id);
+      expect(deletedIds).toContain(initialMicrocycles[2]._id);
+      expect(regenResult.microcycles?.create).toHaveLength(2);
+    });
+
     it('should throw error when incomplete microcycle has already started', () => {
       const exercises = [
         workoutTestUtil.STANDARD_EXERCISES.barbellSquat,

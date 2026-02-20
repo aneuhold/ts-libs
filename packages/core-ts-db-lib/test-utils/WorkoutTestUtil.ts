@@ -811,6 +811,9 @@ class WorkoutTestUtil {
     sessions.forEach((session) => {
       session.complete = true;
     });
+
+    // Mark the microcycle as completed
+    microcycle.completedDate = new Date();
   }
 }
 

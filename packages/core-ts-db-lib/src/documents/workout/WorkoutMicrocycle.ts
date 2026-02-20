@@ -43,7 +43,14 @@ export const WorkoutMicrocycleSchema = z.object({
    * This makes it easier to reason about the order of sessions before dates
    * are assigned.
    */
-  sessionOrder: z.array(z.uuidv7().transform((val) => val as UUID)).default([])
+  sessionOrder: z.array(z.uuidv7().transform((val) => val as UUID)).default([]),
+  /**
+   * The date this microcycle was marked as completed by the user.
+   *
+   * This helps for performance reasons, but also acts as our indicator that the mesocycle has been
+   * regenerated after the microcycle was completed.
+   */
+  completedDate: z.date().nullish()
 });
 
 /**

@@ -210,6 +210,9 @@ export default class WorkoutMesocycleService {
     let firstIncompleteMicrocycleIndex = -1;
     for (let i = 0; i < microcyclesForMesocycle.length; i++) {
       const microcycle = microcyclesForMesocycle[i];
+      if (microcycle.completedDate) {
+        continue;
+      }
       if (microcycle.sessionOrder.length === 0) {
         // Microcycle has no sessions, it's incomplete
         firstIncompleteMicrocycleIndex = i;

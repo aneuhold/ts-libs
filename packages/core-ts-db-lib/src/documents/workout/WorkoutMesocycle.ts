@@ -73,6 +73,14 @@ export const WorkoutMesocycleSchema = z.object({
    */
   plannedMicrocycleCount: z.int().min(2).max(20).nullish(),
   /**
+   * The date this mesocycle was started by the user.
+   *
+   * Distinct from `createdDate` — this is set when the user explicitly clicks
+   * "Start Mesocycle" to begin training. This is helpful because we need a way to indicate that
+   * the final regeneration has been done just before they start.
+   */
+  startDate: z.date().nullish(),
+  /**
    * The date this mesocycle was completed.
    *
    * This should be set after the user gets a "success" completion screen and
