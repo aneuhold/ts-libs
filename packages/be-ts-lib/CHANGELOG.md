@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## 🔖 [3.0.16] (2026-02-21)
+
+### ✅ Added
+
+### 🏗️ Changed
+
+### 🩹 Fixed
+
+### 🔥 Removed
+
 ## 🔖 [3.0.15] (2026-02-20)
 
 ### 🏗️ Changed
@@ -185,7 +195,7 @@ No direct code changes; version bump for compatibility with new major versions o
 - Updated workflow permissions to allow repository write access
 
 <!-- Link References -->
-
+[3.0.16]: https://github.com/aneuhold/ts-libs/compare/be-ts-lib-v3.0.15...be-ts-lib-v3.0.16
 [3.0.15]: https://github.com/aneuhold/ts-libs/compare/be-ts-lib-v3.0.14...be-ts-lib-v3.0.15
 [3.0.14]: https://github.com/aneuhold/ts-libs/compare/be-ts-lib-v3.0.13...be-ts-lib-v3.0.14
 [3.0.13]: https://github.com/aneuhold/ts-libs/compare/be-ts-lib-v3.0.12...be-ts-lib-v3.0.13
