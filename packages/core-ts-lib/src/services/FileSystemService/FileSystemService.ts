@@ -381,10 +381,11 @@ export default class FileSystemService {
       await execAsync('git show-ref --verify --quiet refs/remotes/origin/main', {
         cwd: repoRoot
       });
-      return 'git diff --name-only origin/main...HEAD';
+      // Returns all changed files compared to origin/main, including uncommitted changes
+      return 'git diff --name-only $(git merge-base origin/main HEAD)';
     } catch {
       DR.logger.verbose.info('origin/main not found, comparing to HEAD~1');
-      return 'git diff --name-only HEAD~1 HEAD';
+      return 'git diff --name-only HEAD~1';
     }
   }
 

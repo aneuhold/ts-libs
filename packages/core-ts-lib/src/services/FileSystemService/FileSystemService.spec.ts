@@ -1,4 +1,4 @@
-import { readFile, symlink, writeFile } from 'fs/promises';
+import { readFile, rm, symlink, writeFile } from 'fs/promises';
 import path from 'path';
 import { afterAll, describe, expect, it } from 'vitest';
 import FileSystemService from './FileSystemService.js';
@@ -170,6 +170,23 @@ describe('FileSystemService', () => {
       const content = await readFile(path.join(testFolderPath, 'test.txt'), 'utf8');
 
       expect(content).toBe('Original OLD_TEXT content'); // Should not change in dry run
+    });
+  });
+
+  describe('hasChangesComparedToMain', () => {
+    const tempFilePath = path.resolve('__uncommitted-change-test__.txt');
+
+    it('should detect uncommitted file changes', async () => {
+      // Create an uncommitted file in the repo to simulate what
+      // preparePkg/propagateVersion does (modifying package.json without committing)
+      await writeFile(tempFilePath, 'temporary test content');
+
+      try {
+        const hasChanges = await FileSystemService.hasChangesComparedToMain(path.resolve('.'));
+        expect(hasChanges).toBe(true);
+      } finally {
+        await rm(tempFilePath);
+      }
     });
   });
 

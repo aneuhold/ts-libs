@@ -11,7 +11,7 @@
     "lint": "pnpm -r --stream lint",
     "check": "pnpm -r --stream check",
     "test": "pnpm -r --stream test",
-    "preparePkg": "pnpm -r --stream --parallel preparePkg && pnpm -r --stream propagateVersion && pnpm i",
+    "preparePkg": "tsx scripts/prepareAllPackages.ts",
     "upgrade:core": "pnpm update '@aneuhold/*' --latest && pnpm -r --stream upgrade:core",
     "upgrade:all": "pnpm up && pnpm -r --stream upgrade:all"
   },
