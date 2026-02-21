@@ -77,9 +77,16 @@ export default class WorkoutSessionExerciseService {
   }
 
   /**
+   * Returns true if the exercise is a deload exercise (all sets have plannedRir == null).
+   */
+  static isDeloadExercise(exerciseSets: WorkoutSet[]): boolean {
+    return exerciseSets.length > 0 && exerciseSets.every((s) => s.plannedRir == null);
+  }
+
+  /**
    * Returns true if all mid-session metrics are filled out for the session exercise.
    * Mid-session metrics are filled out right after performing the exercise:
-   * mindMuscleConnection, pump, jointAndTissueDisruption, perceivedEffort,
+   * mindMuscleConnection, pump, unusedMusclePerformance, perceivedEffort,
    * and performanceScore. Deload exercises are always considered filled.
    */
   static hasMidSessionMetricsFilled(
@@ -90,22 +97,15 @@ export default class WorkoutSessionExerciseService {
     return (
       sessionExercise.rsm?.mindMuscleConnection != null &&
       sessionExercise.rsm.pump != null &&
-      sessionExercise.fatigue?.jointAndTissueDisruption != null &&
+      sessionExercise.fatigue?.unusedMusclePerformance != null &&
       sessionExercise.fatigue.perceivedEffort != null &&
       sessionExercise.performanceScore != null
     );
   }
 
   /**
-   * Returns true if the exercise is a deload exercise (all sets have plannedRir == null).
-   */
-  static isDeloadExercise(exerciseSets: WorkoutSet[]): boolean {
-    return exerciseSets.length > 0 && exerciseSets.every((s) => s.plannedRir == null);
-  }
-
-  /**
    * Returns true if all session metrics (both mid-session and post-session) are filled out.
-   * Post-session metrics are disruption, unusedMusclePerformance, and sorenessScore.
+   * Post-session metrics are disruption, jointAndTissueDisruption, and sorenessScore.
    * Deload exercises are always considered filled.
    */
   static hasAllSessionMetricsFilled(
@@ -118,7 +118,7 @@ export default class WorkoutSessionExerciseService {
     if (WorkoutSessionExerciseService.isDeloadExercise(exerciseSets)) return true;
     return (
       sessionExercise.rsm?.disruption != null &&
-      sessionExercise.fatigue?.unusedMusclePerformance != null &&
+      sessionExercise.fatigue?.jointAndTissueDisruption != null &&
       sessionExercise.sorenessScore != null
     );
   }

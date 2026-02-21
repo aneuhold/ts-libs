@@ -17,9 +17,9 @@ describe('Unit Tests', () => {
         overrides: {
           rsm: { mindMuscleConnection: 2, pump: 1, disruption: null },
           fatigue: {
-            jointAndTissueDisruption: 1,
+            jointAndTissueDisruption: null,
             perceivedEffort: 2,
-            unusedMusclePerformance: null
+            unusedMusclePerformance: 1
           },
           performanceScore: 1
         }
@@ -33,9 +33,9 @@ describe('Unit Tests', () => {
         overrides: {
           rsm: { mindMuscleConnection: null, pump: 1, disruption: null },
           fatigue: {
-            jointAndTissueDisruption: 1,
+            jointAndTissueDisruption: null,
             perceivedEffort: 2,
-            unusedMusclePerformance: null
+            unusedMusclePerformance: 1
           },
           performanceScore: 1
         }
@@ -49,9 +49,9 @@ describe('Unit Tests', () => {
         overrides: {
           rsm: null,
           fatigue: {
-            jointAndTissueDisruption: 1,
+            jointAndTissueDisruption: null,
             perceivedEffort: 2,
-            unusedMusclePerformance: null
+            unusedMusclePerformance: 1
           },
           performanceScore: 1
         }
@@ -65,9 +65,9 @@ describe('Unit Tests', () => {
         overrides: {
           rsm: { mindMuscleConnection: 2, pump: 1, disruption: null },
           fatigue: {
-            jointAndTissueDisruption: 1,
+            jointAndTissueDisruption: null,
             perceivedEffort: 2,
-            unusedMusclePerformance: null
+            unusedMusclePerformance: 1
           },
           performanceScore: null
         }
@@ -137,14 +137,14 @@ describe('Unit Tests', () => {
       expect(WorkoutSessionExerciseService.hasAllSessionMetricsFilled(se, sets)).toBe(false);
     });
 
-    it('should return false when unusedMusclePerformance is null', () => {
+    it('should return false when jointAndTissueDisruption is null', () => {
       const se = workoutTestUtil.createSessionExercise({
         overrides: {
           rsm: { mindMuscleConnection: 2, pump: 2, disruption: 2 },
           fatigue: {
-            jointAndTissueDisruption: 1,
+            jointAndTissueDisruption: null,
             perceivedEffort: 1,
-            unusedMusclePerformance: null
+            unusedMusclePerformance: 1
           },
           performanceScore: 1,
           sorenessScore: 1
