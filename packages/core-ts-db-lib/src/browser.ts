@@ -153,7 +153,9 @@ import WorkoutExerciseCalibrationService from './services/workout/ExerciseCalibr
 import WorkoutMesocyclePlanContext from './services/workout/Mesocycle/WorkoutMesocyclePlanContext.js';
 import WorkoutMesocycleService from './services/workout/Mesocycle/WorkoutMesocycleService.js';
 import WorkoutMicrocycleService from './services/workout/Microcycle/WorkoutMicrocycleService.js';
-import WorkoutSessionService from './services/workout/Session/WorkoutSessionService.js';
+import WorkoutSessionService, {
+  WorkoutSessionLockReason
+} from './services/workout/Session/WorkoutSessionService.js';
 import WorkoutSessionExerciseService from './services/workout/SessionExercise/WorkoutSessionExerciseService.js';
 import WorkoutSetService from './services/workout/Set/WorkoutSetService.js';
 import WorkoutSFRService from './services/workout/util/SFR/WorkoutSFRService.js';
@@ -208,6 +210,7 @@ export {
   RecurrenceInfoSchema,
   RequiredUserIdSchema,
   RsmSchema,
+  WorkoutSessionLockReason,
   StandardFilterSettingSchema,
   UserCTOSchema,
   UserSchema,

@@ -5,7 +5,7 @@ import type { WorkoutExercise } from '../../../documents/workout/WorkoutExercise
 import type { WorkoutSessionExercise } from '../../../documents/workout/WorkoutSessionExercise.js';
 import type { WorkoutSet } from '../../../documents/workout/WorkoutSet.js';
 import WorkoutVolumePlanningService from '../util/VolumePlanning/WorkoutVolumePlanningService.js';
-import WorkoutSessionService from './WorkoutSessionService.js';
+import WorkoutSessionService, { WorkoutSessionLockReason } from './WorkoutSessionService.js';
 
 describe('WorkoutSessionService', () => {
   describe('getActiveAndNextSessions', () => {
@@ -84,6 +84,87 @@ describe('WorkoutSessionService', () => {
       const result = WorkoutSessionService.getActiveAndNextSessions([s1], seMap, setMap);
       expect(result.inProgressSession?._id).toBe(s1._id);
       expect(result.nextUpSession).toBeNull();
+    });
+  });
+
+  describe('getSessionLockReason', () => {
+    it('should return null for free-form sessions (no microcycle)', () => {
+      const result = WorkoutSessionService.getSessionLockReason(null, null, null, null);
+      expect(result).toBeNull();
+    });
+
+    it('should return null for free-form microcycles (no mesocycle)', () => {
+      const microcycle = workoutTestUtil.createMicrocycle({});
+      const result = WorkoutSessionService.getSessionLockReason(microcycle, null, null, null);
+      expect(result).toBeNull();
+    });
+
+    it('should return MesocycleNotStarted when mesocycle has no startDate', () => {
+      const mesocycle = workoutTestUtil.createMesocycle({ startDate: undefined });
+      const microcycle = workoutTestUtil.createMicrocycle({ mesocycle });
+
+      const result = WorkoutSessionService.getSessionLockReason(microcycle, mesocycle, null, null);
+      expect(result).toBe(WorkoutSessionLockReason.MesocycleNotStarted);
+    });
+
+    it('should return PreviousMicrocycleNotCompleted when previous microcycle has no completedDate', () => {
+      const mesocycle = workoutTestUtil.createMesocycle({ startDate: new Date() });
+      const microcycle = workoutTestUtil.createMicrocycle({ mesocycle });
+      const previousMicrocycle = workoutTestUtil.createMicrocycle({ mesocycle });
+
+      const result = WorkoutSessionService.getSessionLockReason(
+        microcycle,
+        mesocycle,
+        previousMicrocycle,
+        null
+      );
+      expect(result).toBe(WorkoutSessionLockReason.PreviousMicrocycleNotCompleted);
+    });
+
+    it('should return PreviousSessionNotCompleted when previous session is incomplete', () => {
+      const mesocycle = workoutTestUtil.createMesocycle({ startDate: new Date() });
+      const microcycle = workoutTestUtil.createMicrocycle({ mesocycle });
+      const previousSession = workoutTestUtil.createSession({
+        microcycle,
+        overrides: { complete: false }
+      });
+
+      const result = WorkoutSessionService.getSessionLockReason(
+        microcycle,
+        mesocycle,
+        null,
+        previousSession
+      );
+      expect(result).toBe(WorkoutSessionLockReason.PreviousSessionNotCompleted);
+    });
+
+    it('should return null when all conditions are met (first session, first microcycle, started mesocycle)', () => {
+      const mesocycle = workoutTestUtil.createMesocycle({ startDate: new Date() });
+      const microcycle = workoutTestUtil.createMicrocycle({ mesocycle });
+
+      const result = WorkoutSessionService.getSessionLockReason(microcycle, mesocycle, null, null);
+      expect(result).toBeNull();
+    });
+
+    it('should return null when previous microcycle is completed and previous session is complete', () => {
+      const mesocycle = workoutTestUtil.createMesocycle({ startDate: new Date() });
+      const microcycle = workoutTestUtil.createMicrocycle({ mesocycle });
+      const previousMicrocycle = workoutTestUtil.createMicrocycle({
+        mesocycle,
+        overrides: { completedDate: new Date() }
+      });
+      const previousSession = workoutTestUtil.createSession({
+        microcycle,
+        overrides: { complete: true }
+      });
+
+      const result = WorkoutSessionService.getSessionLockReason(
+        microcycle,
+        mesocycle,
+        previousMicrocycle,
+        previousSession
+      );
+      expect(result).toBeNull();
     });
   });
 

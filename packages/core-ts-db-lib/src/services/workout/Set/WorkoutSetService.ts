@@ -52,13 +52,15 @@ export default class WorkoutSetService {
 
     const sets: WorkoutSet[] = [];
 
-    // Calculate progressed targets for the first set
+    // Calculate progressed targets for the first set.
+    // For deload microcycles, use the previous microcycle's index so we base
+    // the deload on the last accumulation weight rather than progressing further.
     const { targetWeight: firstSetWeight, targetReps: firstSetReps } =
       WorkoutExerciseService.calculateTargetRepsAndWeightForFirstSet({
         exercise,
         calibration,
         equipment,
-        microcycleIndex,
+        microcycleIndex: isDeloadMicrocycle ? microcycleIndex - 1 : microcycleIndex,
         firstMicrocycleRir: context.FIRST_MICROCYCLE_RIR
       });
 

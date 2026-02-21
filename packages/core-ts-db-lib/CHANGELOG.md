@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## 🔖 [4.1.7] (2026-02-21)
+
+### ✅ Added
+
+- Added `WorkoutSessionLockReason` enum with values `MesocycleNotStarted`, `PreviousMicrocycleNotCompleted`, and `PreviousSessionNotCompleted`.
+- Added `WorkoutSessionService.getSessionLockReason()` to determine whether a session is locked and why.
+- Added `WorkoutSessionExerciseService.hasMidSessionMetricsFilled()` to check if mid-session metrics (mindMuscleConnection, pump, jointAndTissueDisruption, perceivedEffort, performanceScore) are filled.
+
+### 🏗️ Changed
+
+- _Breaking Change:_ Renamed `WorkoutSessionExerciseService.needsReview()` to `hasAllSessionMetricsFilled()`. The method now returns `true` when all metrics are filled (inverted semantics from the old method).
+
+### 🩹 Fixed
+
+- Fixed deload set generation to use the previous microcycle's index when calculating target weight/reps, preventing deload sets from being planned at a higher weight than the last accumulation cycle.
+
 ## 🔖 [4.1.6] (2026-02-21)
 
 ### 🏗️ Changed
@@ -265,6 +281,7 @@ Updated dependency: now requires `@aneuhold/core-ts-lib@^2.3.11`.
 
 <!-- Link References -->
 
+[4.1.7]: https://github.com/aneuhold/ts-libs/compare/core-ts-db-lib-v4.1.6...core-ts-db-lib-v4.1.7
 [4.1.6]: https://github.com/aneuhold/ts-libs/compare/core-ts-db-lib-v4.1.5...core-ts-db-lib-v4.1.6
 [4.1.5]: https://github.com/aneuhold/ts-libs/compare/core-ts-db-lib-v4.1.4...core-ts-db-lib-v4.1.5
 [4.1.4]: https://github.com/aneuhold/ts-libs/compare/core-ts-db-lib-v4.1.3...core-ts-db-lib-v4.1.4

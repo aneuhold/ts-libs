@@ -230,5 +230,41 @@ describe('WorkoutSetService', () => {
       }
       expect(deloadSets[1].plannedReps).toBeGreaterThan(deloadSets[0].plannedReps / 2);
     });
+
+    it('should not plan higher weight in a deload than the previous accumulation microcycle', () => {
+      // Use a rep-progression exercise where the extra microcycle iteration would
+      // cause a weight bump if the deload index were used directly.
+      // dumbbellLateralRaise: Light range (15-30), Rep progression.
+      // With midpoint 22 and +2 reps/microcycle, reps hit 30 at MC 4 and would
+      // overflow at MC 5, triggering a weight bump if the raw index were used.
+      const testExercise = workoutTestUtil.STANDARD_EXERCISES.dumbbellLateralRaise;
+      const testCalibration = workoutTestUtil.STANDARD_CALIBRATIONS.dumbbellLateralRaise;
+
+      const lastAccumulationSets = runGeneration({
+        currentExercise: testExercise,
+        currentCalibration: testCalibration,
+        microcycleIndex: 4,
+        targetRir: 0,
+        isDeload: false,
+        setCountOverride: 1
+      });
+
+      const deloadSets = runGeneration({
+        currentExercise: testExercise,
+        currentCalibration: testCalibration,
+        microcycleIndex: 5,
+        targetRir: null,
+        isDeload: true,
+        setCountOverride: 1
+      });
+
+      const accumulationWeight = lastAccumulationSets[0].plannedWeight;
+      const deloadWeight = deloadSets[0].plannedWeight;
+      if (accumulationWeight == null || deloadWeight == null) {
+        throw new Error('Planned weight should be defined');
+      }
+
+      expect(deloadWeight).toBeLessThanOrEqual(accumulationWeight);
+    });
   });
 });

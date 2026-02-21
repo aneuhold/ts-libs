@@ -1,13 +1,24 @@
 import type { UUID } from 'crypto';
 import type { CalibrationExercisePair } from '../../../documents/workout/WorkoutExerciseCalibration.js';
+import type { WorkoutMesocycle } from '../../../documents/workout/WorkoutMesocycle.js';
+import type { WorkoutMicrocycle } from '../../../documents/workout/WorkoutMicrocycle.js';
 import type { WorkoutSession } from '../../../documents/workout/WorkoutSession.js';
 import { WorkoutSessionSchema } from '../../../documents/workout/WorkoutSession.js';
-import { WorkoutSessionExerciseSchema } from '../../../documents/workout/WorkoutSessionExercise.js';
 import type { WorkoutSessionExercise } from '../../../documents/workout/WorkoutSessionExercise.js';
+import { WorkoutSessionExerciseSchema } from '../../../documents/workout/WorkoutSessionExercise.js';
 import type { WorkoutSet } from '../../../documents/workout/WorkoutSet.js';
 import type WorkoutMesocyclePlanContext from '../Mesocycle/WorkoutMesocyclePlanContext.js';
 import WorkoutSetService from '../Set/WorkoutSetService.js';
 import WorkoutSFRService from '../util/SFR/WorkoutSFRService.js';
+
+/**
+ * Describes why a session is locked and cannot be interacted with.
+ */
+export enum WorkoutSessionLockReason {
+  MesocycleNotStarted = 'MesocycleNotStarted',
+  PreviousMicrocycleNotCompleted = 'PreviousMicrocycleNotCompleted',
+  PreviousSessionNotCompleted = 'PreviousSessionNotCompleted'
+}
 
 /**
  * A service for handling operations related to {@link WorkoutSession}s.
@@ -43,6 +54,40 @@ export default class WorkoutSessionService {
    */
   static getSFR(session: WorkoutSession): number | null {
     return WorkoutSFRService.getSFR(session.rsm, session.fatigue);
+  }
+
+  /**
+   * Returns the reason a session is locked, or `null` if the session is
+   * unlocked and can be interacted with.
+   *
+   * A session is unlocked when:
+   * - It has no microcycle (free-form session)
+   * - It has no mesocycle (free-form microcycle)
+   * - Its mesocycle has been started, the previous microcycle (if any) is
+   *   completed, and the previous session in the same microcycle (if any)
+   *   is complete.
+   *
+   * @param microcycle The session's parent microcycle, or null/undefined for free-form sessions.
+   * @param mesocycle The session's parent mesocycle, or null/undefined for free-form microcycles.
+   * @param previousMicrocycle The microcycle preceding the session's microcycle, or null/undefined if first.
+   * @param previousSessionInMicrocycle The session before this one in the same microcycle, or null/undefined if first.
+   */
+  static getSessionLockReason(
+    microcycle: WorkoutMicrocycle | null | undefined,
+    mesocycle: WorkoutMesocycle | null | undefined,
+    previousMicrocycle: WorkoutMicrocycle | null | undefined,
+    previousSessionInMicrocycle: WorkoutSession | null | undefined
+  ): WorkoutSessionLockReason | null {
+    if (!microcycle) return null;
+    if (!mesocycle) return null;
+    if (mesocycle.startDate == null) return WorkoutSessionLockReason.MesocycleNotStarted;
+    if (previousMicrocycle && previousMicrocycle.completedDate == null) {
+      return WorkoutSessionLockReason.PreviousMicrocycleNotCompleted;
+    }
+    if (previousSessionInMicrocycle && !previousSessionInMicrocycle.complete) {
+      return WorkoutSessionLockReason.PreviousSessionNotCompleted;
+    }
+    return null;
   }
 
   /**
