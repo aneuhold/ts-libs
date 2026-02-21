@@ -60,7 +60,7 @@
   "dependencies": {
     "@aneuhold/be-ts-lib": "^3.0.15",
     "@aneuhold/core-ts-db-lib": "^4.1.4",
-    "@aneuhold/core-ts-lib": "^2.3.17",
+    "@aneuhold/core-ts-lib": "^2.3.18",
     "bson": "^7.0.0",
     "mongodb": "^7.0.0",
     "uuid": "^13.0.0",
