@@ -3,6 +3,92 @@ import workoutTestUtil from '../../../../test-utils/WorkoutTestUtil.js';
 import WorkoutSessionExerciseService from './WorkoutSessionExerciseService.js';
 
 describe('Unit Tests', () => {
+  describe('hasMidSessionMetricsFilled', () => {
+    it('should return true for deload exercises regardless of slider values', () => {
+      const se = workoutTestUtil.createSessionExercise({
+        overrides: { rsm: null, fatigue: null, performanceScore: null }
+      });
+      const deloadSets = [workoutTestUtil.createSet({ overrides: { plannedRir: null } })];
+      expect(WorkoutSessionExerciseService.hasMidSessionMetricsFilled(se, deloadSets)).toBe(true);
+    });
+
+    it('should return true when all mid session metrics are filled', () => {
+      const se = workoutTestUtil.createSessionExercise({
+        overrides: {
+          rsm: { mindMuscleConnection: 2, pump: 1, disruption: null },
+          fatigue: {
+            jointAndTissueDisruption: 1,
+            perceivedEffort: 2,
+            unusedMusclePerformance: null
+          },
+          performanceScore: 1
+        }
+      });
+      const sets = [workoutTestUtil.createSet({ overrides: { plannedRir: 2 } })];
+      expect(WorkoutSessionExerciseService.hasMidSessionMetricsFilled(se, sets)).toBe(true);
+    });
+
+    it('should return false when mindMuscleConnection is null', () => {
+      const se = workoutTestUtil.createSessionExercise({
+        overrides: {
+          rsm: { mindMuscleConnection: null, pump: 1, disruption: null },
+          fatigue: {
+            jointAndTissueDisruption: 1,
+            perceivedEffort: 2,
+            unusedMusclePerformance: null
+          },
+          performanceScore: 1
+        }
+      });
+      const sets = [workoutTestUtil.createSet({ overrides: { plannedRir: 2 } })];
+      expect(WorkoutSessionExerciseService.hasMidSessionMetricsFilled(se, sets)).toBe(false);
+    });
+
+    it('should return false when rsm is null', () => {
+      const se = workoutTestUtil.createSessionExercise({
+        overrides: {
+          rsm: null,
+          fatigue: {
+            jointAndTissueDisruption: 1,
+            perceivedEffort: 2,
+            unusedMusclePerformance: null
+          },
+          performanceScore: 1
+        }
+      });
+      const sets = [workoutTestUtil.createSet({ overrides: { plannedRir: 2 } })];
+      expect(WorkoutSessionExerciseService.hasMidSessionMetricsFilled(se, sets)).toBe(false);
+    });
+
+    it('should return false when performanceScore is null', () => {
+      const se = workoutTestUtil.createSessionExercise({
+        overrides: {
+          rsm: { mindMuscleConnection: 2, pump: 1, disruption: null },
+          fatigue: {
+            jointAndTissueDisruption: 1,
+            perceivedEffort: 2,
+            unusedMusclePerformance: null
+          },
+          performanceScore: null
+        }
+      });
+      const sets = [workoutTestUtil.createSet({ overrides: { plannedRir: 2 } })];
+      expect(WorkoutSessionExerciseService.hasMidSessionMetricsFilled(se, sets)).toBe(false);
+    });
+
+    it('should return false when fatigue is null', () => {
+      const se = workoutTestUtil.createSessionExercise({
+        overrides: {
+          rsm: { mindMuscleConnection: 2, pump: 1, disruption: null },
+          fatigue: null,
+          performanceScore: 1
+        }
+      });
+      const sets = [workoutTestUtil.createSet({ overrides: { plannedRir: 2 } })];
+      expect(WorkoutSessionExerciseService.hasMidSessionMetricsFilled(se, sets)).toBe(false);
+    });
+  });
+
   describe('isDeloadExercise', () => {
     it('should return true when all sets have plannedRir == null', () => {
       const sets = [
@@ -25,16 +111,16 @@ describe('Unit Tests', () => {
     });
   });
 
-  describe('needsReview', () => {
-    it('should return false for deload exercises', () => {
+  describe('hasAllSessionMetricsFilled', () => {
+    it('should return true for deload exercises regardless of metric values', () => {
       const se = workoutTestUtil.createSessionExercise({
-        overrides: { sorenessScore: null }
+        overrides: { rsm: null, fatigue: null, sorenessScore: null }
       });
       const deloadSets = [workoutTestUtil.createSet({ overrides: { plannedRir: null } })];
-      expect(WorkoutSessionExerciseService.needsReview(se, deloadSets)).toBe(false);
+      expect(WorkoutSessionExerciseService.hasAllSessionMetricsFilled(se, deloadSets)).toBe(true);
     });
 
-    it('should return true when disruption is null', () => {
+    it('should return false when disruption is null', () => {
       const se = workoutTestUtil.createSessionExercise({
         overrides: {
           rsm: { mindMuscleConnection: 2, pump: 2, disruption: null },
@@ -43,14 +129,15 @@ describe('Unit Tests', () => {
             perceivedEffort: 1,
             unusedMusclePerformance: 1
           },
+          performanceScore: 1,
           sorenessScore: 1
         }
       });
       const sets = [workoutTestUtil.createSet({ overrides: { plannedRir: 2 } })];
-      expect(WorkoutSessionExerciseService.needsReview(se, sets)).toBe(true);
+      expect(WorkoutSessionExerciseService.hasAllSessionMetricsFilled(se, sets)).toBe(false);
     });
 
-    it('should return true when unusedMusclePerformance is null', () => {
+    it('should return false when unusedMusclePerformance is null', () => {
       const se = workoutTestUtil.createSessionExercise({
         overrides: {
           rsm: { mindMuscleConnection: 2, pump: 2, disruption: 2 },
@@ -59,14 +146,15 @@ describe('Unit Tests', () => {
             perceivedEffort: 1,
             unusedMusclePerformance: null
           },
+          performanceScore: 1,
           sorenessScore: 1
         }
       });
       const sets = [workoutTestUtil.createSet({ overrides: { plannedRir: 2 } })];
-      expect(WorkoutSessionExerciseService.needsReview(se, sets)).toBe(true);
+      expect(WorkoutSessionExerciseService.hasAllSessionMetricsFilled(se, sets)).toBe(false);
     });
 
-    it('should return true when sorenessScore is null', () => {
+    it('should return false when sorenessScore is null', () => {
       const se = workoutTestUtil.createSessionExercise({
         overrides: {
           rsm: { mindMuscleConnection: 2, pump: 2, disruption: 2 },
@@ -75,14 +163,32 @@ describe('Unit Tests', () => {
             perceivedEffort: 1,
             unusedMusclePerformance: 1
           },
+          performanceScore: 1,
           sorenessScore: null
         }
       });
       const sets = [workoutTestUtil.createSet({ overrides: { plannedRir: 2 } })];
-      expect(WorkoutSessionExerciseService.needsReview(se, sets)).toBe(true);
+      expect(WorkoutSessionExerciseService.hasAllSessionMetricsFilled(se, sets)).toBe(false);
     });
 
-    it('should return false when all late fields are filled', () => {
+    it('should return false when mid-session metrics are missing', () => {
+      const se = workoutTestUtil.createSessionExercise({
+        overrides: {
+          rsm: { mindMuscleConnection: null, pump: 2, disruption: 2 },
+          fatigue: {
+            jointAndTissueDisruption: 1,
+            perceivedEffort: 1,
+            unusedMusclePerformance: 1
+          },
+          performanceScore: 1,
+          sorenessScore: 1
+        }
+      });
+      const sets = [workoutTestUtil.createSet({ overrides: { plannedRir: 2 } })];
+      expect(WorkoutSessionExerciseService.hasAllSessionMetricsFilled(se, sets)).toBe(false);
+    });
+
+    it('should return true when all metrics are filled', () => {
       const se = workoutTestUtil.createSessionExercise({
         overrides: {
           rsm: { mindMuscleConnection: 2, pump: 2, disruption: 2 },
@@ -91,11 +197,12 @@ describe('Unit Tests', () => {
             perceivedEffort: 1,
             unusedMusclePerformance: 1
           },
+          performanceScore: 1,
           sorenessScore: 1
         }
       });
       const sets = [workoutTestUtil.createSet({ overrides: { plannedRir: 2 } })];
-      expect(WorkoutSessionExerciseService.needsReview(se, sets)).toBe(false);
+      expect(WorkoutSessionExerciseService.hasAllSessionMetricsFilled(se, sets)).toBe(true);
     });
   });
 
