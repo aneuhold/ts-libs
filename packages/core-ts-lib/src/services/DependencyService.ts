@@ -29,7 +29,8 @@ export default class DependencyService {
     } catch (error) {
       const originalError = ErrorUtils.getErrorString(error);
       throw new Error(
-        `No package.json file found in the current directory or it's unreadable. Original error: ${originalError}`
+        `No package.json file found in the current directory or it's unreadable. Original error: ${originalError}`,
+        { cause: error }
       );
     }
 

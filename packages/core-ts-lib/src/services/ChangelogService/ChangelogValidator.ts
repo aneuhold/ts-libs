@@ -10,7 +10,7 @@ export default class ChangelogValidator {
    *
    * @param versionEntry The version entry to validate
    * @param version The version being validated (for error messages)
-   * @throws Error if validation fails
+   * @throws {Error} Error if validation fails
    */
   static validateVersionEntry(versionEntry: ChangelogVersionEntry, version: string): void {
     const { sections } = versionEntry;

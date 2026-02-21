@@ -5,8 +5,8 @@ export default class ArrayService {
   /**
    * Determines if two arrays have the same primitive values.
    *
-   * @param array1
-   * @param array2
+   * @param array1 - The first array to compare.
+   * @param array2 - The second array to compare.
    * @returns true if the arrays have the same primitive values, false otherwise.
    */
   static arraysHaveSamePrimitiveValues(array1: Array<unknown>, array2: Array<unknown>): boolean {

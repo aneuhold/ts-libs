@@ -16,7 +16,7 @@ export default class GitHubService {
    * @param repoName - The name of the repository.
    * @param filePath - The path to the file within the repository.
    * @returns The content of the file as a string.
-   * @throws Will throw an error if the content cannot be retrieved.
+   * @throws {Error} Will throw an error if the content cannot be retrieved.
    */
   static async getContentFromRepo(repoName: string, filePath: string): Promise<string> {
     if (!GitHubService.gitHub) {

@@ -60,7 +60,7 @@ export class MutexService {
     } catch (error) {
       const errorMessage = `Failed to acquire mutex lock: ${String(error)}`;
       DR.logger.error(errorMessage);
-      throw new Error(errorMessage);
+      throw new Error(errorMessage, { cause: error });
     }
   }
 
@@ -130,7 +130,7 @@ export class MutexService {
       } catch (manualRemovalError) {
         const errorMessage = `Failed to force release mutex lock via both unlock and manual removal: ${String(error)}, manual removal error: ${String(manualRemovalError)}`;
         DR.logger.error(errorMessage);
-        throw new Error(errorMessage);
+        throw new Error(errorMessage, { cause: manualRemovalError });
       }
     }
   }

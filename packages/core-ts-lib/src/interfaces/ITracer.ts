@@ -7,7 +7,8 @@ export interface ISpan {
    * Sets the status of the span.
    *
    * @param status - An object containing a code and message.
-   *                 Common codes: 1 (OK), 2 (Error/Internal), etc.
+   * @param status.code - The status code. Common codes: 1 (OK), 2 (Error/Internal), etc.
+   * @param status.message - A human-readable message describing the status.
    */
   setStatus(status: { code: number; message: string }): void;
   // Add other methods you might need from the span, e.g., recordError, end
@@ -67,8 +68,8 @@ export class NoopTracer implements ITracer {
   /**
    * Executes the callback directly without creating a real span.
    *
-   * @param _name
-   * @param callback
+   * @param _name - The name of the operation (unused).
+   * @param callback - The asynchronous function to execute.
    */
   async startSpan<T>(_name: string, callback: (span?: ISpan) => Promise<T>): Promise<T> {
     // Provide a dummy span object that does nothing
