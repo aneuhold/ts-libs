@@ -42,10 +42,10 @@ importers:
   packages/be-ts-db-lib:
     dependencies:
       '@aneuhold/be-ts-lib':
-        specifier: ^3.0.16
+        specifier: ^3.0.17
         version: link:../be-ts-lib
       '@aneuhold/core-ts-db-lib':
-        specifier: ^4.1.5
+        specifier: ^4.1.6
         version: link:../core-ts-db-lib
       '@aneuhold/core-ts-lib':
         specifier: ^2.3.18
@@ -64,7 +64,7 @@ importers:
         version: 4.1.13
     devDependencies:
       '@aneuhold/local-npm-registry':
-        specifier: ^0.2.25
+        specifier: ^0.2.26
         version: link:../local-npm-registry
       '@aneuhold/main-scripts':
         specifier: ^2.8.3
@@ -109,7 +109,7 @@ importers:
   packages/be-ts-lib:
     dependencies:
       '@aneuhold/core-ts-api-lib':
-        specifier: ^3.0.16
+        specifier: ^3.0.17
         version: link:../core-ts-api-lib
       '@aneuhold/core-ts-lib':
         specifier: ^2.3.18
@@ -128,7 +128,7 @@ importers:
         version: 5.0.5
     devDependencies:
       '@aneuhold/local-npm-registry':
-        specifier: ^0.2.25
+        specifier: ^0.2.26
         version: link:../local-npm-registry
       '@aneuhold/main-scripts':
         specifier: ^2.8.3
@@ -164,7 +164,7 @@ importers:
   packages/core-ts-api-lib:
     dependencies:
       '@aneuhold/core-ts-db-lib':
-        specifier: ^4.1.5
+        specifier: ^4.1.6
         version: link:../core-ts-db-lib
       '@aneuhold/core-ts-lib':
         specifier: ^2.3.18
@@ -174,7 +174,7 @@ importers:
         version: 7.0.0
     devDependencies:
       '@aneuhold/local-npm-registry':
-        specifier: ^0.2.25
+        specifier: ^0.2.26
         version: link:../local-npm-registry
       '@aneuhold/main-scripts':
         specifier: ^2.8.3
@@ -217,7 +217,7 @@ importers:
         version: 4.1.13
     devDependencies:
       '@aneuhold/local-npm-registry':
-        specifier: ^0.2.25
+        specifier: ^0.2.26
         version: link:../local-npm-registry
       '@aneuhold/main-scripts':
         specifier: ^2.8.3
@@ -6118,7 +6118,7 @@ snapshots:
 
   '@npmcli/fs@5.0.0':
     dependencies:
-      semver: 7.7.3
+      semver: 7.7.4
 
   '@npmcli/git@7.0.1':
     dependencies:
@@ -6128,7 +6128,7 @@ snapshots:
       npm-pick-manifest: 11.0.3
       proc-log: 6.1.0
       promise-retry: 2.0.1
-      semver: 7.7.3
+      semver: 7.7.4
       which: 6.0.1
 
   '@npmcli/installed-package-contents@3.0.0':
@@ -6145,7 +6145,7 @@ snapshots:
       hosted-git-info: 9.0.2
       json-parse-even-better-errors: 5.0.0
       proc-log: 6.1.0
-      semver: 7.7.3
+      semver: 7.7.4
       spdx-expression-parse: 4.0.0
 
   '@npmcli/promise-spawn@8.0.3':
@@ -6815,14 +6815,6 @@ snapshots:
       magic-string: 0.30.21
     optionalDependencies:
       vite: 7.2.7(@types/node@24.10.4)(jiti@2.4.2)(tsx@4.21.0)(yaml@2.7.1)
-
-  '@vitest/mocker@4.0.15(vite@7.2.7(@types/node@25.0.2)(jiti@2.4.2)(tsx@4.21.0)(yaml@2.7.1))':
-    dependencies:
-      '@vitest/spy': 4.0.15
-      estree-walker: 3.0.3
-      magic-string: 0.30.21
-    optionalDependencies:
-      vite: 7.2.7(@types/node@25.0.2)(jiti@2.4.2)(tsx@4.21.0)(yaml@2.7.1)
 
   '@vitest/pretty-format@4.0.15':
     dependencies:
@@ -8988,7 +8980,7 @@ snapshots:
       make-fetch-happen: 15.0.3
       nopt: 9.0.0
       proc-log: 6.1.0
-      semver: 7.7.3
+      semver: 7.7.4
       tar: 7.5.9
       tinyglobby: 0.2.15
       which: 6.0.1
@@ -9026,7 +9018,7 @@ snapshots:
 
   npm-install-checks@8.0.0:
     dependencies:
-      semver: 7.7.3
+      semver: 7.7.4
 
   npm-normalize-package-bin@4.0.0: {}
 
@@ -9036,7 +9028,7 @@ snapshots:
     dependencies:
       hosted-git-info: 9.0.2
       proc-log: 5.0.0
-      semver: 7.7.3
+      semver: 7.7.4
       validate-npm-package-name: 6.0.2
 
   npm-packlist@10.0.4:
@@ -9049,7 +9041,7 @@ snapshots:
       npm-install-checks: 8.0.0
       npm-normalize-package-bin: 5.0.0
       npm-package-arg: 13.0.1
-      semver: 7.7.3
+      semver: 7.7.4
 
   npm-registry-fetch@19.1.1:
     dependencies:
@@ -10361,7 +10353,7 @@ snapshots:
   vitest@4.0.15(@types/node@25.0.2)(jiti@2.4.2)(tsx@4.21.0)(yaml@2.7.1):
     dependencies:
       '@vitest/expect': 4.0.15
-      '@vitest/mocker': 4.0.15(vite@7.2.7(@types/node@25.0.2)(jiti@2.4.2)(tsx@4.21.0)(yaml@2.7.1))
+      '@vitest/mocker': 4.0.15(vite@7.2.7(@types/node@24.10.4)(jiti@2.4.2)(tsx@4.21.0)(yaml@2.7.1))
       '@vitest/pretty-format': 4.0.15
       '@vitest/runner': 4.0.15
       '@vitest/snapshot': 4.0.15
