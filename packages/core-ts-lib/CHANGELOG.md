@@ -7,13 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## 🔖 [2.3.18] (2026-02-21)
 
-### ✅ Added
-
-### 🏗️ Changed
-
 ### 🩹 Fixed
 
-### 🔥 Removed
+- Fixed `FileSystemService` git diff command to include uncommitted changes by using `git merge-base origin/main HEAD` instead of `origin/main...HEAD`.
+- Simplified the fallback diff command from `git diff HEAD~1 HEAD` to `git diff HEAD~1`.
 
 ## 🔖 [2.3.17] (2026-02-06)
 
@@ -190,6 +187,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Updated workflow permissions to allow repository write access
 
 <!-- Link References -->
+
 [2.3.18]: https://github.com/aneuhold/ts-libs/compare/core-ts-lib-v2.3.17...core-ts-lib-v2.3.18
 [2.3.17]: https://github.com/aneuhold/ts-libs/compare/core-ts-lib-v2.3.16...core-ts-lib-v2.3.17
 [2.3.16]: https://github.com/aneuhold/ts-libs/compare/core-ts-lib-v2.3.15...core-ts-lib-v2.3.16

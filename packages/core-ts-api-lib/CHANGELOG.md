@@ -7,13 +7,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## 🔖 [3.0.16] (2026-02-21)
 
-### ✅ Added
-
 ### 🏗️ Changed
 
-### 🩹 Fixed
-
-### 🔥 Removed
+- Updated dependencies: now requires `@aneuhold/core-ts-db-lib@^4.1.5`, `@aneuhold/core-ts-lib@^2.3.18`, and `@aneuhold/local-npm-registry@^0.2.25`.
 
 ## 🔖 [3.0.15] (2026-02-20)
 
@@ -261,6 +257,7 @@ No direct code changes; version bump for compatibility.
 - Updated workflow permissions to allow repository write access
 
 <!-- Link References -->
+
 [3.0.16]: https://github.com/aneuhold/ts-libs/compare/core-ts-api-lib-v3.0.15...core-ts-api-lib-v3.0.16
 [3.0.15]: https://github.com/aneuhold/ts-libs/compare/core-ts-api-lib-v3.0.14...core-ts-api-lib-v3.0.15
 [3.0.14]: https://github.com/aneuhold/ts-libs/compare/core-ts-api-lib-v3.0.13...core-ts-api-lib-v3.0.14
