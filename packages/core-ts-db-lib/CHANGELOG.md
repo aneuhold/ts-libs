@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### 🏗️ Changed
 
 - Updated dev dependencies: now requires `@aneuhold/local-npm-registry@^0.2.26` and `@aneuhold/main-scripts@^2.8.3`.
+- Improved type annotations: replaced implicit `0` and `null` initializers with explicit types in `TaskRecurrenceService` and `WorkoutVolumePlanningService`.
 
 ## 🔖 [4.1.5] (2026-02-21)
 

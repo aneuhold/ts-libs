@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### 🏗️ Changed
 
 - Updated dev dependency: now requires `@aneuhold/main-scripts@^2.8.3`.
+- Added `{ cause: error }` to `Error` constructors in `MutexService` for improved error chaining.
 
 ## 🔖 [0.2.25] (2026-02-21)
 

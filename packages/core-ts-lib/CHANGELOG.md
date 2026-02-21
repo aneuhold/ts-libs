@@ -7,13 +7,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## 🔖 [2.3.19] (2026-02-21)
 
-### ✅ Added
-
 ### 🏗️ Changed
 
-### 🩹 Fixed
-
-### 🔥 Removed
+- Improved `@param` JSDoc documentation in `ArrayService`, `ITracer`, and `NoopTracer`.
+- Added `{ cause: error }` to `Error` constructors in `DependencyService` and `FileSystemService` for better error chaining.
+- Fixed `@throws {Error}` JSDoc format in `ChangelogFileService`, `ChangelogService`, `ChangelogValidator`, and `JsrPackageService`.
 
 ## 🔖 [2.3.18] (2026-02-21)
 
@@ -197,6 +195,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Updated workflow permissions to allow repository write access
 
 <!-- Link References -->
+
 [2.3.19]: https://github.com/aneuhold/ts-libs/compare/core-ts-lib-v2.3.18...core-ts-lib-v2.3.19
 [2.3.18]: https://github.com/aneuhold/ts-libs/compare/core-ts-lib-v2.3.17...core-ts-lib-v2.3.18
 [2.3.17]: https://github.com/aneuhold/ts-libs/compare/core-ts-lib-v2.3.16...core-ts-lib-v2.3.17
