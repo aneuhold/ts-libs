@@ -261,7 +261,7 @@ export default class JsrPackageService {
    *
    * ```sh
    * error: Failed to publish @aneuhold/be-ts-lib@2.0.67
-   * Caused by: Failed to publish @aneuhold/be-ts-lib at 2.0.67: failed to build module graph: Module not found "file:///src/services/@aneuhold/core-ts-lib".
+   * Caused by: Failed to publish @aneuhold/be-ts-lib at 2.0.67: failed to build module graph: Module not found "file:///src/services/\@aneuhold/core-ts-lib".
    *      at file:///src/services/GitHubService.ts:1:20
    * ```
    */
@@ -297,7 +297,7 @@ export default class JsrPackageService {
       // can cause problems, but it is accepted for now.
       // Here is an example error that comes up if we don't use a caret:
       // ```sh
-      // error: Invalid package specifier 'npm:@aneuhold/core-ts-lib@*2.1.7'
+      // error: Invalid package specifier 'npm:\@aneuhold/core-ts-lib@*2.1.7'
       // 0: Invalid specifier version requirement
       // 1: Unexpected character.
       //      2.1.7

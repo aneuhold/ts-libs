@@ -281,7 +281,7 @@ export default class FileSystemService {
       const errorMessage = ErrorUtils.getErrorString(error);
 
       if (errorMessage.includes('not a git repository')) {
-        throw new Error(`Not in a git repository: ${targetDir}`);
+        throw new Error(`Not in a git repository: ${targetDir}`, { cause: error });
       }
 
       DR.logger.error(`Failed to check for changes compared to main: ${errorMessage}`);

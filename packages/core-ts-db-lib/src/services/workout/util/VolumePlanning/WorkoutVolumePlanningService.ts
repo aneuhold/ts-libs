@@ -193,7 +193,7 @@ export default class WorkoutVolumePlanningService {
       const previousSessionExercise = exerciseIdToPrevSessionExercise.get(pair.exercise._id);
       if (!previousSessionExercise) return;
 
-      let recommendation = null;
+      let recommendation: number | null;
       if (!exercisesThatWerePreviouslyInRecovery.has(pair.exercise._id)) {
         recommendation =
           WorkoutSessionExerciseService.getRecommendedSetAdditionsOrRecovery(

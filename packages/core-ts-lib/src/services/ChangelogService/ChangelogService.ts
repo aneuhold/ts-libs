@@ -20,7 +20,7 @@ export default class ChangelogService {
    *
    * @param version The version to validate in the changelog
    * @param packagePath Optional path to the package directory (defaults to current working directory)
-   * @throws Error if validation fails
+   * @throws {Error} Error if validation fails
    */
   static async validateChangelogForVersion(version: string, packagePath?: string): Promise<void> {
     const workingDir = packagePath || process.cwd();
@@ -297,7 +297,7 @@ export default class ChangelogService {
    * @param version The version to extract changelog content for
    * @param packagePath Optional path to the package directory (defaults to current working directory)
    * @returns Formatted release notes content for the version
-   * @throws Error if changelog doesn't exist or version entry is not found
+   * @throws {Error} Error if changelog doesn't exist or version entry is not found
    */
   static async getChangelogContentForVersion(
     version: string,

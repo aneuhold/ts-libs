@@ -119,7 +119,7 @@ export default class DashboardTaskRecurrenceService {
       return;
     }
 
-    let diff = 0;
+    let diff: number;
 
     if (task.parentRecurringTaskInfo) {
       if (task.recurrenceInfo.recurrenceBasis === RecurrenceBasis.startDate) {

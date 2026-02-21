@@ -38,7 +38,7 @@ export default class ChangelogFileService {
    *
    * @param packagePath Optional path to the package directory
    * @returns Changelog content as string
-   * @throws Error if file doesn't exist or can't be read
+   * @throws {Error} Error if file doesn't exist or can't be read
    */
   static async readChangelog(packagePath?: string): Promise<string> {
     const changelogPath = this.getChangelogPath(packagePath);
