@@ -7,13 +7,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## 🔖 [4.2.8] (2026-02-21)
 
-### ✅ Added
-
 ### 🏗️ Changed
 
-### 🩹 Fixed
-
-### 🔥 Removed
+- Updated dependencies: now requires `@aneuhold/be-ts-lib@^3.0.18` and `@aneuhold/core-ts-db-lib@^4.1.7`.
 
 ## 🔖 [4.2.7] (2026-02-21)
 
