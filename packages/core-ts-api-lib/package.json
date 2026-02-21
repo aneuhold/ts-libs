@@ -73,7 +73,7 @@
   ],
   "dependencies": {
     "@aneuhold/core-ts-db-lib": "^4.1.6",
-    "@aneuhold/core-ts-lib": "^2.3.18",
+    "@aneuhold/core-ts-lib": "^2.3.19",
     "bson": "^7.0.0"
   },
   "devDependencies": {
