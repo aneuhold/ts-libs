@@ -144,6 +144,30 @@ export default class DateService {
   }
 
   /**
+   * Gets the calendar day number since the Unix epoch (January 1, 1970)
+   * for the given date in local time. The time-of-day component is stripped,
+   * so any two dates on the same local calendar day return the same value.
+   *
+   * @param date - The date to get the day number for.
+   */
+  static getDaySinceEpoch(date: Date): number {
+    const dateWithoutTime = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    return Math.round(dateWithoutTime.getTime() / (1000 * 60 * 60 * 24));
+  }
+
+  /**
+   * Gets the number of calendar days between two dates in local time. The
+   * time-of-day component is ignored: 11:59 PM on January 1 to 12:01 AM
+   * on January 2 returns 1. A positive result means date2 is after date1.
+   *
+   * @param date1 - The earlier date.
+   * @param date2 - The later date.
+   */
+  static getCalendarDaysBetween(date1: Date, date2: Date): number {
+    return this.getDaySinceEpoch(date2) - this.getDaySinceEpoch(date1);
+  }
+
+  /**
    * Gets the date of the provided weekday in the provided week of the month.
    * Retains the time that was provided in the date.
    *
