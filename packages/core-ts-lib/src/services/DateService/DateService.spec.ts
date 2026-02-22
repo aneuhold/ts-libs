@@ -2,6 +2,48 @@ import { describe, expect, it } from 'vitest';
 import DateService from './DateService.js';
 
 describe('DateService', () => {
+  describe('getDaySinceEpoch', () => {
+    it('should return the same value for two dates on the same calendar day', () => {
+      const morning = new Date(2026, 0, 5, 6, 0, 0);
+      const evening = new Date(2026, 0, 5, 23, 59, 0);
+      expect(DateService.getDaySinceEpoch(morning)).toBe(DateService.getDaySinceEpoch(evening));
+    });
+
+    it('should return different values for dates on consecutive calendar days', () => {
+      const day1 = new Date(2026, 0, 5, 23, 59, 0);
+      const day2 = new Date(2026, 0, 6, 0, 1, 0);
+      expect(DateService.getDaySinceEpoch(day2) - DateService.getDaySinceEpoch(day1)).toBe(1);
+    });
+  });
+
+  describe('getCalendarDaysBetween', () => {
+    it('should return the number of calendar days between two dates', () => {
+      const result = DateService.getCalendarDaysBetween(new Date(2026, 0, 1), new Date(2026, 0, 8));
+      expect(result).toBe(7);
+    });
+
+    it('should return 0 for the same date', () => {
+      const date = new Date(2026, 0, 1);
+      expect(DateService.getCalendarDaysBetween(date, date)).toBe(0);
+    });
+
+    it('should return 1 when dates are on consecutive days regardless of time', () => {
+      const result = DateService.getCalendarDaysBetween(
+        new Date(2026, 0, 1, 23, 59, 0),
+        new Date(2026, 0, 2, 0, 1, 0)
+      );
+      expect(result).toBe(1);
+    });
+
+    it('should return 0 when dates are on the same day with different times', () => {
+      const result = DateService.getCalendarDaysBetween(
+        new Date(2026, 0, 1, 0, 0, 0),
+        new Date(2026, 0, 1, 23, 59, 0)
+      );
+      expect(result).toBe(0);
+    });
+  });
+
   describe('addWeeks', () => {
     it('should successfully add weeks to a date', () => {
       const result = DateService.addWeeks(new Date(2024, 0, 1), 1);
