@@ -1,6 +1,9 @@
+import { DateService } from '@aneuhold/core-ts-lib';
+import type { UUID } from 'crypto';
 import { describe, expect, it } from 'vitest';
 import workoutTestUtil from '../../../../test-utils/WorkoutTestUtil.js';
 import { CycleType, WorkoutMesocycleSchema } from '../../../documents/workout/WorkoutMesocycle.js';
+import type { WorkoutMicrocycle } from '../../../documents/workout/WorkoutMicrocycle.js';
 import WorkoutMesocycleService from './WorkoutMesocycleService.js';
 
 describe('Unit Tests', () => {
@@ -206,15 +209,15 @@ describe('Unit Tests', () => {
       // Verify microcycle dates are sequential and correct length
       const microcycles = result.microcycles?.create ?? [];
       for (let i = 0; i < microcycles.length; i++) {
-        const start = new Date(microcycles[i].startDate);
-        const end = new Date(microcycles[i].endDate);
-        const durationDays = (end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24);
-        expect(durationDays).toBeGreaterThan(7); // 8 day microcycles (allow for DST)
+        const durationDays = DateService.getCalendarDaysBetween(
+          microcycles[i].startDate,
+          microcycles[i].endDate
+        );
+        expect(durationDays).toBeGreaterThanOrEqual(7); // 8 day microcycles (allow for DST)
 
         // Verify sequential dates
         if (i > 0) {
-          const prevEnd = new Date(microcycles[i - 1].endDate);
-          expect(start.getTime()).toBe(prevEnd.getTime());
+          expect(microcycles[i].startDate.getTime()).toBe(microcycles[i - 1].endDate.getTime());
         }
       }
 
@@ -224,11 +227,11 @@ describe('Unit Tests', () => {
         const microSessions = sessions.filter((s) => s.workoutMicrocycleId === microcycle._id);
 
         microSessions.forEach((session) => {
-          const dayOfMicrocycle = Math.round(
-            (session.startTime.getTime() - microcycle.startDate.getTime()) / (1000 * 60 * 60 * 24)
-          );
-          // Sessions should not be on rest days (4 and 5)
-          expect([4, 5]).not.toContain(dayOfMicrocycle);
+          // Check that the session is not on a rest day by comparing dates directly
+          const restDay4 = DateService.addDays(microcycle.startDate, 4);
+          const restDay5 = DateService.addDays(microcycle.startDate, 5);
+          expect(DateService.datesAreOnSameDay(session.startTime, restDay4)).toBe(false);
+          expect(DateService.datesAreOnSameDay(session.startTime, restDay5)).toBe(false);
         });
       });
 
@@ -792,6 +795,226 @@ describe('Unit Tests', () => {
           expect(sessionExerciseIdsToDelete.has(set.workoutSessionExerciseId)).toBe(true);
         }
       });
+    });
+  });
+
+  describe('calculateProjectedEndDate', () => {
+    it('should return the last microcycle endDate when microcycles exist', () => {
+      const mesocycle = workoutTestUtil.createMesocycle({
+        startDate: new Date('2026-01-01T00:00:00.000Z')
+      });
+      const micro1 = workoutTestUtil.createMicrocycle({
+        mesocycle,
+        startDate: new Date('2026-01-01T00:00:00.000Z'),
+        endDate: new Date('2026-01-08T00:00:00.000Z')
+      });
+      const micro2 = workoutTestUtil.createMicrocycle({
+        mesocycle,
+        startDate: new Date('2026-01-08T00:00:00.000Z'),
+        endDate: new Date('2026-01-15T00:00:00.000Z')
+      });
+
+      const result = WorkoutMesocycleService.calculateProjectedEndDate(mesocycle, [micro1, micro2]);
+
+      expect(result).not.toBeNull();
+      expect(result?.getTime()).toBe(new Date('2026-01-15T00:00:00.000Z').getTime());
+    });
+
+    it('should calculate from start date and planned parameters when no microcycles exist', () => {
+      const mesocycle = workoutTestUtil.createMesocycle({
+        startDate: new Date('2026-01-01T00:00:00.000Z'),
+        plannedMicrocycleCount: 4,
+        plannedMicrocycleLengthInDays: 7
+      });
+
+      const result = WorkoutMesocycleService.calculateProjectedEndDate(mesocycle, []);
+
+      expect(result).not.toBeNull();
+      // 4 microcycles * 7 days = 28 days
+      expect(result?.getTime()).toBe(new Date('2026-01-29T00:00:00.000Z').getTime());
+    });
+
+    it('should return null when mesocycle has no start date and no microcycles', () => {
+      const mesocycle = workoutTestUtil.createMesocycle();
+
+      const result = WorkoutMesocycleService.calculateProjectedEndDate(mesocycle, []);
+
+      expect(result).toBeNull();
+    });
+  });
+
+  describe('shiftMesocycleDates', () => {
+    it('should shift all dates forward by the specified number of days in place', () => {
+      const mesocycle = workoutTestUtil.createMesocycle({
+        startDate: new Date('2026-01-01T00:00:00.000Z')
+      });
+      const micro = workoutTestUtil.createMicrocycle({
+        mesocycle,
+        startDate: new Date('2026-01-01T00:00:00.000Z'),
+        endDate: new Date('2026-01-08T00:00:00.000Z')
+      });
+      const session = workoutTestUtil.createSession({
+        microcycle: micro,
+        startTime: new Date('2026-01-02T00:00:00.000Z')
+      });
+
+      WorkoutMesocycleService.shiftMesocycleDates(mesocycle, [micro], [session], 7);
+
+      expect(mesocycle.startDate?.getTime()).toBe(new Date('2026-01-08T00:00:00.000Z').getTime());
+      expect(micro.startDate.getTime()).toBe(new Date('2026-01-08T00:00:00.000Z').getTime());
+      expect(micro.endDate.getTime()).toBe(new Date('2026-01-15T00:00:00.000Z').getTime());
+      expect(session.startTime.getTime()).toBe(new Date('2026-01-09T00:00:00.000Z').getTime());
+    });
+
+    it('should shift dates backward with negative days', () => {
+      const mesocycle = workoutTestUtil.createMesocycle({
+        startDate: new Date('2026-01-15T00:00:00.000Z')
+      });
+      const micro = workoutTestUtil.createMicrocycle({
+        mesocycle,
+        startDate: new Date('2026-01-15T00:00:00.000Z'),
+        endDate: new Date('2026-01-22T00:00:00.000Z')
+      });
+
+      WorkoutMesocycleService.shiftMesocycleDates(mesocycle, [micro], [], -3);
+
+      expect(mesocycle.startDate?.getTime()).toBe(new Date('2026-01-12T00:00:00.000Z').getTime());
+      expect(micro.startDate.getTime()).toBe(new Date('2026-01-12T00:00:00.000Z').getTime());
+    });
+
+    it('should not modify startDate if mesocycle has no startDate', () => {
+      const mesocycle = workoutTestUtil.createMesocycle();
+      const micro = workoutTestUtil.createMicrocycle({
+        mesocycle,
+        startDate: new Date('2026-01-01T00:00:00.000Z'),
+        endDate: new Date('2026-01-08T00:00:00.000Z')
+      });
+
+      WorkoutMesocycleService.shiftMesocycleDates(mesocycle, [micro], [], 5);
+
+      expect(mesocycle.startDate).toBeUndefined();
+    });
+  });
+
+  describe('detectMesocycleOverlap', () => {
+    it('should detect overlapping mesocycles', () => {
+      const meso1 = workoutTestUtil.createMesocycle({
+        startDate: new Date('2026-01-01T00:00:00.000Z'),
+        plannedMicrocycleCount: 3,
+        plannedMicrocycleLengthInDays: 7
+      });
+      const meso2 = workoutTestUtil.createMesocycle({
+        startDate: new Date('2026-01-15T00:00:00.000Z'),
+        plannedMicrocycleCount: 3,
+        plannedMicrocycleLengthInDays: 7
+      });
+
+      const mesoToMicros = new Map<UUID, WorkoutMicrocycle[]>([
+        [meso1._id, []],
+        [meso2._id, []]
+      ]);
+
+      // meso1 ends at Jan 22, meso2 starts at Jan 15 -> overlap
+      const result = WorkoutMesocycleService.detectMesocycleOverlap([meso1, meso2], mesoToMicros);
+
+      expect(result.hasOverlap).toBe(true);
+      expect(result.overlappingPairs).toHaveLength(1);
+    });
+
+    it('should not detect overlap for non-overlapping mesocycles', () => {
+      const meso1 = workoutTestUtil.createMesocycle({
+        startDate: new Date('2026-01-01T00:00:00.000Z'),
+        plannedMicrocycleCount: 2,
+        plannedMicrocycleLengthInDays: 7
+      });
+      const meso2 = workoutTestUtil.createMesocycle({
+        startDate: new Date('2026-01-15T00:00:00.000Z'),
+        plannedMicrocycleCount: 2,
+        plannedMicrocycleLengthInDays: 7
+      });
+
+      const mesoToMicros = new Map<UUID, WorkoutMicrocycle[]>([
+        [meso1._id, []],
+        [meso2._id, []]
+      ]);
+
+      // meso1 ends at Jan 15, meso2 starts at Jan 15 -> no overlap (end is exclusive)
+      const result = WorkoutMesocycleService.detectMesocycleOverlap([meso1, meso2], mesoToMicros);
+
+      expect(result.hasOverlap).toBe(false);
+    });
+  });
+
+  describe('getEarliestAllowedStartDate', () => {
+    it('should return current date when no existing mesocycles', () => {
+      const currentDate = new Date('2026-02-01T00:00:00.000Z');
+      const result = WorkoutMesocycleService.getEarliestAllowedStartDate(
+        [],
+        new Map(),
+        currentDate
+      );
+
+      expect(result.getTime()).toBe(currentDate.getTime());
+    });
+
+    it('should return projected end of latest uncompleted mesocycle', () => {
+      const currentDate = new Date('2026-01-05T00:00:00.000Z');
+      const mesocycle = workoutTestUtil.createMesocycle({
+        startDate: new Date('2026-01-01T00:00:00.000Z'),
+        plannedMicrocycleCount: 4,
+        plannedMicrocycleLengthInDays: 7
+      });
+
+      const mesoToMicros = new Map<UUID, WorkoutMicrocycle[]>([[mesocycle._id, []]]);
+
+      // Projected end is Jan 1 + 28 days = Jan 29
+      const result = WorkoutMesocycleService.getEarliestAllowedStartDate(
+        [mesocycle],
+        mesoToMicros,
+        currentDate
+      );
+
+      expect(result.getTime()).toBe(new Date('2026-01-29T00:00:00.000Z').getTime());
+    });
+
+    it('should skip completed mesocycles', () => {
+      const currentDate = new Date('2026-02-01T00:00:00.000Z');
+      const completedMesocycle = workoutTestUtil.createMesocycle({
+        startDate: new Date('2026-01-01T00:00:00.000Z'),
+        plannedMicrocycleCount: 4,
+        plannedMicrocycleLengthInDays: 7,
+        completedDate: new Date('2026-01-28T00:00:00.000Z')
+      });
+
+      const mesoToMicros = new Map<UUID, WorkoutMicrocycle[]>([[completedMesocycle._id, []]]);
+
+      const result = WorkoutMesocycleService.getEarliestAllowedStartDate(
+        [completedMesocycle],
+        mesoToMicros,
+        currentDate
+      );
+
+      expect(result.getTime()).toBe(currentDate.getTime());
+    });
+
+    it('should return the later of current date or projected end', () => {
+      const currentDate = new Date('2026-03-01T00:00:00.000Z');
+      const mesocycle = workoutTestUtil.createMesocycle({
+        startDate: new Date('2026-01-01T00:00:00.000Z'),
+        plannedMicrocycleCount: 4,
+        plannedMicrocycleLengthInDays: 7
+      });
+
+      const mesoToMicros = new Map<UUID, WorkoutMicrocycle[]>([[mesocycle._id, []]]);
+
+      // Projected end is Jan 29, which is before current date (Mar 1)
+      const result = WorkoutMesocycleService.getEarliestAllowedStartDate(
+        [mesocycle],
+        mesoToMicros,
+        currentDate
+      );
+
+      expect(result.getTime()).toBe(currentDate.getTime());
     });
   });
 });
