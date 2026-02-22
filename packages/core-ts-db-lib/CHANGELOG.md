@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## 🔖 [4.1.9] (2026-02-22)
+
+### ✅ Added
+
+- Added `WorkoutMesocycleService.calculateProjectedEndDate()` to compute a mesocycle's projected end from its microcycles or planned parameters.
+- Added `WorkoutMesocycleService.shiftMesocycleDates()` to shift all dates of a mesocycle and its child documents in place by a given number of days.
+- Added `WorkoutMesocycleService.detectMesocycleOverlap()` to detect overlapping date ranges across a set of mesocycles.
+- Added `WorkoutMesocycleService.getEarliestAllowedStartDate()` to determine the earliest valid start date for a new mesocycle based on existing ones.
+
+### 🏗️ Changed
+
+- Refactored internal date handling in `WorkoutMesocycleService` to use existing `Date` references directly instead of wrapping them in `new Date()`.
+
 ## 🔖 [4.1.8] (2026-02-22)
 
 ### 🏗️ Changed
@@ -287,6 +300,7 @@ Updated dependency: now requires `@aneuhold/core-ts-lib@^2.3.11`.
 
 <!-- Link References -->
 
+[4.1.9]: https://github.com/aneuhold/ts-libs/compare/core-ts-db-lib-v4.1.8...core-ts-db-lib-v4.1.9
 [4.1.8]: https://github.com/aneuhold/ts-libs/compare/core-ts-db-lib-v4.1.7...core-ts-db-lib-v4.1.8
 [4.1.7]: https://github.com/aneuhold/ts-libs/compare/core-ts-db-lib-v4.1.6...core-ts-db-lib-v4.1.7
 [4.1.6]: https://github.com/aneuhold/ts-libs/compare/core-ts-db-lib-v4.1.5...core-ts-db-lib-v4.1.6

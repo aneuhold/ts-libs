@@ -117,11 +117,11 @@ export default class WorkoutMesocycleService {
     let currentDate: Date;
 
     if (startMicrocycleIndex === 0) {
-      currentDate = startDate ? new Date(startDate) : new Date();
+      currentDate = startDate ?? new Date();
     } else {
       // Continue from where the last existing microcycle ended
       const lastExistingMicrocycle = context.microcyclesInOrder[startMicrocycleIndex - 1];
-      currentDate = new Date(lastExistingMicrocycle.endDate);
+      currentDate = lastExistingMicrocycle.endDate;
     }
 
     // Generate remaining microcycles
@@ -140,7 +140,7 @@ export default class WorkoutMesocycleService {
       const microcycle = WorkoutMicrocycleSchema.parse({
         userId: mesocycle.userId,
         workoutMesocycleId: mesocycle._id,
-        startDate: new Date(currentDate),
+        startDate: currentDate,
         endDate: DateService.addDays(currentDate, mesocycle.plannedMicrocycleLengthInDays)
       });
       context.addMicrocycle(microcycle);
@@ -153,7 +153,7 @@ export default class WorkoutMesocycleService {
       });
 
       // Move to next microcycle
-      currentDate = new Date(microcycle.endDate);
+      currentDate = microcycle.endDate;
     }
 
     return {
@@ -175,6 +175,129 @@ export default class WorkoutMesocycleService {
       },
       sets: { create: context.setsToCreate, update: [], delete: cleanupResult.setsToDelete }
     };
+  }
+
+  /**
+   * Calculates the projected end date of a mesocycle based on its microcycles.
+   * If microcycles exist, uses the last microcycle's endDate. Otherwise,
+   * calculates from the mesocycle's start date and planned parameters.
+   *
+   * @param mesocycle The mesocycle to calculate the end date for.
+   * @param microcycles The microcycles belonging to this mesocycle (pre-filtered).
+   */
+  static calculateProjectedEndDate(
+    mesocycle: WorkoutMesocycle,
+    microcycles: WorkoutMicrocycle[]
+  ): Date | null {
+    const sorted = [...microcycles].sort((a, b) => a.startDate.getTime() - b.startDate.getTime());
+
+    if (sorted.length > 0) {
+      return sorted[sorted.length - 1].endDate;
+    }
+
+    if (mesocycle.startDate == null) {
+      return null;
+    }
+
+    const totalMicrocycles = mesocycle.plannedMicrocycleCount ?? 6;
+    const totalDays = totalMicrocycles * mesocycle.plannedMicrocycleLengthInDays;
+    return DateService.addDays(mesocycle.startDate, totalDays);
+  }
+
+  /**
+   * Shifts all dates in a mesocycle and its child documents by the given number of days.
+   * Mutates the passed-in objects in place.
+   *
+   * @param mesocycle The mesocycle to shift. Its startDate is mutated directly.
+   * @param microcycles The microcycles belonging to this mesocycle (pre-filtered). Mutated in place.
+   * @param sessions The sessions belonging to these microcycles (pre-filtered). Mutated in place.
+   * @param daysDelta The number of days to shift (positive = forward, negative = backward).
+   */
+  static shiftMesocycleDates(
+    mesocycle: WorkoutMesocycle,
+    microcycles: WorkoutMicrocycle[],
+    sessions: WorkoutSession[],
+    daysDelta: number
+  ): void {
+    if (mesocycle.startDate != null) {
+      mesocycle.startDate = DateService.addDays(mesocycle.startDate, daysDelta);
+    }
+
+    for (const microcycle of microcycles) {
+      microcycle.startDate = DateService.addDays(microcycle.startDate, daysDelta);
+      microcycle.endDate = DateService.addDays(microcycle.endDate, daysDelta);
+    }
+
+    for (const session of sessions) {
+      session.startTime = DateService.addDays(session.startTime, daysDelta);
+    }
+  }
+
+  /**
+   * Detects whether any mesocycles in the provided list have overlapping date ranges.
+   * Two mesocycles overlap if their projected date ranges intersect.
+   *
+   * @param mesocycles The mesocycles to check.
+   * @param mesocycleToMicrocyclesMap A map from mesocycle ID to its microcycles.
+   */
+  static detectMesocycleOverlap(
+    mesocycles: WorkoutMesocycle[],
+    mesocycleToMicrocyclesMap: Map<UUID, WorkoutMicrocycle[]>
+  ): { hasOverlap: boolean; overlappingPairs: Array<[UUID, UUID]> } {
+    const overlappingPairs: Array<[UUID, UUID]> = [];
+
+    const ranges: Array<{ id: UUID; start: Date; end: Date }> = [];
+    for (const mesocycle of mesocycles) {
+      const start = mesocycle.startDate;
+      if (start == null) {
+        continue;
+      }
+      const microcycles = mesocycleToMicrocyclesMap.get(mesocycle._id) ?? [];
+      const end = this.calculateProjectedEndDate(mesocycle, microcycles);
+      if (end == null) {
+        continue;
+      }
+      ranges.push({ id: mesocycle._id, start, end });
+    }
+
+    ranges.sort((a, b) => a.start.getTime() - b.start.getTime());
+
+    for (let i = 0; i < ranges.length; i++) {
+      for (let j = i + 1; j < ranges.length; j++) {
+        if (ranges[j].start.getTime() < ranges[i].end.getTime()) {
+          overlappingPairs.push([ranges[i].id, ranges[j].id]);
+        }
+      }
+    }
+
+    return { hasOverlap: overlappingPairs.length > 0, overlappingPairs };
+  }
+
+  /**
+   * Returns the earliest allowed start date for a new mesocycle. This is the later
+   * of: the projected end of the last existing mesocycle, or today.
+   *
+   * @param existingMesocycles All existing mesocycles.
+   * @param mesocycleToMicrocyclesMap A map from mesocycle ID to its microcycles.
+   */
+  static getEarliestAllowedStartDate(
+    existingMesocycles: WorkoutMesocycle[],
+    mesocycleToMicrocyclesMap: Map<UUID, WorkoutMicrocycle[]>
+  ): Date {
+    let latestEnd = new Date();
+
+    for (const mesocycle of existingMesocycles) {
+      if (mesocycle.completedDate != null) {
+        continue;
+      }
+      const microcycles = mesocycleToMicrocyclesMap.get(mesocycle._id) ?? [];
+      const projectedEnd = this.calculateProjectedEndDate(mesocycle, microcycles);
+      if (projectedEnd != null && projectedEnd.getTime() > latestEnd.getTime()) {
+        latestEnd = projectedEnd;
+      }
+    }
+
+    return latestEnd;
   }
 
   /**
