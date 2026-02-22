@@ -462,6 +462,73 @@ describe('WorkoutVolumePlanningService', () => {
       expect(result.recoveryExerciseIds.has(chestExercises[0]._id)).toBe(true);
     });
 
+    it('should halve historical set counts during deload and skip SFR-based additions', () => {
+      const chestExercises: WorkoutExercise[] = [
+        workoutTestUtil.STANDARD_EXERCISES.barbellBenchPress,
+        workoutTestUtil.STANDARD_EXERCISES.inclineBenchPress
+      ];
+
+      // Exercise A: 6 sets, high SFR that would normally trigger +2 sets
+      // Exercise B: 4 sets, moderate SFR that would normally trigger +1 set
+      const { result } = calculateSetPlan({
+        exercises: chestExercises,
+        calibrations: [
+          {
+            exercise: chestExercises[0],
+            calibration: workoutTestUtil.STANDARD_CALIBRATIONS.barbellBenchPress
+          },
+          {
+            exercise: chestExercises[1],
+            calibration: workoutTestUtil.STANDARD_CALIBRATIONS.inclineBenchPress
+          }
+        ],
+        microcycleIndex: 1,
+        isDeload: true,
+        sessionStructure: [[0], [1]],
+        historicalMicrocycles: [
+          {
+            sessionExerciseOverrides: [
+              [
+                {
+                  setCount: 6,
+                  sorenessScore: 0,
+                  performanceScore: 0,
+                  rsm: { mindMuscleConnection: 3, pump: 3, disruption: 3 },
+                  fatigue: {
+                    jointAndTissueDisruption: 1,
+                    perceivedEffort: 1,
+                    unusedMusclePerformance: 1
+                  }
+                }
+              ],
+              [
+                {
+                  setCount: 4,
+                  sorenessScore: 0,
+                  performanceScore: 1,
+                  rsm: { mindMuscleConnection: 2, pump: 2, disruption: 2 },
+                  fatigue: {
+                    jointAndTissueDisruption: 1,
+                    perceivedEffort: 2,
+                    unusedMusclePerformance: 1
+                  }
+                }
+              ]
+            ]
+          }
+        ]
+      });
+
+      // Exercise A: floor(6/2) = 3 sets (not 6 or 8)
+      expect(result.exerciseIdToSetCount.get(chestExercises[0]._id)).toBe(3);
+
+      // Exercise B: floor(4/2) = 2 sets (not 4 or 5)
+      expect(result.exerciseIdToSetCount.get(chestExercises[1]._id)).toBe(2);
+
+      // No recovery exercises during deload
+      expect(result.recoveryExerciseIds.size).toBe(0);
+    });
+
     /**
      * Helper to set up context and call calculateSetPlanForMicrocycle
      */
