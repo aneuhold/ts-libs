@@ -178,14 +178,33 @@ export default class WorkoutMesocycleService {
   }
 
   /**
-   * Calculates the projected end date of a mesocycle based on its microcycles.
+   * Returns the projected start date for a mesocycle. Uses
+   * `mesocycle.startDate` if set (active/completed), otherwise falls back to
+   * the earliest microcycle's start date (future/planned mesocycles).
+   *
+   * @param mesocycle The mesocycle to get the projected start date for.
+   * @param microcycles The microcycles belonging to this mesocycle (pre-filtered).
+   */
+  static getProjectedStartDate(
+    mesocycle: WorkoutMesocycle,
+    microcycles: WorkoutMicrocycle[]
+  ): Date | null {
+    if (mesocycle.startDate != null) {
+      return mesocycle.startDate;
+    }
+    const sorted = [...microcycles].sort((a, b) => a.startDate.getTime() - b.startDate.getTime());
+    return sorted.length > 0 ? sorted[0].startDate : null;
+  }
+
+  /**
+   * Returns the projected end date of a mesocycle based on its microcycles.
    * If microcycles exist, uses the last microcycle's endDate. Otherwise,
    * calculates from the mesocycle's start date and planned parameters.
    *
    * @param mesocycle The mesocycle to calculate the end date for.
    * @param microcycles The microcycles belonging to this mesocycle (pre-filtered).
    */
-  static calculateProjectedEndDate(
+  static getProjectedEndDate(
     mesocycle: WorkoutMesocycle,
     microcycles: WorkoutMicrocycle[]
   ): Date | null {
@@ -195,13 +214,14 @@ export default class WorkoutMesocycleService {
       return sorted[sorted.length - 1].endDate;
     }
 
-    if (mesocycle.startDate == null) {
+    const startDate = this.getProjectedStartDate(mesocycle, microcycles);
+    if (startDate == null) {
       return null;
     }
 
     const totalMicrocycles = mesocycle.plannedMicrocycleCount ?? 6;
     const totalDays = totalMicrocycles * mesocycle.plannedMicrocycleLengthInDays;
-    return DateService.addDays(mesocycle.startDate, totalDays);
+    return DateService.addDays(startDate, totalDays);
   }
 
   /**
@@ -248,12 +268,12 @@ export default class WorkoutMesocycleService {
 
     const ranges: Array<{ id: UUID; start: Date; end: Date }> = [];
     for (const mesocycle of mesocycles) {
-      const start = mesocycle.startDate;
+      const microcycles = mesocycleToMicrocyclesMap.get(mesocycle._id) ?? [];
+      const start = this.getProjectedStartDate(mesocycle, microcycles);
       if (start == null) {
         continue;
       }
-      const microcycles = mesocycleToMicrocyclesMap.get(mesocycle._id) ?? [];
-      const end = this.calculateProjectedEndDate(mesocycle, microcycles);
+      const end = this.getProjectedEndDate(mesocycle, microcycles);
       if (end == null) {
         continue;
       }
@@ -291,7 +311,7 @@ export default class WorkoutMesocycleService {
         continue;
       }
       const microcycles = mesocycleToMicrocyclesMap.get(mesocycle._id) ?? [];
-      const projectedEnd = this.calculateProjectedEndDate(mesocycle, microcycles);
+      const projectedEnd = this.getProjectedEndDate(mesocycle, microcycles);
       if (projectedEnd != null && projectedEnd.getTime() > latestEnd.getTime()) {
         latestEnd = projectedEnd;
       }

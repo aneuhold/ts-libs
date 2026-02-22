@@ -798,7 +798,7 @@ describe('Unit Tests', () => {
     });
   });
 
-  describe('calculateProjectedEndDate', () => {
+  describe('getProjectedEndDate', () => {
     it('should return the last microcycle endDate when microcycles exist', () => {
       const mesocycle = workoutTestUtil.createMesocycle({
         startDate: new Date('2026-01-01T00:00:00.000Z')
@@ -814,7 +814,7 @@ describe('Unit Tests', () => {
         endDate: new Date('2026-01-15T00:00:00.000Z')
       });
 
-      const result = WorkoutMesocycleService.calculateProjectedEndDate(mesocycle, [micro1, micro2]);
+      const result = WorkoutMesocycleService.getProjectedEndDate(mesocycle, [micro1, micro2]);
 
       expect(result).not.toBeNull();
       expect(result?.getTime()).toBe(new Date('2026-01-15T00:00:00.000Z').getTime());
@@ -827,7 +827,7 @@ describe('Unit Tests', () => {
         plannedMicrocycleLengthInDays: 7
       });
 
-      const result = WorkoutMesocycleService.calculateProjectedEndDate(mesocycle, []);
+      const result = WorkoutMesocycleService.getProjectedEndDate(mesocycle, []);
 
       expect(result).not.toBeNull();
       // 4 microcycles * 7 days = 28 days
@@ -837,7 +837,7 @@ describe('Unit Tests', () => {
     it('should return null when mesocycle has no start date and no microcycles', () => {
       const mesocycle = workoutTestUtil.createMesocycle();
 
-      const result = WorkoutMesocycleService.calculateProjectedEndDate(mesocycle, []);
+      const result = WorkoutMesocycleService.getProjectedEndDate(mesocycle, []);
 
       expect(result).toBeNull();
     });
@@ -896,6 +896,43 @@ describe('Unit Tests', () => {
     });
   });
 
+  describe('getProjectedStartDate', () => {
+    it('should return mesocycle startDate when set', () => {
+      const startDate = new Date('2026-01-01T00:00:00.000Z');
+      const mesocycle = workoutTestUtil.createMesocycle({ startDate });
+
+      const result = WorkoutMesocycleService.getProjectedStartDate(mesocycle, []);
+
+      expect(result?.getTime()).toBe(startDate.getTime());
+    });
+
+    it('should fall back to earliest microcycle start date when mesocycle has no startDate', () => {
+      const mesocycle = workoutTestUtil.createMesocycle();
+      const micro1 = workoutTestUtil.createMicrocycle({
+        mesocycle,
+        startDate: new Date('2026-01-08T00:00:00.000Z'),
+        endDate: new Date('2026-01-15T00:00:00.000Z')
+      });
+      const micro2 = workoutTestUtil.createMicrocycle({
+        mesocycle,
+        startDate: new Date('2026-01-01T00:00:00.000Z'),
+        endDate: new Date('2026-01-08T00:00:00.000Z')
+      });
+
+      const result = WorkoutMesocycleService.getProjectedStartDate(mesocycle, [micro1, micro2]);
+
+      expect(result?.getTime()).toBe(new Date('2026-01-01T00:00:00.000Z').getTime());
+    });
+
+    it('should return null when no startDate and no microcycles', () => {
+      const mesocycle = workoutTestUtil.createMesocycle();
+
+      const result = WorkoutMesocycleService.getProjectedStartDate(mesocycle, []);
+
+      expect(result).toBeNull();
+    });
+  });
+
   describe('detectMesocycleOverlap', () => {
     it('should detect overlapping mesocycles', () => {
       const meso1 = workoutTestUtil.createMesocycle({
@@ -915,6 +952,35 @@ describe('Unit Tests', () => {
       ]);
 
       // meso1 ends at Jan 22, meso2 starts at Jan 15 -> overlap
+      const result = WorkoutMesocycleService.detectMesocycleOverlap([meso1, meso2], mesoToMicros);
+
+      expect(result.hasOverlap).toBe(true);
+      expect(result.overlappingPairs).toHaveLength(1);
+    });
+
+    it('should detect overlap with a future mesocycle that has no startDate', () => {
+      const meso1 = workoutTestUtil.createMesocycle({
+        startDate: new Date('2026-01-01T00:00:00.000Z'),
+        plannedMicrocycleCount: 4,
+        plannedMicrocycleLengthInDays: 7
+      });
+      // Future mesocycle: no startDate, but has microcycles with dates
+      const meso2 = workoutTestUtil.createMesocycle({
+        plannedMicrocycleCount: 3,
+        plannedMicrocycleLengthInDays: 7
+      });
+      const futureMicro = workoutTestUtil.createMicrocycle({
+        mesocycle: meso2,
+        startDate: new Date('2026-01-15T00:00:00.000Z'),
+        endDate: new Date('2026-02-05T00:00:00.000Z')
+      });
+
+      const mesoToMicros = new Map<UUID, WorkoutMicrocycle[]>([
+        [meso1._id, []],
+        [meso2._id, [futureMicro]]
+      ]);
+
+      // meso1 ends at Jan 29 (4×7), meso2 starts at Jan 15 via microcycle -> overlap
       const result = WorkoutMesocycleService.detectMesocycleOverlap([meso1, meso2], mesoToMicros);
 
       expect(result.hasOverlap).toBe(true);
@@ -965,8 +1031,8 @@ describe('Unit Tests', () => {
 
       const mesoToMicros = new Map<UUID, WorkoutMicrocycle[]>([[mesocycle._id, []]]);
 
-      // Projected end is now + 28 days (via calculateProjectedEndDate)
-      const expectedEnd = WorkoutMesocycleService.calculateProjectedEndDate(mesocycle, []);
+      // Projected end is now + 28 days (via getProjectedEndDate)
+      const expectedEnd = WorkoutMesocycleService.getProjectedEndDate(mesocycle, []);
 
       const result = WorkoutMesocycleService.getEarliestAllowedStartDate([mesocycle], mesoToMicros);
 
