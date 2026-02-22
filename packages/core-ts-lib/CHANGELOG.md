@@ -9,11 +9,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### ✅ Added
 
-### 🏗️ Changed
-
-### 🩹 Fixed
-
-### 🔥 Removed
+- Added `DateService.getDaySinceEpoch()` static method to get the calendar day number since the Unix epoch for a given date in local time.
+- Added `DateService.getCalendarDaysBetween()` static method to get the number of calendar days between two dates, ignoring the time-of-day component.
 
 ## 🔖 [2.3.19] (2026-02-21)
 
@@ -205,6 +202,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Updated workflow permissions to allow repository write access
 
 <!-- Link References -->
+
 [2.4.0]: https://github.com/aneuhold/ts-libs/compare/core-ts-lib-v2.3.19...core-ts-lib-v2.4.0
 [2.3.19]: https://github.com/aneuhold/ts-libs/compare/core-ts-lib-v2.3.18...core-ts-lib-v2.3.19
 [2.3.18]: https://github.com/aneuhold/ts-libs/compare/core-ts-lib-v2.3.17...core-ts-lib-v2.3.18

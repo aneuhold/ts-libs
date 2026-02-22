@@ -7,13 +7,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## 🔖 [4.1.8] (2026-02-22)
 
-### ✅ Added
-
 ### 🏗️ Changed
 
-### 🩹 Fixed
-
-### 🔥 Removed
+- Updated dependencies: now requires `@aneuhold/core-ts-lib@^2.4.0`.
 
 ## 🔖 [4.1.7] (2026-02-21)
 
@@ -290,6 +286,7 @@ Updated dependency: now requires `@aneuhold/core-ts-lib@^2.3.11`.
 - Updated workflow permissions to allow repository write access
 
 <!-- Link References -->
+
 [4.1.8]: https://github.com/aneuhold/ts-libs/compare/core-ts-db-lib-v4.1.7...core-ts-db-lib-v4.1.8
 [4.1.7]: https://github.com/aneuhold/ts-libs/compare/core-ts-db-lib-v4.1.6...core-ts-db-lib-v4.1.7
 [4.1.6]: https://github.com/aneuhold/ts-libs/compare/core-ts-db-lib-v4.1.5...core-ts-db-lib-v4.1.6
