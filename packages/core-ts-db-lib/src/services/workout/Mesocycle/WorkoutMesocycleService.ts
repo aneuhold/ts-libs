@@ -275,18 +275,16 @@ export default class WorkoutMesocycleService {
 
   /**
    * Returns the earliest allowed start date for a new mesocycle. This is the later
-   * of: the projected end of the last existing mesocycle, or the current date.
+   * of: the projected end of the last existing mesocycle, or today.
    *
    * @param existingMesocycles All existing mesocycles.
    * @param mesocycleToMicrocyclesMap A map from mesocycle ID to its microcycles.
-   * @param currentDate The current date.
    */
   static getEarliestAllowedStartDate(
     existingMesocycles: WorkoutMesocycle[],
-    mesocycleToMicrocyclesMap: Map<UUID, WorkoutMicrocycle[]>,
-    currentDate: Date
+    mesocycleToMicrocyclesMap: Map<UUID, WorkoutMicrocycle[]>
   ): Date {
-    let latestEnd = currentDate;
+    let latestEnd = new Date();
 
     for (const mesocycle of existingMesocycles) {
       if (mesocycle.completedDate != null) {

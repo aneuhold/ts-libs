@@ -946,75 +946,72 @@ describe('Unit Tests', () => {
   });
 
   describe('getEarliestAllowedStartDate', () => {
-    it('should return current date when no existing mesocycles', () => {
-      const currentDate = new Date('2026-02-01T00:00:00.000Z');
-      const result = WorkoutMesocycleService.getEarliestAllowedStartDate(
-        [],
-        new Map(),
-        currentDate
-      );
+    it('should return approximately today when no existing mesocycles', () => {
+      const before = new Date();
+      const result = WorkoutMesocycleService.getEarliestAllowedStartDate([], new Map());
+      const after = new Date();
 
-      expect(result.getTime()).toBe(currentDate.getTime());
+      expect(result.getTime()).toBeGreaterThanOrEqual(before.getTime());
+      expect(result.getTime()).toBeLessThanOrEqual(after.getTime());
     });
 
-    it('should return projected end of latest uncompleted mesocycle', () => {
-      const currentDate = new Date('2026-01-05T00:00:00.000Z');
+    it('should return projected end of latest uncompleted mesocycle when it is in the future', () => {
+      const now = new Date();
       const mesocycle = workoutTestUtil.createMesocycle({
-        startDate: new Date('2026-01-01T00:00:00.000Z'),
+        startDate: now,
         plannedMicrocycleCount: 4,
         plannedMicrocycleLengthInDays: 7
       });
 
       const mesoToMicros = new Map<UUID, WorkoutMicrocycle[]>([[mesocycle._id, []]]);
 
-      // Projected end is Jan 1 + 28 days = Jan 29
-      const result = WorkoutMesocycleService.getEarliestAllowedStartDate(
-        [mesocycle],
-        mesoToMicros,
-        currentDate
-      );
+      // Projected end is now + 28 days (via calculateProjectedEndDate)
+      const expectedEnd = WorkoutMesocycleService.calculateProjectedEndDate(mesocycle, []);
 
-      expect(result.getTime()).toBe(new Date('2026-01-29T00:00:00.000Z').getTime());
+      const result = WorkoutMesocycleService.getEarliestAllowedStartDate([mesocycle], mesoToMicros);
+
+      expect(result.getTime()).toBe(expectedEnd?.getTime());
     });
 
     it('should skip completed mesocycles', () => {
-      const currentDate = new Date('2026-02-01T00:00:00.000Z');
+      const before = new Date();
       const completedMesocycle = workoutTestUtil.createMesocycle({
-        startDate: new Date('2026-01-01T00:00:00.000Z'),
+        startDate: new Date('2025-01-01T00:00:00.000Z'),
         plannedMicrocycleCount: 4,
         plannedMicrocycleLengthInDays: 7,
-        completedDate: new Date('2026-01-28T00:00:00.000Z')
+        completedDate: new Date('2025-01-28T00:00:00.000Z')
       });
 
       const mesoToMicros = new Map<UUID, WorkoutMicrocycle[]>([[completedMesocycle._id, []]]);
 
       const result = WorkoutMesocycleService.getEarliestAllowedStartDate(
         [completedMesocycle],
-        mesoToMicros,
-        currentDate
+        mesoToMicros
       );
+      const after = new Date();
 
-      expect(result.getTime()).toBe(currentDate.getTime());
+      // Should return approximately today since the only mesocycle is completed
+      expect(result.getTime()).toBeGreaterThanOrEqual(before.getTime());
+      expect(result.getTime()).toBeLessThanOrEqual(after.getTime());
     });
 
-    it('should return the later of current date or projected end', () => {
-      const currentDate = new Date('2026-03-01T00:00:00.000Z');
+    it('should return today when projected end is in the past', () => {
+      const before = new Date();
       const mesocycle = workoutTestUtil.createMesocycle({
-        startDate: new Date('2026-01-01T00:00:00.000Z'),
+        startDate: new Date('2025-01-01T00:00:00.000Z'),
         plannedMicrocycleCount: 4,
         plannedMicrocycleLengthInDays: 7
       });
 
       const mesoToMicros = new Map<UUID, WorkoutMicrocycle[]>([[mesocycle._id, []]]);
 
-      // Projected end is Jan 29, which is before current date (Mar 1)
-      const result = WorkoutMesocycleService.getEarliestAllowedStartDate(
-        [mesocycle],
-        mesoToMicros,
-        currentDate
-      );
+      // Projected end is Jan 29 2025, which is in the past
+      const result = WorkoutMesocycleService.getEarliestAllowedStartDate([mesocycle], mesoToMicros);
+      const after = new Date();
 
-      expect(result.getTime()).toBe(currentDate.getTime());
+      // Should return approximately today since projected end is in the past
+      expect(result.getTime()).toBeGreaterThanOrEqual(before.getTime());
+      expect(result.getTime()).toBeLessThanOrEqual(after.getTime());
     });
   });
 });
