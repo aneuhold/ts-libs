@@ -9,11 +9,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### ✅ Added
 
+- Added `WorkoutMesocycleService.getProjectedStartDate()` to return the projected start date for a mesocycle, falling back to the earliest microcycle start date when `startDate` is not set.
+
 ### 🏗️ Changed
 
-### 🩹 Fixed
-
-### 🔥 Removed
+- _Breaking Change:_ Renamed `WorkoutMesocycleService.calculateProjectedEndDate()` to `getProjectedEndDate()`.
+- Updated `WorkoutMesocycleService.detectMesocycleOverlap()` to use `getProjectedStartDate()`, enabling overlap detection for future mesocycles that have no `startDate` but have associated microcycles.
+- Deload microcycles in `WorkoutVolumePlanningService` now halve the previous microcycle's historical set counts (minimum 1) and skip SFR-based set additions entirely.
 
 ## 🔖 [4.1.9] (2026-02-22)
 
@@ -309,6 +311,7 @@ Updated dependency: now requires `@aneuhold/core-ts-lib@^2.3.11`.
 - Updated workflow permissions to allow repository write access
 
 <!-- Link References -->
+
 [4.1.10]: https://github.com/aneuhold/ts-libs/compare/core-ts-db-lib-v4.1.9...core-ts-db-lib-v4.1.10
 [4.1.9]: https://github.com/aneuhold/ts-libs/compare/core-ts-db-lib-v4.1.8...core-ts-db-lib-v4.1.9
 [4.1.8]: https://github.com/aneuhold/ts-libs/compare/core-ts-db-lib-v4.1.7...core-ts-db-lib-v4.1.8
