@@ -206,6 +206,103 @@ describe('Unit Tests', () => {
     });
   });
 
+  describe('getPerformanceScore', () => {
+    it('should return null when no sets have complete data', () => {
+      const sets = [
+        workoutTestUtil.createSet({ overrides: { plannedReps: 10, plannedRir: null } }),
+        workoutTestUtil.createSet({ overrides: { plannedReps: null, plannedRir: 2 } })
+      ];
+      expect(WorkoutSessionExerciseService.getPerformanceScore(sets)).toBeNull();
+    });
+
+    it('should return null for an empty sets array', () => {
+      expect(WorkoutSessionExerciseService.getPerformanceScore([])).toBeNull();
+    });
+
+    it('should return 0 when surplus is >= 2 (exceeded expectations)', () => {
+      const sets = [
+        workoutTestUtil.createSet({
+          overrides: { plannedReps: 10, plannedRir: 2, actualReps: 12, rir: 2 }
+        })
+      ];
+      expect(WorkoutSessionExerciseService.getPerformanceScore(sets)).toBe(0);
+    });
+
+    it('should return 0 when RIR surplus alone is >= 2', () => {
+      const sets = [
+        workoutTestUtil.createSet({
+          overrides: { plannedReps: 10, plannedRir: 2, actualReps: 10, rir: 4 }
+        })
+      ];
+      expect(WorkoutSessionExerciseService.getPerformanceScore(sets)).toBe(0);
+    });
+
+    it('should return 1 when surplus is 0 (on target)', () => {
+      const sets = [
+        workoutTestUtil.createSet({
+          overrides: { plannedReps: 10, plannedRir: 2, actualReps: 10, rir: 2 }
+        })
+      ];
+      expect(WorkoutSessionExerciseService.getPerformanceScore(sets)).toBe(1);
+    });
+
+    it('should return 1 when surplus is 1', () => {
+      const sets = [
+        workoutTestUtil.createSet({
+          overrides: { plannedReps: 10, plannedRir: 2, actualReps: 10, rir: 3 }
+        })
+      ];
+      expect(WorkoutSessionExerciseService.getPerformanceScore(sets)).toBe(1);
+    });
+
+    it('should return 2 when surplus is negative but target reps hit (declining)', () => {
+      const sets = [
+        workoutTestUtil.createSet({
+          overrides: { plannedReps: 10, plannedRir: 3, actualReps: 10, rir: 1 }
+        })
+      ];
+      expect(WorkoutSessionExerciseService.getPerformanceScore(sets)).toBe(2);
+    });
+
+    it('should return 3 when actual reps are below planned reps', () => {
+      const sets = [
+        workoutTestUtil.createSet({
+          overrides: { plannedReps: 10, plannedRir: 2, actualReps: 8, rir: 0 }
+        })
+      ];
+      expect(WorkoutSessionExerciseService.getPerformanceScore(sets)).toBe(3);
+    });
+
+    it('should average across multiple sets and round', () => {
+      const sets = [
+        // surplus = 0 → score 1
+        workoutTestUtil.createSet({
+          overrides: { plannedReps: 10, plannedRir: 2, actualReps: 10, rir: 2 }
+        }),
+        // surplus = 2 → score 0
+        workoutTestUtil.createSet({
+          overrides: { plannedReps: 10, plannedRir: 2, actualReps: 12, rir: 2 }
+        })
+      ];
+      // average = (1 + 0) / 2 = 0.5, rounds to 1
+      expect(WorkoutSessionExerciseService.getPerformanceScore(sets)).toBe(1);
+    });
+
+    it('should skip sets with missing actual data', () => {
+      const sets = [
+        // Complete: surplus = -2 → score 2
+        workoutTestUtil.createSet({
+          overrides: { plannedReps: 10, plannedRir: 3, actualReps: 10, rir: 1 }
+        }),
+        // Incomplete: actualReps is null
+        workoutTestUtil.createSet({
+          overrides: { plannedReps: 10, plannedRir: 2, actualReps: null, rir: null }
+        })
+      ];
+      expect(WorkoutSessionExerciseService.getPerformanceScore(sets)).toBe(2);
+    });
+  });
+
   describe('getRecommendedSetAdditionsOrRecovery', () => {
     it('should return null when insufficient data is available', () => {
       const workoutSessionExercise = workoutTestUtil.createSessionExercise({

@@ -146,16 +146,28 @@ export default class WorkoutVolumePlanningService {
     if (exerciseIdToPrevSessionExercise.size === 0)
       return { exerciseIdToSetCount, recoveryExerciseIds };
 
-    // Update baseline with historical set counts when available
+    // Update baseline with historical set counts when available.
+    // For deload microcycles, halve the historical count (minimum 1 set). We don't use baseline
+    // because the user may have adjusted over the mesocycle in a way that the baseline is actually
+    // a higher set count than what would be calculated by halving the previous microcycle's sets.
     muscleGroupExercisePairs.forEach((pair) => {
       const previousSessionExercise = exerciseIdToPrevSessionExercise.get(pair.exercise._id);
       if (previousSessionExercise) {
-        exerciseIdToSetCount.set(
-          pair.exercise._id,
-          Math.min(previousSessionExercise.setOrder.length, this.MAX_SETS_PER_EXERCISE)
+        let setCount = Math.min(
+          previousSessionExercise.setOrder.length,
+          this.MAX_SETS_PER_EXERCISE
         );
+        if (isDeloadMicrocycle) {
+          setCount = Math.max(1, Math.floor(setCount / 2));
+        }
+        exerciseIdToSetCount.set(pair.exercise._id, setCount);
       }
     });
+
+    // Deload microcycles use reduced volume — skip SFR-based set additions
+    if (isDeloadMicrocycle) {
+      return { exerciseIdToSetCount, recoveryExerciseIds };
+    }
 
     /**
      * Determines if the session for the given exercise is already capped for this muscle group.

@@ -34,6 +34,56 @@ export default class WorkoutSessionExerciseService {
   }
 
   /**
+   * Calculates the performance score (0-3) for an exercise based on its sets.
+   *
+   * For each set with complete data, a surplus is computed as
+   * `(actualReps - plannedReps) + (rir - plannedRir)`. The per-set score is:
+   * - 0: surplus >= 2 (exceeded expectations)
+   * - 1: surplus 0-1 (on target)
+   * - 2: surplus < 0 but hit target reps (declining)
+   * - 3: did not hit target reps
+   *
+   * The exercise score is the rounded average of all per-set scores. Returns
+   * `null` if no sets have complete planned and actual data.
+   */
+  static getPerformanceScore(sets: WorkoutSet[]): number | null {
+    const setScores: number[] = [];
+
+    for (const set of sets) {
+      if (
+        set.plannedReps == null ||
+        set.plannedRir == null ||
+        set.actualReps == null ||
+        set.rir == null
+      ) {
+        continue;
+      }
+
+      if (set.actualReps < set.plannedReps) {
+        setScores.push(3);
+        continue;
+      }
+
+      const surplus = set.actualReps - set.plannedReps + (set.rir - set.plannedRir);
+
+      if (surplus >= 2) {
+        setScores.push(0);
+      } else if (surplus >= 0) {
+        setScores.push(1);
+      } else {
+        setScores.push(2);
+      }
+    }
+
+    if (setScores.length === 0) {
+      return null;
+    }
+
+    const average = setScores.reduce((sum, score) => sum + score, 0) / setScores.length;
+    return Math.round(average);
+  }
+
+  /**
    * Uses the soreness/performance table from the workout model notes to recommend whether to add
    * sets next microcycle or employ recovery sessions.
    *
