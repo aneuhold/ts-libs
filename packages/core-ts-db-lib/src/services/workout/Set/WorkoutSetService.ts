@@ -159,7 +159,13 @@ export default class WorkoutSetService {
       // First half of deload microcycle: same weight, half reps/sets
       // Second half: half weight too
       if (deloadInfo.sessionIndex >= Math.floor(deloadInfo.plannedSessionCountPerMicrocycle / 2)) {
-        currentWeight = Math.floor(currentWeight / 2);
+        const halvedWeight = currentWeight / 2;
+        const nearestWeight = WorkoutEquipmentTypeService.findNearestWeight(
+          equipment,
+          halvedWeight,
+          'prefer-down'
+        );
+        currentWeight = nearestWeight ?? Math.floor(halvedWeight);
       }
     }
 
