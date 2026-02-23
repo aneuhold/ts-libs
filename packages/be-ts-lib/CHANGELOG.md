@@ -7,13 +7,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## 🔖 [3.0.22] (2026-02-23)
 
-### ✅ Added
-
 ### 🏗️ Changed
 
-### 🩹 Fixed
-
-### 🔥 Removed
+- Updated dependencies: now requires `@aneuhold/core-ts-api-lib@^3.0.22`.
 
 ## 🔖 [3.0.21] (2026-02-23)
 
@@ -232,6 +228,7 @@ No direct code changes; version bump for compatibility with new major versions o
 - Updated workflow permissions to allow repository write access
 
 <!-- Link References -->
+
 [3.0.22]: https://github.com/aneuhold/ts-libs/compare/be-ts-lib-v3.0.21...be-ts-lib-v3.0.22
 [3.0.21]: https://github.com/aneuhold/ts-libs/compare/be-ts-lib-v3.0.20...be-ts-lib-v3.0.21
 [3.0.20]: https://github.com/aneuhold/ts-libs/compare/be-ts-lib-v3.0.19...be-ts-lib-v3.0.20

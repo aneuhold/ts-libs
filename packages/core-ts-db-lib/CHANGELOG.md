@@ -7,13 +7,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## 🔖 [4.1.11] (2026-02-23)
 
-### ✅ Added
-
 ### 🏗️ Changed
 
-### 🩹 Fixed
-
-### 🔥 Removed
+- Deload second-half weight halving in `WorkoutSetService` now uses `WorkoutEquipmentTypeService.findNearestWeight` to snap to the nearest available equipment weight, falling back to `Math.floor` if no match is found.
 
 ## 🔖 [4.1.10] (2026-02-23)
 
