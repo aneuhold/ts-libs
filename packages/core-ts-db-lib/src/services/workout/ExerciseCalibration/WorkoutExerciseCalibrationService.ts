@@ -43,13 +43,14 @@ export default class WorkoutExerciseCalibrationService {
   /**
    * Calculates the target percentage of 1RM for a given target rep count.
    *
-   * Uses the formula: targetPercentage = 30 + ((targetReps - 5) * 2.2)
+   * Uses the formula: targetPercentage = 85 - ((targetReps - 5) * 2.2)
    *
-   * This ensures training stays within the 30%-85% 1RM range (30 reps to 5 reps).
+   * This ensures training stays within the 85%-30% 1RM range (5 reps to 30 reps).
+   * Higher rep counts produce lower percentages of 1RM.
    *
    * @param targetReps The target number of reps.
    */
   private static getTargetPercentage(targetReps: number): number {
-    return 30 + (targetReps - 5) * 2.2;
+    return 85 - (targetReps - 5) * 2.2;
   }
 }
