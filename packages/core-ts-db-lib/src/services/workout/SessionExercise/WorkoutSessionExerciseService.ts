@@ -136,7 +136,7 @@ export default class WorkoutSessionExerciseService {
   /**
    * Returns true if all mid-session metrics are filled out for the session exercise.
    * Mid-session metrics are filled out right after performing the exercise:
-   * mindMuscleConnection, pump, unusedMusclePerformance, perceivedEffort,
+   * mindMuscleConnection, pump, unusedMusclePerformance,
    * and performanceScore. Deload exercises are always considered filled.
    */
   static hasMidSessionMetricsFilled(
@@ -148,15 +148,14 @@ export default class WorkoutSessionExerciseService {
       sessionExercise.rsm?.mindMuscleConnection != null &&
       sessionExercise.rsm.pump != null &&
       sessionExercise.fatigue?.unusedMusclePerformance != null &&
-      sessionExercise.fatigue.perceivedEffort != null &&
       sessionExercise.performanceScore != null
     );
   }
 
   /**
    * Returns true if all session metrics (both mid-session and post-session) are filled out.
-   * Post-session metrics are disruption, jointAndTissueDisruption, and sorenessScore.
-   * Deload exercises are always considered filled.
+   * Post-session metrics are disruption, jointAndTissueDisruption, perceivedEffort,
+   * and sorenessScore. Deload exercises are always considered filled.
    */
   static hasAllSessionMetricsFilled(
     sessionExercise: WorkoutSessionExercise,
@@ -169,6 +168,7 @@ export default class WorkoutSessionExerciseService {
     return (
       sessionExercise.rsm?.disruption != null &&
       sessionExercise.fatigue?.jointAndTissueDisruption != null &&
+      sessionExercise.fatigue.perceivedEffort != null &&
       sessionExercise.sorenessScore != null
     );
   }
