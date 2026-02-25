@@ -48,10 +48,10 @@ export const WorkoutSessionExerciseSchema = z.object({
   /**
    * The soreness score for this session exercise (0-3).
    *
-   * - 0: You did not get at all sore in the target muscles
-   * - 1: You got stiff for a few hours after training and had mild soreness that resolved by next session
-   * - 2: You got DOMS that resolved just in time for the next session
-   * - 3: You got DOMS that remained for the next session
+   * - 0: You did not get at all sore in the target muscle group
+   * - 1: You got stiff for a few hours after training and had mild soreness in the target muscle group that resolved by next session targeting the same muscle group
+   * - 2: You got DOMS in the target muscle group that resolved just in time for the next session targeting the same muscle group
+   * - 3: You got DOMS in the target muscle group that remained for the next session targeting the same muscle group
    */
   sorenessScore: z.int().min(0).max(3).nullish(),
   /**
