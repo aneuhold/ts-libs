@@ -1,8 +1,13 @@
 import type { UUID } from 'crypto';
 import type { WorkoutExerciseCTO } from '../../../../ctos/workout/WorkoutExerciseCTO.js';
+import type {
+  WorkoutMuscleGroupVolumeCTO,
+  WorkoutVolumeLandmarkEstimate
+} from '../../../../ctos/workout/WorkoutMuscleGroupVolumeCTO.js';
 import type { WorkoutSessionExercise } from '../../../../documents/workout/WorkoutSessionExercise.js';
 import type WorkoutMesocyclePlanContext from '../../Mesocycle/WorkoutMesocyclePlanContext.js';
 import WorkoutSessionExerciseService from '../../SessionExercise/WorkoutSessionExerciseService.js';
+import WorkoutSFRService from '../SFR/WorkoutSFRService.js';
 
 /**
  * A service for handling volume planning operations across microcycles.
@@ -56,7 +61,172 @@ export default class WorkoutVolumePlanningService {
       }
     });
 
+    // Apply MEV proximity adjustment when generating the second microcycle (index 1)
+    // after the first microcycle is complete with RSM data. Only applies when volume
+    // data (volumeCTOs) was provided to the context.
+    if (
+      microcycleIndex === 1 &&
+      !isDeloadMicrocycle &&
+      context.muscleGroupToVolumeLandmarkMap.size > 0
+    ) {
+      this.applyMevProximityAdjustments(context, exerciseIdToSetCount);
+    }
+
     return { exerciseIdToSetCount, recoveryExerciseIds };
+  }
+
+  /**
+   * Estimates MEV, MRV, and MAV for a muscle group based on historical data
+   * across completed mesocycles.
+   *
+   * @param volumeCTO The WorkoutMuscleGroupVolumeCTO containing mesocycle
+   *   history for this muscle group.
+   */
+  static estimateVolumeLandmarks(
+    volumeCTO: WorkoutMuscleGroupVolumeCTO
+  ): WorkoutVolumeLandmarkEstimate {
+    const { mesocycleHistory } = volumeCTO;
+
+    // Estimated MEV
+    let estimatedMev: number;
+    const effectiveMesocycles = mesocycleHistory.filter((m) => m.avgRsm !== null && m.avgRsm >= 4);
+    if (effectiveMesocycles.length > 0) {
+      estimatedMev =
+        effectiveMesocycles.reduce((sum, m) => sum + m.startingSetCount, 0) /
+        effectiveMesocycles.length;
+      estimatedMev = Math.round(estimatedMev);
+    } else if (mesocycleHistory.length > 0) {
+      estimatedMev = Math.min(...mesocycleHistory.map((m) => m.startingSetCount));
+    } else {
+      estimatedMev = 2;
+    }
+
+    // Estimated MRV
+    let estimatedMrv: number;
+    const stressedMesocycles = mesocycleHistory.filter(
+      (m) =>
+        (m.avgPerformanceScore !== null && m.avgPerformanceScore >= 2.5) ||
+        m.recoverySessionCount > 0
+    );
+    if (stressedMesocycles.length > 0) {
+      estimatedMrv =
+        stressedMesocycles.reduce((sum, m) => sum + m.peakSetCount, 0) / stressedMesocycles.length;
+      estimatedMrv = Math.round(estimatedMrv);
+    } else if (mesocycleHistory.length > 0) {
+      estimatedMrv = Math.max(...mesocycleHistory.map((m) => m.peakSetCount)) + 2;
+    } else {
+      estimatedMrv = 8;
+    }
+
+    // Hard cap MRV at 10 (MAX_SETS_PER_MUSCLE_GROUP_PER_SESSION)
+    estimatedMrv = Math.min(estimatedMrv, this.MAX_SETS_PER_MUSCLE_GROUP_PER_SESSION);
+
+    // Ensure MRV > MEV
+    if (estimatedMrv <= estimatedMev) {
+      estimatedMrv = estimatedMev + 1;
+    }
+
+    const estimatedMav = Math.ceil((estimatedMev + estimatedMrv) / 2);
+
+    return { estimatedMev, estimatedMrv, estimatedMav, mesocycleCount: mesocycleHistory.length };
+  }
+
+  /**
+   * Evaluates MEV (Minimum Effective Volume) proximity for a muscle group based on
+   * RSM scores from the first microcycle. Called when generating the second microcycle to adjust
+   * the volume baseline.
+   *
+   * Returns `null` when the first microcycle is incomplete or has no RSM data for the muscle group.
+   *
+   * @param context The mesocycle planning context containing microcycle/session/exercise data.
+   * @param muscleGroupId The muscle group to evaluate.
+   */
+  static evaluateMevProximity(
+    context: WorkoutMesocyclePlanContext,
+    muscleGroupId: UUID
+  ): {
+    /** 'below' = RSM 0-3, 'at' = RSM 4-6, 'above' = RSM 7-9 */
+    proximity: 'below' | 'at' | 'above';
+
+    /**
+     * Recommended total set adjustment for this muscle group.
+     * Positive = add sets, negative = remove sets, 0 = no change.
+     * Range: -2 to +3
+     */
+    recommendedSetAdjustment: number;
+
+    /** The average RSM across session exercises targeting this muscle group. */
+    averageRsm: number;
+  } | null {
+    const firstMicrocycle = context.microcyclesInOrder[0];
+    if (!firstMicrocycle) return null;
+
+    // Check the first microcycle is complete
+    const lastSessionId = firstMicrocycle.sessionOrder[firstMicrocycle.sessionOrder.length - 1];
+    if (!context.sessionMap.get(lastSessionId)?.complete) return null;
+
+    // Collect RSM totals from session exercises that target this muscle group
+    const rsmTotals: number[] = [];
+    for (const sessionId of firstMicrocycle.sessionOrder) {
+      const session = context.sessionMap.get(sessionId);
+      if (!session) continue;
+      for (const seId of session.sessionExerciseOrder) {
+        const se = context.sessionExerciseMap.get(seId);
+        if (!se) continue;
+        const exercise = context.exerciseMap.get(se.workoutExerciseId);
+        if (!exercise?.primaryMuscleGroups.includes(muscleGroupId)) continue;
+
+        const rsmTotal = WorkoutSFRService.getRsmTotal(se.rsm);
+        if (rsmTotal !== null) {
+          rsmTotals.push(rsmTotal);
+        }
+      }
+    }
+
+    if (rsmTotals.length === 0) return null;
+
+    const averageRsm = rsmTotals.reduce((sum, val) => sum + val, 0) / rsmTotals.length;
+    const bracket = Math.floor(averageRsm);
+
+    if (bracket <= 3) {
+      return { proximity: 'below', recommendedSetAdjustment: 3, averageRsm };
+    } else if (bracket <= 6) {
+      return { proximity: 'at', recommendedSetAdjustment: 0, averageRsm };
+    }
+    return { proximity: 'above', recommendedSetAdjustment: -2, averageRsm };
+  }
+
+  /**
+   * Applies MEV proximity adjustments based on RSM data from the first microcycle.
+   * Adjusts set counts per muscle group when the first microcycle indicates volume
+   * was below or above MEV.
+   */
+  private static applyMevProximityAdjustments(
+    context: WorkoutMesocyclePlanContext,
+    exerciseIdToSetCount: Map<UUID, number>
+  ): void {
+    if (!context.muscleGroupToExerciseCTOsMap) return;
+
+    for (const [muscleGroupId, muscleGroupExerciseCTOs] of context.muscleGroupToExerciseCTOsMap) {
+      const mevResult = this.evaluateMevProximity(context, muscleGroupId);
+      if (!mevResult || mevResult.recommendedSetAdjustment === 0) continue;
+
+      // Distribute the adjustment evenly across exercises in this muscle group
+      const exerciseCount = muscleGroupExerciseCTOs.length;
+      const adjustmentPerExercise = Math.floor(mevResult.recommendedSetAdjustment / exerciseCount);
+      const adjustmentRemainder = mevResult.recommendedSetAdjustment % exerciseCount;
+
+      muscleGroupExerciseCTOs.forEach((cto, index) => {
+        const currentSets = exerciseIdToSetCount.get(cto._id) ?? 2;
+        const extra =
+          index < Math.abs(adjustmentRemainder) ? Math.sign(mevResult.recommendedSetAdjustment) : 0;
+        const newSets = Math.max(
+          1,
+          Math.min(currentSets + adjustmentPerExercise + extra, this.MAX_SETS_PER_EXERCISE)
+        );
+        exerciseIdToSetCount.set(cto._id, newSets);
+      });
+    }
   }
 
   /**
@@ -75,13 +245,16 @@ export default class WorkoutVolumePlanningService {
     const recoveryExerciseIds = new Set<UUID>();
     const sessionIndexToExerciseIds = new Map<number, UUID[]>();
 
+    const { progressionInterval } = context;
+
     // 1. Calculate baselines for all exercises in muscle group
     muscleGroupExerciseCTOs.forEach((cto, index) => {
       const baseline = this.calculateBaselineSetCount(
         microcycleIndex,
         muscleGroupExerciseCTOs.length,
         index,
-        isDeloadMicrocycle
+        isDeloadMicrocycle,
+        progressionInterval
       );
       exerciseIdToSetCount.set(cto._id, Math.min(baseline, this.MAX_SETS_PER_EXERCISE));
 
@@ -150,13 +323,26 @@ export default class WorkoutVolumePlanningService {
     // For deload microcycles, halve the historical count (minimum 1 set). We don't use baseline
     // because the user may have adjusted over the mesocycle in a way that the baseline is actually
     // a higher set count than what would be calculated by halving the previous microcycle's sets.
+    //
+    // For exercises returning from recovery, use the estimated MAV from volume landmarks
+    // when available, instead of the pre-recovery historical count.
+    const primaryMuscleGroupId = muscleGroupExerciseCTOs[0]?.primaryMuscleGroups[0];
+    const volumeLandmark = primaryMuscleGroupId
+      ? context.muscleGroupToVolumeLandmarkMap.get(primaryMuscleGroupId)
+      : undefined;
+
     muscleGroupExerciseCTOs.forEach((cto) => {
       const previousSessionExercise = exerciseIdToPrevSessionExercise.get(cto._id);
       if (previousSessionExercise) {
-        let setCount = Math.min(
-          previousSessionExercise.setOrder.length,
-          this.MAX_SETS_PER_EXERCISE
-        );
+        let setCount: number;
+
+        if (exercisesThatWerePreviouslyInRecovery.has(cto._id) && volumeLandmark) {
+          // Exercise is returning from recovery — resume at the estimated MAV
+          setCount = Math.min(volumeLandmark.estimatedMav, this.MAX_SETS_PER_EXERCISE);
+        } else {
+          setCount = Math.min(previousSessionExercise.setOrder.length, this.MAX_SETS_PER_EXERCISE);
+        }
+
         if (isDeloadMicrocycle) {
           setCount = Math.max(1, Math.floor(setCount / 2));
         }
@@ -164,8 +350,8 @@ export default class WorkoutVolumePlanningService {
       }
     });
 
-    // Deload microcycles use reduced volume — skip SFR-based set additions
-    if (isDeloadMicrocycle) {
+    // Deload microcycles and zero-progression cycles (Resensitization) skip SFR-based set additions
+    if (isDeloadMicrocycle || progressionInterval === 0) {
       return { exerciseIdToSetCount, recoveryExerciseIds };
     }
 
@@ -316,14 +502,26 @@ export default class WorkoutVolumePlanningService {
    * for the entire microcycle, regardless of which session those exercises are in.
    *
    * Baseline: 2 sets per exercise in the muscle group.
-   * Progression: add 1 total set per microcycle per muscle group (distributed to earlier exercises
-   * in the muscle-group-wide ordering).
+   * Progression: add 1 set per muscle group every `progressionInterval` microcycles.
+   * - MuscleGain (interval 1): every microcycle
+   * - Cut (interval 2): every other microcycle
+   * - Resensitization (interval 0): no progression (flat 2 sets per exercise)
+   *
+   * @param microcycleIndex The index of the current microcycle.
+   * @param totalExercisesInMuscleGroupForMicrocycle Total exercises in the muscle group for
+   * this microcycle.
+   * @param exerciseIndexInMuscleGroupForMicrocycle Index of the current exercise within the
+   * muscle group.
+   * @param isDeloadMicrocycle Whether this is a deload microcycle.
+   * @param progressionInterval Number of microcycles between each set addition. 0 means no
+   * progression.
    */
   private static calculateBaselineSetCount(
     microcycleIndex: number,
     totalExercisesInMuscleGroupForMicrocycle: number,
     exerciseIndexInMuscleGroupForMicrocycle: number,
-    isDeloadMicrocycle: boolean
+    isDeloadMicrocycle: boolean,
+    progressionInterval: number = 1
   ): number {
     // Deload microcycle: half the sets from the previous microcycle, minimum 1 set.
     if (isDeloadMicrocycle) {
@@ -331,14 +529,16 @@ export default class WorkoutVolumePlanningService {
         microcycleIndex - 1,
         totalExercisesInMuscleGroupForMicrocycle,
         exerciseIndexInMuscleGroupForMicrocycle,
-        false
+        false,
+        progressionInterval
       );
       return Math.max(1, Math.floor(baselineSets / 2));
     }
 
     // Total sets to distribute for this muscle group in this microcycle.
-    // For now, add exactly +1 total set per microcycle per muscle group.
-    const totalSets = 2 * totalExercisesInMuscleGroupForMicrocycle + microcycleIndex;
+    const progressionSets =
+      progressionInterval === 0 ? 0 : Math.ceil(microcycleIndex / progressionInterval);
+    const totalSets = 2 * totalExercisesInMuscleGroupForMicrocycle + progressionSets;
 
     // Distribute sets evenly, with earlier exercises getting extra sets from the remainder.
     const baseSetsPerExercise = Math.floor(totalSets / totalExercisesInMuscleGroupForMicrocycle);

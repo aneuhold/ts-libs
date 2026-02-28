@@ -289,6 +289,7 @@ describe('Unit Tests', () => {
       const regenResult = WorkoutMesocycleService.generateOrUpdateMesocycle(
         mesocycle,
         exerciseCTOs,
+        [],
         initialResult.microcycles?.create ?? [],
         sessionsAllComplete,
         initialResult.sessionExercises?.create ?? [],
@@ -348,6 +349,7 @@ describe('Unit Tests', () => {
       const extendedResult = WorkoutMesocycleService.generateOrUpdateMesocycle(
         mesocycle,
         exerciseCTOs,
+        [],
         initialResult.microcycles?.create ?? [],
         sessionsComplete,
         initialResult.sessionExercises?.create ?? [],
@@ -418,6 +420,7 @@ describe('Unit Tests', () => {
       const regenResult = WorkoutMesocycleService.generateOrUpdateMesocycle(
         mesocycle,
         exerciseCTOs,
+        [],
         initialResult.microcycles?.create ?? [],
         sessionsPartialComplete,
         initialResult.sessionExercises?.create ?? [],
@@ -483,6 +486,7 @@ describe('Unit Tests', () => {
       const regenResult = WorkoutMesocycleService.generateOrUpdateMesocycle(
         mesocycle,
         exerciseCTOs,
+        [],
         modifiedMicrocycles,
         sessionsComplete,
         initialResult.sessionExercises?.create ?? [],
@@ -539,6 +543,7 @@ describe('Unit Tests', () => {
       const regenResult = WorkoutMesocycleService.generateOrUpdateMesocycle(
         mesocycle,
         exerciseCTOs,
+        [],
         initialMicrocycles,
         initialResult.sessions?.create ?? [],
         initialResult.sessionExercises?.create ?? [],
@@ -616,6 +621,7 @@ describe('Unit Tests', () => {
         WorkoutMesocycleService.generateOrUpdateMesocycle(
           mesocycle,
           exerciseCTOs,
+          [],
           initialResult.microcycles?.create ?? [],
           sessionsPartialComplete,
           initialResult.sessionExercises?.create ?? [],
@@ -655,6 +661,7 @@ describe('Unit Tests', () => {
       const result = WorkoutMesocycleService.generateOrUpdateMesocycle(
         mesocycle,
         exerciseCTOs,
+        [],
         [],
         [],
         [],
@@ -775,6 +782,7 @@ describe('Unit Tests', () => {
       const regenResult = WorkoutMesocycleService.generateOrUpdateMesocycle(
         mesocycle,
         exerciseCTOs,
+        [],
         initialResult.microcycles?.create ?? [],
         sessionsComplete,
         initialResult.sessionExercises?.create ?? [],
@@ -815,6 +823,129 @@ describe('Unit Tests', () => {
         if (set) {
           expect(sessionExerciseIdsToDelete.has(set.workoutSessionExerciseId)).toBe(true);
         }
+      });
+    });
+
+    describe('cycle-type-specific generation', () => {
+      it('should skip deload for Resensitization cycles', () => {
+        const exerciseCTOs = [
+          workoutTestUtil.createExerciseCTO({
+            exercise: workoutTestUtil.STANDARD_EXERCISES.barbellBenchPress,
+            calibration: workoutTestUtil.STANDARD_CALIBRATIONS.barbellBenchPress,
+            equipmentType: workoutTestUtil.STANDARD_EQUIPMENT_TYPES.barbell
+          })
+        ];
+
+        const mesocycle = WorkoutMesocycleSchema.parse({
+          userId: workoutTestUtil.userId,
+          cycleType: CycleType.Resensitization,
+          plannedSessionCountPerMicrocycle: 1,
+          plannedMicrocycleLengthInDays: 7,
+          plannedMicrocycleRestDays: [],
+          plannedMicrocycleCount: 4,
+          calibratedExercises: exerciseCTOs.flatMap((c) =>
+            c.bestCalibration ? [c.bestCalibration._id] : []
+          )
+        });
+
+        const result = WorkoutMesocycleService.generateOrUpdateMesocycle(mesocycle, exerciseCTOs);
+        const sets = result.sets?.create ?? [];
+
+        // All 4 microcycles should be accumulation (no deload)
+        expect(result.microcycles?.create).toHaveLength(4);
+
+        // No sets should have null plannedRir (which would indicate deload)
+        const deloadSets = sets.filter((s) => s.plannedRir === null);
+        expect(deloadSets).toHaveLength(0);
+      });
+
+      it('should start RIR at 3 for Cut cycles instead of 4', () => {
+        const exerciseCTOs = [
+          workoutTestUtil.createExerciseCTO({
+            exercise: workoutTestUtil.STANDARD_EXERCISES.barbellBenchPress,
+            calibration: workoutTestUtil.STANDARD_CALIBRATIONS.barbellBenchPress,
+            equipmentType: workoutTestUtil.STANDARD_EQUIPMENT_TYPES.barbell
+          })
+        ];
+
+        const mesocycle = WorkoutMesocycleSchema.parse({
+          userId: workoutTestUtil.userId,
+          cycleType: CycleType.Cut,
+          plannedSessionCountPerMicrocycle: 1,
+          plannedMicrocycleLengthInDays: 7,
+          plannedMicrocycleRestDays: [],
+          plannedMicrocycleCount: 6,
+          calibratedExercises: exerciseCTOs.flatMap((c) =>
+            c.bestCalibration ? [c.bestCalibration._id] : []
+          )
+        });
+
+        const result = WorkoutMesocycleService.generateOrUpdateMesocycle(mesocycle, exerciseCTOs);
+        const sets = result.sets?.create ?? [];
+        const sessions = result.sessions?.create ?? [];
+        const microcycles = result.microcycles?.create ?? [];
+
+        // First microcycle's first session's sets should have RIR 3 (not 4)
+        const firstMicrocycle = microcycles[0];
+        const firstSession = sessions.find((s) => s.workoutMicrocycleId === firstMicrocycle._id);
+        const firstMicrocycleSets = sets.filter((s) => s.workoutSessionId === firstSession?._id);
+        expect(firstMicrocycleSets[0].plannedRir).toBe(3);
+      });
+
+      it('should start RIR at 3 for Resensitization cycles', () => {
+        const exerciseCTOs = [
+          workoutTestUtil.createExerciseCTO({
+            exercise: workoutTestUtil.STANDARD_EXERCISES.barbellBenchPress,
+            calibration: workoutTestUtil.STANDARD_CALIBRATIONS.barbellBenchPress,
+            equipmentType: workoutTestUtil.STANDARD_EQUIPMENT_TYPES.barbell
+          })
+        ];
+
+        const mesocycle = WorkoutMesocycleSchema.parse({
+          userId: workoutTestUtil.userId,
+          cycleType: CycleType.Resensitization,
+          plannedSessionCountPerMicrocycle: 1,
+          plannedMicrocycleLengthInDays: 7,
+          plannedMicrocycleRestDays: [],
+          plannedMicrocycleCount: 3,
+          calibratedExercises: exerciseCTOs.flatMap((c) =>
+            c.bestCalibration ? [c.bestCalibration._id] : []
+          )
+        });
+
+        const result = WorkoutMesocycleService.generateOrUpdateMesocycle(mesocycle, exerciseCTOs);
+        const sets = result.sets?.create ?? [];
+
+        // First microcycle sets should have RIR 3
+        const firstMicrocycleSessionId = result.sessions?.create?.[0]._id;
+        const firstSets = sets.filter((s) => s.workoutSessionId === firstMicrocycleSessionId);
+        expect(firstSets[0].plannedRir).toBe(3);
+      });
+
+      it('should preserve FreeForm early exit', () => {
+        const exerciseCTOs = [
+          workoutTestUtil.createExerciseCTO({
+            exercise: workoutTestUtil.STANDARD_EXERCISES.barbellSquat,
+            calibration: workoutTestUtil.STANDARD_CALIBRATIONS.barbellSquat,
+            equipmentType: workoutTestUtil.STANDARD_EQUIPMENT_TYPES.barbell
+          })
+        ];
+
+        const mesocycle = WorkoutMesocycleSchema.parse({
+          userId: workoutTestUtil.userId,
+          cycleType: CycleType.FreeForm,
+          plannedSessionCountPerMicrocycle: 1,
+          plannedMicrocycleLengthInDays: 7,
+          plannedMicrocycleRestDays: [],
+          plannedMicrocycleCount: 3,
+          calibratedExercises: exerciseCTOs.flatMap((c) =>
+            c.bestCalibration ? [c.bestCalibration._id] : []
+          )
+        });
+
+        const result = WorkoutMesocycleService.generateOrUpdateMesocycle(mesocycle, exerciseCTOs);
+        expect(result.microcycles).toBeUndefined();
+        expect(result.sessions).toBeUndefined();
       });
     });
   });

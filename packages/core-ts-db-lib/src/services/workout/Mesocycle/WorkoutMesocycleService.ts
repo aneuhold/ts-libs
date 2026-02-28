@@ -1,6 +1,7 @@
 import { DateService } from '@aneuhold/core-ts-lib';
 import type { UUID } from 'crypto';
 import type { WorkoutExerciseCTO } from '../../../ctos/workout/WorkoutExerciseCTO.js';
+import type { WorkoutMuscleGroupVolumeCTO } from '../../../ctos/workout/WorkoutMuscleGroupVolumeCTO.js';
 import { CycleType, type WorkoutMesocycle } from '../../../documents/workout/WorkoutMesocycle.js';
 import type { WorkoutMicrocycle } from '../../../documents/workout/WorkoutMicrocycle.js';
 import { WorkoutMicrocycleSchema } from '../../../documents/workout/WorkoutMicrocycle.js';
@@ -30,6 +31,7 @@ export default class WorkoutMesocycleService {
    *
    * @param mesocycle The mesocycle configuration.
    * @param exerciseCTOs The exercise CTOs containing exercise, calibration, equipment, and historical data.
+   * @param volumeCTOs Optional muscle group volume CTOs for historical volume landmark estimation.
    * @param existingMicrocycles Existing microcycle documents for this mesocycle.
    * @param existingSessions Existing session documents.
    * @param existingSessionExercises Existing session exercise documents.
@@ -39,6 +41,7 @@ export default class WorkoutMesocycleService {
   static generateOrUpdateMesocycle(
     mesocycle: WorkoutMesocycle,
     exerciseCTOs: WorkoutExerciseCTO[],
+    volumeCTOs: WorkoutMuscleGroupVolumeCTO[] = [],
     existingMicrocycles: WorkoutMicrocycle[] = [],
     existingSessions: WorkoutSession[] = [],
     existingSessionExercises: WorkoutSessionExercise[] = [],
@@ -93,6 +96,7 @@ export default class WorkoutMesocycleService {
     const context = new WorkoutMesocyclePlanContext(
       mesocycle,
       exerciseCTOs,
+      volumeCTOs,
       cleanMicrocycles,
       cleanSessions,
       cleanSessionExercises,
@@ -110,7 +114,7 @@ export default class WorkoutMesocycleService {
 
     // Determine number of microcycles (default to 6 if not specified: 5 accumulation + 1 deload)
     const totalMicrocycles = mesocycle.plannedMicrocycleCount ?? 6;
-    const deloadMicrocycleIndex = totalMicrocycles - 1;
+    const deloadMicrocycleIndex = context.skipDeload ? -1 : totalMicrocycles - 1;
 
     // Determine starting point for generation
     const startMicrocycleIndex = context.microcyclesInOrder.length;
@@ -124,6 +128,8 @@ export default class WorkoutMesocycleService {
       currentDate = lastExistingMicrocycle.endDate;
     }
 
+    const { firstMicrocycleRir } = context;
+
     // Generate remaining microcycles
     for (
       let microcycleIndex = startMicrocycleIndex;
@@ -132,9 +138,10 @@ export default class WorkoutMesocycleService {
     ) {
       const isDeloadMicrocycle = microcycleIndex === deloadMicrocycleIndex;
 
-      // Calculate RIR for this microcycle (4 -> 3 -> 2 -> 1 -> 0, capped at microcycle 5)
-      const rirForMicrocycle = Math.min(microcycleIndex, 4);
-      const targetRir = isDeloadMicrocycle ? null : 4 - rirForMicrocycle;
+      // Calculate RIR for this microcycle. Uses the cycle-type-specific starting RIR
+      // and tapers down by 1 per microcycle: e.g. MuscleGain 4->3->2->1->0, Cut 3->2->1->0->0
+      const rirForMicrocycle = Math.max(firstMicrocycleRir - microcycleIndex, 0);
+      const targetRir = isDeloadMicrocycle ? null : rirForMicrocycle;
 
       // Create microcycle
       const microcycle = WorkoutMicrocycleSchema.parse({

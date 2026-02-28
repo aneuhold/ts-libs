@@ -36,6 +36,11 @@
 - Use object destructuring when accessing multiple properties from an object
 - Prefer template literals over string concatenation.
 
+### Organization & Refactoring
+
+- Always prefer to refactor rather than try and "preserve backwards compatibility". We have control over consumers of the packages in this repo for the most part. We can refactor as much as we like.
+- If you need to create something new, try to organize it among the existing items that are similar.
+
 ### Enums
 
 - Use PascalCase for enum names and values

@@ -65,7 +65,7 @@ export default class WorkoutSetService {
         calibration: bestCalibration,
         equipment: equipmentType,
         microcycleIndex: isDeloadMicrocycle ? microcycleIndex - 1 : microcycleIndex,
-        firstMicrocycleRir: context.FIRST_MICROCYCLE_RIR,
+        firstMicrocycleRir: context.firstMicrocycleRir,
         previousFirstSet
       });
 

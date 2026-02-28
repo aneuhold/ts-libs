@@ -1,3 +1,10 @@
+import type { WorkoutExerciseCTO } from './ctos/workout/WorkoutExerciseCTO.js';
+import { WorkoutExerciseCTOSchema } from './ctos/workout/WorkoutExerciseCTO.js';
+import type {
+  WorkoutMuscleGroupVolumeCTO,
+  WorkoutVolumeLandmarkEstimate
+} from './ctos/workout/WorkoutMuscleGroupVolumeCTO.js';
+import { WorkoutMuscleGroupVolumeCTOSchema } from './ctos/workout/WorkoutMuscleGroupVolumeCTO.js';
 import type {
   BaseDocument,
   BaseDocumentWithType,
@@ -48,12 +55,6 @@ import {
   WorkoutExerciseCalibration_docType,
   WorkoutExerciseCalibrationSchema
 } from './documents/workout/WorkoutExerciseCalibration.js';
-import type { WorkoutExerciseCTO } from './ctos/workout/WorkoutExerciseCTO.js';
-import { WorkoutExerciseCTOSchema } from './ctos/workout/WorkoutExerciseCTO.js';
-import type { WorkoutMuscleGroupVolumeCTO } from './ctos/workout/WorkoutMuscleGroupVolumeCTO.js';
-import { WorkoutMuscleGroupVolumeCTOSchema } from './ctos/workout/WorkoutMuscleGroupVolumeCTO.js';
-import type { MesocycleVolumeSummary } from './embedded-types/workout/MesocycleVolumeSummary.js';
-import { MesocycleVolumeSummarySchema } from './embedded-types/workout/MesocycleVolumeSummary.js';
 import type { WorkoutMesocycle } from './documents/workout/WorkoutMesocycle.js';
 import {
   CycleType,
@@ -142,6 +143,8 @@ import {
 } from './embedded-types/dashboard/userConfig/Tags.js';
 import type { Fatigue } from './embedded-types/workout/Fatigue.js';
 import { FatigueSchema } from './embedded-types/workout/Fatigue.js';
+import type { MesocycleVolumeSummary } from './embedded-types/workout/MesocycleVolumeSummary.js';
+import { MesocycleVolumeSummarySchema } from './embedded-types/workout/MesocycleVolumeSummary.js';
 import type { RSM } from './embedded-types/workout/Rsm.js';
 import { RsmSchema } from './embedded-types/workout/Rsm.js';
 import type { RequiredUserId } from './schemas/required-refs/RequiredUserId.js';
@@ -162,6 +165,7 @@ import WorkoutSessionService, {
 import WorkoutSessionExerciseService from './services/workout/SessionExercise/WorkoutSessionExerciseService.js';
 import WorkoutSetService from './services/workout/Set/WorkoutSetService.js';
 import WorkoutSFRService from './services/workout/util/SFR/WorkoutSFRService.js';
+import WorkoutVolumePlanningService from './services/workout/util/VolumePlanning/WorkoutVolumePlanningService.js';
 
 // Export all browser-safe functions and classes from this library
 export {
@@ -214,7 +218,6 @@ export {
   RecurrenceInfoSchema,
   RequiredUserIdSchema,
   RsmSchema,
-  WorkoutSessionLockReason,
   StandardFilterSettingSchema,
   UserCTOSchema,
   UserSchema,
@@ -242,12 +245,14 @@ export {
   WorkoutSessionExercise_docType,
   WorkoutSessionExerciseSchema,
   WorkoutSessionExerciseService,
+  WorkoutSessionLockReason,
   WorkoutSessionSchema,
   WorkoutSessionService,
   WorkoutSet_docType,
   WorkoutSetSchema,
   WorkoutSetService,
-  WorkoutSFRService
+  WorkoutSFRService,
+  WorkoutVolumePlanningService
 };
 
 // Export TypeScript types where needed
@@ -293,5 +298,6 @@ export type {
   WorkoutMuscleGroupVolumeCTO,
   WorkoutSession,
   WorkoutSessionExercise,
-  WorkoutSet
+  WorkoutSet,
+  WorkoutVolumeLandmarkEstimate
 };
