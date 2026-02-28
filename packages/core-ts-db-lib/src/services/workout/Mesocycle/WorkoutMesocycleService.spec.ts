@@ -1554,7 +1554,14 @@ describe('Unit Tests', () => {
       startDate: new Date('2024-01-15'),
       endDate: new Date('2024-01-22')
     });
-    const allMicrocycles = [mc1, mc2, mc3];
+    // A 4th microcycle ensures mc3 is NOT the last (deload) microcycle,
+    // which would cause the deload guard to suppress recommendations.
+    const mc4 = workoutTestUtil.createMicrocycle({
+      mesocycle,
+      startDate: new Date('2024-01-22'),
+      endDate: new Date('2024-01-29')
+    });
+    const allMicrocycles = [mc1, mc2, mc3, mc4];
 
     // Session in the current (3rd) microcycle for linking session exercises
     const recentSession = workoutTestUtil.createSession({ microcycle: mc3 });
