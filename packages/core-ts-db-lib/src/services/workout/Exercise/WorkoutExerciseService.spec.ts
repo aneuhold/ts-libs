@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import workoutTestUtil from '../../../../test-utils/WorkoutTestUtil.js';
-import { ExerciseRepRange } from '../../../documents/workout/WorkoutExercise.js';
+import {
+  ExerciseProgressionType,
+  ExerciseRepRange
+} from '../../../documents/workout/WorkoutExercise.js';
 import WorkoutExerciseService from './WorkoutExerciseService.js';
 
 describe('Unit Tests', () => {
@@ -187,6 +190,46 @@ describe('Unit Tests', () => {
 
         // Should round up to lowest available (45lbs for barbell)
         expect(result.targetWeight).toBe(45);
+      });
+    });
+
+    describe('Calf Raise Scenario - Target Should Not Exceed Calibration', () => {
+      it('should not ask for more reps at calibration weight than calibration supports', () => {
+        // Real scenario: Calf raise calibrated at 25lb x 10 reps, Light range, Rep progression
+        // At microcycle 0 with 4 RIR, the target is 22 reps @ 4 RIR (26 total rep capability)
+        // This should NOT target 25lb, since the user can only do 10 reps at 25lb
+        const weightBelt = workoutTestUtil.createEquipmentType({
+          title: 'Weight Belt',
+          weightOptions: [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50]
+        });
+
+        const calfRaise = workoutTestUtil.createExercise({
+          exerciseName: 'Calf Raise',
+          workoutEquipmentTypeId: weightBelt._id,
+          repRange: ExerciseRepRange.Light,
+          preferredProgressionType: ExerciseProgressionType.Rep,
+          primaryMuscleGroups: [workoutTestUtil.STANDARD_MUSCLE_GROUPS.calves._id]
+        });
+
+        const calibration = workoutTestUtil.createCalibration({
+          exercise: calfRaise,
+          weight: 25,
+          reps: 10
+        });
+
+        const result = WorkoutExerciseService.calculateTargetRepsAndWeightForFirstSet({
+          exercise: calfRaise,
+          calibration,
+          equipment: weightBelt,
+          microcycleIndex: 0,
+          firstMicrocycleRir: 4
+        });
+
+        // Target reps for microcycle 0 should be the midpoint (22 for Light range)
+        expect(result.targetReps).toBe(22);
+        // But the weight should be much less than 25lb since 22 reps + 4 RIR = 26 total
+        // rep capability, far exceeding the 10-rep calibration at 25lb
+        expect(result.targetWeight).toBeLessThan(25);
       });
     });
 

@@ -1,4 +1,10 @@
+import type { UUID } from 'crypto';
+import type { WorkoutExerciseCTO } from '../../../ctos/workout/WorkoutExerciseCTO.js';
 import type { WorkoutExerciseCalibration } from '../../../documents/workout/WorkoutExerciseCalibration.js';
+import { WorkoutExerciseCalibrationSchema } from '../../../documents/workout/WorkoutExerciseCalibration.js';
+
+/** Divisor used in the NASM 1RM formula: 1RM = (weight × reps / 30.48) + weight */
+const NASM_1RM_DIVISOR = 30.48;
 
 /**
  * A service for handling operations related to {@link WorkoutExerciseCalibration}s.
@@ -22,7 +28,21 @@ export default class WorkoutExerciseCalibrationService {
    * @param reps The number of reps performed.
    */
   static get1RMRaw(weight: number, reps: number): number {
-    return (weight * reps) / 30.48 + weight;
+    return (weight * reps) / NASM_1RM_DIVISOR + weight;
+  }
+
+  /**
+   * Returns the NASM 1RM formula as a MongoDB aggregation expression.
+   * This is the MongoDB-equivalent of {@link get1RMRaw} and must be kept
+   * in sync with it.
+   *
+   * @param weightField The MongoDB field reference for weight (e.g. `'$weight'`).
+   * @param repsField The MongoDB field reference for reps (e.g. `'$reps'`).
+   */
+  static get1RMMongoExpr(weightField: string, repsField: string) {
+    return {
+      $add: [{ $divide: [{ $multiply: [weightField, repsField] }, NASM_1RM_DIVISOR] }, weightField]
+    };
   }
 
   /**
@@ -41,15 +61,60 @@ export default class WorkoutExerciseCalibrationService {
   }
 
   /**
+   * Generates auto-calibrations from exercise CTOs whose best set 1RM exceeds
+   * their best calibration 1RM.
+   *
+   * The CTO already provides `bestCalibration` and `bestSet` per exercise, so
+   * this method just compares those two pre-computed values and creates new
+   * calibrations where the set wins.
+   *
+   * @param exerciseCTOs The exercise CTOs to evaluate.
+   * @param userId The user ID for the new calibrations.
+   * @param dateRecorded The date to use as dateRecorded for new calibrations.
+   */
+  static generateAutoCalibrations(
+    exerciseCTOs: WorkoutExerciseCTO[],
+    userId: UUID,
+    dateRecorded: Date
+  ): WorkoutExerciseCalibration[] {
+    const newCalibrations: WorkoutExerciseCalibration[] = [];
+
+    for (const cto of exerciseCTOs) {
+      const { bestSet, bestCalibration } = cto;
+      if (!bestSet?.actualWeight || !bestSet.actualReps || bestSet.actualReps <= 0) continue;
+
+      const set1RM = this.get1RMRaw(bestSet.actualWeight, bestSet.actualReps);
+      const cal1RM = bestCalibration ? this.get1RM(bestCalibration) : 0;
+
+      if (set1RM > cal1RM) {
+        newCalibrations.push(
+          WorkoutExerciseCalibrationSchema.parse({
+            userId,
+            workoutExerciseId: cto._id,
+            weight: bestSet.actualWeight,
+            reps: bestSet.actualReps,
+            exerciseProperties: bestSet.exerciseProperties,
+            dateRecorded,
+            associatedWorkoutSetId: bestSet._id
+          })
+        );
+      }
+    }
+
+    return newCalibrations;
+  }
+
+  /**
    * Calculates the target percentage of 1RM for a given target rep count.
    *
-   * Uses the formula: targetPercentage = 30 + ((targetReps - 5) * 2.2)
+   * Uses the formula: targetPercentage = 85 - ((targetReps - 5) * 2.2)
    *
-   * This ensures training stays within the 30%-85% 1RM range (30 reps to 5 reps).
+   * This ensures training stays within the 85%-30% 1RM range (5 reps to 30 reps).
+   * Higher rep counts produce lower percentages of 1RM.
    *
    * @param targetReps The target number of reps.
    */
   private static getTargetPercentage(targetReps: number): number {
-    return 30 + (targetReps - 5) * 2.2;
+    return 85 - (targetReps - 5) * 2.2;
   }
 }

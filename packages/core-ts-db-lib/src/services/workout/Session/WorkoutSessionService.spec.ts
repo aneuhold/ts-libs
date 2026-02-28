@@ -178,22 +178,48 @@ describe('WorkoutSessionService', () => {
     ]
   });
 
-  const exercises: WorkoutExercise[] = [
-    workoutTestUtil.STANDARD_EXERCISES.barbellSquat,
-    workoutTestUtil.STANDARD_EXERCISES.barbellBenchPress,
-    workoutTestUtil.STANDARD_EXERCISES.cableRow
+  const defaultExerciseCTOs = [
+    workoutTestUtil.createExerciseCTO({
+      exercise: workoutTestUtil.STANDARD_EXERCISES.barbellSquat,
+      calibration: workoutTestUtil.STANDARD_CALIBRATIONS.barbellSquat,
+      equipmentType: workoutTestUtil.STANDARD_EQUIPMENT_TYPES.barbell
+    }),
+    workoutTestUtil.createExerciseCTO({
+      exercise: workoutTestUtil.STANDARD_EXERCISES.barbellBenchPress,
+      calibration: workoutTestUtil.STANDARD_CALIBRATIONS.barbellBenchPress,
+      equipmentType: workoutTestUtil.STANDARD_EQUIPMENT_TYPES.barbell
+    }),
+    workoutTestUtil.createExerciseCTO({
+      exercise: workoutTestUtil.STANDARD_EXERCISES.cableRow,
+      calibration: workoutTestUtil.STANDARD_CALIBRATIONS.cableRow,
+      equipmentType: workoutTestUtil.STANDARD_EQUIPMENT_TYPES.cable
+    })
   ];
+
+  /**
+   * Helper to build CTOs from WorkoutExercise array, using barbellSquat calibration
+   * for all exercises.
+   */
+  const buildCTOsFromExercises = (exercises: WorkoutExercise[]) =>
+    exercises.map((ex) =>
+      workoutTestUtil.createExerciseCTO({
+        exercise: ex,
+        calibration: workoutTestUtil.STANDARD_CALIBRATIONS.barbellSquat,
+        equipmentType: Object.values(workoutTestUtil.STANDARD_EQUIPMENT_TYPES).find(
+          (et) => et._id === ex.workoutEquipmentTypeId
+        )
+      })
+    );
 
   // Helper to generate a session and inspect set counts
   const getSetsPerExercise = (
     microcycleIndex: number,
     isDeload: boolean = false,
-    inputExercises: WorkoutExercise[] = exercises
+    inputExerciseCTOs = defaultExerciseCTOs
   ) => {
     const context = workoutTestUtil.createContext({
       mesocycle,
-      calibrations: [workoutTestUtil.STANDARD_CALIBRATIONS.barbellSquat],
-      exercises: inputExercises
+      exerciseCTOs: inputExerciseCTOs
     });
 
     // Populate dummy microcycles so that when generateSession looks for context.microcyclesToCreate[index], it exists.
@@ -208,14 +234,9 @@ describe('WorkoutSessionService', () => {
       );
     }
 
-    const localExerciseList = inputExercises.map((ex) => ({
-      exercise: ex,
-      calibration: workoutTestUtil.STANDARD_CALIBRATIONS.barbellSquat
-    }));
-
     // This test calls generateSession directly, so we need to initialize the muscle-group-wide
     // ordering that microcycle generation would normally provide.
-    context.setPlannedSessionExercisePairs([localExerciseList]);
+    context.setPlannedSessionExerciseCTOs([inputExerciseCTOs]);
 
     const setPlan = WorkoutVolumePlanningService.calculateSetPlanForMicrocycle(
       context,
@@ -228,27 +249,21 @@ describe('WorkoutSessionService', () => {
       microcycleIndex,
       sessionIndex: 0,
       sessionStartDate: new Date(),
-      sessionExerciseList: localExerciseList,
+      sessionExerciseList: inputExerciseCTOs,
       targetRir: 2,
       isDeloadMicrocycle: isDeload,
       setPlan
     });
 
     // Count sets generated per exercise
-    // result is in `context.setsToCreate`
-    // We map them back to which exercise they belong to.
     const setsGeneratedPerExercise: Record<string, { exerciseName: string; count: number }> = {};
     let totalSets = 0;
 
-    localExerciseList.forEach((pair) => {
-      const count = context.setsToCreate.filter(
-        (s) => s.workoutExerciseId === pair.exercise._id
-      ).length;
+    inputExerciseCTOs.forEach((cto) => {
+      const count = context.setsToCreate.filter((s) => s.workoutExerciseId === cto._id).length;
 
-      setsGeneratedPerExercise[pair.exercise._id] = {
-        // Exercise name is added so it is easy to debug the tests and make out what you are
-        // looking at.
-        exerciseName: pair.exercise.exerciseName,
+      setsGeneratedPerExercise[cto._id] = {
+        exerciseName: cto.exerciseName,
         count
       };
       totalSets += count;
@@ -273,36 +288,36 @@ describe('WorkoutSessionService', () => {
     });
 
     it('should distribute extra sets to earlier exercises within a muscle group', () => {
-      const chestExercises: WorkoutExercise[] = [
+      const chestCTOs = buildCTOsFromExercises([
         workoutTestUtil.STANDARD_EXERCISES.barbellBenchPress,
         workoutTestUtil.STANDARD_EXERCISES.inclineBenchPress
-      ];
+      ]);
 
       // Micro 1: total sets for chest group = (2 * 2) + 1 = 5.
       // Distribution: first gets 3, second gets 2.
-      const { setsGeneratedPerExercise: summary } = getSetsPerExercise(1, false, chestExercises);
-      expect(summary[chestExercises[0]._id].count).toBe(3);
-      expect(summary[chestExercises[1]._id].count).toBe(2);
+      const { setsGeneratedPerExercise: summary } = getSetsPerExercise(1, false, chestCTOs);
+      expect(summary[chestCTOs[0]._id].count).toBe(3);
+      expect(summary[chestCTOs[1]._id].count).toBe(2);
 
       // Micro 2: total sets = (2 * 2) + 2 = 6 -> 3 and 3.
-      const { setsGeneratedPerExercise: sum2 } = getSetsPerExercise(2, false, chestExercises);
-      expect(sum2[chestExercises[0]._id].count).toBe(3);
-      expect(sum2[chestExercises[1]._id].count).toBe(3);
+      const { setsGeneratedPerExercise: sum2 } = getSetsPerExercise(2, false, chestCTOs);
+      expect(sum2[chestCTOs[0]._id].count).toBe(3);
+      expect(sum2[chestCTOs[1]._id].count).toBe(3);
     });
   });
 
   describe('Deload', () => {
     it('should drastically cut volume during deload', () => {
-      const chestExercises: WorkoutExercise[] = [
+      const chestCTOs = buildCTOsFromExercises([
         workoutTestUtil.STANDARD_EXERCISES.barbellBenchPress,
         workoutTestUtil.STANDARD_EXERCISES.inclineBenchPress
-      ];
+      ]);
 
       // Deload: baseline is previous microcycle's set count, then halved (min 1).
       const { setsGeneratedPerExercise: summary, totalSets } = getSetsPerExercise(
         5,
         true,
-        chestExercises
+        chestCTOs
       );
 
       // Check total reduction

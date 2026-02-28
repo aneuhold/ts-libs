@@ -1,30 +1,16 @@
-import {
-  UserSchema,
-  WorkoutMuscleGroupSchema,
-  type WorkoutMuscleGroup
-} from '@aneuhold/core-ts-db-lib';
+import { type WorkoutMuscleGroup } from '@aneuhold/core-ts-db-lib';
 import { describe, expect, it } from 'vitest';
-import { getTestUserName } from '../../../test-util/testsUtil.js';
-import UserRepository from '../common/UserRepository.js';
+import workoutTestUtil from '../../../test-util/projects/workout/workoutTestUtil.js';
 import WorkoutMuscleGroupRepository from './WorkoutMuscleGroupRepository.js';
-
-const userRepo = UserRepository.getRepo();
 
 describe('WorkoutMuscleGroupRepository', () => {
   const repo = WorkoutMuscleGroupRepository.getRepo();
 
   describe('Basic CRUD Operations', () => {
     it('should insert a new muscle group', async () => {
-      const testUser = await createNewTestUser();
-      const newMuscleGroup = WorkoutMuscleGroupSchema.parse({
-        userId: testUser._id,
-        name: 'Test Quadriceps'
-      });
+      const testUser = await workoutTestUtil.insertUser('WorkoutMuscleGroupRepository');
 
-      const result = await repo.insertNew(newMuscleGroup);
-      if (!result) {
-        throw new Error('Failed to insert muscle group');
-      }
+      const result = await workoutTestUtil.insertMuscleGroup(testUser._id, 'Test Quadriceps');
 
       expect(result._id).toBeDefined();
       expect(result.name).toBe('Test Quadriceps');
@@ -32,30 +18,13 @@ describe('WorkoutMuscleGroupRepository', () => {
       expect(result.createdDate).toBeInstanceOf(Date);
       expect(result.lastUpdatedDate).toBeInstanceOf(Date);
       expect(result.docType).toBe('workoutMuscleGroup');
-
-      // Cleanup
-      await repo.delete(result._id);
     });
 
     it('should get all muscle groups for a user', async () => {
-      const testUser = await createNewTestUser();
-      const muscleGroup1 = await repo.insertNew(
-        WorkoutMuscleGroupSchema.parse({
-          userId: testUser._id,
-          name: 'Chest'
-        })
-      );
+      const testUser = await workoutTestUtil.insertUser('WorkoutMuscleGroupRepository');
 
-      const muscleGroup2 = await repo.insertNew(
-        WorkoutMuscleGroupSchema.parse({
-          userId: testUser._id,
-          name: 'Back'
-        })
-      );
-
-      if (!muscleGroup1 || !muscleGroup2) {
-        throw new Error('Failed to insert muscle groups');
-      }
+      const muscleGroup1 = await workoutTestUtil.insertMuscleGroup(testUser._id, 'Chest');
+      const muscleGroup2 = await workoutTestUtil.insertMuscleGroup(testUser._id, 'Back');
 
       const allMuscleGroups = await repo.getAllForUser(testUser._id);
 
@@ -63,24 +32,11 @@ describe('WorkoutMuscleGroupRepository', () => {
       const ids = allMuscleGroups.map((mg) => mg._id);
       expect(ids).toContain(muscleGroup1._id);
       expect(ids).toContain(muscleGroup2._id);
-
-      // Cleanup
-      await repo.delete(muscleGroup1._id);
-      await repo.delete(muscleGroup2._id);
     });
 
     it('should update a muscle group', async () => {
-      const testUser = await createNewTestUser();
-      const muscleGroup = await repo.insertNew(
-        WorkoutMuscleGroupSchema.parse({
-          userId: testUser._id,
-          name: 'Shoulders'
-        })
-      );
-
-      if (!muscleGroup) {
-        throw new Error('Failed to insert muscle group');
-      }
+      const testUser = await workoutTestUtil.insertUser('WorkoutMuscleGroupRepository');
+      const muscleGroup = await workoutTestUtil.insertMuscleGroup(testUser._id, 'Shoulders');
 
       await repo.update({
         _id: muscleGroup._id,
@@ -93,23 +49,11 @@ describe('WorkoutMuscleGroupRepository', () => {
       }
 
       expect(updated.name).toBe('Updated Shoulders');
-
-      // Cleanup
-      await repo.delete(muscleGroup._id);
     });
 
     it('should delete a muscle group', async () => {
-      const testUser = await createNewTestUser();
-      const muscleGroup = await repo.insertNew(
-        WorkoutMuscleGroupSchema.parse({
-          userId: testUser._id,
-          name: 'Biceps'
-        })
-      );
-
-      if (!muscleGroup) {
-        throw new Error('Failed to insert muscle group');
-      }
+      const testUser = await workoutTestUtil.insertUser('WorkoutMuscleGroupRepository');
+      const muscleGroup = await workoutTestUtil.insertMuscleGroup(testUser._id, 'Biceps');
 
       await repo.delete(muscleGroup._id);
 
@@ -120,8 +64,7 @@ describe('WorkoutMuscleGroupRepository', () => {
 
   describe('Validation', () => {
     it('should reject invalid muscle group on creation', async () => {
-      const testUser = await createNewTestUser();
-      // Test with missing required field (name)
+      const testUser = await workoutTestUtil.insertUser('WorkoutMuscleGroupRepository');
       const invalidMuscleGroup = {
         userId: testUser._id
         // name is missing
@@ -141,45 +84,190 @@ describe('WorkoutMuscleGroupRepository', () => {
     });
 
     it('should reject invalid muscle group on update', async () => {
-      const testUser = await createNewTestUser();
-      const muscleGroup = await repo.insertNew(
-        WorkoutMuscleGroupSchema.parse({
-          userId: testUser._id,
-          name: 'Test Group'
-        })
-      );
+      const testUser = await workoutTestUtil.insertUser('WorkoutMuscleGroupRepository');
+      const muscleGroup = await workoutTestUtil.insertMuscleGroup(testUser._id, 'Test Group');
 
-      if (!muscleGroup) {
-        throw new Error('Failed to insert muscle group');
-      }
-
-      // Create the update
       const update = {
         _id: muscleGroup._id,
         name: 123 // Invalid type
       };
 
-      // Test with invalid data type for name
       await expect(repo.update(update as unknown as WorkoutMuscleGroup)).rejects.toThrow(
         'Schema validation failed'
       );
+    });
+  });
 
-      // Cleanup
-      await repo.delete(muscleGroup._id);
+  describe('buildMuscleGroupVolumeCTOsForUser', () => {
+    it('should return empty mesocycleHistory for muscle groups with no completed mesocycles', async () => {
+      const user = await workoutTestUtil.insertUser('WorkoutMuscleGroupRepository.buildCTOs');
+      const mg = await workoutTestUtil.insertMuscleGroup(user._id, 'Traps');
+
+      const ctos = await repo.buildMuscleGroupVolumeCTOsForUser(user._id);
+      const cto = ctos.find((c) => c._id === mg._id);
+
+      expect(cto).toBeDefined();
+      if (!cto) return;
+      expect(cto.mesocycleHistory).toHaveLength(0);
+    });
+
+    it('should compute startingSetCount from the first microcycle', async () => {
+      const user = await workoutTestUtil.insertUser('WorkoutMuscleGroupRepository.buildCTOs');
+      const mg = await workoutTestUtil.insertMuscleGroup(user._id, 'Chest');
+      const eq = await workoutTestUtil.insertEquipmentType(user._id);
+      const exercise = await workoutTestUtil.insertExercise({
+        userId: user._id,
+        equipmentTypeId: eq._id,
+        primaryMuscleGroupIds: [mg._id],
+        name: 'Bench'
+      });
+
+      await workoutTestUtil.insertCompletedMesocycle(user._id, exercise, {
+        microcycleCount: 3,
+        setsPerMicrocycle: [2, 4, 5]
+      });
+
+      const ctos = await repo.buildMuscleGroupVolumeCTOsForUser(user._id);
+      const cto = ctos.find((c) => c._id === mg._id);
+
+      expect(cto).toBeDefined();
+      if (!cto) return;
+      expect(cto.mesocycleHistory).toHaveLength(1);
+      expect(cto.mesocycleHistory[0].startingSetCount).toBe(2);
+    });
+
+    it('should compute peakSetCount as the max across microcycles', async () => {
+      const user = await workoutTestUtil.insertUser('WorkoutMuscleGroupRepository.buildCTOs');
+      const mg = await workoutTestUtil.insertMuscleGroup(user._id, 'Quads');
+      const eq = await workoutTestUtil.insertEquipmentType(user._id);
+      const exercise = await workoutTestUtil.insertExercise({
+        userId: user._id,
+        equipmentTypeId: eq._id,
+        primaryMuscleGroupIds: [mg._id],
+        name: 'Squat'
+      });
+
+      await workoutTestUtil.insertCompletedMesocycle(user._id, exercise, {
+        microcycleCount: 3,
+        setsPerMicrocycle: [3, 5, 4]
+      });
+
+      const ctos = await repo.buildMuscleGroupVolumeCTOsForUser(user._id);
+      const cto = ctos.find((c) => c._id === mg._id);
+
+      expect(cto).toBeDefined();
+      if (!cto) return;
+      expect(cto.mesocycleHistory[0].peakSetCount).toBe(5);
+    });
+
+    it('should compute RSM, soreness, and performance averages correctly', async () => {
+      const user = await workoutTestUtil.insertUser('WorkoutMuscleGroupRepository.buildCTOs');
+      const mg = await workoutTestUtil.insertMuscleGroup(user._id, 'Back');
+      const eq = await workoutTestUtil.insertEquipmentType(user._id);
+      const exercise = await workoutTestUtil.insertExercise({
+        userId: user._id,
+        equipmentTypeId: eq._id,
+        primaryMuscleGroupIds: [mg._id],
+        name: 'Row'
+      });
+
+      await workoutTestUtil.insertCompletedMesocycle(user._id, exercise, {
+        microcycleCount: 2,
+        sorenessScore: 2,
+        performanceScore: 1,
+        rsm: { mindMuscleConnection: 2, pump: 1, disruption: 1 }
+      });
+
+      const ctos = await repo.buildMuscleGroupVolumeCTOsForUser(user._id);
+      const cto = ctos.find((c) => c._id === mg._id);
+      expect(cto).toBeDefined();
+      if (!cto) return;
+      const history = cto.mesocycleHistory[0];
+
+      // RSM total = 2+1+1 = 4, averaged across 2 session exercises
+      expect(history.avgRsm).toBe(4);
+      expect(history.avgSorenessScore).toBe(2);
+      expect(history.avgPerformanceScore).toBe(1);
+    });
+
+    it('should count recoverySessionCount correctly', async () => {
+      const user = await workoutTestUtil.insertUser('WorkoutMuscleGroupRepository.buildCTOs');
+      const mg = await workoutTestUtil.insertMuscleGroup(user._id, 'Shoulders');
+      const eq = await workoutTestUtil.insertEquipmentType(user._id);
+      const exercise = await workoutTestUtil.insertExercise({
+        userId: user._id,
+        equipmentTypeId: eq._id,
+        primaryMuscleGroupIds: [mg._id],
+        name: 'Press'
+      });
+
+      await workoutTestUtil.insertCompletedMesocycle(user._id, exercise, {
+        microcycleCount: 3,
+        isRecoveryExercise: true
+      });
+
+      const ctos = await repo.buildMuscleGroupVolumeCTOsForUser(user._id);
+      const cto = ctos.find((c) => c._id === mg._id);
+
+      expect(cto).toBeDefined();
+      if (!cto) return;
+      expect(cto.mesocycleHistory[0].recoverySessionCount).toBe(3);
+    });
+
+    it('should include secondary muscle group associations', async () => {
+      const user = await workoutTestUtil.insertUser('WorkoutMuscleGroupRepository.buildCTOs');
+      const primaryMg = await workoutTestUtil.insertMuscleGroup(user._id, 'Chest');
+      const secondaryMg = await workoutTestUtil.insertMuscleGroup(user._id, 'Triceps');
+      const eq = await workoutTestUtil.insertEquipmentType(user._id);
+      const exercise = await workoutTestUtil.insertExercise({
+        userId: user._id,
+        equipmentTypeId: eq._id,
+        primaryMuscleGroupIds: [primaryMg._id],
+        secondaryMuscleGroupIds: [secondaryMg._id],
+        name: 'Bench'
+      });
+
+      await workoutTestUtil.insertCompletedMesocycle(user._id, exercise, {
+        microcycleCount: 2,
+        setsPerMicrocycle: [4, 4]
+      });
+
+      const ctos = await repo.buildMuscleGroupVolumeCTOsForUser(user._id);
+      const secondaryCto = ctos.find((c) => c._id === secondaryMg._id);
+
+      // Secondary muscle group should also have volume history
+      expect(secondaryCto).toBeDefined();
+      if (!secondaryCto) return;
+      expect(secondaryCto.mesocycleHistory).toHaveLength(1);
+      expect(secondaryCto.mesocycleHistory[0].startingSetCount).toBe(4);
+    });
+
+    it('should return null averages when RSM/soreness/performance are not recorded', async () => {
+      const user = await workoutTestUtil.insertUser('WorkoutMuscleGroupRepository.buildCTOs');
+      const mg = await workoutTestUtil.insertMuscleGroup(user._id, 'Calves');
+      const eq = await workoutTestUtil.insertEquipmentType(user._id);
+      const exercise = await workoutTestUtil.insertExercise({
+        userId: user._id,
+        equipmentTypeId: eq._id,
+        primaryMuscleGroupIds: [mg._id],
+        name: 'Calf Raise'
+      });
+
+      await workoutTestUtil.insertCompletedMesocycle(user._id, exercise, {
+        microcycleCount: 2,
+        sorenessScore: null,
+        performanceScore: null,
+        rsm: null
+      });
+
+      const ctos = await repo.buildMuscleGroupVolumeCTOsForUser(user._id);
+      const cto = ctos.find((c) => c._id === mg._id);
+
+      expect(cto).toBeDefined();
+      if (!cto) return;
+      expect(cto.mesocycleHistory[0].avgRsm).toBeNull();
+      expect(cto.mesocycleHistory[0].avgSorenessScore).toBeNull();
+      expect(cto.mesocycleHistory[0].avgPerformanceScore).toBeNull();
     });
   });
 });
-
-/**
- * Create a new test user
- *
- * @returns The new user
- */
-async function createNewTestUser() {
-  const newUser = UserSchema.parse({
-    userName: getTestUserName(`musclegroup`)
-  });
-  const insertResult = await userRepo.insertNew(newUser);
-  expect(insertResult).toBeTruthy();
-  return newUser;
-}

@@ -5,7 +5,6 @@ import {
   BaseDocumentWithTypeSchema,
   BaseDocumentWithUpdatedAndCreatedDatesSchema
 } from '../BaseDocument.js';
-import type { WorkoutExercise } from './WorkoutExercise.js';
 
 /**
  * The docType value for WorkoutExerciseCalibration documents.
@@ -47,7 +46,18 @@ export const WorkoutExerciseCalibrationSchema = z.object({
   /**
    * The date this calibration was recorded.
    */
-  dateRecorded: z.date().default(() => new Date())
+  dateRecorded: z.date().default(() => new Date()),
+  /**
+   * When populated, this calibration was created from an actual set
+   * that produced a higher 1RM than any existing calibration for this
+   * exercise. The ID references the WorkoutSet that generated it.
+   *
+   * When null, this calibration was manually entered by the user.
+   */
+  associatedWorkoutSetId: z
+    .uuidv7()
+    .transform((val) => val as UUID)
+    .nullish()
 });
 
 /**
@@ -64,11 +74,3 @@ export const WorkoutExerciseCalibrationSchema = z.object({
  * are updated later.
  */
 export type WorkoutExerciseCalibration = z.infer<typeof WorkoutExerciseCalibrationSchema>;
-
-/**
- * Represents a calibration paired with its associated exercise definition.
- */
-export type CalibrationExercisePair = {
-  calibration: WorkoutExerciseCalibration;
-  exercise: WorkoutExercise;
-};

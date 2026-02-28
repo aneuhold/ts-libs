@@ -1,21 +1,13 @@
 import {
   ExerciseRepRange,
-  UserSchema,
-  WorkoutEquipmentTypeSchema,
-  WorkoutExerciseCalibrationSchema,
+  WorkoutExerciseCalibrationService,
   WorkoutExerciseSchema,
-  WorkoutMuscleGroupSchema,
   type WorkoutExercise
 } from '@aneuhold/core-ts-db-lib';
 import { describe, expect, it } from 'vitest';
-import { getTestUserName } from '../../../test-util/testsUtil.js';
-import UserRepository from '../common/UserRepository.js';
-import WorkoutEquipmentTypeRepository from './WorkoutEquipmentTypeRepository.js';
+import workoutTestUtil from '../../../test-util/projects/workout/workoutTestUtil.js';
 import WorkoutExerciseCalibrationRepository from './WorkoutExerciseCalibrationRepository.js';
 import WorkoutExerciseRepository from './WorkoutExerciseRepository.js';
-import WorkoutMuscleGroupRepository from './WorkoutMuscleGroupRepository.js';
-
-const userRepo = UserRepository.getRepo();
 
 describe('WorkoutExerciseRepository', () => {
   const repo = WorkoutExerciseRepository.getRepo();
@@ -23,20 +15,25 @@ describe('WorkoutExerciseRepository', () => {
 
   describe('Basic CRUD Operations', () => {
     it('should insert a new exercise with muscle groups and equipment', async () => {
-      const testUser = await createNewTestUser();
-
-      const primaryMuscleGroup = await createMuscleGroup(testUser._id, 'Quadriceps');
-      const secondaryMuscleGroup = await createMuscleGroup(testUser._id, 'Hamstrings');
-      const equipment = await createEquipmentType(testUser._id, 'Barbell');
-
-      const result = await createExercise(
+      const testUser = await workoutTestUtil.insertUser('WorkoutExerciseRepository');
+      const primaryMuscleGroup = await workoutTestUtil.insertMuscleGroup(
         testUser._id,
-        'Squat',
-        equipment._id,
-        [primaryMuscleGroup._id],
-        [secondaryMuscleGroup._id],
-        ExerciseRepRange.Heavy
+        'Quadriceps'
       );
+      const secondaryMuscleGroup = await workoutTestUtil.insertMuscleGroup(
+        testUser._id,
+        'Hamstrings'
+      );
+      const equipment = await workoutTestUtil.insertEquipmentType(testUser._id, 'Barbell');
+
+      const result = await workoutTestUtil.insertExercise({
+        userId: testUser._id,
+        equipmentTypeId: equipment._id,
+        primaryMuscleGroupIds: [primaryMuscleGroup._id],
+        secondaryMuscleGroupIds: [secondaryMuscleGroup._id],
+        name: 'Squat',
+        repRange: ExerciseRepRange.Heavy
+      });
 
       expect(result._id).toBeDefined();
       expect(result.exerciseName).toBe('Squat');
@@ -50,12 +47,16 @@ describe('WorkoutExerciseRepository', () => {
     });
 
     it('should insert a new exercise without secondary muscle groups', async () => {
-      const testUser = await createNewTestUser();
+      const testUser = await workoutTestUtil.insertUser('WorkoutExerciseRepository');
+      const muscleGroup = await workoutTestUtil.insertMuscleGroup(testUser._id, 'Core');
+      const equipment = await workoutTestUtil.insertEquipmentType(testUser._id, 'Bodyweight');
 
-      const muscleGroup = await createMuscleGroup(testUser._id, 'Core');
-      const equipment = await createEquipmentType(testUser._id, 'Bodyweight');
-
-      const result = await createExercise(testUser._id, 'Plank', equipment._id, [muscleGroup._id]);
+      const result = await workoutTestUtil.insertExercise({
+        userId: testUser._id,
+        equipmentTypeId: equipment._id,
+        primaryMuscleGroupIds: [muscleGroup._id],
+        name: 'Plank'
+      });
 
       expect(result._id).toBeDefined();
       expect(result.exerciseName).toBe('Plank');
@@ -64,18 +65,22 @@ describe('WorkoutExerciseRepository', () => {
     });
 
     it('should get all exercises for a user', async () => {
-      const testUser = await createNewTestUser();
+      const testUser = await workoutTestUtil.insertUser('WorkoutExerciseRepository');
+      const muscleGroup = await workoutTestUtil.insertMuscleGroup(testUser._id, 'Chest');
+      const equipment = await workoutTestUtil.insertEquipmentType(testUser._id, 'Barbell');
 
-      const muscleGroup = await createMuscleGroup(testUser._id, 'Chest');
-      const equipment = await createEquipmentType(testUser._id, 'Barbell');
-
-      const exercise1 = await createExercise(testUser._id, 'Bench Press', equipment._id, [
-        muscleGroup._id
-      ]);
-
-      const exercise2 = await createExercise(testUser._id, 'Incline Press', equipment._id, [
-        muscleGroup._id
-      ]);
+      const exercise1 = await workoutTestUtil.insertExercise({
+        userId: testUser._id,
+        equipmentTypeId: equipment._id,
+        primaryMuscleGroupIds: [muscleGroup._id],
+        name: 'Bench Press'
+      });
+      const exercise2 = await workoutTestUtil.insertExercise({
+        userId: testUser._id,
+        equipmentTypeId: equipment._id,
+        primaryMuscleGroupIds: [muscleGroup._id],
+        name: 'Incline Press'
+      });
 
       const allExercises = await repo.getAllForUser(testUser._id);
 
@@ -86,14 +91,16 @@ describe('WorkoutExerciseRepository', () => {
     });
 
     it('should update an exercise', async () => {
-      const testUser = await createNewTestUser();
+      const testUser = await workoutTestUtil.insertUser('WorkoutExerciseRepository');
+      const muscleGroup = await workoutTestUtil.insertMuscleGroup(testUser._id, 'Back');
+      const equipment = await workoutTestUtil.insertEquipmentType(testUser._id, 'Bodyweight');
 
-      const muscleGroup = await createMuscleGroup(testUser._id, 'Back');
-      const equipment = await createEquipmentType(testUser._id, 'Bodyweight');
-
-      const exercise = await createExercise(testUser._id, 'Pull Up', equipment._id, [
-        muscleGroup._id
-      ]);
+      const exercise = await workoutTestUtil.insertExercise({
+        userId: testUser._id,
+        equipmentTypeId: equipment._id,
+        primaryMuscleGroupIds: [muscleGroup._id],
+        name: 'Pull Up'
+      });
 
       await repo.update({
         _id: exercise._id,
@@ -109,14 +116,16 @@ describe('WorkoutExerciseRepository', () => {
     });
 
     it('should delete an exercise', async () => {
-      const testUser = await createNewTestUser();
+      const testUser = await workoutTestUtil.insertUser('WorkoutExerciseRepository');
+      const muscleGroup = await workoutTestUtil.insertMuscleGroup(testUser._id, 'Shoulders');
+      const equipment = await workoutTestUtil.insertEquipmentType(testUser._id, 'Barbell');
 
-      const muscleGroup = await createMuscleGroup(testUser._id, 'Shoulders');
-      const equipment = await createEquipmentType(testUser._id, 'Barbell');
-
-      const exercise = await createExercise(testUser._id, 'Overhead Press', equipment._id, [
-        muscleGroup._id
-      ]);
+      const exercise = await workoutTestUtil.insertExercise({
+        userId: testUser._id,
+        equipmentTypeId: equipment._id,
+        primaryMuscleGroupIds: [muscleGroup._id],
+        name: 'Overhead Press'
+      });
 
       await repo.delete(exercise._id);
 
@@ -127,9 +136,8 @@ describe('WorkoutExerciseRepository', () => {
 
   describe('Validation', () => {
     it('should reject exercise with non-existent muscle group', async () => {
-      const testUser = await createNewTestUser();
-
-      const equipment = await createEquipmentType(testUser._id, 'Barbell');
+      const testUser = await workoutTestUtil.insertUser('WorkoutExerciseRepository');
+      const equipment = await workoutTestUtil.insertEquipmentType(testUser._id, 'Barbell');
 
       const newExercise = WorkoutExerciseSchema.parse({
         userId: testUser._id,
@@ -148,9 +156,8 @@ describe('WorkoutExerciseRepository', () => {
     });
 
     it('should reject exercise with non-existent equipment type', async () => {
-      const testUser = await createNewTestUser();
-
-      const muscleGroup = await createMuscleGroup(testUser._id, 'Legs');
+      const testUser = await workoutTestUtil.insertUser('WorkoutExerciseRepository');
+      const muscleGroup = await workoutTestUtil.insertMuscleGroup(testUser._id, 'Legs');
 
       const fakeEquipmentId = '00000000-0000-7000-8000-000000000000';
       const newExercise = WorkoutExerciseSchema.parse({
@@ -168,7 +175,7 @@ describe('WorkoutExerciseRepository', () => {
     });
 
     it('should reject invalid exercise on creation', async () => {
-      const testUser = await createNewTestUser();
+      const testUser = await workoutTestUtil.insertUser('WorkoutExerciseRepository');
 
       const invalidExercise = {
         userId: testUser._id
@@ -191,27 +198,23 @@ describe('WorkoutExerciseRepository', () => {
 
   describe('Cascading Deletes', () => {
     it('should delete calibrations when exercise is deleted', async () => {
-      const testUser = await createNewTestUser();
+      const testUser = await workoutTestUtil.insertUser('WorkoutExerciseRepository');
+      const muscleGroup = await workoutTestUtil.insertMuscleGroup(testUser._id, 'Arms');
+      const equipment = await workoutTestUtil.insertEquipmentType(testUser._id, 'Dumbbell');
 
-      const muscleGroup = await createMuscleGroup(testUser._id, 'Arms');
-      const equipment = await createEquipmentType(testUser._id, 'Dumbbell');
+      const exercise = await workoutTestUtil.insertExercise({
+        userId: testUser._id,
+        equipmentTypeId: equipment._id,
+        primaryMuscleGroupIds: [muscleGroup._id],
+        name: 'Bicep Curl'
+      });
 
-      const exercise = await createExercise(testUser._id, 'Bicep Curl', equipment._id, [
-        muscleGroup._id
-      ]);
-
-      // Create calibrations for the exercise
-      const calibration = await calibrationRepo.insertNew(
-        WorkoutExerciseCalibrationSchema.parse({
-          userId: testUser._id,
-          workoutExerciseId: exercise._id,
-          reps: 10,
-          weight: 25
-        })
-      );
-      if (!calibration) {
-        throw new Error('Failed to insert calibration');
-      }
+      const calibration = await workoutTestUtil.insertCalibration({
+        userId: testUser._id,
+        exerciseId: exercise._id,
+        reps: 10,
+        weight: 25
+      });
 
       // Verify calibration exists
       const retrievedCalibration = await calibrationRepo.get({ _id: calibration._id });
@@ -225,89 +228,279 @@ describe('WorkoutExerciseRepository', () => {
       expect(deletedCalibration).toBeNull();
     });
   });
-});
 
-/**
- * Create a new test user
- */
-async function createNewTestUser() {
-  const newUser = UserSchema.parse({
-    userName: getTestUserName(`exercise`)
+  describe('buildExerciseCTOsForUser', () => {
+    it('should return CTO with correct equipmentType', async () => {
+      const user = await workoutTestUtil.insertUser('WorkoutExerciseRepository.buildCTOs');
+      const mg = await workoutTestUtil.insertMuscleGroup(user._id, 'Chest');
+      const eq = await workoutTestUtil.insertEquipmentType(user._id, 'Barbell');
+      const exercise = await workoutTestUtil.insertExercise({
+        userId: user._id,
+        equipmentTypeId: eq._id,
+        primaryMuscleGroupIds: [mg._id],
+        name: 'Bench Press'
+      });
+
+      const ctos = await repo.buildExerciseCTOsForUser(user._id);
+
+      const cto = ctos.find((c) => c._id === exercise._id);
+      expect(cto).toBeDefined();
+      if (!cto) return;
+      expect(cto.equipmentType._id).toBe(eq._id);
+      expect(cto.equipmentType.title).toBe('Barbell');
+    });
+
+    it('should return bestCalibration as the calibration with highest 1RM', async () => {
+      const user = await workoutTestUtil.insertUser('WorkoutExerciseRepository.buildCTOs');
+      const mg = await workoutTestUtil.insertMuscleGroup(user._id, 'Quads');
+      const eq = await workoutTestUtil.insertEquipmentType(user._id, 'Barbell');
+      const exercise = await workoutTestUtil.insertExercise({
+        userId: user._id,
+        equipmentTypeId: eq._id,
+        primaryMuscleGroupIds: [mg._id],
+        name: 'Squat'
+      });
+
+      const cal1 = await workoutTestUtil.insertCalibration({
+        userId: user._id,
+        exerciseId: exercise._id,
+        weight: 100,
+        reps: 8
+      });
+      const cal2 = await workoutTestUtil.insertCalibration({
+        userId: user._id,
+        exerciseId: exercise._id,
+        weight: 120,
+        reps: 6
+      });
+
+      const cal1_1rm = WorkoutExerciseCalibrationService.get1RM(cal1);
+      const cal2_1rm = WorkoutExerciseCalibrationService.get1RM(cal2);
+      const expectedBestId = cal2_1rm > cal1_1rm ? cal2._id : cal1._id;
+
+      const ctos = await repo.buildExerciseCTOsForUser(user._id);
+      const cto = ctos.find((c) => c._id === exercise._id);
+
+      expect(cto).toBeDefined();
+      if (!cto) return;
+      expect(cto.bestCalibration).not.toBeNull();
+      if (!cto.bestCalibration) return;
+      expect(cto.bestCalibration._id).toBe(expectedBestId);
+    });
+
+    it('should return bestSet as the set with highest 1RM among completed sets', async () => {
+      const user = await workoutTestUtil.insertUser('WorkoutExerciseRepository.buildCTOs');
+      const mg = await workoutTestUtil.insertMuscleGroup(user._id, 'Chest');
+      const eq = await workoutTestUtil.insertEquipmentType(user._id, 'Barbell');
+      const exercise = await workoutTestUtil.insertExercise({
+        userId: user._id,
+        equipmentTypeId: eq._id,
+        primaryMuscleGroupIds: [mg._id],
+        name: 'Bench'
+      });
+
+      // Session 1: lighter sets
+      await workoutTestUtil.insertSessionHierarchy(user._id, exercise, {
+        actualWeight: 80,
+        actualReps: 10,
+        startTime: new Date('2025-01-01')
+      });
+
+      // Session 2: heavier sets (higher 1RM)
+      const { sets: heavySets } = await workoutTestUtil.insertSessionHierarchy(user._id, exercise, {
+        actualWeight: 100,
+        actualReps: 8,
+        startTime: new Date('2025-01-08')
+      });
+
+      const ctos = await repo.buildExerciseCTOsForUser(user._id);
+      const cto = ctos.find((c) => c._id === exercise._id);
+
+      expect(cto).toBeDefined();
+      if (!cto) return;
+      expect(cto.bestSet).not.toBeNull();
+      if (!cto.bestSet) return;
+      // The best set should be one of the heavier sets
+      expect(heavySets.map((s) => s._id)).toContain(cto.bestSet._id);
+    });
+
+    it('should return lastSessionExercise from the most recent completed non-deload session', async () => {
+      const user = await workoutTestUtil.insertUser('WorkoutExerciseRepository.buildCTOs');
+      const mg = await workoutTestUtil.insertMuscleGroup(user._id, 'Back');
+      const eq = await workoutTestUtil.insertEquipmentType(user._id, 'Cable');
+      const exercise = await workoutTestUtil.insertExercise({
+        userId: user._id,
+        equipmentTypeId: eq._id,
+        primaryMuscleGroupIds: [mg._id],
+        name: 'Lat Pulldown'
+      });
+
+      // Older completed session
+      await workoutTestUtil.insertSessionHierarchy(user._id, exercise, {
+        startTime: new Date('2025-01-01'),
+        complete: true,
+        plannedRir: 2
+      });
+
+      // More recent completed session
+      const { sessionExercise: recentSE } = await workoutTestUtil.insertSessionHierarchy(
+        user._id,
+        exercise,
+        {
+          startTime: new Date('2025-01-08'),
+          complete: true,
+          plannedRir: 3
+        }
+      );
+
+      const ctos = await repo.buildExerciseCTOsForUser(user._id);
+      const cto = ctos.find((c) => c._id === exercise._id);
+
+      expect(cto).toBeDefined();
+      if (!cto) return;
+      expect(cto.lastSessionExercise).not.toBeNull();
+      if (!cto.lastSessionExercise) return;
+      expect(cto.lastSessionExercise._id).toBe(recentSE._id);
+    });
+
+    it('should exclude deload sessions from lastSessionExercise', async () => {
+      const user = await workoutTestUtil.insertUser('WorkoutExerciseRepository.buildCTOs');
+      const mg = await workoutTestUtil.insertMuscleGroup(user._id, 'Shoulders');
+      const eq = await workoutTestUtil.insertEquipmentType(user._id, 'Dumbbell');
+      const exercise = await workoutTestUtil.insertExercise({
+        userId: user._id,
+        equipmentTypeId: eq._id,
+        primaryMuscleGroupIds: [mg._id],
+        name: 'Lateral Raise'
+      });
+
+      // Older accumulation session
+      const { sessionExercise: accumSE } = await workoutTestUtil.insertSessionHierarchy(
+        user._id,
+        exercise,
+        {
+          startTime: new Date('2025-01-01'),
+          complete: true,
+          plannedRir: 2
+        }
+      );
+
+      // More recent deload session (all sets have plannedRir === null)
+      await workoutTestUtil.insertSessionHierarchy(user._id, exercise, {
+        startTime: new Date('2025-01-08'),
+        complete: true,
+        plannedRir: null
+      });
+
+      const ctos = await repo.buildExerciseCTOsForUser(user._id);
+      const cto = ctos.find((c) => c._id === exercise._id);
+
+      expect(cto).toBeDefined();
+      if (!cto) return;
+      expect(cto.lastSessionExercise).not.toBeNull();
+      if (!cto.lastSessionExercise) return;
+      // Should pick the accumulation session, not the deload
+      expect(cto.lastSessionExercise._id).toBe(accumSE._id);
+    });
+
+    it('should return lastFirstSet matching lastSessionExercise.setOrder[0]', async () => {
+      const user = await workoutTestUtil.insertUser('WorkoutExerciseRepository.buildCTOs');
+      const mg = await workoutTestUtil.insertMuscleGroup(user._id, 'Chest');
+      const eq = await workoutTestUtil.insertEquipmentType(user._id, 'Barbell');
+      const exercise = await workoutTestUtil.insertExercise({
+        userId: user._id,
+        equipmentTypeId: eq._id,
+        primaryMuscleGroupIds: [mg._id],
+        name: 'Bench Press'
+      });
+
+      const { sessionExercise, sets } = await workoutTestUtil.insertSessionHierarchy(
+        user._id,
+        exercise,
+        {
+          startTime: new Date('2025-01-08'),
+          complete: true,
+          setCount: 3
+        }
+      );
+
+      const ctos = await repo.buildExerciseCTOsForUser(user._id);
+      const cto = ctos.find((c) => c._id === exercise._id);
+
+      expect(cto).toBeDefined();
+      if (!cto) return;
+      expect(cto.lastFirstSet).not.toBeNull();
+      if (!cto.lastFirstSet) return;
+      expect(cto.lastFirstSet._id).toBe(sessionExercise.setOrder[0]);
+      expect(cto.lastFirstSet._id).toBe(sets[0]._id);
+    });
+
+    it('should return null for all nullable fields when exercise has no data', async () => {
+      const user = await workoutTestUtil.insertUser('WorkoutExerciseRepository.buildCTOs');
+      const mg = await workoutTestUtil.insertMuscleGroup(user._id, 'Abs');
+      const eq = await workoutTestUtil.insertEquipmentType(user._id, 'Bodyweight');
+      const exercise = await workoutTestUtil.insertExercise({
+        userId: user._id,
+        equipmentTypeId: eq._id,
+        primaryMuscleGroupIds: [mg._id],
+        name: 'Crunch'
+      });
+
+      const ctos = await repo.buildExerciseCTOsForUser(user._id);
+      const cto = ctos.find((c) => c._id === exercise._id);
+
+      expect(cto).toBeDefined();
+      if (!cto) return;
+      expect(cto.bestCalibration).toBeNull();
+      expect(cto.bestSet).toBeNull();
+      expect(cto.lastSessionExercise).toBeNull();
+      expect(cto.lastFirstSet).toBeNull();
+    });
+
+    it('should return multiple exercises correctly in one call', async () => {
+      const user = await workoutTestUtil.insertUser('WorkoutExerciseRepository.buildCTOs');
+      const mg = await workoutTestUtil.insertMuscleGroup(user._id, 'Legs');
+      const eq = await workoutTestUtil.insertEquipmentType(user._id, 'Barbell');
+      const ex1 = await workoutTestUtil.insertExercise({
+        userId: user._id,
+        equipmentTypeId: eq._id,
+        primaryMuscleGroupIds: [mg._id],
+        name: 'Squat'
+      });
+      const ex2 = await workoutTestUtil.insertExercise({
+        userId: user._id,
+        equipmentTypeId: eq._id,
+        primaryMuscleGroupIds: [mg._id],
+        name: 'Deadlift'
+      });
+
+      await workoutTestUtil.insertCalibration({
+        userId: user._id,
+        exerciseId: ex1._id,
+        weight: 100,
+        reps: 8
+      });
+      await workoutTestUtil.insertCalibration({
+        userId: user._id,
+        exerciseId: ex2._id,
+        weight: 120,
+        reps: 5
+      });
+
+      const ctos = await repo.buildExerciseCTOsForUser(user._id);
+
+      expect(ctos.length).toBeGreaterThanOrEqual(2);
+      const ids = ctos.map((c) => c._id);
+      expect(ids).toContain(ex1._id);
+      expect(ids).toContain(ex2._id);
+
+      const cto1 = ctos.find((c) => c._id === ex1._id);
+      const cto2 = ctos.find((c) => c._id === ex2._id);
+      expect(cto1).toBeDefined();
+      expect(cto2).toBeDefined();
+      if (!cto1 || !cto2) return;
+      expect(cto1.bestCalibration).not.toBeNull();
+      expect(cto2.bestCalibration).not.toBeNull();
+    });
   });
-  const insertResult = await userRepo.insertNew(newUser);
-  expect(insertResult).toBeTruthy();
-  return newUser;
-}
-
-/**
- * Create a muscle group for testing
- *
- * @param userId the user ID
- * @param name the muscle group name
- */
-async function createMuscleGroup(userId: string, name: string) {
-  const muscleGroup = await WorkoutMuscleGroupRepository.getRepo().insertNew(
-    WorkoutMuscleGroupSchema.parse({
-      userId,
-      name
-    })
-  );
-  if (!muscleGroup) {
-    throw new Error(`Failed to insert muscle group: ${name}`);
-  }
-  return muscleGroup;
-}
-
-/**
- * Create equipment type for testing
- *
- * @param userId the user ID
- * @param title the equipment title
- */
-async function createEquipmentType(userId: string, title: string) {
-  const equipment = await WorkoutEquipmentTypeRepository.getRepo().insertNew(
-    WorkoutEquipmentTypeSchema.parse({
-      userId,
-      title
-    })
-  );
-  if (!equipment) {
-    throw new Error(`Failed to insert equipment type: ${title}`);
-  }
-  return equipment;
-}
-
-/**
- * Create an exercise for testing
- *
- * @param userId the user ID
- * @param exerciseName the exercise name
- * @param equipmentId the equipment ID
- * @param primaryMuscleGroupIds the primary muscle group IDs
- * @param secondaryMuscleGroupIds the secondary muscle group IDs
- * @param repRange the exercise rep range
- */
-async function createExercise(
-  userId: string,
-  exerciseName: string,
-  equipmentId: string,
-  primaryMuscleGroupIds: string[],
-  secondaryMuscleGroupIds?: string[],
-  repRange: ExerciseRepRange = ExerciseRepRange.Medium
-): Promise<WorkoutExercise> {
-  const exercise = await WorkoutExerciseRepository.getRepo().insertNew(
-    WorkoutExerciseSchema.parse({
-      userId,
-      exerciseName,
-      workoutEquipmentTypeId: equipmentId,
-      initialFatigueGuess: {},
-      primaryMuscleGroups: primaryMuscleGroupIds,
-      secondaryMuscleGroups: secondaryMuscleGroupIds,
-      repRange
-    })
-  );
-  if (!exercise) {
-    throw new Error(`Failed to insert exercise: ${exerciseName}`);
-  }
-  return exercise;
-}
+});

@@ -367,12 +367,12 @@ To get your MEV, do the RSM calculation for the first 2-3 days of the mesocycle.
 
 After you get this information, go ahead and finish out the first week at MEV, then calculate how you should progress by answering the following questions:
 
-On a scale of 0-3 how sore did you get in the target muscles?
+On a scale of 0-3 how sore did you get in the target muscle group?
 
-- 0: You did not get at all sore in the target muscles
-- 1: You got stiff for a few hours after training and had mild soreness in the target muscles that resolved by next session targeting the same muscles
-- 2: You got DOMS in the target muscles that resolved just in time for the next session targeting the same muscles
-- 3: You got DOMS in the target muscles that remained for the next session targeting the same muscles
+- 0: You did not get at all sore in the target muscle group
+- 1: You got stiff for a few hours after training and had mild soreness in the target muscle group that resolved by next session targeting the same muscle group
+- 2: You got DOMS in the target muscle group that resolved just in time for the next session targeting the same muscle group
+- 3: You got DOMS in the target muscle group that remained for the next session targeting the same muscle group
 
 On a scale of 0-3 how was your performance?
 

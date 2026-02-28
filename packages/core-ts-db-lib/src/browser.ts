@@ -43,14 +43,17 @@ import {
   WorkoutExercise_docType,
   WorkoutExerciseSchema
 } from './documents/workout/WorkoutExercise.js';
-import type {
-  CalibrationExercisePair,
-  WorkoutExerciseCalibration
-} from './documents/workout/WorkoutExerciseCalibration.js';
+import type { WorkoutExerciseCalibration } from './documents/workout/WorkoutExerciseCalibration.js';
 import {
   WorkoutExerciseCalibration_docType,
   WorkoutExerciseCalibrationSchema
 } from './documents/workout/WorkoutExerciseCalibration.js';
+import type { WorkoutExerciseCTO } from './ctos/workout/WorkoutExerciseCTO.js';
+import { WorkoutExerciseCTOSchema } from './ctos/workout/WorkoutExerciseCTO.js';
+import type { WorkoutMuscleGroupVolumeCTO } from './ctos/workout/WorkoutMuscleGroupVolumeCTO.js';
+import { WorkoutMuscleGroupVolumeCTOSchema } from './ctos/workout/WorkoutMuscleGroupVolumeCTO.js';
+import type { MesocycleVolumeSummary } from './embedded-types/workout/MesocycleVolumeSummary.js';
+import { MesocycleVolumeSummarySchema } from './embedded-types/workout/MesocycleVolumeSummary.js';
 import type { WorkoutMesocycle } from './documents/workout/WorkoutMesocycle.js';
 import {
   CycleType,
@@ -191,6 +194,7 @@ export {
   ExercisePropertyType,
   ExerciseRepRange,
   FatigueSchema,
+  MesocycleVolumeSummarySchema,
   NonogramKatanaItem_docType,
   NonogramKatanaItemName,
   NonogramKatanaItemNameSchema,
@@ -221,6 +225,7 @@ export {
   WorkoutExerciseCalibration_docType,
   WorkoutExerciseCalibrationSchema,
   WorkoutExerciseCalibrationService,
+  WorkoutExerciseCTOSchema,
   WorkoutExerciseSchema,
   WorkoutExerciseService,
   WorkoutMesocycle_docType,
@@ -232,6 +237,7 @@ export {
   WorkoutMicrocycleService,
   WorkoutMuscleGroup_docType,
   WorkoutMuscleGroupSchema,
+  WorkoutMuscleGroupVolumeCTOSchema,
   WorkoutSession_docType,
   WorkoutSessionExercise_docType,
   WorkoutSessionExerciseSchema,
@@ -250,7 +256,6 @@ export type {
   BaseDocument,
   BaseDocumentWithType,
   BaseDocumentWithUpdatedAndCreatedDates,
-  CalibrationExercisePair,
   DashboardTagSetting,
   DashboardTagSettings,
   DashboardTask,
@@ -267,6 +272,7 @@ export type {
   DocumentMap,
   ExerciseProperty,
   Fatigue,
+  MesocycleVolumeSummary,
   NonogramKatanaItem,
   NonogramKatanaUpgrade,
   ParentRecurringTaskInfo,
@@ -280,9 +286,11 @@ export type {
   WorkoutEquipmentType,
   WorkoutExercise,
   WorkoutExerciseCalibration,
+  WorkoutExerciseCTO,
   WorkoutMesocycle,
   WorkoutMicrocycle,
   WorkoutMuscleGroup,
+  WorkoutMuscleGroupVolumeCTO,
   WorkoutSession,
   WorkoutSessionExercise,
   WorkoutSet

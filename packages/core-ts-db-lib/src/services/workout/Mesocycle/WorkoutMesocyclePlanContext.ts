@@ -1,10 +1,7 @@
 import type { UUID } from 'crypto';
+import type { WorkoutExerciseCTO } from '../../../ctos/workout/WorkoutExerciseCTO.js';
 import type { WorkoutEquipmentType } from '../../../documents/workout/WorkoutEquipmentType.js';
 import type { WorkoutExercise } from '../../../documents/workout/WorkoutExercise.js';
-import type {
-  CalibrationExercisePair,
-  WorkoutExerciseCalibration
-} from '../../../documents/workout/WorkoutExerciseCalibration.js';
 import type { WorkoutMesocycle } from '../../../documents/workout/WorkoutMesocycle.js';
 import type { WorkoutMicrocycle } from '../../../documents/workout/WorkoutMicrocycle.js';
 import type { WorkoutSession } from '../../../documents/workout/WorkoutSession.js';
@@ -25,7 +22,6 @@ export default class WorkoutMesocyclePlanContext {
    */
   public readonly FIRST_MICROCYCLE_RIR = 4;
 
-  public readonly calibrationMap: Map<UUID, WorkoutExerciseCalibration>;
   public readonly exerciseMap: Map<UUID, WorkoutExercise>;
   public readonly equipmentMap: Map<UUID, WorkoutEquipmentType>;
   public readonly sessionMap: Map<UUID, WorkoutSession>;
@@ -44,10 +40,10 @@ export default class WorkoutMesocyclePlanContext {
   public readonly setsToCreate: WorkoutSet[] = [];
 
   /**
-   * The array of sessions corresponding to the array of calibration exercise pairs, in order,
+   * The array of sessions corresponding to the array of exercise CTOs, in order,
    * for that session.
    */
-  public plannedSessionExercisePairs: CalibrationExercisePair[][] | undefined;
+  public plannedSessionExerciseCTOs: WorkoutExerciseCTO[][] | undefined;
   /**
    * Stores the mesocycle's muscle-group-wide exercise ordering.
    *
@@ -55,7 +51,7 @@ export default class WorkoutMesocyclePlanContext {
    * exercises that share a primary muscle group, regardless of which session they
    * ended up in.
    */
-  public muscleGroupToExercisePairsMap: Map<UUID, CalibrationExercisePair[]> | undefined;
+  public muscleGroupToExerciseCTOsMap: Map<UUID, WorkoutExerciseCTO[]> | undefined;
   public exerciseIdToSessionIndex: Map<UUID, number> | undefined;
 
   /**
@@ -63,17 +59,20 @@ export default class WorkoutMesocyclePlanContext {
    */
   constructor(
     public mesocycle: WorkoutMesocycle,
-    calibrations: WorkoutExerciseCalibration[],
-    exercises: WorkoutExercise[],
-    equipmentTypes: WorkoutEquipmentType[],
+    exerciseCTOs: WorkoutExerciseCTO[],
     public existingMicrocycles: WorkoutMicrocycle[] = [],
     public existingSessions: WorkoutSession[] = [],
     public existingSessionExercises: WorkoutSessionExercise[] = [],
     public existingSets: WorkoutSet[] = []
   ) {
-    this.calibrationMap = new Map(calibrations.map((c) => [c._id, c]));
-    this.exerciseMap = new Map(exercises.map((e) => [e._id, e]));
-    this.equipmentMap = new Map(equipmentTypes.map((et) => [et._id, et]));
+    // Derive exercise map from CTOs
+    this.exerciseMap = new Map(exerciseCTOs.map((cto) => [cto._id, cto]));
+
+    // Derive equipment map from CTOs
+    this.equipmentMap = new Map(
+      exerciseCTOs.map((cto) => [cto.equipmentType._id, cto.equipmentType])
+    );
+
     this.sessionMap = new Map(existingSessions.map((s) => [s._id, s]));
     this.sessionExerciseMap = new Map(existingSessionExercises.map((s) => [s._id, s]));
 
@@ -111,15 +110,13 @@ export default class WorkoutMesocyclePlanContext {
    * Stores the planned session -> exercises structure for the mesocycle and derives
    * the muscle-group-wide ordering used for set progression.
    */
-  public setPlannedSessionExercisePairs(
-    plannedSessionExercisePairs: CalibrationExercisePair[][]
-  ): void {
-    this.plannedSessionExercisePairs = plannedSessionExercisePairs;
-    this.buildSessionPairsMaps(plannedSessionExercisePairs);
+  public setPlannedSessionExerciseCTOs(plannedSessionExerciseCTOs: WorkoutExerciseCTO[][]): void {
+    this.plannedSessionExerciseCTOs = plannedSessionExerciseCTOs;
+    this.buildSessionCTOMaps(plannedSessionExerciseCTOs);
   }
 
   /**
-   * Builds and stores a map of primary muscle group -> ordered exercise pairs for the mesocycle plan.
+   * Builds and stores a map of primary muscle group -> ordered exercise CTOs for the mesocycle plan.
    *
    * Also builds a map of exercise ID -> session index for use during session generation.
    *
@@ -127,33 +124,30 @@ export default class WorkoutMesocyclePlanContext {
    * each session in order. This allows set progression to be distributed evenly across a muscle group
    * for the entire microcycle, even when exercises are split across sessions.
    */
-  private buildSessionPairsMaps(sessionsToExercisePairs: CalibrationExercisePair[][]): void {
-    const muscleGroupToPairsMap = new Map<UUID, CalibrationExercisePair[]>();
+  private buildSessionCTOMaps(sessionsToCTOs: WorkoutExerciseCTO[][]): void {
+    const muscleGroupToCTOsMap = new Map<UUID, WorkoutExerciseCTO[]>();
     const exerciseIdToSessionIndex = new Map<UUID, number>();
 
-    for (let sessionIndex = 0; sessionIndex < sessionsToExercisePairs.length; sessionIndex++) {
-      const sessionExercisePairs = sessionsToExercisePairs[sessionIndex];
-      for (const exercisePair of sessionExercisePairs) {
-        // Set the session index for this exercise as well
-        exerciseIdToSessionIndex.set(exercisePair.exercise._id, sessionIndex);
+    for (let sessionIndex = 0; sessionIndex < sessionsToCTOs.length; sessionIndex++) {
+      const sessionCTOs = sessionsToCTOs[sessionIndex];
+      for (const cto of sessionCTOs) {
+        exerciseIdToSessionIndex.set(cto._id, sessionIndex);
 
-        const primaryMuscleGroupId = exercisePair.exercise.primaryMuscleGroups[0];
+        const primaryMuscleGroupId = cto.primaryMuscleGroups[0];
         if (!primaryMuscleGroupId) {
-          throw new Error(
-            `Exercise ${exercisePair.exercise._id}, ${exercisePair.exercise.exerciseName} has no primary muscle group`
-          );
+          throw new Error(`Exercise ${cto._id}, ${cto.exerciseName} has no primary muscle group`);
         }
 
-        const existing = muscleGroupToPairsMap.get(primaryMuscleGroupId);
+        const existing = muscleGroupToCTOsMap.get(primaryMuscleGroupId);
         if (existing) {
-          existing.push(exercisePair);
+          existing.push(cto);
         } else {
-          muscleGroupToPairsMap.set(primaryMuscleGroupId, [exercisePair]);
+          muscleGroupToCTOsMap.set(primaryMuscleGroupId, [cto]);
         }
       }
     }
 
-    this.muscleGroupToExercisePairsMap = muscleGroupToPairsMap;
+    this.muscleGroupToExerciseCTOsMap = muscleGroupToCTOsMap;
     this.exerciseIdToSessionIndex = exerciseIdToSessionIndex;
   }
 }

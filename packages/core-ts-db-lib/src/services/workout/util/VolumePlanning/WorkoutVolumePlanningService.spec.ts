@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import workoutTestUtil from '../../../../../test-utils/WorkoutTestUtil.js';
+import type { WorkoutExerciseCTO } from '../../../../ctos/workout/WorkoutExerciseCTO.js';
 import type { WorkoutExercise } from '../../../../documents/workout/WorkoutExercise.js';
-import type { WorkoutExerciseCalibration } from '../../../../documents/workout/WorkoutExerciseCalibration.js';
 import type { Fatigue } from '../../../../embedded-types/workout/Fatigue.js';
 import type { RSM } from '../../../../embedded-types/workout/Rsm.js';
 import WorkoutVolumePlanningService from './WorkoutVolumePlanningService.js';
@@ -15,16 +15,17 @@ describe('WorkoutVolumePlanningService', () => {
       ];
 
       const { result } = calculateSetPlan({
-        exercises: chestExercises,
-        calibrations: [
-          {
+        exerciseCTOs: [
+          workoutTestUtil.createExerciseCTO({
             exercise: chestExercises[0],
-            calibration: workoutTestUtil.STANDARD_CALIBRATIONS.barbellBenchPress
-          },
-          {
+            calibration: workoutTestUtil.STANDARD_CALIBRATIONS.barbellBenchPress,
+            equipmentType: workoutTestUtil.STANDARD_EQUIPMENT_TYPES.barbell
+          }),
+          workoutTestUtil.createExerciseCTO({
             exercise: chestExercises[1],
-            calibration: workoutTestUtil.STANDARD_CALIBRATIONS.inclineBenchPress
-          }
+            calibration: workoutTestUtil.STANDARD_CALIBRATIONS.inclineBenchPress,
+            equipmentType: workoutTestUtil.STANDARD_EQUIPMENT_TYPES.barbell
+          })
         ]
       });
 
@@ -43,16 +44,17 @@ describe('WorkoutVolumePlanningService', () => {
       // Exercise A (bench press): 8 sets, high SFR (rsm=9, fatigue=3 -> SFR=3, soreness=0, performance=0 -> +2 recommendation)
       // Exercise B (incline): 3 sets, moderate SFR (rsm=6, fatigue=4 -> SFR=1.5, soreness=1, performance=1 -> +0 recommendation)
       const { result } = calculateSetPlan({
-        exercises: chestExercises,
-        calibrations: [
-          {
+        exerciseCTOs: [
+          workoutTestUtil.createExerciseCTO({
             exercise: chestExercises[0],
-            calibration: workoutTestUtil.STANDARD_CALIBRATIONS.barbellBenchPress
-          },
-          {
+            calibration: workoutTestUtil.STANDARD_CALIBRATIONS.barbellBenchPress,
+            equipmentType: workoutTestUtil.STANDARD_EQUIPMENT_TYPES.barbell
+          }),
+          workoutTestUtil.createExerciseCTO({
             exercise: chestExercises[1],
-            calibration: workoutTestUtil.STANDARD_CALIBRATIONS.inclineBenchPress
-          }
+            calibration: workoutTestUtil.STANDARD_CALIBRATIONS.inclineBenchPress,
+            equipmentType: workoutTestUtil.STANDARD_EQUIPMENT_TYPES.barbell
+          })
         ],
         microcycleIndex: 1,
         sessionStructure: [[0], [1]], // Exercise A in session 0, Exercise B in session 1
@@ -108,20 +110,22 @@ describe('WorkoutVolumePlanningService', () => {
       // Exercise B (incline): 5 sets, second SFR (rsm=8, fatigue=4 -> SFR=2, soreness=0, performance=1 -> +1 recommendation)
       // Exercise C (dumbbell): 5 sets, lower SFR (rsm=6, fatigue=6 -> SFR=1, soreness=1, performance=1 -> +0 recommendation)
       const { result } = calculateSetPlan({
-        exercises: chestExercises,
-        calibrations: [
-          {
+        exerciseCTOs: [
+          workoutTestUtil.createExerciseCTO({
             exercise: chestExercises[0],
-            calibration: workoutTestUtil.STANDARD_CALIBRATIONS.barbellBenchPress
-          },
-          {
+            calibration: workoutTestUtil.STANDARD_CALIBRATIONS.barbellBenchPress,
+            equipmentType: workoutTestUtil.STANDARD_EQUIPMENT_TYPES.barbell
+          }),
+          workoutTestUtil.createExerciseCTO({
             exercise: chestExercises[1],
-            calibration: workoutTestUtil.STANDARD_CALIBRATIONS.inclineBenchPress
-          },
-          {
+            calibration: workoutTestUtil.STANDARD_CALIBRATIONS.inclineBenchPress,
+            equipmentType: workoutTestUtil.STANDARD_EQUIPMENT_TYPES.barbell
+          }),
+          workoutTestUtil.createExerciseCTO({
             exercise: chestExercises[2],
-            calibration: workoutTestUtil.STANDARD_CALIBRATIONS.dumbbellChestPress
-          }
+            calibration: workoutTestUtil.STANDARD_CALIBRATIONS.dumbbellChestPress,
+            equipmentType: workoutTestUtil.STANDARD_EQUIPMENT_TYPES.dumbbell
+          })
         ],
         microcycleIndex: 1,
         sessionStructure: [[0, 1], [2]], // Exercises A and B in session 0, Exercise C in session 1
@@ -185,27 +189,31 @@ describe('WorkoutVolumePlanningService', () => {
         workoutTestUtil.STANDARD_EXERCISES.dumbbellChestPress
       ];
 
+      const chestCTOs = [
+        workoutTestUtil.createExerciseCTO({
+          exercise: chestExercises[0],
+          calibration: workoutTestUtil.STANDARD_CALIBRATIONS.barbellBenchPress,
+          equipmentType: workoutTestUtil.STANDARD_EQUIPMENT_TYPES.barbell
+        }),
+        workoutTestUtil.createExerciseCTO({
+          exercise: chestExercises[1],
+          calibration: workoutTestUtil.STANDARD_CALIBRATIONS.inclineBenchPress,
+          equipmentType: workoutTestUtil.STANDARD_EQUIPMENT_TYPES.barbell
+        }),
+        workoutTestUtil.createExerciseCTO({
+          exercise: chestExercises[2],
+          calibration: workoutTestUtil.STANDARD_CALIBRATIONS.dumbbellChestPress,
+          equipmentType: workoutTestUtil.STANDARD_EQUIPMENT_TYPES.dumbbell
+        })
+      ];
+
       // Exercise A (bench): 4 sets, highest SFR (rsm=9, fatigue=3 -> SFR=3, soreness=0, performance=1 -> +1 recommendation)
       // Exercise B (incline): 5 sets, second SFR (rsm=8, fatigue=4 -> SFR=2, soreness=0, performance=1 -> +1 recommendation)
       // Exercise C (dumbbell): 3 sets, third SFR (rsm=6, fatigue=6 -> SFR=1, soreness=1, performance=0 -> +1 recommendation)
       // Total sets to add: 3. Session 0 already has 9 sets (4+5), so adding 1 to A caps it at 10.
       // B cannot receive sets due to session cap, so its +1 is redistributed to C.
       const { result } = calculateSetPlan({
-        exercises: chestExercises,
-        calibrations: [
-          {
-            exercise: chestExercises[0],
-            calibration: workoutTestUtil.STANDARD_CALIBRATIONS.barbellBenchPress
-          },
-          {
-            exercise: chestExercises[1],
-            calibration: workoutTestUtil.STANDARD_CALIBRATIONS.inclineBenchPress
-          },
-          {
-            exercise: chestExercises[2],
-            calibration: workoutTestUtil.STANDARD_CALIBRATIONS.dumbbellChestPress
-          }
-        ],
+        exerciseCTOs: chestCTOs,
         microcycleIndex: 1,
         sessionStructure: [[0, 1], [2]], // Exercises A and B in session 0, Exercise C in session 1
         historicalMicrocycles: [
@@ -269,18 +277,21 @@ describe('WorkoutVolumePlanningService', () => {
         workoutTestUtil.STANDARD_EXERCISES.inclineBenchPress
       ];
 
+      const chestCTOs = [
+        workoutTestUtil.createExerciseCTO({
+          exercise: chestExercises[0],
+          calibration: workoutTestUtil.STANDARD_CALIBRATIONS.barbellBenchPress,
+          equipmentType: workoutTestUtil.STANDARD_EQUIPMENT_TYPES.barbell
+        }),
+        workoutTestUtil.createExerciseCTO({
+          exercise: chestExercises[1],
+          calibration: workoutTestUtil.STANDARD_CALIBRATIONS.inclineBenchPress,
+          equipmentType: workoutTestUtil.STANDARD_EQUIPMENT_TYPES.barbell
+        })
+      ];
+
       const { result } = calculateSetPlan({
-        exercises: chestExercises,
-        calibrations: [
-          {
-            exercise: chestExercises[0],
-            calibration: workoutTestUtil.STANDARD_CALIBRATIONS.barbellBenchPress
-          },
-          {
-            exercise: chestExercises[1],
-            calibration: workoutTestUtil.STANDARD_CALIBRATIONS.inclineBenchPress
-          }
-        ],
+        exerciseCTOs: chestCTOs,
         microcycleIndex: 2,
         sessionStructure: [[0, 1]],
         historicalMicrocycles: [
@@ -363,20 +374,23 @@ describe('WorkoutVolumePlanningService', () => {
         workoutTestUtil.STANDARD_EXERCISES.inclineBenchPress
       ];
 
+      const chestCTOs = [
+        workoutTestUtil.createExerciseCTO({
+          exercise: chestExercises[0],
+          calibration: workoutTestUtil.STANDARD_CALIBRATIONS.barbellBenchPress,
+          equipmentType: workoutTestUtil.STANDARD_EQUIPMENT_TYPES.barbell
+        }),
+        workoutTestUtil.createExerciseCTO({
+          exercise: chestExercises[1],
+          calibration: workoutTestUtil.STANDARD_CALIBRATIONS.inclineBenchPress,
+          equipmentType: workoutTestUtil.STANDARD_EQUIPMENT_TYPES.barbell
+        })
+      ];
+
       // Exercise A: 5 sets, triggers recovery (performanceScore=3)
       // Exercise B: 3 sets, does not trigger recovery
       const { result } = calculateSetPlan({
-        exercises: chestExercises,
-        calibrations: [
-          {
-            exercise: chestExercises[0],
-            calibration: workoutTestUtil.STANDARD_CALIBRATIONS.barbellBenchPress
-          },
-          {
-            exercise: chestExercises[1],
-            calibration: workoutTestUtil.STANDARD_CALIBRATIONS.inclineBenchPress
-          }
-        ],
+        exerciseCTOs: chestCTOs,
         microcycleIndex: 1,
         sessionStructure: [[0, 1]],
         historicalMicrocycles: [
@@ -421,19 +435,17 @@ describe('WorkoutVolumePlanningService', () => {
     });
 
     it('should enforce minimum of 1 set when recovery cuts below 1', () => {
-      const chestExercises: WorkoutExercise[] = [
-        workoutTestUtil.STANDARD_EXERCISES.barbellBenchPress
+      const chestCTOs = [
+        workoutTestUtil.createExerciseCTO({
+          exercise: workoutTestUtil.STANDARD_EXERCISES.barbellBenchPress,
+          calibration: workoutTestUtil.STANDARD_CALIBRATIONS.barbellBenchPress,
+          equipmentType: workoutTestUtil.STANDARD_EQUIPMENT_TYPES.barbell
+        })
       ];
 
       // Exercise with only 1 set previously, should remain at 1 when cut in half
       const { result } = calculateSetPlan({
-        exercises: chestExercises,
-        calibrations: [
-          {
-            exercise: chestExercises[0],
-            calibration: workoutTestUtil.STANDARD_CALIBRATIONS.barbellBenchPress
-          }
-        ],
+        exerciseCTOs: chestCTOs,
         microcycleIndex: 1,
         sessionStructure: [[0]],
         historicalMicrocycles: [
@@ -458,8 +470,8 @@ describe('WorkoutVolumePlanningService', () => {
       });
 
       // Should be minimum 1 set (floor(1/2) = 0, but min is 1)
-      expect(result.exerciseIdToSetCount.get(chestExercises[0]._id)).toBe(1);
-      expect(result.recoveryExerciseIds.has(chestExercises[0]._id)).toBe(true);
+      expect(result.exerciseIdToSetCount.get(chestCTOs[0]._id)).toBe(1);
+      expect(result.recoveryExerciseIds.has(chestCTOs[0]._id)).toBe(true);
     });
 
     it('should halve historical set counts during deload and skip SFR-based additions', () => {
@@ -468,20 +480,23 @@ describe('WorkoutVolumePlanningService', () => {
         workoutTestUtil.STANDARD_EXERCISES.inclineBenchPress
       ];
 
+      const chestCTOs = [
+        workoutTestUtil.createExerciseCTO({
+          exercise: chestExercises[0],
+          calibration: workoutTestUtil.STANDARD_CALIBRATIONS.barbellBenchPress,
+          equipmentType: workoutTestUtil.STANDARD_EQUIPMENT_TYPES.barbell
+        }),
+        workoutTestUtil.createExerciseCTO({
+          exercise: chestExercises[1],
+          calibration: workoutTestUtil.STANDARD_CALIBRATIONS.inclineBenchPress,
+          equipmentType: workoutTestUtil.STANDARD_EQUIPMENT_TYPES.barbell
+        })
+      ];
+
       // Exercise A: 6 sets, high SFR that would normally trigger +2 sets
       // Exercise B: 4 sets, moderate SFR that would normally trigger +1 set
       const { result } = calculateSetPlan({
-        exercises: chestExercises,
-        calibrations: [
-          {
-            exercise: chestExercises[0],
-            calibration: workoutTestUtil.STANDARD_CALIBRATIONS.barbellBenchPress
-          },
-          {
-            exercise: chestExercises[1],
-            calibration: workoutTestUtil.STANDARD_CALIBRATIONS.inclineBenchPress
-          }
-        ],
+        exerciseCTOs: chestCTOs,
         microcycleIndex: 1,
         isDeload: true,
         sessionStructure: [[0], [1]],
@@ -533,8 +548,7 @@ describe('WorkoutVolumePlanningService', () => {
      * Helper to set up context and call calculateSetPlanForMicrocycle
      */
     function calculateSetPlan(options: {
-      exercises: WorkoutExercise[];
-      calibrations: { exercise: WorkoutExercise; calibration: WorkoutExerciseCalibration }[];
+      exerciseCTOs: WorkoutExerciseCTO[];
       microcycleIndex?: number;
       isDeload?: boolean;
       sessionStructure?: number[][];
@@ -552,8 +566,7 @@ describe('WorkoutVolumePlanningService', () => {
       }>;
     }) {
       const {
-        exercises,
-        calibrations,
+        exerciseCTOs,
         microcycleIndex = 0,
         isDeload = false,
         sessionStructure = [[0, 1]],
@@ -563,28 +576,26 @@ describe('WorkoutVolumePlanningService', () => {
       // Create default mesocycle if not provided, with session count matching sessionStructure
       const mesocycle = workoutTestUtil.createMesocycle({
         plannedSessionCountPerMicrocycle: sessionStructure.length,
-        calibratedExercises: calibrations.map((c) => c.calibration._id)
+        calibratedExercises: exerciseCTOs
+          .map((cto) => cto.bestCalibration?._id)
+          .filter((id): id is NonNullable<typeof id> => id != null)
       });
 
       const context = workoutTestUtil.createContext({
         mesocycle,
-        calibrations: calibrations.map((c) => c.calibration),
-        exercises
+        exerciseCTOs
       });
 
-      // Build exercise pairs based on session structure
-      const exercisePairs = sessionStructure.map((sessionExerciseIndices) =>
-        sessionExerciseIndices.map((exerciseIndex) => ({
-          exercise: exercises[exerciseIndex],
-          calibration: calibrations[exerciseIndex].calibration
-        }))
+      // Build exercise CTO arrays based on session structure
+      const sessionExerciseCTOs = sessionStructure.map((sessionExerciseIndices) =>
+        sessionExerciseIndices.map((exerciseIndex) => exerciseCTOs[exerciseIndex])
       );
 
       // Create historical microcycles with performance data
       historicalMicrocycles.forEach((historicalData) => {
         workoutTestUtil.createHistoricalMicrocycle({
           context,
-          exercisePairs,
+          exerciseCTOs: sessionExerciseCTOs,
           targetRir: 2,
           isDeloadMicrocycle: false,
           sessionExerciseOverrides: historicalData.sessionExerciseOverrides
@@ -594,7 +605,7 @@ describe('WorkoutVolumePlanningService', () => {
       // Add the current microcycle being planned
       context.addMicrocycle(workoutTestUtil.createMicrocycle({ mesocycle }));
 
-      context.setPlannedSessionExercisePairs(exercisePairs);
+      context.setPlannedSessionExerciseCTOs(sessionExerciseCTOs);
 
       const result = WorkoutVolumePlanningService.calculateSetPlanForMicrocycle(
         context,

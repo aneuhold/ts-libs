@@ -117,8 +117,15 @@ describe('WorkoutSetService', () => {
       // Use all standard equipment so any exercise works
       const context = workoutTestUtil.createContext({
         mesocycle,
-        calibrations: [currentCalibration],
-        exercises: [currentExercise]
+        exerciseCTOs: [
+          workoutTestUtil.createExerciseCTO({
+            exercise: currentExercise,
+            calibration: currentCalibration,
+            equipmentType: Object.values(workoutTestUtil.STANDARD_EQUIPMENT_TYPES).find(
+              (et) => et._id === currentExercise.workoutEquipmentTypeId
+            )
+          })
+        ]
       });
 
       WorkoutSetService.generateSetsForSessionExercise({

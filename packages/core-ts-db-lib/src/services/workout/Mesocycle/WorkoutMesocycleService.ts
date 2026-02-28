@@ -1,8 +1,6 @@
 import { DateService } from '@aneuhold/core-ts-lib';
 import type { UUID } from 'crypto';
-import type { WorkoutEquipmentType } from '../../../documents/workout/WorkoutEquipmentType.js';
-import type { WorkoutExercise } from '../../../documents/workout/WorkoutExercise.js';
-import type { WorkoutExerciseCalibration } from '../../../documents/workout/WorkoutExerciseCalibration.js';
+import type { WorkoutExerciseCTO } from '../../../ctos/workout/WorkoutExerciseCTO.js';
 import { CycleType, type WorkoutMesocycle } from '../../../documents/workout/WorkoutMesocycle.js';
 import type { WorkoutMicrocycle } from '../../../documents/workout/WorkoutMicrocycle.js';
 import { WorkoutMicrocycleSchema } from '../../../documents/workout/WorkoutMicrocycle.js';
@@ -31,21 +29,16 @@ export default class WorkoutMesocycleService {
    * (first session complete), in which case it will throw an error.
    *
    * @param mesocycle The mesocycle configuration.
-   * @param calibrations The calibration documents referenced by the mesocycle.
-   * @param exercises The exercise definitions for the calibrations.
-   * @param equipmentTypes The equipment types for weight increment calculations.
+   * @param exerciseCTOs The exercise CTOs containing exercise, calibration, equipment, and historical data.
    * @param existingMicrocycles Existing microcycle documents for this mesocycle.
    * @param existingSessions Existing session documents.
    * @param existingSessionExercises Existing session exercise documents.
    * @param existingSets Existing set documents.
-   * @param startDate Optional start date for the first microcycle. Defaults to
-   *   the current date when not provided.
+   * @param startDate Optional start date for the first microcycle. Defaults to the current date when not provided.
    */
   static generateOrUpdateMesocycle(
     mesocycle: WorkoutMesocycle,
-    calibrations: WorkoutExerciseCalibration[],
-    exercises: WorkoutExercise[],
-    equipmentTypes: WorkoutEquipmentType[],
+    exerciseCTOs: WorkoutExerciseCTO[],
     existingMicrocycles: WorkoutMicrocycle[] = [],
     existingSessions: WorkoutSession[] = [],
     existingSessionExercises: WorkoutSessionExercise[] = [],
@@ -63,6 +56,16 @@ export default class WorkoutMesocycleService {
     // to be done / make any sense.
     if (mesocycle.cycleType === CycleType.FreeForm) {
       return {};
+    }
+
+    // Validate all exercises have calibrations before doing any work
+    for (const cto of exerciseCTOs) {
+      if (!cto.bestCalibration) {
+        throw new Error(
+          `Exercise "${cto.exerciseName}" (${cto._id}) has no bestCalibration. ` +
+            `All exercises must be calibrated before planning a mesocycle.`
+        );
+      }
     }
 
     // Clean up incomplete microcycles before creating context
@@ -89,9 +92,7 @@ export default class WorkoutMesocycleService {
     // Create planning context with clean data
     const context = new WorkoutMesocyclePlanContext(
       mesocycle,
-      calibrations,
-      exercises,
-      equipmentTypes,
+      exerciseCTOs,
       cleanMicrocycles,
       cleanSessions,
       cleanSessionExercises,
@@ -100,11 +101,10 @@ export default class WorkoutMesocycleService {
 
     // Distribute exercises across sessions once for the entire mesocycle plan.
     // This session layout is expected to be stable across microcycles.
-    context.setPlannedSessionExercisePairs(
+    context.setPlannedSessionExerciseCTOs(
       WorkoutMicrocycleService.distributeExercisesAcrossSessions(
         mesocycle.plannedSessionCountPerMicrocycle,
-        context.calibrationMap,
-        context.exerciseMap
+        exerciseCTOs
       )
     );
 

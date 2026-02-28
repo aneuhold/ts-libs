@@ -18,7 +18,23 @@ describe('Unit Tests', () => {
           rsm: { mindMuscleConnection: 2, pump: 1, disruption: null },
           fatigue: {
             jointAndTissueDisruption: null,
-            perceivedEffort: 2,
+            perceivedEffort: null,
+            unusedMusclePerformance: 1
+          },
+          performanceScore: 1
+        }
+      });
+      const sets = [workoutTestUtil.createSet({ overrides: { plannedRir: 2 } })];
+      expect(WorkoutSessionExerciseService.hasMidSessionMetricsFilled(se, sets)).toBe(true);
+    });
+
+    it('should return true when perceivedEffort is null (post-session metric)', () => {
+      const se = workoutTestUtil.createSessionExercise({
+        overrides: {
+          rsm: { mindMuscleConnection: 2, pump: 1, disruption: null },
+          fatigue: {
+            jointAndTissueDisruption: null,
+            perceivedEffort: null,
             unusedMusclePerformance: 1
           },
           performanceScore: 1
@@ -34,7 +50,7 @@ describe('Unit Tests', () => {
           rsm: { mindMuscleConnection: null, pump: 1, disruption: null },
           fatigue: {
             jointAndTissueDisruption: null,
-            perceivedEffort: 2,
+            perceivedEffort: null,
             unusedMusclePerformance: 1
           },
           performanceScore: 1
@@ -50,7 +66,7 @@ describe('Unit Tests', () => {
           rsm: null,
           fatigue: {
             jointAndTissueDisruption: null,
-            perceivedEffort: 2,
+            perceivedEffort: null,
             unusedMusclePerformance: 1
           },
           performanceScore: 1
@@ -66,7 +82,7 @@ describe('Unit Tests', () => {
           rsm: { mindMuscleConnection: 2, pump: 1, disruption: null },
           fatigue: {
             jointAndTissueDisruption: null,
-            perceivedEffort: 2,
+            perceivedEffort: null,
             unusedMusclePerformance: 1
           },
           performanceScore: null
@@ -144,6 +160,23 @@ describe('Unit Tests', () => {
           fatigue: {
             jointAndTissueDisruption: null,
             perceivedEffort: 1,
+            unusedMusclePerformance: 1
+          },
+          performanceScore: 1,
+          sorenessScore: 1
+        }
+      });
+      const sets = [workoutTestUtil.createSet({ overrides: { plannedRir: 2 } })];
+      expect(WorkoutSessionExerciseService.hasAllSessionMetricsFilled(se, sets)).toBe(false);
+    });
+
+    it('should return false when perceivedEffort is null', () => {
+      const se = workoutTestUtil.createSessionExercise({
+        overrides: {
+          rsm: { mindMuscleConnection: 2, pump: 2, disruption: 2 },
+          fatigue: {
+            jointAndTissueDisruption: 1,
+            perceivedEffort: null,
             unusedMusclePerformance: 1
           },
           performanceScore: 1,
