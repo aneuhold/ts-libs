@@ -2,6 +2,7 @@ import { DateService } from '@aneuhold/core-ts-lib';
 import type { UUID } from 'crypto';
 import type { WorkoutExerciseCTO } from '../../../ctos/workout/WorkoutExerciseCTO.js';
 import type { WorkoutMuscleGroupVolumeCTO } from '../../../ctos/workout/WorkoutMuscleGroupVolumeCTO.js';
+import type { WorkoutExercise } from '../../../documents/workout/WorkoutExercise.js';
 import { CycleType, type WorkoutMesocycle } from '../../../documents/workout/WorkoutMesocycle.js';
 import type { WorkoutMicrocycle } from '../../../documents/workout/WorkoutMicrocycle.js';
 import { WorkoutMicrocycleSchema } from '../../../documents/workout/WorkoutMicrocycle.js';
@@ -10,7 +11,31 @@ import type { WorkoutSessionExercise } from '../../../documents/workout/WorkoutS
 import type { WorkoutSet } from '../../../documents/workout/WorkoutSet.js';
 import type { DocumentOperations } from '../../DocumentService.js';
 import WorkoutMicrocycleService from '../Microcycle/WorkoutMicrocycleService.js';
+import WorkoutSessionExerciseService from '../SessionExercise/WorkoutSessionExerciseService.js';
 import WorkoutMesocyclePlanContext from './WorkoutMesocyclePlanContext.js';
+import type { WorkoutDeloadRecommendation } from './WorkoutMesocycleService.types.js';
+import {
+  WorkoutDeloadSeverity,
+  WorkoutDeloadTriggerRule
+} from './WorkoutMesocycleService.types.js';
+
+/** Minimum microcycle index (0-based) before deload detection is active. */
+const MIN_MICROCYCLE_INDEX_FOR_DELOAD = 2;
+
+/** Recovery ratio above which a deload is Recommended. */
+const RECOVERY_RATIO_RECOMMENDED = 0.5;
+
+/** Recovery ratio at or above which a deload is Suggested. */
+const RECOVERY_RATIO_SUGGESTED = 0.4;
+
+/** Set surplus at or below which a performance drop is counted. */
+const PERFORMANCE_DROP_SURPLUS_THRESHOLD = -3;
+
+/** Number of consecutive performance drops needed to trigger the rule. */
+const CONSECUTIVE_DROPS_REQUIRED = 2;
+
+/** Number of exercises with consecutive drops needed for Recommended severity. */
+const EXERCISES_WITH_DROPS_FOR_RECOMMENDED = 2;
 
 /**
  * A service for handling operations related to {@link WorkoutMesocycle}s.
@@ -65,8 +90,7 @@ export default class WorkoutMesocycleService {
     for (const cto of exerciseCTOs) {
       if (!cto.bestCalibration) {
         throw new Error(
-          `Exercise "${cto.exerciseName}" (${cto._id}) has no bestCalibration. ` +
-            `All exercises must be calibrated before planning a mesocycle.`
+          `Exercise "${cto.exerciseName}" (${cto._id}) has no bestCalibration. All exercises must be calibrated before planning a mesocycle.`
         );
       }
     }
@@ -332,6 +356,243 @@ export default class WorkoutMesocycleService {
   }
 
   /**
+   * Evaluates whether the mesocycle should trigger an early deload based on
+   * fatigue indicators from recent session data.
+   *
+   * Should be called after each session completion. Accepts the same document
+   * inputs as {@link generateOrUpdateMesocycle} plus a current microcycle ID,
+   * and uses {@link WorkoutMesocyclePlanContext} internally to derive all
+   * needed data.
+   */
+  static shouldTriggerEarlyDeload(
+    mesocycle: WorkoutMesocycle,
+    exerciseCTOs: WorkoutExerciseCTO[],
+    currentMicrocycleId: UUID,
+    existingMicrocycles: WorkoutMicrocycle[],
+    existingSessions: WorkoutSession[],
+    existingSessionExercises: WorkoutSessionExercise[],
+    existingSets: WorkoutSet[]
+  ): WorkoutDeloadRecommendation {
+    const noDeload: WorkoutDeloadRecommendation = {
+      shouldDeload: false,
+      severity: WorkoutDeloadSeverity.None,
+      triggeredRules: []
+    };
+
+    const context = new WorkoutMesocyclePlanContext(
+      mesocycle,
+      exerciseCTOs,
+      [],
+      existingMicrocycles,
+      existingSessions,
+      existingSessionExercises,
+      existingSets
+    );
+
+    // Find current microcycle index
+    const currentMicrocycleIndex = context.microcyclesInOrder.findIndex(
+      (mc) => mc._id === currentMicrocycleId
+    );
+
+    // Guard: don't trigger before enough microcycles have been completed
+    if (currentMicrocycleIndex < MIN_MICROCYCLE_INDEX_FOR_DELOAD) {
+      return noDeload;
+    }
+
+    // Gather recent session exercises from the last 2 microcycles
+    const startIndex = Math.max(0, currentMicrocycleIndex - 1);
+    const recentMicrocycles = context.microcyclesInOrder.slice(
+      startIndex,
+      currentMicrocycleIndex + 1
+    );
+    const recentMicrocycleIds = new Set(recentMicrocycles.map((mc) => mc._id));
+
+    const recentSessionExercises = [...context.sessionExerciseMap.values()].filter((se) => {
+      const session = context.sessionMap.get(se.workoutSessionId);
+      return session?.workoutMicrocycleId && recentMicrocycleIds.has(session.workoutMicrocycleId);
+    });
+
+    const triggeredRules: WorkoutDeloadTriggerRule[] = [];
+    let recoverySeverity = WorkoutDeloadSeverity.None;
+    let performanceSeverity = WorkoutDeloadSeverity.None;
+
+    // --- Rule 1: Recovery Session Threshold ---
+    const recoveryResult = this.evaluateRecoverySessionThreshold(
+      recentSessionExercises,
+      context.exerciseMap
+    );
+    if (recoveryResult !== WorkoutDeloadSeverity.None) {
+      triggeredRules.push(WorkoutDeloadTriggerRule.RecoverySessionThreshold);
+      recoverySeverity = recoveryResult;
+    }
+
+    // --- Rule 2: Consecutive Performance Drops ---
+    const performanceResult = this.evaluateConsecutivePerformanceDrops(
+      recentSessionExercises,
+      context.setMap
+    );
+    if (performanceResult !== WorkoutDeloadSeverity.None) {
+      triggeredRules.push(WorkoutDeloadTriggerRule.ConsecutivePerformanceDrop);
+      performanceSeverity = performanceResult;
+    }
+
+    if (triggeredRules.length === 0) {
+      return noDeload;
+    }
+
+    // Determine combined severity
+    let severity: WorkoutDeloadSeverity;
+    if (triggeredRules.length >= 2) {
+      severity = WorkoutDeloadSeverity.Urgent;
+    } else {
+      severity =
+        recoverySeverity !== WorkoutDeloadSeverity.None ? recoverySeverity : performanceSeverity;
+    }
+
+    return {
+      shouldDeload: true,
+      severity,
+      triggeredRules
+    };
+  }
+
+  /**
+   * Checks whether the ratio of muscle groups in recovery mode exceeds the
+   * deload thresholds. Derives the trained muscle group list and per-exercise
+   * muscle group mapping from the exercise map built by
+   * {@link WorkoutMesocyclePlanContext}.
+   *
+   * @param recentSessionExercises Session exercises from the last 2 microcycles.
+   * @param exerciseMap Map of exercise ID to exercise (from context).
+   */
+  private static evaluateRecoverySessionThreshold(
+    recentSessionExercises: WorkoutSessionExercise[],
+    exerciseMap: ReadonlyMap<UUID, WorkoutExercise>
+  ): WorkoutDeloadSeverity {
+    // Derive unique trained muscle groups from all exercises in the plan
+    const trainedMuscleGroupIds = new Set<UUID>();
+    for (const exercise of exerciseMap.values()) {
+      for (const mgId of exercise.primaryMuscleGroups) {
+        trainedMuscleGroupIds.add(mgId);
+      }
+    }
+
+    if (trainedMuscleGroupIds.size === 0) {
+      return WorkoutDeloadSeverity.None;
+    }
+
+    const recoveryMuscleGroups = new Set<UUID>();
+    for (const sessionExercise of recentSessionExercises) {
+      if (sessionExercise.isRecoveryExercise) {
+        const exercise = exerciseMap.get(sessionExercise.workoutExerciseId);
+        if (exercise) {
+          for (const mgId of exercise.primaryMuscleGroups) {
+            recoveryMuscleGroups.add(mgId);
+          }
+        }
+      }
+    }
+
+    const ratio = recoveryMuscleGroups.size / trainedMuscleGroupIds.size;
+
+    if (ratio > RECOVERY_RATIO_RECOMMENDED) {
+      return WorkoutDeloadSeverity.Recommended;
+    }
+    if (ratio >= RECOVERY_RATIO_SUGGESTED) {
+      return WorkoutDeloadSeverity.Suggested;
+    }
+    return WorkoutDeloadSeverity.None;
+  }
+
+  /**
+   * Checks whether exercises show consecutive performance drops (negative set
+   * surplus) across recent session exercises. Uses the context's set map for
+   * O(1) set lookups instead of building a local map.
+   *
+   * @param recentSessionExercises Session exercises from the last 2 microcycles.
+   * @param setMap Map of set ID to set (from context).
+   */
+  private static evaluateConsecutivePerformanceDrops(
+    recentSessionExercises: WorkoutSessionExercise[],
+    setMap: ReadonlyMap<UUID, WorkoutSet>
+  ): WorkoutDeloadSeverity {
+    // Group session exercises by exercise ID
+    const exerciseGroups = new Map<UUID, WorkoutSessionExercise[]>();
+    for (const se of recentSessionExercises) {
+      const existing = exerciseGroups.get(se.workoutExerciseId);
+      if (existing) {
+        existing.push(se);
+      } else {
+        exerciseGroups.set(se.workoutExerciseId, [se]);
+      }
+    }
+
+    let exercisesWithDropsCount = 0;
+
+    for (const [, sessionExercises] of exerciseGroups) {
+      // Sort by session exercise creation date (ascending)
+      const sorted = [...sessionExercises].sort(
+        (a, b) => a.createdDate.getTime() - b.createdDate.getTime()
+      );
+
+      let consecutiveDrops = 0;
+      let hasConsecutiveDrops = false;
+
+      for (const se of sorted) {
+        if (se.setOrder.length === 0) {
+          consecutiveDrops = 0;
+          continue;
+        }
+
+        const firstSetId = se.setOrder[0];
+        const firstSet = setMap.get(firstSetId);
+
+        if (
+          !firstSet ||
+          firstSet.actualReps == null ||
+          firstSet.plannedReps == null ||
+          firstSet.rir == null ||
+          firstSet.plannedRir == null
+        ) {
+          consecutiveDrops = 0;
+          continue;
+        }
+
+        const surplus = WorkoutSessionExerciseService.calculateSetSurplus(
+          firstSet.actualReps,
+          firstSet.plannedReps,
+          firstSet.rir,
+          firstSet.plannedRir
+        );
+
+        if (surplus <= PERFORMANCE_DROP_SURPLUS_THRESHOLD) {
+          consecutiveDrops++;
+        } else {
+          consecutiveDrops = 0;
+        }
+
+        if (consecutiveDrops >= CONSECUTIVE_DROPS_REQUIRED) {
+          hasConsecutiveDrops = true;
+          break;
+        }
+      }
+
+      if (hasConsecutiveDrops) {
+        exercisesWithDropsCount++;
+      }
+    }
+
+    if (exercisesWithDropsCount === 0) {
+      return WorkoutDeloadSeverity.None;
+    }
+
+    if (exercisesWithDropsCount >= EXERCISES_WITH_DROPS_FOR_RECOMMENDED) {
+      return WorkoutDeloadSeverity.Recommended;
+    }
+    return WorkoutDeloadSeverity.Suggested;
+  }
+
+  /**
    * Cleans up incomplete microcycles and their associated documents.
    *
    * Finds the first microcycle where the last session is not complete, validates that it
@@ -395,9 +656,7 @@ export default class WorkoutMesocycleService {
       const firstSession = existingSessions.find((s) => s._id === firstSessionId);
       if (firstSession?.complete) {
         throw new Error(
-          `Cannot generate new microcycles for mesocycle ${mesocycle._id}: ` +
-            `Microcycle at index ${firstIncompleteMicrocycleIndex} has started but is not complete. ` +
-            `All sessions in the current microcycle must be completed before generating new microcycles.`
+          `Cannot generate new microcycles for mesocycle ${mesocycle._id}: Microcycle at index ${firstIncompleteMicrocycleIndex} has started but is not complete. All sessions in the current microcycle must be completed before generating new microcycles.`
         );
       }
     }

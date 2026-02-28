@@ -141,6 +141,11 @@ import {
   DashboardTagSettingSchema,
   DashboardTagSettingsSchema
 } from './embedded-types/dashboard/userConfig/Tags.js';
+import {
+  WorkoutDeloadSeverity,
+  WorkoutDeloadTriggerRule
+} from './services/workout/Mesocycle/WorkoutMesocycleService.types.js';
+import type { WorkoutDeloadRecommendation } from './services/workout/Mesocycle/WorkoutMesocycleService.types.js';
 import type { Fatigue } from './embedded-types/workout/Fatigue.js';
 import { FatigueSchema } from './embedded-types/workout/Fatigue.js';
 import type { MesocycleVolumeSummary } from './embedded-types/workout/MesocycleVolumeSummary.js';
@@ -174,6 +179,8 @@ export {
   BaseDocumentWithTypeSchema,
   BaseDocumentWithUpdatedAndCreatedDatesSchema,
   CycleType,
+  WorkoutDeloadSeverity,
+  WorkoutDeloadTriggerRule,
   DashboardTagSettingSchema,
   DashboardTagSettingsSchema,
   DashboardTask_docType,
@@ -259,6 +266,7 @@ export {
 export type {
   ApiKey,
   BaseDocument,
+  WorkoutDeloadRecommendation,
   BaseDocumentWithType,
   BaseDocumentWithUpdatedAndCreatedDates,
   DashboardTagSetting,
