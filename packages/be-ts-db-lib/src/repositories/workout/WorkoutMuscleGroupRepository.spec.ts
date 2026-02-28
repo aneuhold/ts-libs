@@ -97,4 +97,177 @@ describe('WorkoutMuscleGroupRepository', () => {
       );
     });
   });
+
+  describe('buildMuscleGroupVolumeCTOsForUser', () => {
+    it('should return empty mesocycleHistory for muscle groups with no completed mesocycles', async () => {
+      const user = await workoutTestUtil.insertUser('WorkoutMuscleGroupRepository.buildCTOs');
+      const mg = await workoutTestUtil.insertMuscleGroup(user._id, 'Traps');
+
+      const ctos = await repo.buildMuscleGroupVolumeCTOsForUser(user._id);
+      const cto = ctos.find((c) => c._id === mg._id);
+
+      expect(cto).toBeDefined();
+      if (!cto) return;
+      expect(cto.mesocycleHistory).toHaveLength(0);
+    });
+
+    it('should compute startingSetCount from the first microcycle', async () => {
+      const user = await workoutTestUtil.insertUser('WorkoutMuscleGroupRepository.buildCTOs');
+      const mg = await workoutTestUtil.insertMuscleGroup(user._id, 'Chest');
+      const eq = await workoutTestUtil.insertEquipmentType(user._id);
+      const exercise = await workoutTestUtil.insertExercise({
+        userId: user._id,
+        equipmentTypeId: eq._id,
+        primaryMuscleGroupIds: [mg._id],
+        name: 'Bench'
+      });
+
+      await workoutTestUtil.insertCompletedMesocycle(user._id, exercise, {
+        microcycleCount: 3,
+        setsPerMicrocycle: [2, 4, 5]
+      });
+
+      const ctos = await repo.buildMuscleGroupVolumeCTOsForUser(user._id);
+      const cto = ctos.find((c) => c._id === mg._id);
+
+      expect(cto).toBeDefined();
+      if (!cto) return;
+      expect(cto.mesocycleHistory).toHaveLength(1);
+      expect(cto.mesocycleHistory[0].startingSetCount).toBe(2);
+    });
+
+    it('should compute peakSetCount as the max across microcycles', async () => {
+      const user = await workoutTestUtil.insertUser('WorkoutMuscleGroupRepository.buildCTOs');
+      const mg = await workoutTestUtil.insertMuscleGroup(user._id, 'Quads');
+      const eq = await workoutTestUtil.insertEquipmentType(user._id);
+      const exercise = await workoutTestUtil.insertExercise({
+        userId: user._id,
+        equipmentTypeId: eq._id,
+        primaryMuscleGroupIds: [mg._id],
+        name: 'Squat'
+      });
+
+      await workoutTestUtil.insertCompletedMesocycle(user._id, exercise, {
+        microcycleCount: 3,
+        setsPerMicrocycle: [3, 5, 4]
+      });
+
+      const ctos = await repo.buildMuscleGroupVolumeCTOsForUser(user._id);
+      const cto = ctos.find((c) => c._id === mg._id);
+
+      expect(cto).toBeDefined();
+      if (!cto) return;
+      expect(cto.mesocycleHistory[0].peakSetCount).toBe(5);
+    });
+
+    it('should compute RSM, soreness, and performance averages correctly', async () => {
+      const user = await workoutTestUtil.insertUser('WorkoutMuscleGroupRepository.buildCTOs');
+      const mg = await workoutTestUtil.insertMuscleGroup(user._id, 'Back');
+      const eq = await workoutTestUtil.insertEquipmentType(user._id);
+      const exercise = await workoutTestUtil.insertExercise({
+        userId: user._id,
+        equipmentTypeId: eq._id,
+        primaryMuscleGroupIds: [mg._id],
+        name: 'Row'
+      });
+
+      await workoutTestUtil.insertCompletedMesocycle(user._id, exercise, {
+        microcycleCount: 2,
+        sorenessScore: 2,
+        performanceScore: 1,
+        rsm: { mindMuscleConnection: 2, pump: 1, disruption: 1 }
+      });
+
+      const ctos = await repo.buildMuscleGroupVolumeCTOsForUser(user._id);
+      const cto = ctos.find((c) => c._id === mg._id);
+      expect(cto).toBeDefined();
+      if (!cto) return;
+      const history = cto.mesocycleHistory[0];
+
+      // RSM total = 2+1+1 = 4, averaged across 2 session exercises
+      expect(history.avgRsm).toBe(4);
+      expect(history.avgSorenessScore).toBe(2);
+      expect(history.avgPerformanceScore).toBe(1);
+    });
+
+    it('should count recoverySessionCount correctly', async () => {
+      const user = await workoutTestUtil.insertUser('WorkoutMuscleGroupRepository.buildCTOs');
+      const mg = await workoutTestUtil.insertMuscleGroup(user._id, 'Shoulders');
+      const eq = await workoutTestUtil.insertEquipmentType(user._id);
+      const exercise = await workoutTestUtil.insertExercise({
+        userId: user._id,
+        equipmentTypeId: eq._id,
+        primaryMuscleGroupIds: [mg._id],
+        name: 'Press'
+      });
+
+      await workoutTestUtil.insertCompletedMesocycle(user._id, exercise, {
+        microcycleCount: 3,
+        isRecoveryExercise: true
+      });
+
+      const ctos = await repo.buildMuscleGroupVolumeCTOsForUser(user._id);
+      const cto = ctos.find((c) => c._id === mg._id);
+
+      expect(cto).toBeDefined();
+      if (!cto) return;
+      expect(cto.mesocycleHistory[0].recoverySessionCount).toBe(3);
+    });
+
+    it('should include secondary muscle group associations', async () => {
+      const user = await workoutTestUtil.insertUser('WorkoutMuscleGroupRepository.buildCTOs');
+      const primaryMg = await workoutTestUtil.insertMuscleGroup(user._id, 'Chest');
+      const secondaryMg = await workoutTestUtil.insertMuscleGroup(user._id, 'Triceps');
+      const eq = await workoutTestUtil.insertEquipmentType(user._id);
+      const exercise = await workoutTestUtil.insertExercise({
+        userId: user._id,
+        equipmentTypeId: eq._id,
+        primaryMuscleGroupIds: [primaryMg._id],
+        secondaryMuscleGroupIds: [secondaryMg._id],
+        name: 'Bench'
+      });
+
+      await workoutTestUtil.insertCompletedMesocycle(user._id, exercise, {
+        microcycleCount: 2,
+        setsPerMicrocycle: [4, 4]
+      });
+
+      const ctos = await repo.buildMuscleGroupVolumeCTOsForUser(user._id);
+      const secondaryCto = ctos.find((c) => c._id === secondaryMg._id);
+
+      // Secondary muscle group should also have volume history
+      expect(secondaryCto).toBeDefined();
+      if (!secondaryCto) return;
+      expect(secondaryCto.mesocycleHistory).toHaveLength(1);
+      expect(secondaryCto.mesocycleHistory[0].startingSetCount).toBe(4);
+    });
+
+    it('should return null averages when RSM/soreness/performance are not recorded', async () => {
+      const user = await workoutTestUtil.insertUser('WorkoutMuscleGroupRepository.buildCTOs');
+      const mg = await workoutTestUtil.insertMuscleGroup(user._id, 'Calves');
+      const eq = await workoutTestUtil.insertEquipmentType(user._id);
+      const exercise = await workoutTestUtil.insertExercise({
+        userId: user._id,
+        equipmentTypeId: eq._id,
+        primaryMuscleGroupIds: [mg._id],
+        name: 'Calf Raise'
+      });
+
+      await workoutTestUtil.insertCompletedMesocycle(user._id, exercise, {
+        microcycleCount: 2,
+        sorenessScore: null,
+        performanceScore: null,
+        rsm: null
+      });
+
+      const ctos = await repo.buildMuscleGroupVolumeCTOsForUser(user._id);
+      const cto = ctos.find((c) => c._id === mg._id);
+
+      expect(cto).toBeDefined();
+      if (!cto) return;
+      expect(cto.mesocycleHistory[0].avgRsm).toBeNull();
+      expect(cto.mesocycleHistory[0].avgSorenessScore).toBeNull();
+      expect(cto.mesocycleHistory[0].avgPerformanceScore).toBeNull();
+    });
+  });
 });
