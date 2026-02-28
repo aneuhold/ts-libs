@@ -233,6 +233,363 @@ describe('Unit Tests', () => {
       });
     });
 
+    describe('Rep Progression Autoregulation', () => {
+      it('should accelerate when surplus >= 3 (significantly exceeded)', () => {
+        const equipment = workoutTestUtil.STANDARD_EQUIPMENT_TYPES.barbell;
+        const exercise = workoutTestUtil.STANDARD_EXERCISES.deadlift; // Medium, Rep progression
+        const calibration = workoutTestUtil.STANDARD_CALIBRATIONS.deadlift;
+
+        // Previous: planned 15 reps @ 3 RIR, actual 18 reps @ 3 RIR → surplus = 3
+        const previousFirstSet = workoutTestUtil.createSet({
+          exercise,
+          overrides: {
+            plannedReps: 15,
+            plannedWeight: 200,
+            plannedRir: 3,
+            actualReps: 18,
+            actualWeight: 200,
+            rir: 3
+          }
+        });
+
+        const result = WorkoutExerciseService.calculateTargetRepsAndWeightForFirstSet({
+          exercise,
+          calibration,
+          equipment,
+          microcycleIndex: 1,
+          firstMicrocycleRir: 4,
+          previousFirstSet
+        });
+
+        // Accelerate: 18 + 2 = 20 (from actual, not planned)
+        expect(result.targetReps).toBe(20);
+        expect(result.targetWeight).toBe(200);
+      });
+
+      it('should progress normally when surplus is 0-2 (met expectations)', () => {
+        const equipment = workoutTestUtil.STANDARD_EQUIPMENT_TYPES.barbell;
+        const exercise = workoutTestUtil.STANDARD_EXERCISES.deadlift;
+        const calibration = workoutTestUtil.STANDARD_CALIBRATIONS.deadlift;
+
+        // Previous: planned 15 reps @ 3 RIR, actual 15 reps @ 3 RIR → surplus = 0
+        const previousFirstSet = workoutTestUtil.createSet({
+          exercise,
+          overrides: {
+            plannedReps: 15,
+            plannedWeight: 200,
+            plannedRir: 3,
+            actualReps: 15,
+            actualWeight: 200,
+            rir: 3
+          }
+        });
+
+        const result = WorkoutExerciseService.calculateTargetRepsAndWeightForFirstSet({
+          exercise,
+          calibration,
+          equipment,
+          microcycleIndex: 1,
+          firstMicrocycleRir: 4,
+          previousFirstSet
+        });
+
+        // Normal: 15 + 2 = 17 (from planned)
+        expect(result.targetReps).toBe(17);
+        expect(result.targetWeight).toBe(200);
+      });
+
+      it('should hold when surplus is -1 to -2 (slightly missed)', () => {
+        const equipment = workoutTestUtil.STANDARD_EQUIPMENT_TYPES.barbell;
+        const exercise = workoutTestUtil.STANDARD_EXERCISES.deadlift;
+        const calibration = workoutTestUtil.STANDARD_CALIBRATIONS.deadlift;
+
+        // Previous: planned 15 reps @ 3 RIR, actual 14 reps @ 2 RIR → surplus = -2
+        const previousFirstSet = workoutTestUtil.createSet({
+          exercise,
+          overrides: {
+            plannedReps: 15,
+            plannedWeight: 200,
+            plannedRir: 3,
+            actualReps: 14,
+            actualWeight: 200,
+            rir: 2
+          }
+        });
+
+        const result = WorkoutExerciseService.calculateTargetRepsAndWeightForFirstSet({
+          exercise,
+          calibration,
+          equipment,
+          microcycleIndex: 1,
+          firstMicrocycleRir: 4,
+          previousFirstSet
+        });
+
+        // Hold: keep at 15 (planned reps)
+        expect(result.targetReps).toBe(15);
+        expect(result.targetWeight).toBe(200);
+      });
+
+      it('should regress when surplus <= -3 (significantly missed)', () => {
+        const equipment = workoutTestUtil.STANDARD_EQUIPMENT_TYPES.barbell;
+        const exercise = workoutTestUtil.STANDARD_EXERCISES.deadlift;
+        const calibration = workoutTestUtil.STANDARD_CALIBRATIONS.deadlift;
+
+        // Previous: planned 15 reps @ 3 RIR, actual 12 reps @ 1 RIR → surplus = -5
+        const previousFirstSet = workoutTestUtil.createSet({
+          exercise,
+          overrides: {
+            plannedReps: 15,
+            plannedWeight: 200,
+            plannedRir: 3,
+            actualReps: 12,
+            actualWeight: 200,
+            rir: 1
+          }
+        });
+
+        const result = WorkoutExerciseService.calculateTargetRepsAndWeightForFirstSet({
+          exercise,
+          calibration,
+          equipment,
+          microcycleIndex: 1,
+          firstMicrocycleRir: 4,
+          previousFirstSet
+        });
+
+        // Regress: use actual reps (12)
+        expect(result.targetReps).toBe(12);
+        expect(result.targetWeight).toBe(200);
+      });
+
+      it('should not target below rep range min even if actual was 0', () => {
+        const equipment = workoutTestUtil.STANDARD_EQUIPMENT_TYPES.barbell;
+        const exercise = workoutTestUtil.STANDARD_EXERCISES.deadlift; // Medium range min = 10
+        const calibration = workoutTestUtil.STANDARD_CALIBRATIONS.deadlift;
+
+        // Previous: planned 15 reps, actual 0 reps (complete failure)
+        const previousFirstSet = workoutTestUtil.createSet({
+          exercise,
+          overrides: {
+            plannedReps: 15,
+            plannedWeight: 200,
+            plannedRir: 3,
+            actualReps: 0,
+            actualWeight: 200,
+            rir: 0
+          }
+        });
+
+        const result = WorkoutExerciseService.calculateTargetRepsAndWeightForFirstSet({
+          exercise,
+          calibration,
+          equipment,
+          microcycleIndex: 1,
+          firstMicrocycleRir: 4,
+          previousFirstSet
+        });
+
+        // Should clamp to rep range min (10 for Medium)
+        expect(result.targetReps).toBe(10);
+      });
+
+      it('should cap at rep range max and bump weight when acceleration exceeds ceiling', () => {
+        const equipment = workoutTestUtil.STANDARD_EQUIPMENT_TYPES.barbell;
+        const exercise = workoutTestUtil.STANDARD_EXERCISES.deadlift; // Medium range max = 20
+        const calibration = workoutTestUtil.STANDARD_CALIBRATIONS.deadlift;
+
+        // Previous: planned 19 reps, actual 22 reps → surplus = 3, accelerate to 24
+        const previousFirstSet = workoutTestUtil.createSet({
+          exercise,
+          overrides: {
+            plannedReps: 19,
+            plannedWeight: 200,
+            plannedRir: 2,
+            actualReps: 22,
+            actualWeight: 200,
+            rir: 2
+          }
+        });
+
+        const result = WorkoutExerciseService.calculateTargetRepsAndWeightForFirstSet({
+          exercise,
+          calibration,
+          equipment,
+          microcycleIndex: 1,
+          firstMicrocycleRir: 4,
+          previousFirstSet
+        });
+
+        // 22 + 2 = 24, exceeds max (20), so cap at 20 and bump weight
+        expect(result.targetReps).toBe(20);
+        expect(result.targetWeight).toBeGreaterThan(200);
+      });
+    });
+
+    describe('Load Progression Autoregulation', () => {
+      it('should increase weight by at least 2% when surplus >= 2 (exceeded)', () => {
+        const equipment = workoutTestUtil.STANDARD_EQUIPMENT_TYPES.barbell;
+        const exercise = workoutTestUtil.STANDARD_EXERCISES.barbellSquat; // Heavy, Load progression
+        const calibration = workoutTestUtil.STANDARD_CALIBRATIONS.barbellSquat;
+
+        const previousFirstSet = workoutTestUtil.createSet({
+          exercise,
+          overrides: {
+            plannedReps: 15,
+            plannedWeight: 200,
+            plannedRir: 3,
+            actualReps: 17,
+            actualWeight: 200,
+            rir: 3
+          }
+        });
+
+        const result = WorkoutExerciseService.calculateTargetRepsAndWeightForFirstSet({
+          exercise,
+          calibration,
+          equipment,
+          microcycleIndex: 1,
+          firstMicrocycleRir: 4,
+          previousFirstSet
+        });
+
+        // Weight should increase by at least 2%
+        expect(result.targetWeight).toBeGreaterThanOrEqual(200 * 1.02);
+        expect(result.targetReps).toBe(15); // Heavy max
+      });
+
+      it('should increase weight normally when surplus is 0-1', () => {
+        const equipment = workoutTestUtil.STANDARD_EQUIPMENT_TYPES.barbell;
+        const exercise = workoutTestUtil.STANDARD_EXERCISES.barbellSquat;
+        const calibration = workoutTestUtil.STANDARD_CALIBRATIONS.barbellSquat;
+
+        const previousFirstSet = workoutTestUtil.createSet({
+          exercise,
+          overrides: {
+            plannedReps: 15,
+            plannedWeight: 200,
+            plannedRir: 3,
+            actualReps: 15,
+            actualWeight: 200,
+            rir: 3
+          }
+        });
+
+        const result = WorkoutExerciseService.calculateTargetRepsAndWeightForFirstSet({
+          exercise,
+          calibration,
+          equipment,
+          microcycleIndex: 1,
+          firstMicrocycleRir: 4,
+          previousFirstSet
+        });
+
+        expect(result.targetWeight).toBeGreaterThanOrEqual(200 * 1.02);
+      });
+
+      it('should hold weight when surplus is -1 to -2', () => {
+        const equipment = workoutTestUtil.STANDARD_EQUIPMENT_TYPES.barbell;
+        const exercise = workoutTestUtil.STANDARD_EXERCISES.barbellSquat;
+        const calibration = workoutTestUtil.STANDARD_CALIBRATIONS.barbellSquat;
+
+        const previousFirstSet = workoutTestUtil.createSet({
+          exercise,
+          overrides: {
+            plannedReps: 15,
+            plannedWeight: 200,
+            plannedRir: 3,
+            actualReps: 15,
+            actualWeight: 200,
+            rir: 1
+          }
+        });
+
+        const result = WorkoutExerciseService.calculateTargetRepsAndWeightForFirstSet({
+          exercise,
+          calibration,
+          equipment,
+          microcycleIndex: 1,
+          firstMicrocycleRir: 4,
+          previousFirstSet
+        });
+
+        // Hold: same weight
+        expect(result.targetWeight).toBe(200);
+      });
+
+      it('should reduce weight when surplus <= -3', () => {
+        const equipment = workoutTestUtil.STANDARD_EQUIPMENT_TYPES.barbell;
+        const exercise = workoutTestUtil.STANDARD_EXERCISES.barbellSquat;
+        const calibration = workoutTestUtil.STANDARD_CALIBRATIONS.barbellSquat;
+
+        const previousFirstSet = workoutTestUtil.createSet({
+          exercise,
+          overrides: {
+            plannedReps: 15,
+            plannedWeight: 200,
+            plannedRir: 3,
+            actualReps: 12,
+            actualWeight: 200,
+            rir: 1
+          }
+        });
+
+        const result = WorkoutExerciseService.calculateTargetRepsAndWeightForFirstSet({
+          exercise,
+          calibration,
+          equipment,
+          microcycleIndex: 1,
+          firstMicrocycleRir: 4,
+          previousFirstSet
+        });
+
+        // Reduce by minimum equipment increment
+        expect(result.targetWeight).toBeLessThan(200);
+      });
+    });
+
+    describe('Autoregulation Fallback', () => {
+      it('should use calibration formula when previousFirstSet has no actual data', () => {
+        const equipment = workoutTestUtil.STANDARD_EQUIPMENT_TYPES.barbell;
+        const exercise = workoutTestUtil.STANDARD_EXERCISES.deadlift;
+        const calibration = workoutTestUtil.STANDARD_CALIBRATIONS.deadlift;
+
+        // Previous set with no actual data
+        const previousFirstSet = workoutTestUtil.createSet({
+          exercise,
+          overrides: {
+            plannedReps: 15,
+            plannedWeight: 200,
+            plannedRir: 3,
+            actualReps: null,
+            actualWeight: null,
+            rir: null
+          }
+        });
+
+        const resultWithPrevious = WorkoutExerciseService.calculateTargetRepsAndWeightForFirstSet({
+          exercise,
+          calibration,
+          equipment,
+          microcycleIndex: 1,
+          firstMicrocycleRir: 4,
+          previousFirstSet
+        });
+
+        const resultWithout = WorkoutExerciseService.calculateTargetRepsAndWeightForFirstSet({
+          exercise,
+          calibration,
+          equipment,
+          microcycleIndex: 1,
+          firstMicrocycleRir: 4
+        });
+
+        // Should be the same as without previous set (calibration formula)
+        expect(resultWithPrevious.targetReps).toBe(resultWithout.targetReps);
+        expect(resultWithPrevious.targetWeight).toBe(resultWithout.targetWeight);
+      });
+    });
+
     describe('Error Cases', () => {
       it('should throw error when equipment has no weight options', () => {
         // Create a copy with empty weight options to avoid mutating shared test util

@@ -815,6 +815,7 @@ class WorkoutTestUtil {
             context.setsToCreate.forEach((s, index) => {
               if (s.workoutSessionExerciseId === sessionExercise._id) {
                 indicesToRemove.push(index);
+                context.setMap.delete(s._id);
               }
             });
             for (let i = indicesToRemove.length - 1; i >= 0; i--) {
@@ -837,7 +838,7 @@ class WorkoutTestUtil {
                   rir: targetRir
                 }
               });
-              context.setsToCreate.push(set);
+              context.addSets([set]);
               sessionExercise.setOrder.push(set._id);
             }
           }

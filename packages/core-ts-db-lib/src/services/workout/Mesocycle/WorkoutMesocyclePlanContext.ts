@@ -26,6 +26,7 @@ export default class WorkoutMesocyclePlanContext {
   public readonly equipmentMap: Map<UUID, WorkoutEquipmentType>;
   public readonly sessionMap: Map<UUID, WorkoutSession>;
   public readonly sessionExerciseMap: Map<UUID, WorkoutSessionExercise>;
+  public readonly setMap: Map<UUID, WorkoutSet>;
 
   public readonly microcyclesToCreate: WorkoutMicrocycle[] = [];
   /**
@@ -75,6 +76,7 @@ export default class WorkoutMesocyclePlanContext {
 
     this.sessionMap = new Map(existingSessions.map((s) => [s._id, s]));
     this.sessionExerciseMap = new Map(existingSessionExercises.map((s) => [s._id, s]));
+    this.setMap = new Map(existingSets.map((s) => [s._id, s]));
 
     const existingMicrocyclesForMesocycle = existingMicrocycles
       .filter((m) => m.workoutMesocycleId === mesocycle._id)
@@ -104,6 +106,16 @@ export default class WorkoutMesocyclePlanContext {
   public addSessionExercise(sessionExercise: WorkoutSessionExercise): void {
     this.sessionExercisesToCreate.push(sessionExercise);
     this.sessionExerciseMap.set(sessionExercise._id, sessionExercise);
+  }
+
+  /**
+   * Adds sets to the context and updates the set map for O(1) lookup.
+   */
+  public addSets(sets: WorkoutSet[]): void {
+    this.setsToCreate.push(...sets);
+    for (const set of sets) {
+      this.setMap.set(set._id, set);
+    }
   }
 
   /**
