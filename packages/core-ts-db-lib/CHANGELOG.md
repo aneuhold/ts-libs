@@ -9,11 +9,22 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### ✅ Added
 
+- Added `WorkoutExerciseCTO` type and schema, bundling an exercise with its equipment type, best calibration, best set, and most recent accumulation session data. Replaces the `CalibrationExercisePair` pattern.
+- Added `WorkoutMuscleGroupVolumeCTO` type and schema, bundling a muscle group with its per-mesocycle volume history (last 10 mesocycles).
+- Added `MesocycleVolumeSummary` embedded type for capturing per-mesocycle set counts, RSM/soreness/performance averages, and recovery session counts.
+- Added `associatedWorkoutSetId` field to `WorkoutExerciseCalibration` to track when a calibration was auto-generated from a best-set record.
+- Added `WorkoutExerciseCalibrationService.generateAutoCalibrations()` static method to auto-create calibrations from exercise CTOs whose best-set 1RM exceeds their best calibration 1RM.
+
 ### 🏗️ Changed
 
-### 🩹 Fixed
+- _Breaking Change:_ `WorkoutMesocycleService.planMesocycle()` now accepts a single `exerciseCTOs: WorkoutExerciseCTO[]` parameter instead of separate `calibrations`, `exercises`, and `equipmentTypes` arrays.
+- _Breaking Change:_ `WorkoutMesocyclePlanContext` refactored to use `WorkoutExerciseCTO` throughout; `plannedSessionExercisePairs` renamed to `plannedSessionExerciseCTOs`, `muscleGroupToExercisePairsMap` renamed to `muscleGroupToExerciseCTOsMap`, and `calibrationMap` removed.
+- Fixed `WorkoutExerciseCalibrationService.getTargetPercentageFor1RM()` formula from `30 + (targetReps - 5) * 2.2` to the correct `85 - (targetReps - 5) * 2.2`.
+- Updated `tsconfig.json` to exclude the `lib` directory from TypeScript compilation.
 
 ### 🔥 Removed
+
+- Removed `CalibrationExercisePair` type; superseded by `WorkoutExerciseCTO`.
 
 ## 🔖 [4.1.11] (2026-02-23)
 
@@ -327,6 +338,7 @@ Updated dependency: now requires `@aneuhold/core-ts-lib@^2.3.11`.
 - Updated workflow permissions to allow repository write access
 
 <!-- Link References -->
+
 [4.1.12]: https://github.com/aneuhold/ts-libs/compare/core-ts-db-lib-v4.1.11...core-ts-db-lib-v4.1.12
 [4.1.11]: https://github.com/aneuhold/ts-libs/compare/core-ts-db-lib-v4.1.10...core-ts-db-lib-v4.1.11
 [4.1.10]: https://github.com/aneuhold/ts-libs/compare/core-ts-db-lib-v4.1.9...core-ts-db-lib-v4.1.10

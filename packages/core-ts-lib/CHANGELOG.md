@@ -7,13 +7,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## 🔖 [2.4.1] (2026-02-28)
 
-### ✅ Added
-
 ### 🏗️ Changed
 
-### 🩹 Fixed
-
-### 🔥 Removed
+- Updated `tsconfig.json` to exclude the `lib` directory from TypeScript compilation.
 
 ## 🔖 [2.4.0] (2026-02-22)
 
@@ -212,6 +208,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Updated workflow permissions to allow repository write access
 
 <!-- Link References -->
+
 [2.4.1]: https://github.com/aneuhold/ts-libs/compare/core-ts-lib-v2.4.0...core-ts-lib-v2.4.1
 [2.4.0]: https://github.com/aneuhold/ts-libs/compare/core-ts-lib-v2.3.19...core-ts-lib-v2.4.0
 [2.3.19]: https://github.com/aneuhold/ts-libs/compare/core-ts-lib-v2.3.18...core-ts-lib-v2.3.19

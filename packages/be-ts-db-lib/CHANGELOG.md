@@ -9,11 +9,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### ✅ Added
 
+- Added `WorkoutExerciseRepository.buildExerciseCTOsForUser()` to build `WorkoutExerciseCTO` objects for all of a user's exercises using parallel MongoDB aggregation pipelines (exercise + equipment + best calibration + best set; last accumulation session + first set).
+- Added `WorkoutMuscleGroupRepository.buildMuscleGroupVolumeCTOsForUser()` to build `WorkoutMuscleGroupVolumeCTO` objects for all of a user's muscle groups using a volume aggregation pipeline across completed mesocycles.
+
 ### 🏗️ Changed
 
-### 🩹 Fixed
-
-### 🔥 Removed
+- Updated dependencies: now requires `@aneuhold/be-ts-lib@^3.1.0`, `@aneuhold/core-ts-db-lib@^4.1.12`, and `@aneuhold/core-ts-lib@^2.4.1`.
 
 ## 🔖 [4.2.12] (2026-02-23)
 
@@ -300,6 +301,7 @@ Updated dependencies: now requires `@aneuhold/core-ts-db-lib@^3.0.0`, `@aneuhold
 - Updated workflow permissions to allow repository write access
 
 <!-- Link References -->
+
 [4.2.13]: https://github.com/aneuhold/ts-libs/compare/be-ts-db-lib-v4.2.12...be-ts-db-lib-v4.2.13
 [4.2.12]: https://github.com/aneuhold/ts-libs/compare/be-ts-db-lib-v4.2.11...be-ts-db-lib-v4.2.12
 [4.2.11]: https://github.com/aneuhold/ts-libs/compare/be-ts-db-lib-v4.2.10...be-ts-db-lib-v4.2.11
