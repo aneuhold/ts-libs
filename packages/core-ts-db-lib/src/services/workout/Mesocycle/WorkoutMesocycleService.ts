@@ -399,6 +399,12 @@ export default class WorkoutMesocycleService {
       return noDeload;
     }
 
+    // Guard: don't suggest a deload if already on the deload microcycle
+    const isLastMicrocycle = currentMicrocycleIndex === context.microcyclesInOrder.length - 1;
+    if (isLastMicrocycle && !context.skipDeload) {
+      return noDeload;
+    }
+
     // Gather recent session exercises from the last 2 microcycles
     const startIndex = Math.max(0, currentMicrocycleIndex - 1);
     const recentMicrocycles = context.microcyclesInOrder.slice(
