@@ -147,9 +147,9 @@ export default class WorkoutSetService {
 
     const sessionId = previousMicrocycle.sessionOrder[sessionIndex];
     if (!sessionId) {
-      throw new Error(
-        `Previous microcycle has no session at index ${sessionIndex} for exercise ${exerciseId}`
-      );
+      // The previous microcycle may have fewer sessions than the plan (e.g. pruned
+      // during early deload). Treat as missing history rather than a structural error.
+      return undefined;
     }
 
     const session = context.sessionMap.get(sessionId);
