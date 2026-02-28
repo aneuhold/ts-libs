@@ -1,14 +1,10 @@
 import {
-  CycleType,
   DocumentService,
-  UserSchema,
-  WorkoutMesocycleSchema,
   WorkoutMicrocycleSchema,
   type WorkoutMicrocycle
 } from '@aneuhold/core-ts-db-lib';
-import type { UUID } from 'crypto';
 import { describe, expect, it } from 'vitest';
-import { getTestUserName } from '../../../test-util/testsUtil.js';
+import workoutTestUtil from '../../../test-util/projects/workout/workoutTestUtil.js';
 import UserRepository from '../common/UserRepository.js';
 import WorkoutMesocycleRepository from './WorkoutMesocycleRepository.js';
 import WorkoutMicrocycleRepository from './WorkoutMicrocycleRepository.js';
@@ -21,10 +17,13 @@ describe('WorkoutMicrocycleRepository', () => {
 
   describe('Basic CRUD Operations', () => {
     it('should insert a new microcycle with valid mesocycle reference', async () => {
-      const testUser = await createNewTestUser();
-      const mesocycle = await createMesocycle(testUser._id, 'Test Mesocycle', CycleType.MuscleGain);
+      const testUser = await workoutTestUtil.insertUser('WorkoutMicrocycleRepository');
+      const mesocycle = await workoutTestUtil.insertMesocycle({ userId: testUser._id });
 
-      const result = await createMicrocycle(testUser._id, mesocycle._id);
+      const result = await workoutTestUtil.insertMicrocycle({
+        userId: testUser._id,
+        mesocycleId: mesocycle._id
+      });
 
       expect(result._id).toBeDefined();
       expect(result.userId).toBe(testUser._id);
@@ -37,11 +36,17 @@ describe('WorkoutMicrocycleRepository', () => {
     });
 
     it('should get all microcycles for a user', async () => {
-      const testUser = await createNewTestUser();
-      const mesocycle = await createMesocycle(testUser._id, 'Test Mesocycle', CycleType.MuscleGain);
+      const testUser = await workoutTestUtil.insertUser('WorkoutMicrocycleRepository');
+      const mesocycle = await workoutTestUtil.insertMesocycle({ userId: testUser._id });
 
-      const microcycle1 = await createMicrocycle(testUser._id, mesocycle._id);
-      const microcycle2 = await createMicrocycle(testUser._id, mesocycle._id);
+      const microcycle1 = await workoutTestUtil.insertMicrocycle({
+        userId: testUser._id,
+        mesocycleId: mesocycle._id
+      });
+      const microcycle2 = await workoutTestUtil.insertMicrocycle({
+        userId: testUser._id,
+        mesocycleId: mesocycle._id
+      });
 
       const allMicrocycles = await repo.getAllForUser(testUser._id);
 
@@ -52,10 +57,13 @@ describe('WorkoutMicrocycleRepository', () => {
     });
 
     it('should update a microcycle', async () => {
-      const testUser = await createNewTestUser();
-      const mesocycle = await createMesocycle(testUser._id, 'Test Mesocycle', CycleType.MuscleGain);
+      const testUser = await workoutTestUtil.insertUser('WorkoutMicrocycleRepository');
+      const mesocycle = await workoutTestUtil.insertMesocycle({ userId: testUser._id });
 
-      const microcycle = await createMicrocycle(testUser._id, mesocycle._id);
+      const microcycle = await workoutTestUtil.insertMicrocycle({
+        userId: testUser._id,
+        mesocycleId: mesocycle._id
+      });
 
       const newStartDate = new Date();
       newStartDate.setDate(newStartDate.getDate() + 7);
@@ -74,10 +82,13 @@ describe('WorkoutMicrocycleRepository', () => {
     });
 
     it('should delete a microcycle', async () => {
-      const testUser = await createNewTestUser();
-      const mesocycle = await createMesocycle(testUser._id, 'Test Mesocycle', CycleType.MuscleGain);
+      const testUser = await workoutTestUtil.insertUser('WorkoutMicrocycleRepository');
+      const mesocycle = await workoutTestUtil.insertMesocycle({ userId: testUser._id });
 
-      const microcycle = await createMicrocycle(testUser._id, mesocycle._id);
+      const microcycle = await workoutTestUtil.insertMicrocycle({
+        userId: testUser._id,
+        mesocycleId: mesocycle._id
+      });
 
       await repo.delete(microcycle._id);
 
@@ -88,15 +99,17 @@ describe('WorkoutMicrocycleRepository', () => {
 
   describe('Cascading Deletes', () => {
     it('should delete all microcycles when parent mesocycle is deleted', async () => {
-      const testUser = await createNewTestUser();
-      const mesocycle = await createMesocycle(
-        testUser._id,
-        'Parent Mesocycle',
-        CycleType.MuscleGain
-      );
+      const testUser = await workoutTestUtil.insertUser('WorkoutMicrocycleRepository');
+      const mesocycle = await workoutTestUtil.insertMesocycle({ userId: testUser._id });
 
-      const microcycle1 = await createMicrocycle(testUser._id, mesocycle._id);
-      const microcycle2 = await createMicrocycle(testUser._id, mesocycle._id);
+      const microcycle1 = await workoutTestUtil.insertMicrocycle({
+        userId: testUser._id,
+        mesocycleId: mesocycle._id
+      });
+      const microcycle2 = await workoutTestUtil.insertMicrocycle({
+        userId: testUser._id,
+        mesocycleId: mesocycle._id
+      });
 
       const microcyclesBeforeDelete = await repo.getAllForUser(testUser._id);
       expect(microcyclesBeforeDelete.length).toBeGreaterThanOrEqual(2);
@@ -111,11 +124,17 @@ describe('WorkoutMicrocycleRepository', () => {
     });
 
     it('should delete all microcycles when user is deleted', async () => {
-      const testUser = await createNewTestUser();
-      const mesocycle = await createMesocycle(testUser._id, 'Test Mesocycle', CycleType.MuscleGain);
+      const testUser = await workoutTestUtil.insertUser('WorkoutMicrocycleRepository');
+      const mesocycle = await workoutTestUtil.insertMesocycle({ userId: testUser._id });
 
-      const microcycle1 = await createMicrocycle(testUser._id, mesocycle._id);
-      const microcycle2 = await createMicrocycle(testUser._id, mesocycle._id);
+      const microcycle1 = await workoutTestUtil.insertMicrocycle({
+        userId: testUser._id,
+        mesocycleId: mesocycle._id
+      });
+      const microcycle2 = await workoutTestUtil.insertMicrocycle({
+        userId: testUser._id,
+        mesocycleId: mesocycle._id
+      });
 
       const microcyclesBeforeDelete = await repo.getAllForUser(testUser._id);
       expect(microcyclesBeforeDelete.length).toBeGreaterThanOrEqual(2);
@@ -132,7 +151,7 @@ describe('WorkoutMicrocycleRepository', () => {
 
   describe('Validation', () => {
     it('should reject microcycle with non-existent mesocycle', async () => {
-      const testUser = await createNewTestUser();
+      const testUser = await workoutTestUtil.insertUser('WorkoutMicrocycleRepository');
 
       const fakeMesocycleId = DocumentService.generateID();
       const startDate = new Date();
@@ -152,7 +171,7 @@ describe('WorkoutMicrocycleRepository', () => {
     });
 
     it('should reject invalid microcycle on creation', async () => {
-      const testUser = await createNewTestUser();
+      const testUser = await workoutTestUtil.insertUser('WorkoutMicrocycleRepository');
 
       const invalidMicrocycle = {
         userId: testUser._id
@@ -173,9 +192,12 @@ describe('WorkoutMicrocycleRepository', () => {
     });
 
     it('should reject update with non-existent mesocycle', async () => {
-      const testUser = await createNewTestUser();
-      const mesocycle = await createMesocycle(testUser._id, 'Test Mesocycle', CycleType.MuscleGain);
-      const microcycle = await createMicrocycle(testUser._id, mesocycle._id);
+      const testUser = await workoutTestUtil.insertUser('WorkoutMicrocycleRepository');
+      const mesocycle = await workoutTestUtil.insertMesocycle({ userId: testUser._id });
+      const microcycle = await workoutTestUtil.insertMicrocycle({
+        userId: testUser._id,
+        mesocycleId: mesocycle._id
+      });
 
       const fakeMesocycleId = DocumentService.generateID();
 
@@ -188,64 +210,3 @@ describe('WorkoutMicrocycleRepository', () => {
     });
   });
 });
-
-/**
- * Create a new test user
- */
-async function createNewTestUser() {
-  const newUser = UserSchema.parse({
-    userName: getTestUserName(`microcycle`)
-  });
-  const insertResult = await userRepo.insertNew(newUser);
-  expect(insertResult).toBeTruthy();
-  return newUser;
-}
-
-/**
- * Create a mesocycle for testing
- *
- * @param userId the user ID
- * @param title the mesocycle title
- * @param cycleType the cycle type
- */
-async function createMesocycle(userId: UUID, title: string, cycleType: CycleType) {
-  const mesocycle = await WorkoutMesocycleRepository.getRepo().insertNew(
-    WorkoutMesocycleSchema.parse({
-      userId,
-      title,
-      cycleType,
-      plannedSessionCountPerMicrocycle: 1,
-      plannedMicrocycleLengthInDays: 7,
-      calibratedExercises: [DocumentService.generateID()]
-    })
-  );
-  if (!mesocycle) {
-    throw new Error(`Failed to insert mesocycle: ${title}`);
-  }
-  return mesocycle;
-}
-
-/**
- * Create a microcycle for testing
- *
- * @param userId the user ID
- * @param mesocycleId the parent mesocycle ID
- */
-async function createMicrocycle(userId: UUID, mesocycleId: UUID) {
-  const startDate = new Date();
-  const endDate = new Date(startDate);
-  endDate.setDate(endDate.getDate() + 7);
-
-  const microcycle = await WorkoutMicrocycleRepository.getRepo().insertNew(
-    WorkoutMicrocycleSchema.parse({
-      userId,
-      workoutMesocycleId: mesocycleId,
-      startDate,
-      endDate
-    })
-  );
-  if (!microcycle) {
-    throw new Error(`Failed to insert microcycle`);
-  }
-  return microcycle;
-}

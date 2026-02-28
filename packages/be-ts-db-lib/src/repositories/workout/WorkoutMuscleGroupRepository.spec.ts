@@ -1,30 +1,16 @@
-import {
-  UserSchema,
-  WorkoutMuscleGroupSchema,
-  type WorkoutMuscleGroup
-} from '@aneuhold/core-ts-db-lib';
+import { type WorkoutMuscleGroup } from '@aneuhold/core-ts-db-lib';
 import { describe, expect, it } from 'vitest';
-import { getTestUserName } from '../../../test-util/testsUtil.js';
-import UserRepository from '../common/UserRepository.js';
+import workoutTestUtil from '../../../test-util/projects/workout/workoutTestUtil.js';
 import WorkoutMuscleGroupRepository from './WorkoutMuscleGroupRepository.js';
-
-const userRepo = UserRepository.getRepo();
 
 describe('WorkoutMuscleGroupRepository', () => {
   const repo = WorkoutMuscleGroupRepository.getRepo();
 
   describe('Basic CRUD Operations', () => {
     it('should insert a new muscle group', async () => {
-      const testUser = await createNewTestUser();
-      const newMuscleGroup = WorkoutMuscleGroupSchema.parse({
-        userId: testUser._id,
-        name: 'Test Quadriceps'
-      });
+      const testUser = await workoutTestUtil.insertUser('WorkoutMuscleGroupRepository');
 
-      const result = await repo.insertNew(newMuscleGroup);
-      if (!result) {
-        throw new Error('Failed to insert muscle group');
-      }
+      const result = await workoutTestUtil.insertMuscleGroup(testUser._id, 'Test Quadriceps');
 
       expect(result._id).toBeDefined();
       expect(result.name).toBe('Test Quadriceps');
@@ -32,30 +18,13 @@ describe('WorkoutMuscleGroupRepository', () => {
       expect(result.createdDate).toBeInstanceOf(Date);
       expect(result.lastUpdatedDate).toBeInstanceOf(Date);
       expect(result.docType).toBe('workoutMuscleGroup');
-
-      // Cleanup
-      await repo.delete(result._id);
     });
 
     it('should get all muscle groups for a user', async () => {
-      const testUser = await createNewTestUser();
-      const muscleGroup1 = await repo.insertNew(
-        WorkoutMuscleGroupSchema.parse({
-          userId: testUser._id,
-          name: 'Chest'
-        })
-      );
+      const testUser = await workoutTestUtil.insertUser('WorkoutMuscleGroupRepository');
 
-      const muscleGroup2 = await repo.insertNew(
-        WorkoutMuscleGroupSchema.parse({
-          userId: testUser._id,
-          name: 'Back'
-        })
-      );
-
-      if (!muscleGroup1 || !muscleGroup2) {
-        throw new Error('Failed to insert muscle groups');
-      }
+      const muscleGroup1 = await workoutTestUtil.insertMuscleGroup(testUser._id, 'Chest');
+      const muscleGroup2 = await workoutTestUtil.insertMuscleGroup(testUser._id, 'Back');
 
       const allMuscleGroups = await repo.getAllForUser(testUser._id);
 
@@ -63,24 +32,11 @@ describe('WorkoutMuscleGroupRepository', () => {
       const ids = allMuscleGroups.map((mg) => mg._id);
       expect(ids).toContain(muscleGroup1._id);
       expect(ids).toContain(muscleGroup2._id);
-
-      // Cleanup
-      await repo.delete(muscleGroup1._id);
-      await repo.delete(muscleGroup2._id);
     });
 
     it('should update a muscle group', async () => {
-      const testUser = await createNewTestUser();
-      const muscleGroup = await repo.insertNew(
-        WorkoutMuscleGroupSchema.parse({
-          userId: testUser._id,
-          name: 'Shoulders'
-        })
-      );
-
-      if (!muscleGroup) {
-        throw new Error('Failed to insert muscle group');
-      }
+      const testUser = await workoutTestUtil.insertUser('WorkoutMuscleGroupRepository');
+      const muscleGroup = await workoutTestUtil.insertMuscleGroup(testUser._id, 'Shoulders');
 
       await repo.update({
         _id: muscleGroup._id,
@@ -93,23 +49,11 @@ describe('WorkoutMuscleGroupRepository', () => {
       }
 
       expect(updated.name).toBe('Updated Shoulders');
-
-      // Cleanup
-      await repo.delete(muscleGroup._id);
     });
 
     it('should delete a muscle group', async () => {
-      const testUser = await createNewTestUser();
-      const muscleGroup = await repo.insertNew(
-        WorkoutMuscleGroupSchema.parse({
-          userId: testUser._id,
-          name: 'Biceps'
-        })
-      );
-
-      if (!muscleGroup) {
-        throw new Error('Failed to insert muscle group');
-      }
+      const testUser = await workoutTestUtil.insertUser('WorkoutMuscleGroupRepository');
+      const muscleGroup = await workoutTestUtil.insertMuscleGroup(testUser._id, 'Biceps');
 
       await repo.delete(muscleGroup._id);
 
@@ -120,8 +64,7 @@ describe('WorkoutMuscleGroupRepository', () => {
 
   describe('Validation', () => {
     it('should reject invalid muscle group on creation', async () => {
-      const testUser = await createNewTestUser();
-      // Test with missing required field (name)
+      const testUser = await workoutTestUtil.insertUser('WorkoutMuscleGroupRepository');
       const invalidMuscleGroup = {
         userId: testUser._id
         // name is missing
@@ -141,45 +84,17 @@ describe('WorkoutMuscleGroupRepository', () => {
     });
 
     it('should reject invalid muscle group on update', async () => {
-      const testUser = await createNewTestUser();
-      const muscleGroup = await repo.insertNew(
-        WorkoutMuscleGroupSchema.parse({
-          userId: testUser._id,
-          name: 'Test Group'
-        })
-      );
+      const testUser = await workoutTestUtil.insertUser('WorkoutMuscleGroupRepository');
+      const muscleGroup = await workoutTestUtil.insertMuscleGroup(testUser._id, 'Test Group');
 
-      if (!muscleGroup) {
-        throw new Error('Failed to insert muscle group');
-      }
-
-      // Create the update
       const update = {
         _id: muscleGroup._id,
         name: 123 // Invalid type
       };
 
-      // Test with invalid data type for name
       await expect(repo.update(update as unknown as WorkoutMuscleGroup)).rejects.toThrow(
         'Schema validation failed'
       );
-
-      // Cleanup
-      await repo.delete(muscleGroup._id);
     });
   });
 });
-
-/**
- * Create a new test user
- *
- * @returns The new user
- */
-async function createNewTestUser() {
-  const newUser = UserSchema.parse({
-    userName: getTestUserName(`musclegroup`)
-  });
-  const insertResult = await userRepo.insertNew(newUser);
-  expect(insertResult).toBeTruthy();
-  return newUser;
-}

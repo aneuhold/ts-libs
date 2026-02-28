@@ -1,48 +1,34 @@
 import {
   ExerciseRepRange,
-  UserSchema,
-  WorkoutEquipmentTypeSchema,
   WorkoutExerciseCalibrationSchema,
-  WorkoutExerciseSchema,
-  WorkoutMuscleGroupSchema,
   type WorkoutExerciseCalibration
 } from '@aneuhold/core-ts-db-lib';
-import { type UUID } from 'crypto';
 import { describe, expect, it } from 'vitest';
-import { getTestUserName } from '../../../test-util/testsUtil.js';
-import UserRepository from '../common/UserRepository.js';
-import WorkoutEquipmentTypeRepository from './WorkoutEquipmentTypeRepository.js';
+import workoutTestUtil from '../../../test-util/projects/workout/workoutTestUtil.js';
 import WorkoutExerciseCalibrationRepository from './WorkoutExerciseCalibrationRepository.js';
 import WorkoutExerciseRepository from './WorkoutExerciseRepository.js';
-import WorkoutMuscleGroupRepository from './WorkoutMuscleGroupRepository.js';
-
-const userRepo = UserRepository.getRepo();
 
 describe('WorkoutExerciseCalibrationRepository', () => {
   const repo = WorkoutExerciseCalibrationRepository.getRepo();
 
   describe('Basic CRUD Operations', () => {
     it('should insert a new calibration', async () => {
-      const testUser = await createNewTestUser();
-
-      const muscleGroup = await createMuscleGroup(testUser._id, 'Chest');
-      const equipment = await createEquipmentType(testUser._id, 'Barbell');
-
-      const exercise = await createExercise(testUser._id, 'Bench Press', equipment._id, [
-        muscleGroup._id
-      ]);
-
-      const newCalibration = WorkoutExerciseCalibrationSchema.parse({
+      const testUser = await workoutTestUtil.insertUser('WorkoutExerciseCalibrationRepository');
+      const mg = await workoutTestUtil.insertMuscleGroup(testUser._id, 'Chest');
+      const eq = await workoutTestUtil.insertEquipmentType(testUser._id, 'Barbell');
+      const exercise = await workoutTestUtil.insertExercise({
         userId: testUser._id,
-        workoutExerciseId: exercise._id,
+        equipmentTypeId: eq._id,
+        primaryMuscleGroupIds: [mg._id],
+        name: 'Bench Press'
+      });
+
+      const result = await workoutTestUtil.insertCalibration({
+        userId: testUser._id,
+        exerciseId: exercise._id,
         reps: 10,
         weight: 135
       });
-
-      const result = await repo.insertNew(newCalibration);
-      if (!result) {
-        throw new Error('Failed to insert calibration');
-      }
 
       expect(result._id).toBeDefined();
       expect(result.workoutExerciseId).toBe(exercise._id);
@@ -55,41 +41,29 @@ describe('WorkoutExerciseCalibrationRepository', () => {
     });
 
     it('should get all calibrations for a user', async () => {
-      const testUser = await createNewTestUser();
+      const testUser = await workoutTestUtil.insertUser('WorkoutExerciseCalibrationRepository');
+      const mg = await workoutTestUtil.insertMuscleGroup(testUser._id, 'Legs');
+      const eq = await workoutTestUtil.insertEquipmentType(testUser._id, 'Barbell');
+      const exercise = await workoutTestUtil.insertExercise({
+        userId: testUser._id,
+        equipmentTypeId: eq._id,
+        primaryMuscleGroupIds: [mg._id],
+        name: 'Squat',
+        repRange: ExerciseRepRange.Heavy
+      });
 
-      const muscleGroup = await createMuscleGroup(testUser._id, 'Legs');
-      const equipment = await createEquipmentType(testUser._id, 'Barbell');
-
-      const exercise = await createExercise(
-        testUser._id,
-        'Squat',
-        equipment._id,
-        [muscleGroup._id],
-        undefined,
-        ExerciseRepRange.Heavy
-      );
-
-      const calibration1 = await repo.insertNew(
-        WorkoutExerciseCalibrationSchema.parse({
-          userId: testUser._id,
-          workoutExerciseId: exercise._id,
-          reps: 5,
-          weight: 225
-        })
-      );
-
-      const calibration2 = await repo.insertNew(
-        WorkoutExerciseCalibrationSchema.parse({
-          userId: testUser._id,
-          workoutExerciseId: exercise._id,
-          reps: 8,
-          weight: 185
-        })
-      );
-
-      if (!calibration1 || !calibration2) {
-        throw new Error('Failed to insert calibrations');
-      }
+      const calibration1 = await workoutTestUtil.insertCalibration({
+        userId: testUser._id,
+        exerciseId: exercise._id,
+        reps: 5,
+        weight: 225
+      });
+      const calibration2 = await workoutTestUtil.insertCalibration({
+        userId: testUser._id,
+        exerciseId: exercise._id,
+        reps: 8,
+        weight: 185
+      });
 
       const allCalibrations = await repo.getAllForUser(testUser._id);
 
@@ -100,32 +74,23 @@ describe('WorkoutExerciseCalibrationRepository', () => {
     });
 
     it('should update a calibration', async () => {
-      const testUser = await createNewTestUser();
+      const testUser = await workoutTestUtil.insertUser('WorkoutExerciseCalibrationRepository');
+      const mg = await workoutTestUtil.insertMuscleGroup(testUser._id, 'Back');
+      const eq = await workoutTestUtil.insertEquipmentType(testUser._id, 'Barbell');
+      const exercise = await workoutTestUtil.insertExercise({
+        userId: testUser._id,
+        equipmentTypeId: eq._id,
+        primaryMuscleGroupIds: [mg._id],
+        name: 'Deadlift',
+        repRange: ExerciseRepRange.Heavy
+      });
 
-      const muscleGroup = await createMuscleGroup(testUser._id, 'Back');
-      const equipment = await createEquipmentType(testUser._id, 'Barbell');
-
-      const exercise = await createExercise(
-        testUser._id,
-        'Deadlift',
-        equipment._id,
-        [muscleGroup._id],
-        undefined,
-        ExerciseRepRange.Heavy
-      );
-
-      const calibration = await repo.insertNew(
-        WorkoutExerciseCalibrationSchema.parse({
-          userId: testUser._id,
-          workoutExerciseId: exercise._id,
-          reps: 5,
-          weight: 315
-        })
-      );
-
-      if (!calibration) {
-        throw new Error('Failed to insert calibration');
-      }
+      const calibration = await workoutTestUtil.insertCalibration({
+        userId: testUser._id,
+        exerciseId: exercise._id,
+        reps: 5,
+        weight: 315
+      });
 
       await repo.update({
         _id: calibration._id,
@@ -141,27 +106,22 @@ describe('WorkoutExerciseCalibrationRepository', () => {
     });
 
     it('should delete a calibration', async () => {
-      const testUser = await createNewTestUser();
+      const testUser = await workoutTestUtil.insertUser('WorkoutExerciseCalibrationRepository');
+      const mg = await workoutTestUtil.insertMuscleGroup(testUser._id, 'Shoulders');
+      const eq = await workoutTestUtil.insertEquipmentType(testUser._id, 'Barbell');
+      const exercise = await workoutTestUtil.insertExercise({
+        userId: testUser._id,
+        equipmentTypeId: eq._id,
+        primaryMuscleGroupIds: [mg._id],
+        name: 'Overhead Press'
+      });
 
-      const muscleGroup = await createMuscleGroup(testUser._id, 'Shoulders');
-      const equipment = await createEquipmentType(testUser._id, 'Barbell');
-
-      const exercise = await createExercise(testUser._id, 'Overhead Press', equipment._id, [
-        muscleGroup._id
-      ]);
-
-      const calibration = await repo.insertNew(
-        WorkoutExerciseCalibrationSchema.parse({
-          userId: testUser._id,
-          workoutExerciseId: exercise._id,
-          reps: 10,
-          weight: 95
-        })
-      );
-
-      if (!calibration) {
-        throw new Error('Failed to insert calibration');
-      }
+      const calibration = await workoutTestUtil.insertCalibration({
+        userId: testUser._id,
+        exerciseId: exercise._id,
+        reps: 10,
+        weight: 95
+      });
 
       await repo.delete(calibration._id);
 
@@ -172,7 +132,7 @@ describe('WorkoutExerciseCalibrationRepository', () => {
 
   describe('Validation', () => {
     it('should reject calibration with non-existent exercise', async () => {
-      const testUser = await createNewTestUser();
+      const testUser = await workoutTestUtil.insertUser('WorkoutExerciseCalibrationRepository');
 
       const fakeExerciseId = '00000000-0000-7000-8000-000000000000';
       const newCalibration = WorkoutExerciseCalibrationSchema.parse({
@@ -188,7 +148,7 @@ describe('WorkoutExerciseCalibrationRepository', () => {
     });
 
     it('should reject invalid calibration on creation', async () => {
-      const testUser = await createNewTestUser();
+      const testUser = await workoutTestUtil.insertUser('WorkoutExerciseCalibrationRepository');
 
       const invalidCalibration = {
         userId: testUser._id
@@ -209,27 +169,22 @@ describe('WorkoutExerciseCalibrationRepository', () => {
     });
 
     it('should reject update with non-existent exercise', async () => {
-      const testUser = await createNewTestUser();
+      const testUser = await workoutTestUtil.insertUser('WorkoutExerciseCalibrationRepository');
+      const mg = await workoutTestUtil.insertMuscleGroup(testUser._id, 'Arms');
+      const eq = await workoutTestUtil.insertEquipmentType(testUser._id, 'Dumbbell');
+      const exercise = await workoutTestUtil.insertExercise({
+        userId: testUser._id,
+        equipmentTypeId: eq._id,
+        primaryMuscleGroupIds: [mg._id],
+        name: 'Bicep Curl'
+      });
 
-      const muscleGroup = await createMuscleGroup(testUser._id, 'Arms');
-      const equipment = await createEquipmentType(testUser._id, 'Dumbbell');
-
-      const exercise = await createExercise(testUser._id, 'Bicep Curl', equipment._id, [
-        muscleGroup._id
-      ]);
-
-      const calibration = await repo.insertNew(
-        WorkoutExerciseCalibrationSchema.parse({
-          userId: testUser._id,
-          workoutExerciseId: exercise._id,
-          reps: 10,
-          weight: 30
-        })
-      );
-
-      if (!calibration) {
-        throw new Error('Failed to insert calibration');
-      }
+      const calibration = await workoutTestUtil.insertCalibration({
+        userId: testUser._id,
+        exerciseId: exercise._id,
+        reps: 10,
+        weight: 30
+      });
 
       const fakeExerciseId = '00000000-0000-7000-8000-000000000000';
       await expect(
@@ -243,27 +198,22 @@ describe('WorkoutExerciseCalibrationRepository', () => {
 
   describe('Exercise Reference', () => {
     it('should maintain calibration when exercise is updated', async () => {
-      const testUser = await createNewTestUser();
+      const testUser = await workoutTestUtil.insertUser('WorkoutExerciseCalibrationRepository');
+      const mg = await workoutTestUtil.insertMuscleGroup(testUser._id, 'Core');
+      const eq = await workoutTestUtil.insertEquipmentType(testUser._id, 'Bodyweight');
+      const exercise = await workoutTestUtil.insertExercise({
+        userId: testUser._id,
+        equipmentTypeId: eq._id,
+        primaryMuscleGroupIds: [mg._id],
+        name: 'Plank'
+      });
 
-      const muscleGroup = await createMuscleGroup(testUser._id, 'Core');
-      const equipment = await createEquipmentType(testUser._id, 'Bodyweight');
-
-      const exercise = await createExercise(testUser._id, 'Plank', equipment._id, [
-        muscleGroup._id
-      ]);
-
-      const calibration = await repo.insertNew(
-        WorkoutExerciseCalibrationSchema.parse({
-          userId: testUser._id,
-          workoutExerciseId: exercise._id,
-          reps: 1,
-          weight: 0
-        })
-      );
-
-      if (!calibration) {
-        throw new Error('Failed to insert calibration');
-      }
+      const calibration = await workoutTestUtil.insertCalibration({
+        userId: testUser._id,
+        exerciseId: exercise._id,
+        reps: 1,
+        weight: 0
+      });
 
       // Update exercise
       await WorkoutExerciseRepository.getRepo().update({
@@ -281,88 +231,3 @@ describe('WorkoutExerciseCalibrationRepository', () => {
     });
   });
 });
-
-/**
- * Create a new test user
- */
-async function createNewTestUser() {
-  const newUser = UserSchema.parse({
-    userName: getTestUserName(`calibration`)
-  });
-  const insertResult = await userRepo.insertNew(newUser);
-  expect(insertResult).toBeTruthy();
-  return newUser;
-}
-
-/**
- * Create a muscle group for testing
- *
- * @param userId the user ID
- * @param name the muscle group name
- */
-async function createMuscleGroup(userId: UUID, name: string) {
-  const muscleGroup = await WorkoutMuscleGroupRepository.getRepo().insertNew(
-    WorkoutMuscleGroupSchema.parse({
-      userId,
-      name
-    })
-  );
-  if (!muscleGroup) {
-    throw new Error(`Failed to insert muscle group: ${name}`);
-  }
-  return muscleGroup;
-}
-
-/**
- * Create equipment type for testing
- *
- * @param userId the user ID
- * @param title the equipment title
- */
-async function createEquipmentType(userId: UUID, title: string) {
-  const equipment = await WorkoutEquipmentTypeRepository.getRepo().insertNew(
-    WorkoutEquipmentTypeSchema.parse({
-      userId,
-      title
-    })
-  );
-  if (!equipment) {
-    throw new Error(`Failed to insert equipment type: ${title}`);
-  }
-  return equipment;
-}
-
-/**
- * Create an exercise for testing
- *
- * @param userId the user ID
- * @param exerciseName the exercise name
- * @param equipmentId the equipment ID
- * @param primaryMuscleGroupIds the primary muscle group IDs
- * @param secondaryMuscleGroupIds the secondary muscle group IDs
- * @param repRange the exercise rep range
- */
-async function createExercise(
-  userId: string,
-  exerciseName: string,
-  equipmentId: string,
-  primaryMuscleGroupIds: string[],
-  secondaryMuscleGroupIds?: string[],
-  repRange: ExerciseRepRange = ExerciseRepRange.Medium
-) {
-  const exercise = await WorkoutExerciseRepository.getRepo().insertNew(
-    WorkoutExerciseSchema.parse({
-      userId,
-      exerciseName,
-      workoutEquipmentTypeId: equipmentId,
-      initialFatigueGuess: {},
-      primaryMuscleGroups: primaryMuscleGroupIds,
-      secondaryMuscleGroups: secondaryMuscleGroupIds,
-      repRange
-    })
-  );
-  if (!exercise) {
-    throw new Error(`Failed to insert exercise: ${exerciseName}`);
-  }
-  return exercise;
-}

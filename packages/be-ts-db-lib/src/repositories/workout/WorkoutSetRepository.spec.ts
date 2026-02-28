@@ -1,29 +1,8 @@
-import {
-  CycleType,
-  DocumentService,
-  ExerciseRepRange,
-  UserSchema,
-  WorkoutEquipmentTypeSchema,
-  WorkoutExerciseSchema,
-  WorkoutMesocycleSchema,
-  WorkoutMicrocycleSchema,
-  WorkoutMuscleGroupSchema,
-  WorkoutSessionExerciseSchema,
-  WorkoutSessionSchema,
-  WorkoutSetSchema,
-  type WorkoutSet
-} from '@aneuhold/core-ts-db-lib';
-import type { UUID } from 'crypto';
+import { DocumentService, WorkoutSetSchema, type WorkoutSet } from '@aneuhold/core-ts-db-lib';
 import { describe, expect, it } from 'vitest';
-import { getTestUserName } from '../../../test-util/testsUtil.js';
+import workoutTestUtil from '../../../test-util/projects/workout/workoutTestUtil.js';
 import UserRepository from '../common/UserRepository.js';
-import WorkoutEquipmentTypeRepository from './WorkoutEquipmentTypeRepository.js';
-import WorkoutExerciseRepository from './WorkoutExerciseRepository.js';
-import WorkoutMesocycleRepository from './WorkoutMesocycleRepository.js';
-import WorkoutMicrocycleRepository from './WorkoutMicrocycleRepository.js';
-import WorkoutMuscleGroupRepository from './WorkoutMuscleGroupRepository.js';
 import WorkoutSessionExerciseRepository from './WorkoutSessionExerciseRepository.js';
-import WorkoutSessionRepository from './WorkoutSessionRepository.js';
 import WorkoutSetRepository from './WorkoutSetRepository.js';
 
 const userRepo = UserRepository.getRepo();
@@ -32,16 +11,41 @@ describe('WorkoutSetRepository', () => {
   const repo = WorkoutSetRepository.getRepo();
   const sessionExerciseRepo = WorkoutSessionExerciseRepository.getRepo();
 
+  /**
+   * Creates a full hierarchy (user -> exercise setup -> session setup ->
+   * session exercise) for set tests.
+   *
+   * @param exerciseName - Name for the exercise.
+   */
+  async function createTestSetSetup(exerciseName: string) {
+    const { testUser, exercise } = await workoutTestUtil.insertExerciseSetup({
+      prefix: 'WorkoutSetRepository',
+      exerciseName
+    });
+    const { session } = await workoutTestUtil.insertSessionSetup({
+      userId: testUser._id,
+      exerciseName: `${exerciseName}-session`
+    });
+    const sessionExercise = await workoutTestUtil.insertSessionExercise({
+      userId: testUser._id,
+      sessionId: session._id,
+      exerciseId: exercise._id
+    });
+    return { testUser, exercise, session, sessionExercise };
+  }
+
   describe('Basic CRUD Operations', () => {
     it('should insert a new set with valid session exercise reference', async () => {
-      const testUser = await createNewTestUser();
-      const mesocycle = await createMesocycle(testUser._id, 'Test Mesocycle', CycleType.MuscleGain);
-      const microcycle = await createMicrocycle(testUser._id, mesocycle._id);
-      const session = await createSession(testUser._id, microcycle._id);
-      const exercise = await createExercise(testUser._id, 'Squat');
-      const sessionExercise = await createSessionExercise(testUser._id, session._id, exercise._id);
+      const { testUser, exercise, session, sessionExercise } = await createTestSetSetup('Squat');
 
-      const result = await createSet(testUser._id, sessionExercise._id, 100, 10);
+      const result = await workoutTestUtil.insertSet({
+        userId: testUser._id,
+        exerciseId: exercise._id,
+        sessionId: session._id,
+        sessionExerciseId: sessionExercise._id,
+        actualWeight: 100,
+        actualReps: 10
+      });
 
       expect(result._id).toBeDefined();
       expect(result.userId).toBe(testUser._id);
@@ -54,15 +58,24 @@ describe('WorkoutSetRepository', () => {
     });
 
     it('should get all sets for a user', async () => {
-      const testUser = await createNewTestUser();
-      const mesocycle = await createMesocycle(testUser._id, 'Test Mesocycle', CycleType.MuscleGain);
-      const microcycle = await createMicrocycle(testUser._id, mesocycle._id);
-      const session = await createSession(testUser._id, microcycle._id);
-      const exercise = await createExercise(testUser._id, 'Squat');
-      const sessionExercise = await createSessionExercise(testUser._id, session._id, exercise._id);
+      const { testUser, exercise, session, sessionExercise } = await createTestSetSetup('Squat');
 
-      const set1 = await createSet(testUser._id, sessionExercise._id, 100, 10);
-      const set2 = await createSet(testUser._id, sessionExercise._id, 150, 8);
+      const set1 = await workoutTestUtil.insertSet({
+        userId: testUser._id,
+        exerciseId: exercise._id,
+        sessionId: session._id,
+        sessionExerciseId: sessionExercise._id,
+        actualWeight: 100,
+        actualReps: 10
+      });
+      const set2 = await workoutTestUtil.insertSet({
+        userId: testUser._id,
+        exerciseId: exercise._id,
+        sessionId: session._id,
+        sessionExerciseId: sessionExercise._id,
+        actualWeight: 150,
+        actualReps: 8
+      });
 
       const allSets = await repo.getAllForUser(testUser._id);
 
@@ -73,14 +86,16 @@ describe('WorkoutSetRepository', () => {
     });
 
     it('should update a set', async () => {
-      const testUser = await createNewTestUser();
-      const mesocycle = await createMesocycle(testUser._id, 'Test Mesocycle', CycleType.MuscleGain);
-      const microcycle = await createMicrocycle(testUser._id, mesocycle._id);
-      const session = await createSession(testUser._id, microcycle._id);
-      const exercise = await createExercise(testUser._id, 'Squat');
-      const sessionExercise = await createSessionExercise(testUser._id, session._id, exercise._id);
+      const { testUser, exercise, session, sessionExercise } = await createTestSetSetup('Squat');
 
-      const set = await createSet(testUser._id, sessionExercise._id, 100, 10);
+      const set = await workoutTestUtil.insertSet({
+        userId: testUser._id,
+        exerciseId: exercise._id,
+        sessionId: session._id,
+        sessionExerciseId: sessionExercise._id,
+        actualWeight: 100,
+        actualReps: 10
+      });
 
       await repo.update({
         _id: set._id,
@@ -98,14 +113,16 @@ describe('WorkoutSetRepository', () => {
     });
 
     it('should delete a set', async () => {
-      const testUser = await createNewTestUser();
-      const mesocycle = await createMesocycle(testUser._id, 'Test Mesocycle', CycleType.MuscleGain);
-      const microcycle = await createMicrocycle(testUser._id, mesocycle._id);
-      const session = await createSession(testUser._id, microcycle._id);
-      const exercise = await createExercise(testUser._id, 'Squat');
-      const sessionExercise = await createSessionExercise(testUser._id, session._id, exercise._id);
+      const { testUser, exercise, session, sessionExercise } = await createTestSetSetup('Squat');
 
-      const set = await createSet(testUser._id, sessionExercise._id, 100, 10);
+      const set = await workoutTestUtil.insertSet({
+        userId: testUser._id,
+        exerciseId: exercise._id,
+        sessionId: session._id,
+        sessionExerciseId: sessionExercise._id,
+        actualWeight: 100,
+        actualReps: 10
+      });
 
       await repo.delete(set._id);
 
@@ -116,19 +133,24 @@ describe('WorkoutSetRepository', () => {
 
   describe('Cascading Deletes', () => {
     it('should delete all sets when parent session exercise is deleted', async () => {
-      const testUser = await createNewTestUser();
-      const mesocycle = await createMesocycle(
-        testUser._id,
-        'Parent Mesocycle',
-        CycleType.MuscleGain
-      );
-      const microcycle = await createMicrocycle(testUser._id, mesocycle._id);
-      const session = await createSession(testUser._id, microcycle._id);
-      const exercise = await createExercise(testUser._id, 'Squat');
-      const sessionExercise = await createSessionExercise(testUser._id, session._id, exercise._id);
+      const { testUser, exercise, session, sessionExercise } = await createTestSetSetup('Squat');
 
-      const set1 = await createSet(testUser._id, sessionExercise._id, 100, 10);
-      const set2 = await createSet(testUser._id, sessionExercise._id, 150, 8);
+      const set1 = await workoutTestUtil.insertSet({
+        userId: testUser._id,
+        exerciseId: exercise._id,
+        sessionId: session._id,
+        sessionExerciseId: sessionExercise._id,
+        actualWeight: 100,
+        actualReps: 10
+      });
+      const set2 = await workoutTestUtil.insertSet({
+        userId: testUser._id,
+        exerciseId: exercise._id,
+        sessionId: session._id,
+        sessionExerciseId: sessionExercise._id,
+        actualWeight: 150,
+        actualReps: 8
+      });
 
       const setsBeforeDelete = await repo.getAllForUser(testUser._id);
       expect(setsBeforeDelete.length).toBeGreaterThanOrEqual(2);
@@ -143,15 +165,24 @@ describe('WorkoutSetRepository', () => {
     });
 
     it('should delete all sets when user is deleted', async () => {
-      const testUser = await createNewTestUser();
-      const mesocycle = await createMesocycle(testUser._id, 'Test Mesocycle', CycleType.MuscleGain);
-      const microcycle = await createMicrocycle(testUser._id, mesocycle._id);
-      const session = await createSession(testUser._id, microcycle._id);
-      const exercise = await createExercise(testUser._id, 'Squat');
-      const sessionExercise = await createSessionExercise(testUser._id, session._id, exercise._id);
+      const { testUser, exercise, session, sessionExercise } = await createTestSetSetup('Squat');
 
-      const set1 = await createSet(testUser._id, sessionExercise._id, 100, 10);
-      const set2 = await createSet(testUser._id, sessionExercise._id, 150, 8);
+      const set1 = await workoutTestUtil.insertSet({
+        userId: testUser._id,
+        exerciseId: exercise._id,
+        sessionId: session._id,
+        sessionExerciseId: sessionExercise._id,
+        actualWeight: 100,
+        actualReps: 10
+      });
+      const set2 = await workoutTestUtil.insertSet({
+        userId: testUser._id,
+        exerciseId: exercise._id,
+        sessionId: session._id,
+        sessionExerciseId: sessionExercise._id,
+        actualWeight: 150,
+        actualReps: 8
+      });
 
       const setsBeforeDelete = await repo.getAllForUser(testUser._id);
       expect(setsBeforeDelete.length).toBeGreaterThanOrEqual(2);
@@ -168,7 +199,7 @@ describe('WorkoutSetRepository', () => {
 
   describe('Validation', () => {
     it('should reject set with non-existent session exercise', async () => {
-      const testUser = await createNewTestUser();
+      const testUser = await workoutTestUtil.insertUser('WorkoutSetRepository');
 
       const fakeSessionExerciseId = DocumentService.generateID();
 
@@ -185,7 +216,7 @@ describe('WorkoutSetRepository', () => {
     });
 
     it('should reject invalid set on creation', async () => {
-      const testUser = await createNewTestUser();
+      const testUser = await workoutTestUtil.insertUser('WorkoutSetRepository');
 
       const invalidSet = {
         userId: testUser._id
@@ -206,177 +237,3 @@ describe('WorkoutSetRepository', () => {
     });
   });
 });
-
-/**
- * Create a new test user
- */
-async function createNewTestUser() {
-  const newUser = UserSchema.parse({
-    userName: getTestUserName(`set`)
-  });
-  const insertResult = await userRepo.insertNew(newUser);
-  expect(insertResult).toBeTruthy();
-  return newUser;
-}
-
-/**
- * Create a mesocycle for testing
- *
- * @param userId the user ID
- * @param title the mesocycle title
- * @param cycleType the cycle type
- */
-async function createMesocycle(userId: UUID, title: string, cycleType: CycleType) {
-  const mesocycle = await WorkoutMesocycleRepository.getRepo().insertNew(
-    WorkoutMesocycleSchema.parse({
-      userId,
-      title,
-      cycleType,
-      plannedSessionCountPerMicrocycle: 1,
-      plannedMicrocycleLengthInDays: 7,
-      calibratedExercises: [DocumentService.generateID()]
-    })
-  );
-  if (!mesocycle) {
-    throw new Error(`Failed to insert mesocycle: ${title}`);
-  }
-  return mesocycle;
-}
-
-/**
- * Create a microcycle for testing
- *
- * @param userId the user ID
- * @param mesocycleId the parent mesocycle ID
- */
-async function createMicrocycle(userId: UUID, mesocycleId: UUID) {
-  const startDate = new Date();
-  const endDate = new Date(startDate);
-  endDate.setDate(endDate.getDate() + 7);
-
-  const microcycle = await WorkoutMicrocycleRepository.getRepo().insertNew(
-    WorkoutMicrocycleSchema.parse({
-      userId,
-      workoutMesocycleId: mesocycleId,
-      startDate,
-      endDate
-    })
-  );
-  if (!microcycle) {
-    throw new Error(`Failed to insert microcycle`);
-  }
-  return microcycle;
-}
-
-/**
- * Create a session for testing
- *
- * @param userId the user ID
- * @param microcycleId the parent microcycle ID
- */
-async function createSession(userId: UUID, microcycleId: UUID) {
-  const startTime = new Date();
-
-  const session = await WorkoutSessionRepository.getRepo().insertNew(
-    WorkoutSessionSchema.parse({
-      userId,
-      workoutMicrocycleId: microcycleId,
-      title: 'Test Session',
-      startTime
-    })
-  );
-  if (!session) {
-    throw new Error(`Failed to insert session`);
-  }
-  return session;
-}
-
-/**
- * Create an exercise for testing
- *
- * @param userId the user ID
- * @param exerciseName the exercise name
- */
-async function createExercise(userId: UUID, exerciseName: string) {
-  const muscleGroup = await WorkoutMuscleGroupRepository.getRepo().insertNew(
-    WorkoutMuscleGroupSchema.parse({
-      userId,
-      name: `Muscle-${exerciseName}`
-    })
-  );
-  if (!muscleGroup) {
-    throw new Error(`Failed to insert muscle group`);
-  }
-
-  const equipment = await WorkoutEquipmentTypeRepository.getRepo().insertNew(
-    WorkoutEquipmentTypeSchema.parse({
-      userId,
-      title: `Equipment-${exerciseName}`
-    })
-  );
-  if (!equipment) {
-    throw new Error(`Failed to insert equipment type`);
-  }
-
-  const exercise = await WorkoutExerciseRepository.getRepo().insertNew(
-    WorkoutExerciseSchema.parse({
-      userId,
-      exerciseName,
-      workoutEquipmentTypeId: equipment._id,
-      initialFatigueGuess: {},
-      primaryMuscleGroups: [muscleGroup._id],
-      secondaryMuscleGroups: [],
-      repRange: ExerciseRepRange.Medium
-    })
-  );
-  if (!exercise) {
-    throw new Error(`Failed to insert exercise: ${exerciseName}`);
-  }
-  return exercise;
-}
-
-/**
- * Create a session exercise for testing
- *
- * @param userId the user ID
- * @param sessionId the session ID
- * @param exerciseId the exercise ID
- */
-async function createSessionExercise(userId: UUID, sessionId: UUID, exerciseId: UUID) {
-  const sessionExercise = await WorkoutSessionExerciseRepository.getRepo().insertNew(
-    WorkoutSessionExerciseSchema.parse({
-      userId,
-      workoutSessionId: sessionId,
-      workoutExerciseId: exerciseId
-    })
-  );
-  if (!sessionExercise) {
-    throw new Error(`Failed to insert session exercise`);
-  }
-  return sessionExercise;
-}
-
-/**
- * Create a set for testing
- *
- * @param userId the user ID
- * @param sessionExerciseId the session exercise ID
- * @param weight the weight
- * @param reps the reps
- */
-async function createSet(userId: UUID, sessionExerciseId: UUID, weight: number, reps: number) {
-  const set = await WorkoutSetRepository.getRepo().insertNew(
-    WorkoutSetSchema.parse({
-      userId,
-      workoutExerciseId: DocumentService.generateID(),
-      workoutSessionId: DocumentService.generateID(),
-      workoutSessionExerciseId: sessionExerciseId,
-      actualWeight: weight,
-      actualReps: reps
-    })
-  );
-  if (!set) {
-    throw new Error(`Failed to insert set`);
-  }
-  return set;
-}

@@ -3,9 +3,11 @@ import type {
   WorkoutEquipmentType,
   WorkoutExercise,
   WorkoutExerciseCalibration,
+  WorkoutExerciseCTO,
   WorkoutMesocycle,
   WorkoutMicrocycle,
   WorkoutMuscleGroup,
+  WorkoutMuscleGroupVolumeCTO,
   WorkoutSession,
   WorkoutSessionExercise,
   WorkoutSet
@@ -142,6 +144,18 @@ export interface ProjectWorkoutPrimaryEndpointOptions {
      * Get equipment types.
      */
     equipmentTypes?: GetOptionsBase<WorkoutEquipmentType>;
+    /**
+     * Get exercise CTOs (bundled exercise + equipment + calibration + set data).
+     */
+    exerciseCTOs?: {
+      all?: boolean;
+    };
+    /**
+     * Get muscle group volume CTOs (bundled muscle group + mesocycle history).
+     */
+    muscleGroupVolumeCTOs?: {
+      all?: boolean;
+    };
   };
   insert?: {
     /**
@@ -281,4 +295,6 @@ export interface ProjectWorkoutPrimaryOutput {
   exerciseCalibrations?: WorkoutExerciseCalibration[];
   muscleGroups?: WorkoutMuscleGroup[];
   equipmentTypes?: WorkoutEquipmentType[];
+  exerciseCTOs?: WorkoutExerciseCTO[];
+  muscleGroupVolumeCTOs?: WorkoutMuscleGroupVolumeCTO[];
 }

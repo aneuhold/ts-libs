@@ -1,26 +1,11 @@
 import {
-  CycleType,
   DocumentService,
-  ExerciseRepRange,
-  UserSchema,
-  WorkoutEquipmentTypeSchema,
-  WorkoutExerciseSchema,
-  WorkoutMesocycleSchema,
-  WorkoutMicrocycleSchema,
-  WorkoutMuscleGroupSchema,
   WorkoutSessionExerciseSchema,
-  WorkoutSessionSchema,
   type WorkoutSessionExercise
 } from '@aneuhold/core-ts-db-lib';
-import type { UUID } from 'crypto';
 import { describe, expect, it } from 'vitest';
-import { getTestUserName } from '../../../test-util/testsUtil.js';
+import workoutTestUtil from '../../../test-util/projects/workout/workoutTestUtil.js';
 import UserRepository from '../common/UserRepository.js';
-import WorkoutEquipmentTypeRepository from './WorkoutEquipmentTypeRepository.js';
-import WorkoutExerciseRepository from './WorkoutExerciseRepository.js';
-import WorkoutMesocycleRepository from './WorkoutMesocycleRepository.js';
-import WorkoutMicrocycleRepository from './WorkoutMicrocycleRepository.js';
-import WorkoutMuscleGroupRepository from './WorkoutMuscleGroupRepository.js';
 import WorkoutSessionExerciseRepository from './WorkoutSessionExerciseRepository.js';
 import WorkoutSessionRepository from './WorkoutSessionRepository.js';
 
@@ -32,13 +17,17 @@ describe('WorkoutSessionExerciseRepository', () => {
 
   describe('Basic CRUD Operations', () => {
     it('should insert a new session exercise with valid session and exercise references', async () => {
-      const testUser = await createNewTestUser();
-      const mesocycle = await createMesocycle(testUser._id, 'Test Mesocycle', CycleType.MuscleGain);
-      const microcycle = await createMicrocycle(testUser._id, mesocycle._id);
-      const session = await createSession(testUser._id, microcycle._id);
-      const exercise = await createExercise(testUser._id, 'Squat');
+      const testUser = await workoutTestUtil.insertUser('WorkoutSessionExerciseRepository');
+      const { exercise, session } = await workoutTestUtil.insertSessionSetup({
+        userId: testUser._id,
+        exerciseName: 'Squat'
+      });
 
-      const result = await createSessionExercise(testUser._id, session._id, exercise._id);
+      const result = await workoutTestUtil.insertSessionExercise({
+        userId: testUser._id,
+        sessionId: session._id,
+        exerciseId: exercise._id
+      });
 
       expect(result._id).toBeDefined();
       expect(result.userId).toBe(testUser._id);
@@ -50,23 +39,30 @@ describe('WorkoutSessionExerciseRepository', () => {
     });
 
     it('should get all session exercises for a user', async () => {
-      const testUser = await createNewTestUser();
-      const mesocycle = await createMesocycle(testUser._id, 'Test Mesocycle', CycleType.MuscleGain);
-      const microcycle = await createMicrocycle(testUser._id, mesocycle._id);
-      const session = await createSession(testUser._id, microcycle._id);
-      const exercise1 = await createExercise(testUser._id, 'Squat');
-      const exercise2 = await createExercise(testUser._id, 'Bench Press');
+      const testUser = await workoutTestUtil.insertUser('WorkoutSessionExerciseRepository');
+      const { session, exercise: exercise1 } = await workoutTestUtil.insertSessionSetup({
+        userId: testUser._id,
+        exerciseName: 'Squat'
+      });
+      const mg2 = await workoutTestUtil.insertMuscleGroup(testUser._id, 'Muscle-Bench');
+      const eq2 = await workoutTestUtil.insertEquipmentType(testUser._id, 'Equipment-Bench');
+      const exercise2 = await workoutTestUtil.insertExercise({
+        userId: testUser._id,
+        equipmentTypeId: eq2._id,
+        primaryMuscleGroupIds: [mg2._id],
+        name: 'Bench Press'
+      });
 
-      const sessionExercise1 = await createSessionExercise(
-        testUser._id,
-        session._id,
-        exercise1._id
-      );
-      const sessionExercise2 = await createSessionExercise(
-        testUser._id,
-        session._id,
-        exercise2._id
-      );
+      const sessionExercise1 = await workoutTestUtil.insertSessionExercise({
+        userId: testUser._id,
+        sessionId: session._id,
+        exerciseId: exercise1._id
+      });
+      const sessionExercise2 = await workoutTestUtil.insertSessionExercise({
+        userId: testUser._id,
+        sessionId: session._id,
+        exerciseId: exercise2._id
+      });
 
       const allSessionExercises = await repo.getAllForUser(testUser._id);
 
@@ -77,13 +73,17 @@ describe('WorkoutSessionExerciseRepository', () => {
     });
 
     it('should update a session exercise', async () => {
-      const testUser = await createNewTestUser();
-      const mesocycle = await createMesocycle(testUser._id, 'Test Mesocycle', CycleType.MuscleGain);
-      const microcycle = await createMicrocycle(testUser._id, mesocycle._id);
-      const session = await createSession(testUser._id, microcycle._id);
-      const exercise = await createExercise(testUser._id, 'Squat');
+      const testUser = await workoutTestUtil.insertUser('WorkoutSessionExerciseRepository');
+      const { exercise, session } = await workoutTestUtil.insertSessionSetup({
+        userId: testUser._id,
+        exerciseName: 'Squat'
+      });
 
-      const sessionExercise = await createSessionExercise(testUser._id, session._id, exercise._id);
+      const sessionExercise = await workoutTestUtil.insertSessionExercise({
+        userId: testUser._id,
+        sessionId: session._id,
+        exerciseId: exercise._id
+      });
 
       await repo.update({
         _id: sessionExercise._id,
@@ -99,13 +99,17 @@ describe('WorkoutSessionExerciseRepository', () => {
     });
 
     it('should delete a session exercise', async () => {
-      const testUser = await createNewTestUser();
-      const mesocycle = await createMesocycle(testUser._id, 'Test Mesocycle', CycleType.MuscleGain);
-      const microcycle = await createMicrocycle(testUser._id, mesocycle._id);
-      const session = await createSession(testUser._id, microcycle._id);
-      const exercise = await createExercise(testUser._id, 'Squat');
+      const testUser = await workoutTestUtil.insertUser('WorkoutSessionExerciseRepository');
+      const { exercise, session } = await workoutTestUtil.insertSessionSetup({
+        userId: testUser._id,
+        exerciseName: 'Squat'
+      });
 
-      const sessionExercise = await createSessionExercise(testUser._id, session._id, exercise._id);
+      const sessionExercise = await workoutTestUtil.insertSessionExercise({
+        userId: testUser._id,
+        sessionId: session._id,
+        exerciseId: exercise._id
+      });
 
       await repo.delete(sessionExercise._id);
 
@@ -116,27 +120,30 @@ describe('WorkoutSessionExerciseRepository', () => {
 
   describe('Cascading Deletes', () => {
     it('should delete all session exercises when parent session is deleted', async () => {
-      const testUser = await createNewTestUser();
-      const mesocycle = await createMesocycle(
-        testUser._id,
-        'Parent Mesocycle',
-        CycleType.MuscleGain
-      );
-      const microcycle = await createMicrocycle(testUser._id, mesocycle._id);
-      const session = await createSession(testUser._id, microcycle._id);
-      const exercise1 = await createExercise(testUser._id, 'Squat');
-      const exercise2 = await createExercise(testUser._id, 'Bench Press');
+      const testUser = await workoutTestUtil.insertUser('WorkoutSessionExerciseRepository');
+      const { session, exercise: exercise1 } = await workoutTestUtil.insertSessionSetup({
+        userId: testUser._id,
+        exerciseName: 'Squat'
+      });
+      const mg2 = await workoutTestUtil.insertMuscleGroup(testUser._id, 'Muscle-Bench');
+      const eq2 = await workoutTestUtil.insertEquipmentType(testUser._id, 'Equipment-Bench');
+      const exercise2 = await workoutTestUtil.insertExercise({
+        userId: testUser._id,
+        equipmentTypeId: eq2._id,
+        primaryMuscleGroupIds: [mg2._id],
+        name: 'Bench Press'
+      });
 
-      const sessionExercise1 = await createSessionExercise(
-        testUser._id,
-        session._id,
-        exercise1._id
-      );
-      const sessionExercise2 = await createSessionExercise(
-        testUser._id,
-        session._id,
-        exercise2._id
-      );
+      const sessionExercise1 = await workoutTestUtil.insertSessionExercise({
+        userId: testUser._id,
+        sessionId: session._id,
+        exerciseId: exercise1._id
+      });
+      const sessionExercise2 = await workoutTestUtil.insertSessionExercise({
+        userId: testUser._id,
+        sessionId: session._id,
+        exerciseId: exercise2._id
+      });
 
       const sessionExercisesBeforeDelete = await repo.getAllForUser(testUser._id);
       expect(sessionExercisesBeforeDelete.length).toBeGreaterThanOrEqual(2);
@@ -151,23 +158,30 @@ describe('WorkoutSessionExerciseRepository', () => {
     });
 
     it('should delete all session exercises when user is deleted', async () => {
-      const testUser = await createNewTestUser();
-      const mesocycle = await createMesocycle(testUser._id, 'Test Mesocycle', CycleType.MuscleGain);
-      const microcycle = await createMicrocycle(testUser._id, mesocycle._id);
-      const session = await createSession(testUser._id, microcycle._id);
-      const exercise1 = await createExercise(testUser._id, 'Squat');
-      const exercise2 = await createExercise(testUser._id, 'Bench Press');
+      const testUser = await workoutTestUtil.insertUser('WorkoutSessionExerciseRepository');
+      const { session, exercise: exercise1 } = await workoutTestUtil.insertSessionSetup({
+        userId: testUser._id,
+        exerciseName: 'Squat'
+      });
+      const mg2 = await workoutTestUtil.insertMuscleGroup(testUser._id, 'Muscle-Bench');
+      const eq2 = await workoutTestUtil.insertEquipmentType(testUser._id, 'Equipment-Bench');
+      const exercise2 = await workoutTestUtil.insertExercise({
+        userId: testUser._id,
+        equipmentTypeId: eq2._id,
+        primaryMuscleGroupIds: [mg2._id],
+        name: 'Bench Press'
+      });
 
-      const sessionExercise1 = await createSessionExercise(
-        testUser._id,
-        session._id,
-        exercise1._id
-      );
-      const sessionExercise2 = await createSessionExercise(
-        testUser._id,
-        session._id,
-        exercise2._id
-      );
+      const sessionExercise1 = await workoutTestUtil.insertSessionExercise({
+        userId: testUser._id,
+        sessionId: session._id,
+        exerciseId: exercise1._id
+      });
+      const sessionExercise2 = await workoutTestUtil.insertSessionExercise({
+        userId: testUser._id,
+        sessionId: session._id,
+        exerciseId: exercise2._id
+      });
 
       const sessionExercisesBeforeDelete = await repo.getAllForUser(testUser._id);
       expect(sessionExercisesBeforeDelete.length).toBeGreaterThanOrEqual(2);
@@ -184,8 +198,10 @@ describe('WorkoutSessionExerciseRepository', () => {
 
   describe('Validation', () => {
     it('should reject session exercise with non-existent session', async () => {
-      const testUser = await createNewTestUser();
-      const exercise = await createExercise(testUser._id, 'Squat');
+      const { testUser, exercise } = await workoutTestUtil.insertExerciseSetup({
+        prefix: 'WorkoutSessionExerciseRepository',
+        exerciseName: 'Squat'
+      });
 
       const fakeSessionId = DocumentService.generateID();
 
@@ -202,10 +218,16 @@ describe('WorkoutSessionExerciseRepository', () => {
     });
 
     it('should reject session exercise with non-existent exercise', async () => {
-      const testUser = await createNewTestUser();
-      const mesocycle = await createMesocycle(testUser._id, 'Test Mesocycle', CycleType.MuscleGain);
-      const microcycle = await createMicrocycle(testUser._id, mesocycle._id);
-      const session = await createSession(testUser._id, microcycle._id);
+      const testUser = await workoutTestUtil.insertUser('WorkoutSessionExerciseRepository');
+      const mesocycle = await workoutTestUtil.insertMesocycle({ userId: testUser._id });
+      const microcycle = await workoutTestUtil.insertMicrocycle({
+        userId: testUser._id,
+        mesocycleId: mesocycle._id
+      });
+      const session = await workoutTestUtil.insertSession({
+        userId: testUser._id,
+        microcycleId: microcycle._id
+      });
 
       const fakeExerciseId = DocumentService.generateID();
 
@@ -222,7 +244,7 @@ describe('WorkoutSessionExerciseRepository', () => {
     });
 
     it('should reject invalid session exercise on creation', async () => {
-      const testUser = await createNewTestUser();
+      const testUser = await workoutTestUtil.insertUser('WorkoutSessionExerciseRepository');
 
       const invalidSessionExercise = {
         userId: testUser._id
@@ -243,152 +265,3 @@ describe('WorkoutSessionExerciseRepository', () => {
     });
   });
 });
-
-/**
- * Create a new test user
- */
-async function createNewTestUser() {
-  const newUser = UserSchema.parse({
-    userName: getTestUserName(`sessionExerciseTest`)
-  });
-  const insertResult = await userRepo.insertNew(newUser);
-  expect(insertResult).toBeTruthy();
-  return newUser;
-}
-
-/**
- * Create a mesocycle for testing
- *
- * @param userId the user ID
- * @param title the mesocycle title
- * @param cycleType the cycle type
- */
-async function createMesocycle(userId: UUID, title: string, cycleType: CycleType) {
-  const mesocycle = await WorkoutMesocycleRepository.getRepo().insertNew(
-    WorkoutMesocycleSchema.parse({
-      userId,
-      title,
-      cycleType,
-      plannedSessionCountPerMicrocycle: 1,
-      plannedMicrocycleLengthInDays: 7,
-      calibratedExercises: [DocumentService.generateID()]
-    })
-  );
-  if (!mesocycle) {
-    throw new Error(`Failed to insert mesocycle: ${title}`);
-  }
-  return mesocycle;
-}
-
-/**
- * Create a microcycle for testing
- *
- * @param userId the user ID
- * @param mesocycleId the parent mesocycle ID
- */
-async function createMicrocycle(userId: UUID, mesocycleId: UUID) {
-  const startDate = new Date();
-  const endDate = new Date(startDate);
-  endDate.setDate(endDate.getDate() + 7);
-
-  const microcycle = await WorkoutMicrocycleRepository.getRepo().insertNew(
-    WorkoutMicrocycleSchema.parse({
-      userId,
-      workoutMesocycleId: mesocycleId,
-      startDate,
-      endDate
-    })
-  );
-  if (!microcycle) {
-    throw new Error(`Failed to insert microcycle`);
-  }
-  return microcycle;
-}
-
-/**
- * Create a session for testing
- *
- * @param userId the user ID
- * @param microcycleId the parent microcycle ID
- */
-async function createSession(userId: UUID, microcycleId: UUID) {
-  const startTime = new Date();
-
-  const session = await WorkoutSessionRepository.getRepo().insertNew(
-    WorkoutSessionSchema.parse({
-      userId,
-      workoutMicrocycleId: microcycleId,
-      title: 'Test Session',
-      startTime
-    })
-  );
-  if (!session) {
-    throw new Error(`Failed to insert session`);
-  }
-  return session;
-}
-
-/**
- * Create an exercise for testing
- *
- * @param userId the user ID
- * @param exerciseName the exercise name
- */
-async function createExercise(userId: UUID, exerciseName: string) {
-  const muscleGroup = await WorkoutMuscleGroupRepository.getRepo().insertNew(
-    WorkoutMuscleGroupSchema.parse({
-      userId,
-      name: `Muscle-${exerciseName}`
-    })
-  );
-  if (!muscleGroup) {
-    throw new Error(`Failed to insert muscle group`);
-  }
-
-  const equipment = await WorkoutEquipmentTypeRepository.getRepo().insertNew(
-    WorkoutEquipmentTypeSchema.parse({
-      userId,
-      title: `Equipment-${exerciseName}`
-    })
-  );
-  if (!equipment) {
-    throw new Error(`Failed to insert equipment type`);
-  }
-
-  const exercise = await WorkoutExerciseRepository.getRepo().insertNew(
-    WorkoutExerciseSchema.parse({
-      userId,
-      exerciseName,
-      workoutEquipmentTypeId: equipment._id,
-      initialFatigueGuess: {},
-      primaryMuscleGroups: [muscleGroup._id],
-      secondaryMuscleGroups: [],
-      repRange: ExerciseRepRange.Medium
-    })
-  );
-  if (!exercise) {
-    throw new Error(`Failed to insert exercise: ${exerciseName}`);
-  }
-  return exercise;
-}
-
-/**
- * Create a session exercise for testing
- *
- * @param userId the user ID
- * @param sessionId the session ID
- * @param exerciseId the exercise ID
- */
-async function createSessionExercise(userId: UUID, sessionId: UUID, exerciseId: UUID) {
-  const sessionExercise = await WorkoutSessionExerciseRepository.getRepo().insertNew(
-    WorkoutSessionExerciseSchema.parse({
-      userId,
-      workoutSessionId: sessionId,
-      workoutExerciseId: exerciseId
-    })
-  );
-  if (!sessionExercise) {
-    throw new Error(`Failed to insert session exercise`);
-  }
-  return sessionExercise;
-}
