@@ -99,6 +99,39 @@ describe('Unit Tests', () => {
     });
   });
 
+  describe('getTargetWeightFrom1RM', () => {
+    it('should calculate target weight from a raw 1RM value', () => {
+      // 1RM = 126.247, target% for 10 reps = 85 - ((10-5)*2.2) = 74%
+      const result = WorkoutExerciseCalibrationService.getTargetWeightFrom1RM(126.247, 10);
+
+      expect(result).toBeCloseTo(93.42, 1);
+    });
+
+    it('should produce the same result as getTargetWeight for the same 1RM', () => {
+      const calibration = workoutTestUtil.createCalibration({
+        weight: 100,
+        reps: 8
+      });
+      const oneRM = WorkoutExerciseCalibrationService.get1RM(calibration);
+
+      const fromCalibration = WorkoutExerciseCalibrationService.getTargetWeight(calibration, 15);
+      const from1RM = WorkoutExerciseCalibrationService.getTargetWeightFrom1RM(oneRM, 15);
+
+      expect(from1RM).toBeCloseTo(fromCalibration, 5);
+    });
+
+    it('should produce lower target weight for higher rep counts', () => {
+      const oneRM = 200;
+
+      const weightFor5 = WorkoutExerciseCalibrationService.getTargetWeightFrom1RM(oneRM, 5);
+      const weightFor15 = WorkoutExerciseCalibrationService.getTargetWeightFrom1RM(oneRM, 15);
+      const weightFor25 = WorkoutExerciseCalibrationService.getTargetWeightFrom1RM(oneRM, 25);
+
+      expect(weightFor15).toBeLessThan(weightFor5);
+      expect(weightFor25).toBeLessThan(weightFor15);
+    });
+  });
+
   describe('generateAutoCalibrations', () => {
     const exercise = workoutTestUtil.STANDARD_EXERCISES.barbellBenchPress;
     const calibration = workoutTestUtil.STANDARD_CALIBRATIONS.barbellBenchPress;

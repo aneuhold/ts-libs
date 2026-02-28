@@ -162,26 +162,11 @@ export default class WorkoutSessionService {
     // Create session exercise groupings and associated sets
     for (let exerciseIndex = 0; exerciseIndex < sessionExerciseList.length; exerciseIndex++) {
       const exerciseCTO = sessionExerciseList[exerciseIndex];
-      const { bestCalibration } = exerciseCTO;
-
-      if (!bestCalibration) {
-        throw new Error(
-          `No calibration found for exercise ${exerciseCTO._id}, ${exerciseCTO.exerciseName}`
-        );
-      }
 
       const setCountFromPlan = resolvedSetPlan.exerciseIdToSetCount.get(exerciseCTO._id);
       if (setCountFromPlan == null) {
         throw new Error(
           `No set plan found for exercise ${exerciseCTO._id}, ${exerciseCTO.exerciseName} in microcycle ${microcycleIndex}`
-        );
-      }
-
-      // Equipment is already available on the CTO
-      const { equipmentType } = exerciseCTO;
-      if (!equipmentType.weightOptions || equipmentType.weightOptions.length === 0) {
-        throw new Error(
-          `No weight options defined for equipment type ${equipmentType._id}, ${equipmentType.title}`
         );
       }
 
@@ -194,8 +179,7 @@ export default class WorkoutSessionService {
 
       WorkoutSetService.generateSetsForSessionExercise({
         context,
-        exercise: exerciseCTO,
-        calibration: bestCalibration,
+        exerciseCTO,
         session,
         sessionExercise,
         microcycleIndex,
