@@ -411,7 +411,7 @@ export default class WorkoutVolumePlanningService {
         const previousSetCount = previousSessionExercise.setOrder.length;
         const recoverySets = Math.max(1, Math.floor(previousSetCount / 2));
         exerciseIdToSetCount.set(cto._id, recoverySets);
-      } else if (recommendation != null && recommendation >= 0) {
+      } else if (recommendation !== null && recommendation >= 0) {
         totalSetsToAdd += recommendation;
 
         // Consider as candidate if session is not already capped

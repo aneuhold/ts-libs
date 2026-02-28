@@ -139,8 +139,12 @@ export default class WorkoutMesocycleService {
       const isDeloadMicrocycle = microcycleIndex === deloadMicrocycleIndex;
 
       // Calculate RIR for this microcycle. Uses the cycle-type-specific starting RIR
-      // and tapers down by 1 per microcycle: e.g. MuscleGain 4->3->2->1->0, Cut 3->2->1->0->0
-      const rirForMicrocycle = Math.max(firstMicrocycleRir - microcycleIndex, 0);
+      // and tapers down by 1 per microcycle: e.g. MuscleGain 4->3->2->1->0, Cut 3->2->1->0->0.
+      // If progression is still, keep RIR flat
+      const rirForMicrocycle =
+        context.progressionInterval === 0
+          ? firstMicrocycleRir
+          : Math.max(firstMicrocycleRir - microcycleIndex, 0);
       const targetRir = isDeloadMicrocycle ? null : rirForMicrocycle;
 
       // Create microcycle

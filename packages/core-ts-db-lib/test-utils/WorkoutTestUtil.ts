@@ -799,6 +799,7 @@ class WorkoutTestUtil {
 
     // Use the actual service to generate all sessions, exercises, and sets
     const microcycleIndex = context.microcyclesToCreate.length - 1;
+    const setsCountBefore = context.setsToCreate.length;
     WorkoutMicrocycleService.generateSessionsForMicrocycle({
       context,
       microcycleIndex,
@@ -806,8 +807,8 @@ class WorkoutTestUtil {
       isDeloadMicrocycle
     });
 
-    // Mark all sets as completed with actual performance data
-    const newSets = context.setsToCreate.slice(-context.setsToCreate.length);
+    // Mark only the newly generated sets as completed with actual performance data
+    const newSets = context.setsToCreate.slice(setsCountBefore);
     newSets.forEach((set) => {
       set.actualReps = set.plannedReps;
       set.actualWeight = set.plannedWeight;

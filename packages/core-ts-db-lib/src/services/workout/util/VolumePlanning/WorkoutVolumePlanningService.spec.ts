@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import workoutTestUtil from '../../../../../test-utils/WorkoutTestUtil.js';
 import type { WorkoutExerciseCTO } from '../../../../ctos/workout/WorkoutExerciseCTO.js';
+import type { WorkoutMuscleGroupVolumeCTO } from '../../../../ctos/workout/WorkoutMuscleGroupVolumeCTO.js';
 import type { WorkoutExercise } from '../../../../documents/workout/WorkoutExercise.js';
 import { CycleType } from '../../../../documents/workout/WorkoutMesocycle.js';
 import type { Fatigue } from '../../../../embedded-types/workout/Fatigue.js';
@@ -175,7 +176,7 @@ describe('WorkoutVolumePlanningService', () => {
         ]
       });
 
-      // Exercises A and B remain at 8 sets (at MAX_SETS_PER_EXERCISE)
+      // Exercises A and B remain at 5 sets (session 0 is at cap: 5+5=10)
       expect(result.exerciseIdToSetCount.get(chestExercises[0]._id)).toBe(5);
       expect(result.exerciseIdToSetCount.get(chestExercises[1]._id)).toBe(5);
 
@@ -545,6 +546,175 @@ describe('WorkoutVolumePlanningService', () => {
       expect(result.recoveryExerciseIds.size).toBe(0);
     });
 
+    it('should apply MEV proximity adjustments at microcycle index 1 when volume CTOs are provided', () => {
+      const chestExercises: WorkoutExercise[] = [
+        workoutTestUtil.STANDARD_EXERCISES.barbellBenchPress,
+        workoutTestUtil.STANDARD_EXERCISES.inclineBenchPress
+      ];
+
+      const chestCTOs = [
+        workoutTestUtil.createExerciseCTO({
+          exercise: chestExercises[0],
+          calibration: workoutTestUtil.STANDARD_CALIBRATIONS.barbellBenchPress,
+          equipmentType: workoutTestUtil.STANDARD_EQUIPMENT_TYPES.barbell
+        }),
+        workoutTestUtil.createExerciseCTO({
+          exercise: chestExercises[1],
+          calibration: workoutTestUtil.STANDARD_CALIBRATIONS.inclineBenchPress,
+          equipmentType: workoutTestUtil.STANDARD_EQUIPMENT_TYPES.barbell
+        })
+      ];
+
+      // Volume CTO provides landmark data so MEV proximity kicks in
+      const volumeCTO = workoutTestUtil.createMuscleGroupVolumeCTO(
+        [{ startingSetCount: 3, peakSetCount: 7, avgRsm: 5, avgPerformanceScore: 2.5 }],
+        workoutTestUtil.STANDARD_MUSCLE_GROUPS.chest._id
+      );
+
+      // Historical microcycle with low RSM (below MEV) => should trigger +3 adjustment
+      const { result } = calculateSetPlan({
+        exerciseCTOs: chestCTOs,
+        microcycleIndex: 1,
+        sessionStructure: [[0, 1]],
+        volumeCTOs: [volumeCTO],
+        historicalMicrocycles: [
+          {
+            sessionExerciseOverrides: [
+              [
+                {
+                  setCount: 2,
+                  rsm: { mindMuscleConnection: 1, pump: 1, disruption: 0 }, // RSM = 2, below MEV
+                  fatigue: {
+                    jointAndTissueDisruption: 1,
+                    perceivedEffort: 1,
+                    unusedMusclePerformance: 1
+                  },
+                  sorenessScore: 2, // table[2][0] = 0 → no SFR-based set additions
+                  performanceScore: 0
+                },
+                {
+                  setCount: 2,
+                  rsm: { mindMuscleConnection: 1, pump: 0, disruption: 1 }, // RSM = 2
+                  fatigue: {
+                    jointAndTissueDisruption: 1,
+                    perceivedEffort: 1,
+                    unusedMusclePerformance: 1
+                  },
+                  sorenessScore: 2,
+                  performanceScore: 0
+                }
+              ]
+            ]
+          }
+        ]
+      });
+
+      // Without MEV adjustment, both exercises would stay at 2 sets (no SFR-based additions
+      // since recommendation is 0). With MEV "below" adjustment of +3, sets should increase.
+      const totalSets =
+        (result.exerciseIdToSetCount.get(chestExercises[0]._id) ?? 0) +
+        (result.exerciseIdToSetCount.get(chestExercises[1]._id) ?? 0);
+      expect(totalSets).toBe(4 + 3); // 2+2 baseline + 3 MEV adjustment
+    });
+
+    it('should use estimatedMav as return set count when exercise comes back from recovery with volume landmarks', () => {
+      const chestExercises: WorkoutExercise[] = [
+        workoutTestUtil.STANDARD_EXERCISES.barbellBenchPress,
+        workoutTestUtil.STANDARD_EXERCISES.inclineBenchPress
+      ];
+
+      const chestCTOs = [
+        workoutTestUtil.createExerciseCTO({
+          exercise: chestExercises[0],
+          calibration: workoutTestUtil.STANDARD_CALIBRATIONS.barbellBenchPress,
+          equipmentType: workoutTestUtil.STANDARD_EQUIPMENT_TYPES.barbell
+        }),
+        workoutTestUtil.createExerciseCTO({
+          exercise: chestExercises[1],
+          calibration: workoutTestUtil.STANDARD_CALIBRATIONS.inclineBenchPress,
+          equipmentType: workoutTestUtil.STANDARD_EQUIPMENT_TYPES.barbell
+        })
+      ];
+
+      // Volume CTO: MEV=3, MRV=7, MAV=ceil((3+7)/2)=5
+      const volumeCTO = workoutTestUtil.createMuscleGroupVolumeCTO(
+        [{ startingSetCount: 3, peakSetCount: 7, avgRsm: 5, avgPerformanceScore: 2.5 }],
+        workoutTestUtil.STANDARD_MUSCLE_GROUPS.chest._id
+      );
+
+      const { result } = calculateSetPlan({
+        exerciseCTOs: chestCTOs,
+        microcycleIndex: 2,
+        sessionStructure: [[0, 1]],
+        volumeCTOs: [volumeCTO],
+        historicalMicrocycles: [
+          {
+            // Microcycle 0: Exercise A triggers recovery, Exercise B is normal
+            sessionExerciseOverrides: [
+              [
+                {
+                  setCount: 6,
+                  sorenessScore: 3,
+                  performanceScore: 3, // Triggers recovery
+                  rsm: { mindMuscleConnection: 2, pump: 2, disruption: 2 },
+                  fatigue: {
+                    jointAndTissueDisruption: 2,
+                    perceivedEffort: 2,
+                    unusedMusclePerformance: 2
+                  }
+                },
+                {
+                  setCount: 3,
+                  sorenessScore: 0,
+                  performanceScore: 1,
+                  rsm: { mindMuscleConnection: 2, pump: 2, disruption: 1 },
+                  fatigue: {
+                    jointAndTissueDisruption: 1,
+                    perceivedEffort: 1,
+                    unusedMusclePerformance: 1
+                  }
+                }
+              ]
+            ]
+          },
+          {
+            // Microcycle 1: Exercise A is in recovery with reduced sets
+            sessionExerciseOverrides: [
+              [
+                {
+                  setCount: 3,
+                  isRecovery: true,
+                  sorenessScore: 0,
+                  performanceScore: 0,
+                  rsm: { mindMuscleConnection: 1, pump: 1, disruption: 1 },
+                  fatigue: {
+                    jointAndTissueDisruption: 1,
+                    perceivedEffort: 1,
+                    unusedMusclePerformance: 1
+                  }
+                },
+                {
+                  setCount: 4,
+                  sorenessScore: 0,
+                  performanceScore: 1,
+                  rsm: { mindMuscleConnection: 2, pump: 2, disruption: 1 },
+                  fatigue: {
+                    jointAndTissueDisruption: 1,
+                    perceivedEffort: 1,
+                    unusedMusclePerformance: 1
+                  }
+                }
+              ]
+            ]
+          }
+        ]
+      });
+
+      // Exercise A is returning from recovery. With volume landmarks, it should use
+      // estimatedMav (5) instead of the pre-recovery historical count (6).
+      expect(result.exerciseIdToSetCount.get(chestExercises[0]._id)).toBe(5);
+    });
+
     /**
      * Helper to set up context and call calculateSetPlanForMicrocycle
      */
@@ -553,6 +723,7 @@ describe('WorkoutVolumePlanningService', () => {
       microcycleIndex?: number;
       isDeload?: boolean;
       sessionStructure?: number[][];
+      volumeCTOs?: WorkoutMuscleGroupVolumeCTO[];
       historicalMicrocycles?: Array<{
         sessionExerciseOverrides?: Array<
           Array<{
@@ -571,6 +742,7 @@ describe('WorkoutVolumePlanningService', () => {
         microcycleIndex = 0,
         isDeload = false,
         sessionStructure = [[0, 1]],
+        volumeCTOs = [],
         historicalMicrocycles = []
       } = options;
 
@@ -584,7 +756,8 @@ describe('WorkoutVolumePlanningService', () => {
 
       const context = workoutTestUtil.createContext({
         mesocycle,
-        exerciseCTOs
+        exerciseCTOs,
+        volumeCTOs
       });
 
       // Build exercise CTO arrays based on session structure
