@@ -19,28 +19,28 @@ import {
   WorkoutDeloadTriggerRule
 } from './WorkoutMesocycleService.types.js';
 
-/** Minimum microcycle index (0-based) before deload detection is active. */
-const MIN_MICROCYCLE_INDEX_FOR_DELOAD = 2;
-
-/** Recovery ratio above which a deload is Recommended. */
-const RECOVERY_RATIO_RECOMMENDED = 0.5;
-
-/** Recovery ratio at or above which a deload is Suggested. */
-const RECOVERY_RATIO_SUGGESTED = 0.4;
-
-/** Set surplus at or below which a performance drop is counted. */
-const PERFORMANCE_DROP_SURPLUS_THRESHOLD = -3;
-
-/** Number of consecutive performance drops needed to trigger the rule. */
-const CONSECUTIVE_DROPS_REQUIRED = 2;
-
-/** Number of exercises with consecutive drops needed for Recommended severity. */
-const EXERCISES_WITH_DROPS_FOR_RECOMMENDED = 2;
-
 /**
  * A service for handling operations related to {@link WorkoutMesocycle}s.
  */
 export default class WorkoutMesocycleService {
+  /** Minimum microcycle index (0-based) before deload detection is active. */
+  private static readonly MIN_MICROCYCLE_INDEX_FOR_DELOAD = 2;
+
+  /** Recovery ratio above which a deload is Recommended. */
+  private static readonly RECOVERY_RATIO_RECOMMENDED = 0.5;
+
+  /** Recovery ratio at or above which a deload is Suggested. */
+  private static readonly RECOVERY_RATIO_SUGGESTED = 0.4;
+
+  /** Set surplus at or below which a performance drop is counted. */
+  private static readonly PERFORMANCE_DROP_SURPLUS_THRESHOLD = -3;
+
+  /** Number of consecutive performance drops needed to trigger the rule. */
+  private static readonly CONSECUTIVE_DROPS_REQUIRED = 2;
+
+  /** Number of exercises with consecutive drops needed for Recommended severity. */
+  private static readonly EXERCISES_WITH_DROPS_FOR_RECOMMENDED = 2;
+
   /**
    * Generates or updates the workout plan for a mesocycle.
    *
@@ -395,7 +395,7 @@ export default class WorkoutMesocycleService {
     );
 
     // Guard: don't trigger before enough microcycles have been completed
-    if (currentMicrocycleIndex < MIN_MICROCYCLE_INDEX_FOR_DELOAD) {
+    if (currentMicrocycleIndex < this.MIN_MICROCYCLE_INDEX_FOR_DELOAD) {
       return noDeload;
     }
 
@@ -495,10 +495,10 @@ export default class WorkoutMesocycleService {
 
     const ratio = recoveryMuscleGroups.size / trainedMuscleGroupIds.size;
 
-    if (ratio > RECOVERY_RATIO_RECOMMENDED) {
+    if (ratio > this.RECOVERY_RATIO_RECOMMENDED) {
       return WorkoutDeloadSeverity.Recommended;
     }
-    if (ratio >= RECOVERY_RATIO_SUGGESTED) {
+    if (ratio >= this.RECOVERY_RATIO_SUGGESTED) {
       return WorkoutDeloadSeverity.Suggested;
     }
     return WorkoutDeloadSeverity.None;
@@ -565,13 +565,13 @@ export default class WorkoutMesocycleService {
           firstSet.plannedRir
         );
 
-        if (surplus <= PERFORMANCE_DROP_SURPLUS_THRESHOLD) {
+        if (surplus <= this.PERFORMANCE_DROP_SURPLUS_THRESHOLD) {
           consecutiveDrops++;
         } else {
           consecutiveDrops = 0;
         }
 
-        if (consecutiveDrops >= CONSECUTIVE_DROPS_REQUIRED) {
+        if (consecutiveDrops >= this.CONSECUTIVE_DROPS_REQUIRED) {
           hasConsecutiveDrops = true;
           break;
         }
@@ -586,7 +586,7 @@ export default class WorkoutMesocycleService {
       return WorkoutDeloadSeverity.None;
     }
 
-    if (exercisesWithDropsCount >= EXERCISES_WITH_DROPS_FOR_RECOMMENDED) {
+    if (exercisesWithDropsCount >= this.EXERCISES_WITH_DROPS_FOR_RECOMMENDED) {
       return WorkoutDeloadSeverity.Recommended;
     }
     return WorkoutDeloadSeverity.Suggested;

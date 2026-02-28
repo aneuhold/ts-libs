@@ -29,6 +29,39 @@ export default class WorkoutVolumePlanningService {
   private static readonly MAX_SETS_PER_EXERCISE = 8;
   private static readonly MAX_SETS_PER_MUSCLE_GROUP_PER_SESSION = 10;
 
+  /** Minimum average RSM required for a mesocycle to count toward MEV estimation. */
+  private static readonly MEV_RSM_THRESHOLD = 4;
+
+  /** Default estimated MEV when no qualifying mesocycle history exists. */
+  private static readonly DEFAULT_MEV = 2;
+
+  /** Minimum average performance score (or recovery presence) to count a mesocycle toward MRV estimation. */
+  private static readonly MRV_PERFORMANCE_THRESHOLD = 2.5;
+
+  /** Extra sets added above the historical peak when no stressed mesocycles exist, to estimate MRV. */
+  private static readonly MRV_HEADROOM = 2;
+
+  /** Default estimated MRV when no mesocycle history exists at all. */
+  private static readonly DEFAULT_MRV = 8;
+
+  /** RSM bracket upper bound for "below MEV" proximity (0 to this value inclusive). */
+  private static readonly MEV_PROXIMITY_BELOW_THRESHOLD = 3;
+
+  /** RSM bracket upper bound for "at MEV" proximity (above BELOW threshold up to this value inclusive). */
+  private static readonly MEV_PROXIMITY_AT_THRESHOLD = 6;
+
+  /** Recommended set adjustment when volume is below MEV. */
+  private static readonly MEV_BELOW_SET_ADJUSTMENT = 3;
+
+  /** Recommended set adjustment when volume is above MEV. */
+  private static readonly MEV_ABOVE_SET_ADJUSTMENT = -2;
+
+  /** Maximum sets that can be added to a single exercise in one progression step. */
+  private static readonly MAX_SET_ADDITION_PER_EXERCISE = 2;
+
+  /** Maximum total sets to distribute across a muscle group in one progression step. */
+  private static readonly MAX_TOTAL_SET_ADDITIONS = 3;
+
   /**
    * Calculates the set plan for an entire microcycle.
    */
@@ -89,7 +122,9 @@ export default class WorkoutVolumePlanningService {
 
     // Estimated MEV
     let estimatedMev: number;
-    const effectiveMesocycles = mesocycleHistory.filter((m) => m.avgRsm !== null && m.avgRsm >= 4);
+    const effectiveMesocycles = mesocycleHistory.filter(
+      (m) => m.avgRsm !== null && m.avgRsm >= this.MEV_RSM_THRESHOLD
+    );
     if (effectiveMesocycles.length > 0) {
       estimatedMev =
         effectiveMesocycles.reduce((sum, m) => sum + m.startingSetCount, 0) /
@@ -98,14 +133,15 @@ export default class WorkoutVolumePlanningService {
     } else if (mesocycleHistory.length > 0) {
       estimatedMev = Math.min(...mesocycleHistory.map((m) => m.startingSetCount));
     } else {
-      estimatedMev = 2;
+      estimatedMev = this.DEFAULT_MEV;
     }
 
     // Estimated MRV
     let estimatedMrv: number;
     const stressedMesocycles = mesocycleHistory.filter(
       (m) =>
-        (m.avgPerformanceScore !== null && m.avgPerformanceScore >= 2.5) ||
+        (m.avgPerformanceScore !== null &&
+          m.avgPerformanceScore >= this.MRV_PERFORMANCE_THRESHOLD) ||
         m.recoverySessionCount > 0
     );
     if (stressedMesocycles.length > 0) {
@@ -113,9 +149,9 @@ export default class WorkoutVolumePlanningService {
         stressedMesocycles.reduce((sum, m) => sum + m.peakSetCount, 0) / stressedMesocycles.length;
       estimatedMrv = Math.round(estimatedMrv);
     } else if (mesocycleHistory.length > 0) {
-      estimatedMrv = Math.max(...mesocycleHistory.map((m) => m.peakSetCount)) + 2;
+      estimatedMrv = Math.max(...mesocycleHistory.map((m) => m.peakSetCount)) + this.MRV_HEADROOM;
     } else {
-      estimatedMrv = 8;
+      estimatedMrv = this.DEFAULT_MRV;
     }
 
     // Hard cap MRV at 10 (MAX_SETS_PER_MUSCLE_GROUP_PER_SESSION)
@@ -188,12 +224,20 @@ export default class WorkoutVolumePlanningService {
     const averageRsm = rsmTotals.reduce((sum, val) => sum + val, 0) / rsmTotals.length;
     const bracket = Math.floor(averageRsm);
 
-    if (bracket <= 3) {
-      return { proximity: 'below', recommendedSetAdjustment: 3, averageRsm };
-    } else if (bracket <= 6) {
+    if (bracket <= this.MEV_PROXIMITY_BELOW_THRESHOLD) {
+      return {
+        proximity: 'below',
+        recommendedSetAdjustment: this.MEV_BELOW_SET_ADJUSTMENT,
+        averageRsm
+      };
+    } else if (bracket <= this.MEV_PROXIMITY_AT_THRESHOLD) {
       return { proximity: 'at', recommendedSetAdjustment: 0, averageRsm };
     }
-    return { proximity: 'above', recommendedSetAdjustment: -2, averageRsm };
+    return {
+      proximity: 'above',
+      recommendedSetAdjustment: this.MEV_ABOVE_SET_ADJUSTMENT,
+      averageRsm
+    };
   }
 
   /**
@@ -475,8 +519,12 @@ export default class WorkoutVolumePlanningService {
         WorkoutVolumePlanningService.MAX_SETS_PER_EXERCISE - currentSets;
       const maxDueToSessionLimit =
         WorkoutVolumePlanningService.MAX_SETS_PER_MUSCLE_GROUP_PER_SESSION - sessionTotal;
-      // Hard limit of 2 to add to a particular exercise at once
-      const maxAddable = Math.min(setsToAdd, maxDueToExerciseLimit, maxDueToSessionLimit, 2);
+      const maxAddable = Math.min(
+        setsToAdd,
+        maxDueToExerciseLimit,
+        maxDueToSessionLimit,
+        WorkoutVolumePlanningService.MAX_SET_ADDITION_PER_EXERCISE
+      );
 
       if (maxAddable > 0) {
         exerciseIdToSetCount.set(exerciseId, currentSets + maxAddable);
@@ -484,8 +532,10 @@ export default class WorkoutVolumePlanningService {
       return maxAddable;
     }
 
-    // Cap the actual sets to add to 3 total
-    let setsRemaining = totalSetsToAdd >= 3 ? 3 : totalSetsToAdd;
+    let setsRemaining =
+      totalSetsToAdd >= WorkoutVolumePlanningService.MAX_TOTAL_SET_ADDITIONS
+        ? WorkoutVolumePlanningService.MAX_TOTAL_SET_ADDITIONS
+        : totalSetsToAdd;
     for (const candidate of candidates) {
       const added = addSetsToExercise(candidate.exerciseId, setsRemaining);
       setsRemaining -= added;

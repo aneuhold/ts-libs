@@ -1055,6 +1055,232 @@ describe('WorkoutVolumePlanningService', () => {
     });
   });
 
+  describe('recovery session return logic', () => {
+    /**
+     * Helper to set up context and call calculateSetPlanForMicrocycle for recovery return tests.
+     */
+    function calculateRecoveryReturnSetPlan(options: {
+      volumeCTOs: WorkoutMuscleGroupVolumeCTO[];
+      preRecoverySetCount?: number;
+      recoverySetCount?: number;
+    }) {
+      const { volumeCTOs, preRecoverySetCount = 6, recoverySetCount = 3 } = options;
+
+      const chestExercise = workoutTestUtil.STANDARD_EXERCISES.barbellBenchPress;
+      const chestCTO = workoutTestUtil.createExerciseCTO({
+        exercise: chestExercise,
+        calibration: workoutTestUtil.STANDARD_CALIBRATIONS.barbellBenchPress,
+        equipmentType: workoutTestUtil.STANDARD_EQUIPMENT_TYPES.barbell
+      });
+
+      const mesocycle = workoutTestUtil.createMesocycle({
+        plannedSessionCountPerMicrocycle: 1,
+        calibratedExercises: chestCTO.bestCalibration ? [chestCTO.bestCalibration._id] : []
+      });
+
+      const context = workoutTestUtil.createContext({
+        mesocycle,
+        exerciseCTOs: [chestCTO],
+        volumeCTOs
+      });
+
+      const sessionExerciseCTOs = [[chestCTO]];
+
+      // Microcycle 0: triggers recovery
+      workoutTestUtil.createHistoricalMicrocycle({
+        context,
+        exerciseCTOs: sessionExerciseCTOs,
+        sessionExerciseOverrides: [
+          [
+            {
+              setCount: preRecoverySetCount,
+              sorenessScore: 3,
+              performanceScore: 3,
+              rsm: { mindMuscleConnection: 2, pump: 2, disruption: 2 },
+              fatigue: {
+                jointAndTissueDisruption: 2,
+                perceivedEffort: 2,
+                unusedMusclePerformance: 2
+              }
+            }
+          ]
+        ]
+      });
+
+      // Microcycle 1: recovery microcycle with reduced sets
+      workoutTestUtil.createHistoricalMicrocycle({
+        context,
+        exerciseCTOs: sessionExerciseCTOs,
+        sessionExerciseOverrides: [
+          [
+            {
+              setCount: recoverySetCount,
+              isRecovery: true,
+              sorenessScore: 0,
+              performanceScore: 0,
+              rsm: { mindMuscleConnection: 1, pump: 1, disruption: 1 },
+              fatigue: {
+                jointAndTissueDisruption: 1,
+                perceivedEffort: 1,
+                unusedMusclePerformance: 1
+              }
+            }
+          ]
+        ]
+      });
+
+      // Microcycle 2: returning from recovery
+      context.addMicrocycle(workoutTestUtil.createMicrocycle({ mesocycle }));
+      context.setPlannedSessionExerciseCTOs(sessionExerciseCTOs);
+
+      const result = WorkoutVolumePlanningService.calculateSetPlanForMicrocycle(context, 2, false);
+
+      return { context, result, exerciseId: chestExercise._id };
+    }
+
+    it('should return at estimatedMav when recovering with good landmark data (MEV=3, MRV=7)', () => {
+      // Volume CTO: avgRsm=5 (effective), avgPerformanceScore=2.5 (stressed)
+      // estimatedMev = round(3/1) = 3, estimatedMrv = round(7/1) = 7
+      // estimatedMav = ceil((3+7)/2) = 5
+      const volumeCTO = workoutTestUtil.createMuscleGroupVolumeCTO(
+        [{ startingSetCount: 3, peakSetCount: 7, avgRsm: 5, avgPerformanceScore: 2.5 }],
+        workoutTestUtil.STANDARD_MUSCLE_GROUPS.chest._id
+      );
+
+      const { result, exerciseId } = calculateRecoveryReturnSetPlan({
+        volumeCTOs: [volumeCTO]
+      });
+
+      expect(result.exerciseIdToSetCount.get(exerciseId)).toBe(5);
+      expect(result.recoveryExerciseIds.has(exerciseId)).toBe(false);
+    });
+
+    it('should return at estimatedMav when recovering with asymmetric landmarks (MEV=2, MRV=6)', () => {
+      // Two mesocycles: one effective (avgRsm=5), one stressed (peakSetCount=6, avgPerformanceScore=3)
+      // estimatedMev = round((2+3)/2) = round(2.5) = 3... wait, let me be precise.
+      // Effective mesocycles (avgRsm >= 4): only the first with avgRsm=5
+      //   estimatedMev = round(2/1) = 2
+      // Stressed mesocycles (avgPerformanceScore >= 2.5 or recoverySessionCount > 0): both
+      //   estimatedMrv = round((6+6)/2) = 6
+      // estimatedMav = ceil((2+6)/2) = 4
+      const volumeCTO = workoutTestUtil.createMuscleGroupVolumeCTO(
+        [
+          { startingSetCount: 2, peakSetCount: 6, avgRsm: 5, avgPerformanceScore: 3 },
+          { startingSetCount: 3, peakSetCount: 6, avgRsm: 3, avgPerformanceScore: 3 }
+        ],
+        workoutTestUtil.STANDARD_MUSCLE_GROUPS.chest._id
+      );
+
+      // Verify the landmarks first
+      const landmarks = WorkoutVolumePlanningService.estimateVolumeLandmarks(volumeCTO);
+      expect(landmarks.estimatedMev).toBe(2);
+      expect(landmarks.estimatedMrv).toBe(6);
+      expect(landmarks.estimatedMav).toBe(4);
+
+      const { result, exerciseId } = calculateRecoveryReturnSetPlan({
+        volumeCTOs: [volumeCTO]
+      });
+
+      expect(result.exerciseIdToSetCount.get(exerciseId)).toBe(4);
+    });
+
+    it('should use default landmarks (MEV=2, MRV=8, MAV=5) when no historical data exists', () => {
+      // Empty mesocycle history means Low confidence: defaults are MEV=2, MRV=8
+      // estimatedMav = ceil((2+8)/2) = 5
+      const volumeCTO = workoutTestUtil.createMuscleGroupVolumeCTO(
+        [],
+        workoutTestUtil.STANDARD_MUSCLE_GROUPS.chest._id
+      );
+
+      // Verify the default landmarks
+      const landmarks = WorkoutVolumePlanningService.estimateVolumeLandmarks(volumeCTO);
+      expect(landmarks.estimatedMev).toBe(2);
+      expect(landmarks.estimatedMrv).toBe(8);
+      expect(landmarks.estimatedMav).toBe(5);
+      expect(landmarks.mesocycleCount).toBe(0);
+
+      const { result, exerciseId } = calculateRecoveryReturnSetPlan({
+        volumeCTOs: [volumeCTO]
+      });
+
+      expect(result.exerciseIdToSetCount.get(exerciseId)).toBe(5);
+    });
+
+    it('should cap recovery return set count at MAX_SETS_PER_EXERCISE (8)', () => {
+      // Create landmarks where MAV would exceed 8
+      // Multiple stressed mesocycles with high peak set counts push MRV high,
+      // but MRV is capped at 10. With MEV=8, MRV gets bumped to 9, MAV=ceil((8+9)/2)=9.
+      // But 9 > MAX_SETS_PER_EXERCISE (8), so it should be capped at 8.
+      const volumeCTO = workoutTestUtil.createMuscleGroupVolumeCTO(
+        [
+          { startingSetCount: 8, peakSetCount: 10, avgRsm: 5, avgPerformanceScore: 3 },
+          { startingSetCount: 8, peakSetCount: 10, avgRsm: 5, avgPerformanceScore: 3 }
+        ],
+        workoutTestUtil.STANDARD_MUSCLE_GROUPS.chest._id
+      );
+
+      const landmarks = WorkoutVolumePlanningService.estimateVolumeLandmarks(volumeCTO);
+      // MEV = round((8+8)/2) = 8, MRV = round((10+10)/2) = 10
+      // MRV (10) > MEV (8), so no bump needed
+      // MAV = ceil((8+10)/2) = 9
+      expect(landmarks.estimatedMev).toBe(8);
+      expect(landmarks.estimatedMrv).toBe(10);
+      expect(landmarks.estimatedMav).toBe(9);
+
+      const { result, exerciseId } = calculateRecoveryReturnSetPlan({
+        volumeCTOs: [volumeCTO]
+      });
+
+      // MAV is 9, but capped at MAX_SETS_PER_EXERCISE (8)
+      expect(result.exerciseIdToSetCount.get(exerciseId)).toBe(8);
+    });
+
+    it('should return at estimatedMav that is always between MEV and MRV', () => {
+      // Test with various landmark combinations to verify bounds
+      const testCases = [
+        { startingSetCount: 2, peakSetCount: 4, avgRsm: 5, avgPerformanceScore: 3 },
+        { startingSetCount: 5, peakSetCount: 8, avgRsm: 5, avgPerformanceScore: 3 },
+        { startingSetCount: 3, peakSetCount: 9, avgRsm: 5, avgPerformanceScore: 3 }
+      ];
+
+      for (const testCase of testCases) {
+        const volumeCTO = workoutTestUtil.createMuscleGroupVolumeCTO(
+          [testCase],
+          workoutTestUtil.STANDARD_MUSCLE_GROUPS.chest._id
+        );
+        const landmarks = WorkoutVolumePlanningService.estimateVolumeLandmarks(volumeCTO);
+
+        expect(landmarks.estimatedMav).toBeGreaterThanOrEqual(landmarks.estimatedMev);
+        expect(landmarks.estimatedMav).toBeLessThanOrEqual(landmarks.estimatedMrv);
+      }
+    });
+
+    it('should not modify historical set weights when calculating recovery return set count', () => {
+      const volumeCTO = workoutTestUtil.createMuscleGroupVolumeCTO(
+        [{ startingSetCount: 3, peakSetCount: 7, avgRsm: 5, avgPerformanceScore: 2.5 }],
+        workoutTestUtil.STANDARD_MUSCLE_GROUPS.chest._id
+      );
+
+      const { context, result, exerciseId } = calculateRecoveryReturnSetPlan({
+        volumeCTOs: [volumeCTO]
+      });
+
+      // Verify set count changed to MAV
+      expect(result.exerciseIdToSetCount.get(exerciseId)).toBe(5);
+
+      // Verify historical sets in the context still have their original weights.
+      // The pre-recovery microcycle (index 0) and recovery microcycle (index 1) should
+      // have their set data intact -- calculateSetPlanForMicrocycle only returns a map,
+      // it does not mutate existing sets.
+      const historicalSets = context.setsToCreate;
+      for (const set of historicalSets) {
+        // All historical sets were created with actual weight = planned weight
+        expect(set.actualWeight).toBe(set.plannedWeight);
+        expect(set.plannedWeight).not.toBeNull();
+      }
+    });
+  });
+
   describe('cycle-type-specific progression', () => {
     it('should produce flat set counts for Resensitization (no progression)', () => {
       const exerciseCTOs = [
