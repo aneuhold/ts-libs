@@ -56,8 +56,26 @@ export default class WorkoutExerciseCalibrationService {
    */
   static getTargetWeight(calibration: WorkoutExerciseCalibration, targetReps: number): number {
     const oneRepMax = this.get1RM(calibration);
+    return this.getTargetWeightFrom1RM(oneRepMax, targetReps);
+  }
+
+  /**
+   * Calculates the target weight from a raw 1RM value and a target rep count.
+   *
+   * This applies the same targetPercentage formula as {@link getTargetWeight}
+   * but accepts a pre-computed 1RM instead of a calibration document. Useful
+   * when the effective 1RM is derived from multiple sources (calibrations and
+   * actual sets).
+   *
+   * Returns the calculated weight without rounding. Consumer can use
+   * WorkoutEquipmentTypeService.findNearestWeight() to round if needed.
+   *
+   * @param effective1RM The effective 1 Rep Max value.
+   * @param targetReps The target number of reps.
+   */
+  static getTargetWeightFrom1RM(effective1RM: number, targetReps: number): number {
     const targetPercentage = this.getTargetPercentage(targetReps);
-    return (targetPercentage / 100) * oneRepMax;
+    return (targetPercentage / 100) * effective1RM;
   }
 
   /**

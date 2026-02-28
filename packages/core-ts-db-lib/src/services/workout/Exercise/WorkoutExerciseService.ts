@@ -5,8 +5,10 @@ import {
   ExerciseRepRange
 } from '../../../documents/workout/WorkoutExercise.js';
 import type { WorkoutExerciseCalibration } from '../../../documents/workout/WorkoutExerciseCalibration.js';
+import type { CompletedWorkoutSet, WorkoutSet } from '../../../documents/workout/WorkoutSet.js';
 import WorkoutEquipmentTypeService from '../EquipmentType/WorkoutEquipmentTypeService.js';
 import WorkoutExerciseCalibrationService from '../ExerciseCalibration/WorkoutExerciseCalibrationService.js';
+import WorkoutSessionExerciseService from '../SessionExercise/WorkoutSessionExerciseService.js';
 import WorkoutSFRService from '../util/SFR/WorkoutSFRService.js';
 
 /**
@@ -50,6 +52,10 @@ export default class WorkoutExerciseService {
    * This method applies either rep-based or load-based progression depending on the exercise's
    * preferred progression type, then rounds the weight to available equipment options.
    *
+   * When a `previousFirstSet` is provided, autoregulation adjusts progression based on the
+   * surplus between planned and actual performance. Without it, the calibration-based formula
+   * is used as a baseline.
+   *
    * Rep progression: The weight is calculated based on reps at microcycle 0, and reps increase
    * by 2 per microcycle to reach max reps at the final accumulation microcycle (ideally),
    * or drop back down and increase weight by 2%.
@@ -63,8 +69,16 @@ export default class WorkoutExerciseService {
     equipment: WorkoutEquipmentType;
     microcycleIndex: number;
     firstMicrocycleRir: number;
+    previousFirstSet?: WorkoutSet;
   }): { targetWeight: number; targetReps: number } {
-    const { exercise, calibration, equipment, microcycleIndex, firstMicrocycleRir } = params;
+    const {
+      exercise,
+      calibration,
+      equipment,
+      microcycleIndex,
+      firstMicrocycleRir,
+      previousFirstSet
+    } = params;
 
     // Validate equipment has weight options
     if (!equipment.weightOptions || equipment.weightOptions.length === 0) {
@@ -76,6 +90,195 @@ export default class WorkoutExerciseService {
     // Get rep range for this exercise
     const repRange = this.getRepRangeValues(exercise.repRange);
     const repRangeMidpoint = Math.floor((repRange.min + repRange.max) / 2);
+
+    // If we have a previous set with complete data, use autoregulation
+    if (previousFirstSet && this.hasCompleteAutoRegulationData(previousFirstSet)) {
+      return this.calculateAutoRegulatedTargets({
+        exercise,
+        equipment,
+        previousFirstSet,
+        repRange
+      });
+    }
+
+    // Calibration-based formula (no previous set available)
+    return this.calculateCalibrationBasedTargets({
+      exercise,
+      calibration,
+      equipment,
+      microcycleIndex,
+      firstMicrocycleRir,
+      repRange,
+      repRangeMidpoint
+    });
+  }
+
+  /**
+   * Calculates targets using auto-regulation based on actual performance from a previous set.
+   */
+  private static calculateAutoRegulatedTargets(params: {
+    exercise: WorkoutExercise;
+    equipment: WorkoutEquipmentType;
+    previousFirstSet: CompletedWorkoutSet;
+    repRange: { min: number; max: number };
+  }): { targetWeight: number; targetReps: number } {
+    const { exercise, equipment, previousFirstSet, repRange } = params;
+
+    const surplus = WorkoutSessionExerciseService.calculateSetSurplus(
+      previousFirstSet.actualReps,
+      previousFirstSet.plannedReps,
+      previousFirstSet.rir,
+      previousFirstSet.plannedRir
+    );
+
+    if (exercise.preferredProgressionType === ExerciseProgressionType.Rep) {
+      return this.calculateAutoRegulatedRepTargets(previousFirstSet, surplus, repRange, equipment);
+    }
+
+    return this.calculateAutoRegulatedLoadTargets(previousFirstSet, surplus, repRange, equipment);
+  }
+
+  /**
+   * Auto-regulated rep progression. Weight stays the same, reps adjust based on surplus.
+   *
+   * | Surplus | Action |
+   * |---:|---|
+   * | >= 3 | Accelerate: actualReps + 2 (progress from actual, not planned) |
+   * | 0 to 2 | Normal: plannedReps + 2 |
+   * | -1 to -2 | Hold: plannedReps (don't add reps) |
+   * | <= -3 | Regress: actualReps (use actual as new baseline) |
+   */
+  private static calculateAutoRegulatedRepTargets(
+    previousSet: CompletedWorkoutSet,
+    surplus: number,
+    repRange: { min: number; max: number },
+    equipment: WorkoutEquipmentType
+  ): { targetWeight: number; targetReps: number } {
+    let targetReps: number;
+    let targetWeight = previousSet.plannedWeight;
+
+    if (surplus >= 3) {
+      targetReps = previousSet.actualReps + 2;
+    } else if (surplus >= 0) {
+      targetReps = previousSet.plannedReps + 2;
+    } else if (surplus >= -2) {
+      targetReps = previousSet.plannedReps;
+    } else {
+      targetReps = previousSet.actualReps;
+    }
+
+    // Clamp to rep range floor (never target below min, even if actual was 0)
+    targetReps = Math.max(targetReps, repRange.min);
+
+    // Handle rep range ceiling: if target exceeds max, reset and bump weight
+    if (targetReps > repRange.max) {
+      targetReps = repRange.max;
+      const nextWeight = this.findNextTwoPercentWeight(targetWeight, equipment);
+      if (nextWeight !== null) {
+        targetWeight = nextWeight;
+      }
+    }
+
+    // Round weight to equipment
+    const roundedWeight = WorkoutEquipmentTypeService.findNearestWeight(
+      equipment,
+      targetWeight,
+      'prefer-down'
+    );
+    if (roundedWeight !== null) {
+      targetWeight = roundedWeight;
+    }
+
+    return { targetWeight, targetReps };
+  }
+
+  /**
+   * Auto-regulated load progression. Reps stay at rep range max, weight adjusts based on surplus.
+   *
+   * | Surplus | Action |
+   * |---:|---|
+   * | >= 2 | Accelerate: increase weight by ~4% |
+   * | 0 to 1 | Normal: increase weight by 2% |
+   * | -1 to -2 | Hold weight (no increase) |
+   * | <= -3 | Reduce weight by minimum equipment increment |
+   */
+  private static calculateAutoRegulatedLoadTargets(
+    previousSet: CompletedWorkoutSet,
+    surplus: number,
+    repRange: { min: number; max: number },
+    equipment: WorkoutEquipmentType
+  ): { targetWeight: number; targetReps: number } {
+    const targetReps = repRange.max;
+    let targetWeight = previousSet.plannedWeight;
+
+    if (surplus >= 2) {
+      // Accelerate: increase by ~4%
+      const fourPercentIncrease = targetWeight * 1.04;
+      const nextWeight = WorkoutEquipmentTypeService.findNearestWeight(
+        equipment,
+        fourPercentIncrease,
+        'up'
+      );
+      if (nextWeight !== null) {
+        targetWeight = nextWeight;
+      }
+    } else if (surplus >= 0) {
+      // Normal: increase by 2%
+      const nextWeight = this.findNextTwoPercentWeight(targetWeight, equipment);
+      if (nextWeight !== null) {
+        targetWeight = nextWeight;
+      }
+    } else if (surplus >= -2) {
+      // Hold weight - no change
+    } else {
+      // Reduce by minimum equipment increment
+      const reducedWeight = WorkoutEquipmentTypeService.findNearestWeight(
+        equipment,
+        targetWeight - 0.01,
+        'down'
+      );
+      if (reducedWeight !== null) {
+        targetWeight = reducedWeight;
+      }
+    }
+
+    return { targetWeight, targetReps };
+  }
+
+  /**
+   * Checks whether a set has all the data needed for autoregulation calculations.
+   */
+  private static hasCompleteAutoRegulationData(set: WorkoutSet): set is CompletedWorkoutSet {
+    return (
+      set.actualReps != null &&
+      set.plannedReps != null &&
+      set.rir != null &&
+      set.plannedRir != null &&
+      set.plannedWeight != null
+    );
+  }
+
+  /**
+   * Calculates targets using the calibration-based formula (original behavior).
+   */
+  private static calculateCalibrationBasedTargets(params: {
+    exercise: WorkoutExercise;
+    calibration: WorkoutExerciseCalibration;
+    equipment: WorkoutEquipmentType;
+    microcycleIndex: number;
+    firstMicrocycleRir: number;
+    repRange: { min: number; max: number };
+    repRangeMidpoint: number;
+  }): { targetWeight: number; targetReps: number } {
+    const {
+      exercise,
+      calibration,
+      equipment,
+      microcycleIndex,
+      firstMicrocycleRir,
+      repRange,
+      repRangeMidpoint
+    } = params;
 
     // For rep progression, calculate weight based on reps at microcycle 0
     // For load progression, use max reps

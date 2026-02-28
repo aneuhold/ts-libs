@@ -114,18 +114,13 @@ export default class WorkoutSessionExerciseValidator extends IValidator<WorkoutS
           );
           return true;
         }
-        return false;
-      },
-      additionalValidation: (sessionExercise: WorkoutSessionExercise) => {
-        const updatedDoc = { ...sessionExercise };
-        const errors: string[] = [];
-
-        // Check exercise
         if (!allExerciseIds[sessionExercise.workoutExerciseId]) {
-          errors.push(`Exercise with ID: ${sessionExercise.workoutExerciseId} does not exist.`);
+          DR.logger.error(
+            `Workout Session Exercise with ID: ${sessionExercise._id} references non-existent exercise: ${sessionExercise.workoutExerciseId}.`
+          );
+          return true;
         }
-
-        return { updatedDoc, errors };
+        return false;
       },
       deletionFunction: async (docIdsToDelete: UUID[]) => {
         await sessionExerciseRepo.deleteList(docIdsToDelete);

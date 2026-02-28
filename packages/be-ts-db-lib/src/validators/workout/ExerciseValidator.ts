@@ -131,16 +131,17 @@ export default class WorkoutExerciseValidator extends IValidator<WorkoutExercise
           );
           return true;
         }
+        if (!allEquipmentTypeIds[exercise.workoutEquipmentTypeId]) {
+          DR.logger.error(
+            `Workout Exercise with ID: ${exercise._id} references non-existent equipment type: ${exercise.workoutEquipmentTypeId}.`
+          );
+          return true;
+        }
         return false;
       },
       additionalValidation: (exercise: WorkoutExercise) => {
         const updatedDoc = { ...exercise };
         const errors: string[] = [];
-
-        // Check equipment type
-        if (!allEquipmentTypeIds[exercise.workoutEquipmentTypeId]) {
-          errors.push(`Equipment type with ID: ${exercise.workoutEquipmentTypeId} does not exist.`);
-        }
 
         // Check primary muscle groups
         const invalidPrimaryMuscleGroups = exercise.primaryMuscleGroups.filter(

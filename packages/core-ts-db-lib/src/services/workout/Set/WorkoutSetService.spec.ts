@@ -6,6 +6,7 @@ import {
   type WorkoutExercise
 } from '../../../documents/workout/WorkoutExercise.js';
 import type { WorkoutExerciseCalibration } from '../../../documents/workout/WorkoutExerciseCalibration.js';
+import type { WorkoutEquipmentType } from '../../../documents/workout/WorkoutEquipmentType.js';
 import WorkoutSetService from './WorkoutSetService.js';
 
 describe('WorkoutSetService', () => {
@@ -100,6 +101,7 @@ describe('WorkoutSetService', () => {
     const runGeneration = (params: {
       currentExercise: WorkoutExercise;
       currentCalibration: WorkoutExerciseCalibration;
+      equipmentType?: WorkoutEquipmentType;
       microcycleIndex?: number;
       targetRir?: number | null;
       isDeload?: boolean;
@@ -114,24 +116,26 @@ describe('WorkoutSetService', () => {
         setCountOverride = 3
       } = params;
 
-      // Use all standard equipment so any exercise works
+      const resolvedEquipmentType =
+        params.equipmentType ??
+        Object.values(workoutTestUtil.STANDARD_EQUIPMENT_TYPES).find(
+          (et) => et._id === currentExercise.workoutEquipmentTypeId
+        );
+
+      const exerciseCTO = workoutTestUtil.createExerciseCTO({
+        exercise: currentExercise,
+        calibration: currentCalibration,
+        equipmentType: resolvedEquipmentType
+      });
+
       const context = workoutTestUtil.createContext({
         mesocycle,
-        exerciseCTOs: [
-          workoutTestUtil.createExerciseCTO({
-            exercise: currentExercise,
-            calibration: currentCalibration,
-            equipmentType: Object.values(workoutTestUtil.STANDARD_EQUIPMENT_TYPES).find(
-              (et) => et._id === currentExercise.workoutEquipmentTypeId
-            )
-          })
-        ]
+        exerciseCTOs: [exerciseCTO]
       });
 
       WorkoutSetService.generateSetsForSessionExercise({
         context,
-        exercise: currentExercise,
-        calibration: currentCalibration,
+        exerciseCTO,
         session,
         sessionExercise,
         microcycleIndex,

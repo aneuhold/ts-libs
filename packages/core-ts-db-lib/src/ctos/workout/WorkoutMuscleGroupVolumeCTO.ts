@@ -27,3 +27,21 @@ export const WorkoutMuscleGroupVolumeCTOSchema = z.object({
  * recovery session counts across completed mesocycles.
  */
 export type WorkoutMuscleGroupVolumeCTO = z.infer<typeof WorkoutMuscleGroupVolumeCTOSchema>;
+
+/**
+ * Estimated volume landmarks (MEV, MRV, MAV) for a muscle group derived
+ * from historical mesocycle data.
+ */
+export type WorkoutVolumeLandmarkEstimate = {
+  /** Estimated minimum effective volume (sets per muscle group per session). */
+  estimatedMev: number;
+
+  /** Estimated maximum recoverable volume. */
+  estimatedMrv: number;
+
+  /** Estimated maximum adaptive volume (midpoint of MEV and MRV). */
+  estimatedMav: number;
+
+  /** Number of completed mesocycles used to derive these estimates. */
+  mesocycleCount: number;
+};

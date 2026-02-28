@@ -4,7 +4,13 @@ import { describe, expect, it } from 'vitest';
 import workoutTestUtil from '../../../../test-utils/WorkoutTestUtil.js';
 import { CycleType, WorkoutMesocycleSchema } from '../../../documents/workout/WorkoutMesocycle.js';
 import type { WorkoutMicrocycle } from '../../../documents/workout/WorkoutMicrocycle.js';
+import type { WorkoutSessionExercise } from '../../../documents/workout/WorkoutSessionExercise.js';
+import type { WorkoutSet } from '../../../documents/workout/WorkoutSet.js';
 import WorkoutMesocycleService from './WorkoutMesocycleService.js';
+import {
+  WorkoutDeloadSeverity,
+  WorkoutDeloadTriggerRule
+} from './WorkoutMesocycleService.types.js';
 
 describe('Unit Tests', () => {
   describe('generateOrUpdateMesocycle', () => {
@@ -289,6 +295,7 @@ describe('Unit Tests', () => {
       const regenResult = WorkoutMesocycleService.generateOrUpdateMesocycle(
         mesocycle,
         exerciseCTOs,
+        [],
         initialResult.microcycles?.create ?? [],
         sessionsAllComplete,
         initialResult.sessionExercises?.create ?? [],
@@ -348,6 +355,7 @@ describe('Unit Tests', () => {
       const extendedResult = WorkoutMesocycleService.generateOrUpdateMesocycle(
         mesocycle,
         exerciseCTOs,
+        [],
         initialResult.microcycles?.create ?? [],
         sessionsComplete,
         initialResult.sessionExercises?.create ?? [],
@@ -418,6 +426,7 @@ describe('Unit Tests', () => {
       const regenResult = WorkoutMesocycleService.generateOrUpdateMesocycle(
         mesocycle,
         exerciseCTOs,
+        [],
         initialResult.microcycles?.create ?? [],
         sessionsPartialComplete,
         initialResult.sessionExercises?.create ?? [],
@@ -483,6 +492,7 @@ describe('Unit Tests', () => {
       const regenResult = WorkoutMesocycleService.generateOrUpdateMesocycle(
         mesocycle,
         exerciseCTOs,
+        [],
         modifiedMicrocycles,
         sessionsComplete,
         initialResult.sessionExercises?.create ?? [],
@@ -539,6 +549,7 @@ describe('Unit Tests', () => {
       const regenResult = WorkoutMesocycleService.generateOrUpdateMesocycle(
         mesocycle,
         exerciseCTOs,
+        [],
         initialMicrocycles,
         initialResult.sessions?.create ?? [],
         initialResult.sessionExercises?.create ?? [],
@@ -616,6 +627,7 @@ describe('Unit Tests', () => {
         WorkoutMesocycleService.generateOrUpdateMesocycle(
           mesocycle,
           exerciseCTOs,
+          [],
           initialResult.microcycles?.create ?? [],
           sessionsPartialComplete,
           initialResult.sessionExercises?.create ?? [],
@@ -655,6 +667,7 @@ describe('Unit Tests', () => {
       const result = WorkoutMesocycleService.generateOrUpdateMesocycle(
         mesocycle,
         exerciseCTOs,
+        [],
         [],
         [],
         [],
@@ -775,6 +788,7 @@ describe('Unit Tests', () => {
       const regenResult = WorkoutMesocycleService.generateOrUpdateMesocycle(
         mesocycle,
         exerciseCTOs,
+        [],
         initialResult.microcycles?.create ?? [],
         sessionsComplete,
         initialResult.sessionExercises?.create ?? [],
@@ -815,6 +829,377 @@ describe('Unit Tests', () => {
         if (set) {
           expect(sessionExerciseIdsToDelete.has(set.workoutSessionExerciseId)).toBe(true);
         }
+      });
+    });
+
+    it('should populate volume landmark map when volumeCTOs are provided', () => {
+      const exerciseCTOs = [
+        workoutTestUtil.createExerciseCTO({
+          exercise: workoutTestUtil.STANDARD_EXERCISES.barbellBenchPress,
+          calibration: workoutTestUtil.STANDARD_CALIBRATIONS.barbellBenchPress,
+          equipmentType: workoutTestUtil.STANDARD_EQUIPMENT_TYPES.barbell
+        })
+      ];
+
+      const volumeCTO = workoutTestUtil.createMuscleGroupVolumeCTO(
+        [{ startingSetCount: 3, peakSetCount: 7, avgRsm: 5, avgPerformanceScore: 2.5 }],
+        workoutTestUtil.STANDARD_MUSCLE_GROUPS.chest._id
+      );
+
+      const mesocycle = WorkoutMesocycleSchema.parse({
+        userId: workoutTestUtil.userId,
+        cycleType: CycleType.MuscleGain,
+        plannedSessionCountPerMicrocycle: 1,
+        plannedMicrocycleLengthInDays: 7,
+        plannedMicrocycleRestDays: [],
+        plannedMicrocycleCount: 3,
+        calibratedExercises: exerciseCTOs.flatMap((c) =>
+          c.bestCalibration ? [c.bestCalibration._id] : []
+        )
+      });
+
+      const result = WorkoutMesocycleService.generateOrUpdateMesocycle(mesocycle, exerciseCTOs, [
+        volumeCTO
+      ]);
+
+      // Should generate normally (volume data doesn't change structure)
+      expect(result.microcycles?.create).toHaveLength(3);
+      expect(result.sessions?.create?.length).toBeGreaterThan(0);
+      expect(result.sets?.create?.length).toBeGreaterThan(0);
+    });
+
+    describe('cycle-type-specific generation', () => {
+      it('should skip deload for Resensitization cycles', () => {
+        const exerciseCTOs = [
+          workoutTestUtil.createExerciseCTO({
+            exercise: workoutTestUtil.STANDARD_EXERCISES.barbellBenchPress,
+            calibration: workoutTestUtil.STANDARD_CALIBRATIONS.barbellBenchPress,
+            equipmentType: workoutTestUtil.STANDARD_EQUIPMENT_TYPES.barbell
+          })
+        ];
+
+        const mesocycle = WorkoutMesocycleSchema.parse({
+          userId: workoutTestUtil.userId,
+          cycleType: CycleType.Resensitization,
+          plannedSessionCountPerMicrocycle: 1,
+          plannedMicrocycleLengthInDays: 7,
+          plannedMicrocycleRestDays: [],
+          plannedMicrocycleCount: 4,
+          calibratedExercises: exerciseCTOs.flatMap((c) =>
+            c.bestCalibration ? [c.bestCalibration._id] : []
+          )
+        });
+
+        const result = WorkoutMesocycleService.generateOrUpdateMesocycle(mesocycle, exerciseCTOs);
+        const sets = result.sets?.create ?? [];
+
+        // All 4 microcycles should be accumulation (no deload)
+        expect(result.microcycles?.create).toHaveLength(4);
+
+        // No sets should have null plannedRir (which would indicate deload)
+        const deloadSets = sets.filter((s) => s.plannedRir === null);
+        expect(deloadSets).toHaveLength(0);
+      });
+
+      it('should start RIR at 3 for Cut cycles instead of 4', () => {
+        const exerciseCTOs = [
+          workoutTestUtil.createExerciseCTO({
+            exercise: workoutTestUtil.STANDARD_EXERCISES.barbellBenchPress,
+            calibration: workoutTestUtil.STANDARD_CALIBRATIONS.barbellBenchPress,
+            equipmentType: workoutTestUtil.STANDARD_EQUIPMENT_TYPES.barbell
+          })
+        ];
+
+        const mesocycle = WorkoutMesocycleSchema.parse({
+          userId: workoutTestUtil.userId,
+          cycleType: CycleType.Cut,
+          plannedSessionCountPerMicrocycle: 1,
+          plannedMicrocycleLengthInDays: 7,
+          plannedMicrocycleRestDays: [],
+          plannedMicrocycleCount: 6,
+          calibratedExercises: exerciseCTOs.flatMap((c) =>
+            c.bestCalibration ? [c.bestCalibration._id] : []
+          )
+        });
+
+        const result = WorkoutMesocycleService.generateOrUpdateMesocycle(mesocycle, exerciseCTOs);
+        const sets = result.sets?.create ?? [];
+        const sessions = result.sessions?.create ?? [];
+        const microcycles = result.microcycles?.create ?? [];
+
+        // First microcycle's first session's sets should have RIR 3 (not 4)
+        const firstMicrocycle = microcycles[0];
+        const firstSession = sessions.find((s) => s.workoutMicrocycleId === firstMicrocycle._id);
+        const firstMicrocycleSets = sets.filter((s) => s.workoutSessionId === firstSession?._id);
+        expect(firstMicrocycleSets[0].plannedRir).toBe(3);
+      });
+
+      it('should keep RIR flat at 3 for all Resensitization microcycles', () => {
+        const exerciseCTOs = [
+          workoutTestUtil.createExerciseCTO({
+            exercise: workoutTestUtil.STANDARD_EXERCISES.barbellBenchPress,
+            calibration: workoutTestUtil.STANDARD_CALIBRATIONS.barbellBenchPress,
+            equipmentType: workoutTestUtil.STANDARD_EQUIPMENT_TYPES.barbell
+          })
+        ];
+
+        const mesocycle = WorkoutMesocycleSchema.parse({
+          userId: workoutTestUtil.userId,
+          cycleType: CycleType.Resensitization,
+          plannedSessionCountPerMicrocycle: 1,
+          plannedMicrocycleLengthInDays: 7,
+          plannedMicrocycleRestDays: [],
+          plannedMicrocycleCount: 4,
+          calibratedExercises: exerciseCTOs.flatMap((c) =>
+            c.bestCalibration ? [c.bestCalibration._id] : []
+          )
+        });
+
+        const result = WorkoutMesocycleService.generateOrUpdateMesocycle(mesocycle, exerciseCTOs);
+        const sets = result.sets?.create ?? [];
+        const sessions = result.sessions?.create ?? [];
+        const microcycles = result.microcycles?.create ?? [];
+
+        // All microcycles should have RIR 3 (no taper)
+        for (const mc of microcycles) {
+          const mcSession = sessions.find((s) => s.workoutMicrocycleId === mc._id);
+          const mcSets = sets.filter((s) => s.workoutSessionId === mcSession?._id);
+          expect(mcSets.length).toBeGreaterThan(0);
+          expect(mcSets[0].plannedRir).toBe(3);
+        }
+      });
+
+      it('should preserve FreeForm early exit', () => {
+        const exerciseCTOs = [
+          workoutTestUtil.createExerciseCTO({
+            exercise: workoutTestUtil.STANDARD_EXERCISES.barbellSquat,
+            calibration: workoutTestUtil.STANDARD_CALIBRATIONS.barbellSquat,
+            equipmentType: workoutTestUtil.STANDARD_EQUIPMENT_TYPES.barbell
+          })
+        ];
+
+        const mesocycle = WorkoutMesocycleSchema.parse({
+          userId: workoutTestUtil.userId,
+          cycleType: CycleType.FreeForm,
+          plannedSessionCountPerMicrocycle: 1,
+          plannedMicrocycleLengthInDays: 7,
+          plannedMicrocycleRestDays: [],
+          plannedMicrocycleCount: 3,
+          calibratedExercises: exerciseCTOs.flatMap((c) =>
+            c.bestCalibration ? [c.bestCalibration._id] : []
+          )
+        });
+
+        const result = WorkoutMesocycleService.generateOrUpdateMesocycle(mesocycle, exerciseCTOs);
+        expect(result.microcycles).toBeUndefined();
+        expect(result.sessions).toBeUndefined();
+      });
+    });
+
+    describe('cross-mesocycle continuity', () => {
+      /**
+       * Helper to extract the first set of a given exercise from the first microcycle
+       * of a mesocycle generation result.
+       */
+      function getFirstSetForExercise(
+        result: ReturnType<typeof WorkoutMesocycleService.generateOrUpdateMesocycle>,
+        exerciseId: UUID
+      ): WorkoutSet | undefined {
+        const sets = result.sets?.create ?? [];
+        const microcycles = result.microcycles?.create ?? [];
+        const sessions = result.sessions?.create ?? [];
+        const sessionExercises = result.sessionExercises?.create ?? [];
+
+        if (microcycles.length === 0) return undefined;
+
+        const firstMicrocycleId = microcycles[0]._id;
+        const firstMicrocycleSessions = sessions.filter(
+          (s) => s.workoutMicrocycleId === firstMicrocycleId
+        );
+        const firstMicrocycleSessionIds = new Set(firstMicrocycleSessions.map((s) => s._id));
+
+        const matchingSessionExercise = sessionExercises.find(
+          (se) =>
+            se.workoutExerciseId === exerciseId &&
+            firstMicrocycleSessionIds.has(se.workoutSessionId)
+        );
+        if (!matchingSessionExercise) return undefined;
+
+        const firstSetId = matchingSessionExercise.setOrder[0];
+        return sets.find((s) => s._id === firstSetId);
+      }
+
+      it('should use previous performance data when exercise has lastFirstSet populated', () => {
+        // Create a CTO with lastFirstSet simulating a previous mesocycle's actual performance
+        const previousWeight = 225;
+        const lastFirstSet = workoutTestUtil.createSet({
+          exercise: workoutTestUtil.STANDARD_EXERCISES.barbellSquat,
+          overrides: {
+            plannedReps: 15,
+            plannedWeight: previousWeight,
+            plannedRir: 1,
+            actualReps: 15,
+            actualWeight: previousWeight,
+            rir: 1
+          }
+        });
+
+        const lastSessionExercise = workoutTestUtil.createSessionExercise({
+          exercise: workoutTestUtil.STANDARD_EXERCISES.barbellSquat
+        });
+
+        const exerciseCTOWithHistory = workoutTestUtil.createExerciseCTO({
+          exercise: workoutTestUtil.STANDARD_EXERCISES.barbellSquat,
+          calibration: workoutTestUtil.STANDARD_CALIBRATIONS.barbellSquat,
+          equipmentType: workoutTestUtil.STANDARD_EQUIPMENT_TYPES.barbell,
+          lastFirstSet,
+          lastSessionExercise
+        });
+
+        const exerciseCTOs = [exerciseCTOWithHistory];
+
+        const mesocycle = WorkoutMesocycleSchema.parse({
+          userId: workoutTestUtil.userId,
+          cycleType: CycleType.MuscleGain,
+          plannedSessionCountPerMicrocycle: 1,
+          plannedMicrocycleLengthInDays: 7,
+          plannedMicrocycleRestDays: [],
+          plannedMicrocycleCount: 3,
+          calibratedExercises: exerciseCTOs.flatMap((c) =>
+            c.bestCalibration ? [c.bestCalibration._id] : []
+          )
+        });
+
+        const result = WorkoutMesocycleService.generateOrUpdateMesocycle(mesocycle, exerciseCTOs);
+
+        const firstSet = getFirstSetForExercise(
+          result,
+          workoutTestUtil.STANDARD_EXERCISES.barbellSquat._id
+        );
+
+        if (!firstSet) {
+          throw new Error('Expected first set to be defined for history result');
+        }
+
+        // Also generate without history for comparison
+        const exerciseCTOWithoutHistory = workoutTestUtil.createExerciseCTO({
+          exercise: workoutTestUtil.STANDARD_EXERCISES.barbellSquat,
+          calibration: workoutTestUtil.STANDARD_CALIBRATIONS.barbellSquat,
+          equipmentType: workoutTestUtil.STANDARD_EQUIPMENT_TYPES.barbell
+        });
+
+        const resultNoHistory = WorkoutMesocycleService.generateOrUpdateMesocycle(mesocycle, [
+          exerciseCTOWithoutHistory
+        ]);
+
+        const firstSetNoHistory = getFirstSetForExercise(
+          resultNoHistory,
+          workoutTestUtil.STANDARD_EXERCISES.barbellSquat._id
+        );
+
+        if (!firstSet || !firstSetNoHistory) {
+          throw new Error('Expected first sets to be defined for both results');
+        }
+
+        // The weight with history should differ from the calibration-only weight,
+        // proving that autoregulation used the previous mesocycle's data.
+        // Load progression with surplus 0: weight increases by 2% from 225
+        expect(firstSet.plannedWeight).not.toBe(firstSetNoHistory.plannedWeight);
+        expect(firstSet.plannedWeight).toBeGreaterThanOrEqual(previousWeight * 1.02);
+      });
+
+      it('should use calibration formula when exercise CTO has no prior performance data', () => {
+        // CTO with calibration but no lastFirstSet or lastSessionExercise (new exercise)
+        const exerciseCTONew = workoutTestUtil.createExerciseCTO({
+          exercise: workoutTestUtil.STANDARD_EXERCISES.barbellSquat,
+          calibration: workoutTestUtil.STANDARD_CALIBRATIONS.barbellSquat,
+          equipmentType: workoutTestUtil.STANDARD_EQUIPMENT_TYPES.barbell,
+          lastFirstSet: null,
+          lastSessionExercise: null,
+          bestSet: null
+        });
+
+        const exerciseCTOs = [exerciseCTONew];
+
+        const mesocycle = WorkoutMesocycleSchema.parse({
+          userId: workoutTestUtil.userId,
+          cycleType: CycleType.MuscleGain,
+          plannedSessionCountPerMicrocycle: 1,
+          plannedMicrocycleLengthInDays: 7,
+          plannedMicrocycleRestDays: [],
+          plannedMicrocycleCount: 3,
+          calibratedExercises: exerciseCTOs.flatMap((c) =>
+            c.bestCalibration ? [c.bestCalibration._id] : []
+          )
+        });
+
+        const result = WorkoutMesocycleService.generateOrUpdateMesocycle(mesocycle, exerciseCTOs);
+
+        const firstSet = getFirstSetForExercise(
+          result,
+          workoutTestUtil.STANDARD_EXERCISES.barbellSquat._id
+        );
+
+        if (!firstSet) {
+          throw new Error('Expected first set to be defined');
+        }
+
+        expect(firstSet.plannedWeight).toBeGreaterThan(0);
+        expect(firstSet.plannedReps).toBeGreaterThan(0);
+
+        // Verify it matches the calibration-only path by generating independently
+        // with an explicit calibration-based CTO
+        const exerciseCTODefault = workoutTestUtil.createExerciseCTO({
+          exercise: workoutTestUtil.STANDARD_EXERCISES.barbellSquat,
+          calibration: workoutTestUtil.STANDARD_CALIBRATIONS.barbellSquat,
+          equipmentType: workoutTestUtil.STANDARD_EQUIPMENT_TYPES.barbell
+        });
+
+        const resultDefault = WorkoutMesocycleService.generateOrUpdateMesocycle(mesocycle, [
+          exerciseCTODefault
+        ]);
+
+        const firstSetDefault = getFirstSetForExercise(
+          resultDefault,
+          workoutTestUtil.STANDARD_EXERCISES.barbellSquat._id
+        );
+
+        if (!firstSetDefault) {
+          throw new Error('Expected default first set to be defined');
+        }
+
+        // Both should produce the same calibration-based weight
+        expect(firstSet.plannedWeight).toBe(firstSetDefault.plannedWeight);
+        expect(firstSet.plannedReps).toBe(firstSetDefault.plannedReps);
+      });
+
+      it('should throw when exercise CTO has no calibration data at all', () => {
+        // CTO with no calibration, no prior sets, no prior performance
+        const exerciseCTONoCal = workoutTestUtil.createExerciseCTO({
+          exercise: workoutTestUtil.STANDARD_EXERCISES.barbellSquat,
+          calibration: null,
+          equipmentType: workoutTestUtil.STANDARD_EQUIPMENT_TYPES.barbell,
+          lastFirstSet: null,
+          lastSessionExercise: null,
+          bestSet: null
+        });
+
+        const exerciseCTOs = [exerciseCTONoCal];
+
+        const mesocycle = WorkoutMesocycleSchema.parse({
+          userId: workoutTestUtil.userId,
+          cycleType: CycleType.MuscleGain,
+          plannedSessionCountPerMicrocycle: 1,
+          plannedMicrocycleLengthInDays: 7,
+          plannedMicrocycleRestDays: [],
+          plannedMicrocycleCount: 3,
+          calibratedExercises: []
+        });
+
+        // Should throw because no calibration exists for the exercise
+        expect(() => {
+          WorkoutMesocycleService.generateOrUpdateMesocycle(mesocycle, exerciseCTOs);
+        }).toThrow(/no bestCalibration/i);
       });
     });
   });
@@ -1099,6 +1484,380 @@ describe('Unit Tests', () => {
       // Should return approximately today since projected end is in the past
       expect(result.getTime()).toBeGreaterThanOrEqual(before.getTime());
       expect(result.getTime()).toBeLessThanOrEqual(after.getTime());
+    });
+  });
+
+  describe('shouldTriggerEarlyDeload', () => {
+    const { barbellSquat, barbellBenchPress, dumbbellLateralRaise, cableRow, cableTricepPushdown } =
+      workoutTestUtil.STANDARD_EXERCISES;
+    const { hamstrings } = workoutTestUtil.STANDARD_MUSCLE_GROUPS;
+
+    // Custom hamstring exercise + calibration for 6-group coverage
+    const hamstringExercise = workoutTestUtil.createExercise({
+      primaryMuscleGroups: [hamstrings._id]
+    });
+    const hamstringCalibration = workoutTestUtil.createCalibration({
+      exercise: hamstringExercise
+    });
+
+    // CTOs covering 6 distinct muscle groups
+    const sixGroupCTOs = [
+      workoutTestUtil.createExerciseCTO({
+        exercise: barbellSquat,
+        calibration: workoutTestUtil.STANDARD_CALIBRATIONS.barbellSquat,
+        equipmentType: workoutTestUtil.STANDARD_EQUIPMENT_TYPES.barbell
+      }),
+      workoutTestUtil.createExerciseCTO({
+        exercise: barbellBenchPress,
+        calibration: workoutTestUtil.STANDARD_CALIBRATIONS.barbellBenchPress,
+        equipmentType: workoutTestUtil.STANDARD_EQUIPMENT_TYPES.barbell
+      }),
+      workoutTestUtil.createExerciseCTO({
+        exercise: dumbbellLateralRaise,
+        calibration: workoutTestUtil.STANDARD_CALIBRATIONS.dumbbellLateralRaise,
+        equipmentType: workoutTestUtil.STANDARD_EQUIPMENT_TYPES.dumbbell
+      }),
+      workoutTestUtil.createExerciseCTO({
+        exercise: cableRow,
+        calibration: workoutTestUtil.STANDARD_CALIBRATIONS.cableRow,
+        equipmentType: workoutTestUtil.STANDARD_EQUIPMENT_TYPES.cable
+      }),
+      workoutTestUtil.createExerciseCTO({
+        exercise: hamstringExercise,
+        calibration: hamstringCalibration,
+        equipmentType: workoutTestUtil.STANDARD_EQUIPMENT_TYPES.barbell
+      }),
+      workoutTestUtil.createExerciseCTO({
+        exercise: cableTricepPushdown,
+        calibration: workoutTestUtil.STANDARD_CALIBRATIONS.cableTricepPushdown,
+        equipmentType: workoutTestUtil.STANDARD_EQUIPMENT_TYPES.cable
+      })
+    ];
+
+    // CTOs covering 5 distinct muscle groups (no triceps)
+    const fiveGroupCTOs = sixGroupCTOs.slice(0, 5);
+
+    // Shared mesocycle and 3 microcycles (so index 2 passes the guard)
+    const mesocycle = workoutTestUtil.createMesocycle();
+    const mc1 = workoutTestUtil.createMicrocycle({
+      mesocycle,
+      startDate: new Date('2024-01-01'),
+      endDate: new Date('2024-01-08')
+    });
+    const mc2 = workoutTestUtil.createMicrocycle({
+      mesocycle,
+      startDate: new Date('2024-01-08'),
+      endDate: new Date('2024-01-15')
+    });
+    const mc3 = workoutTestUtil.createMicrocycle({
+      mesocycle,
+      startDate: new Date('2024-01-15'),
+      endDate: new Date('2024-01-22')
+    });
+    // A 4th microcycle ensures mc3 is NOT the last (deload) microcycle,
+    // which would cause the deload guard to suppress recommendations.
+    const mc4 = workoutTestUtil.createMicrocycle({
+      mesocycle,
+      startDate: new Date('2024-01-22'),
+      endDate: new Date('2024-01-29')
+    });
+    const allMicrocycles = [mc1, mc2, mc3, mc4];
+
+    // Session in the current (3rd) microcycle for linking session exercises
+    const recentSession = workoutTestUtil.createSession({ microcycle: mc3 });
+    const allSessions = [recentSession];
+
+    /**
+     * Creates a session exercise linked to the recent session.
+     */
+    const createSE = (
+      exercise: { _id: UUID },
+      setIds: UUID[],
+      isRecovery = false
+    ): WorkoutSessionExercise => {
+      return workoutTestUtil.createSessionExercise({
+        session: recentSession,
+        overrides: {
+          workoutExerciseId: exercise._id,
+          isRecoveryExercise: isRecovery,
+          setOrder: setIds
+        }
+      });
+    };
+
+    /**
+     * Creates a set with planned and actual data for performance drop testing.
+     */
+    const createSetWithData = (
+      plannedReps: number,
+      actualReps: number,
+      plannedRir: number,
+      actualRir: number
+    ): WorkoutSet => {
+      return workoutTestUtil.createSet({
+        overrides: {
+          plannedReps,
+          actualReps,
+          plannedRir,
+          rir: actualRir
+        }
+      });
+    };
+
+    /**
+     * Calls shouldTriggerEarlyDeload with the shared test fixtures.
+     */
+    const evaluate = (
+      sessionExercises: WorkoutSessionExercise[],
+      sets: WorkoutSet[],
+      options?: {
+        exerciseCTOs?: typeof sixGroupCTOs;
+        currentMicrocycleId?: UUID;
+      }
+    ) => {
+      return WorkoutMesocycleService.shouldTriggerEarlyDeload(
+        mesocycle,
+        options?.exerciseCTOs ?? sixGroupCTOs,
+        options?.currentMicrocycleId ?? mc3._id,
+        allMicrocycles,
+        allSessions,
+        sessionExercises,
+        sets
+      );
+    };
+
+    describe('microcycle guard', () => {
+      it('should return no trigger before microcycle index 2', () => {
+        const result = evaluate([], [], { currentMicrocycleId: mc2._id });
+
+        expect(result.shouldDeload).toBe(false);
+        expect(result.severity).toBe(WorkoutDeloadSeverity.None);
+        expect(result.triggeredRules).toHaveLength(0);
+      });
+
+      it('should evaluate rules at microcycle index 2', () => {
+        // No recovery exercises, no performance drops — should still return no trigger
+        const result = evaluate([], []);
+
+        expect(result.shouldDeload).toBe(false);
+        expect(result.severity).toBe(WorkoutDeloadSeverity.None);
+      });
+    });
+
+    describe('recovery session threshold', () => {
+      it('should not trigger when 0 of 6 muscle groups had recovery', () => {
+        const se1 = createSE(barbellSquat, []);
+        const se2 = createSE(barbellBenchPress, []);
+
+        const result = evaluate([se1, se2], []);
+
+        expect(result.shouldDeload).toBe(false);
+      });
+
+      it('should not trigger when 2 of 6 muscle groups had recovery (33%)', () => {
+        const se1 = createSE(barbellSquat, [], true); // quads
+        const se2 = createSE(barbellBenchPress, [], true); // chest
+
+        const result = evaluate([se1, se2], []);
+
+        expect(result.shouldDeload).toBe(false);
+      });
+
+      it('should return Suggested when 2 of 5 muscle groups had recovery (40%)', () => {
+        const se1 = createSE(barbellSquat, [], true); // quads
+        const se2 = createSE(barbellBenchPress, [], true); // chest
+
+        const result = evaluate([se1, se2], [], { exerciseCTOs: fiveGroupCTOs });
+
+        expect(result.shouldDeload).toBe(true);
+        expect(result.severity).toBe(WorkoutDeloadSeverity.Suggested);
+        expect(result.triggeredRules).toContain(WorkoutDeloadTriggerRule.RecoverySessionThreshold);
+      });
+
+      it('should return Suggested when 3 of 6 muscle groups had recovery (50%)', () => {
+        const se1 = createSE(barbellSquat, [], true); // quads
+        const se2 = createSE(barbellBenchPress, [], true); // chest
+        const se3 = createSE(dumbbellLateralRaise, [], true); // shoulders
+
+        const result = evaluate([se1, se2, se3], []);
+
+        expect(result.shouldDeload).toBe(true);
+        expect(result.severity).toBe(WorkoutDeloadSeverity.Suggested);
+      });
+
+      it('should return Recommended when 4 of 6 muscle groups had recovery (67%)', () => {
+        const se1 = createSE(barbellSquat, [], true); // quads
+        const se2 = createSE(barbellBenchPress, [], true); // chest
+        const se3 = createSE(dumbbellLateralRaise, [], true); // shoulders
+        const se4 = createSE(cableRow, [], true); // back
+
+        const result = evaluate([se1, se2, se3, se4], []);
+
+        expect(result.shouldDeload).toBe(true);
+        expect(result.severity).toBe(WorkoutDeloadSeverity.Recommended);
+      });
+
+      it('should return Recommended when 6 of 6 muscle groups had recovery (100%)', () => {
+        const se1 = createSE(barbellSquat, [], true); // quads
+        const se2 = createSE(barbellBenchPress, [], true); // chest
+        const se3 = createSE(dumbbellLateralRaise, [], true); // shoulders
+        const se4 = createSE(cableRow, [], true); // back
+        const se5 = createSE(hamstringExercise, [], true); // hamstrings
+        const se6 = createSE(cableTricepPushdown, [], true); // triceps
+
+        const result = evaluate([se1, se2, se3, se4, se5, se6], []);
+
+        expect(result.shouldDeload).toBe(true);
+        expect(result.severity).toBe(WorkoutDeloadSeverity.Recommended);
+      });
+
+      it('should count each muscle group only once even with multiple recovery exercises', () => {
+        // Two exercises targeting the same muscle group (quads)
+        const se1 = createSE(barbellSquat, [], true); // quads
+        const se2 = createSE(barbellSquat, [], true); // quads again
+
+        const result = evaluate([se1, se2], []);
+
+        // Only 1 of 6 muscle groups (quads) had recovery = 17%, no trigger
+        expect(result.shouldDeload).toBe(false);
+      });
+    });
+
+    describe('consecutive performance drops', () => {
+      it('should not trigger with only 1 session below by 3 reps', () => {
+        const set1 = createSetWithData(15, 12, 2, 2);
+        const se1 = createSE(barbellSquat, [set1._id]);
+
+        const result = evaluate([se1], [set1]);
+
+        expect(result.shouldDeload).toBe(false);
+      });
+
+      it('should trigger with 2 consecutive sessions below by 3 reps', () => {
+        const set1 = createSetWithData(15, 12, 2, 2);
+        const set2 = createSetWithData(15, 11, 2, 2);
+        const se1 = createSE(barbellSquat, [set1._id]);
+        const se2 = createSE(barbellSquat, [set2._id]);
+
+        const result = evaluate([se1, se2], [set1, set2]);
+
+        expect(result.shouldDeload).toBe(true);
+        expect(result.triggeredRules).toContain(
+          WorkoutDeloadTriggerRule.ConsecutivePerformanceDrop
+        );
+        expect(result.severity).toBe(WorkoutDeloadSeverity.Suggested);
+      });
+
+      it('should not trigger with 2 non-consecutive sessions below by 3 reps', () => {
+        const set1 = createSetWithData(15, 12, 2, 2); // deficit 3
+        const set2 = createSetWithData(15, 15, 2, 2); // on target (resets counter)
+        const set3 = createSetWithData(15, 12, 2, 2); // deficit 3 again
+        const se1 = createSE(barbellSquat, [set1._id]);
+        const se2 = createSE(barbellSquat, [set2._id]);
+        const se3 = createSE(barbellSquat, [set3._id]);
+
+        const result = evaluate([se1, se2, se3], [set1, set2, set3]);
+
+        expect(result.shouldDeload).toBe(false);
+      });
+
+      it('should trigger when surplus is exactly -3', () => {
+        // plannedReps=15, actualReps=12, same RIR -> surplus = -3
+        const set1 = createSetWithData(15, 12, 2, 2);
+        const set2 = createSetWithData(15, 12, 2, 2);
+        const se1 = createSE(barbellSquat, [set1._id]);
+        const se2 = createSE(barbellSquat, [set2._id]);
+
+        const result = evaluate([se1, se2], [set1, set2]);
+
+        expect(result.shouldDeload).toBe(true);
+      });
+
+      it('should not trigger when deficit is only 2 reps', () => {
+        const set1 = createSetWithData(15, 13, 2, 2); // surplus = -2
+        const set2 = createSetWithData(15, 13, 2, 2); // surplus = -2
+        const se1 = createSE(barbellSquat, [set1._id]);
+        const se2 = createSE(barbellSquat, [set2._id]);
+
+        const result = evaluate([se1, se2], [set1, set2]);
+
+        expect(result.shouldDeload).toBe(false);
+      });
+
+      it('should return Recommended when 2+ exercises have consecutive drops', () => {
+        // Exercise 1: barbell squat with 2 consecutive drops
+        const setA1 = createSetWithData(15, 12, 2, 2);
+        const setA2 = createSetWithData(15, 11, 2, 2);
+        const seA1 = createSE(barbellSquat, [setA1._id]);
+        const seA2 = createSE(barbellSquat, [setA2._id]);
+
+        // Exercise 2: bench press with 2 consecutive drops
+        const setB1 = createSetWithData(10, 7, 2, 2);
+        const setB2 = createSetWithData(10, 6, 2, 2);
+        const seB1 = createSE(barbellBenchPress, [setB1._id]);
+        const seB2 = createSE(barbellBenchPress, [setB2._id]);
+
+        const result = evaluate([seA1, seA2, seB1, seB2], [setA1, setA2, setB1, setB2]);
+
+        expect(result.shouldDeload).toBe(true);
+        expect(result.severity).toBe(WorkoutDeloadSeverity.Recommended);
+      });
+
+      it('should reset consecutive counter when set data is incomplete', () => {
+        const set1 = createSetWithData(15, 12, 2, 2); // surplus = -3
+        const setIncomplete = workoutTestUtil.createSet({
+          overrides: { plannedReps: 15, actualReps: null, plannedRir: 2, rir: null }
+        });
+        const set3 = createSetWithData(15, 12, 2, 2); // surplus = -3
+        const se1 = createSE(barbellSquat, [set1._id]);
+        const se2 = createSE(barbellSquat, [setIncomplete._id]);
+        const se3 = createSE(barbellSquat, [set3._id]);
+
+        const result = evaluate([se1, se2, se3], [set1, setIncomplete, set3]);
+
+        // Incomplete set resets counter, so drops are not consecutive
+        expect(result.shouldDeload).toBe(false);
+      });
+    });
+
+    describe('combined rules', () => {
+      it('should return Urgent when both rules are triggered', () => {
+        // Recovery: 4 of 6 muscle groups (Recommended)
+        const recovSE1 = createSE(barbellSquat, [], true); // quads
+        const recovSE2 = createSE(barbellBenchPress, [], true); // chest
+        const recovSE3 = createSE(dumbbellLateralRaise, [], true); // shoulders
+        const recovSE4 = createSE(cableRow, [], true); // back
+
+        // Performance: 2 consecutive drops for barbell squat
+        const set1 = createSetWithData(15, 12, 2, 2);
+        const set2 = createSetWithData(15, 11, 2, 2);
+        const perfSE1 = createSE(barbellSquat, [set1._id]);
+        const perfSE2 = createSE(barbellSquat, [set2._id]);
+
+        const result = evaluate(
+          [recovSE1, recovSE2, recovSE3, recovSE4, perfSE1, perfSE2],
+          [set1, set2]
+        );
+
+        expect(result.shouldDeload).toBe(true);
+        expect(result.severity).toBe(WorkoutDeloadSeverity.Urgent);
+        expect(result.triggeredRules).toHaveLength(2);
+        expect(result.triggeredRules).toContain(WorkoutDeloadTriggerRule.RecoverySessionThreshold);
+        expect(result.triggeredRules).toContain(
+          WorkoutDeloadTriggerRule.ConsecutivePerformanceDrop
+        );
+      });
+
+      it('should return no trigger when neither rule is met', () => {
+        const se1 = createSE(barbellSquat, []);
+        const se2 = createSE(barbellBenchPress, []);
+
+        const result = evaluate([se1, se2], []);
+
+        expect(result.shouldDeload).toBe(false);
+        expect(result.severity).toBe(WorkoutDeloadSeverity.None);
+        expect(result.triggeredRules).toHaveLength(0);
+      });
     });
   });
 });

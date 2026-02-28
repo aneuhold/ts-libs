@@ -88,3 +88,12 @@ export const WorkoutSetSchema = z.object({
  * The recommended average RIR is 2-3 to balance stimulus and fatigue.
  */
 export type WorkoutSet = z.infer<typeof WorkoutSetSchema>;
+
+/**
+ * A {@link WorkoutSet} with all nullable fields guaranteed to be defined.
+ * Zod's `.nullish()` produces `T | null | undefined`, so `Required` alone
+ * only strips the optional `?` — `NonNullable` is needed to also strip `null`.
+ */
+export type CompletedWorkoutSet = Required<{
+  [K in keyof WorkoutSet]: NonNullable<WorkoutSet[K]>;
+}>;

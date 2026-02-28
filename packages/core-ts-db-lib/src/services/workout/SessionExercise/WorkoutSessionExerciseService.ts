@@ -36,8 +36,8 @@ export default class WorkoutSessionExerciseService {
   /**
    * Calculates the performance score (0-3) for an exercise based on its sets.
    *
-   * For each set with complete data, a surplus is computed as
-   * `(actualReps - plannedReps) + (rir - plannedRir)`. The per-set score is:
+   * For each set with complete data, a surplus is computed via
+   * {@link calculateSetSurplus}. The per-set score is:
    * - 0: surplus >= 2 (exceeded expectations)
    * - 1: surplus 0-1 (on target)
    * - 2: surplus < 0 but hit target reps (declining)
@@ -64,7 +64,12 @@ export default class WorkoutSessionExerciseService {
         continue;
       }
 
-      const surplus = set.actualReps - set.plannedReps + (set.rir - set.plannedRir);
+      const surplus = this.calculateSetSurplus(
+        set.actualReps,
+        set.plannedReps,
+        set.rir,
+        set.plannedRir
+      );
 
       if (surplus >= 2) {
         setScores.push(0);
@@ -81,6 +86,26 @@ export default class WorkoutSessionExerciseService {
 
     const average = setScores.reduce((sum, score) => sum + score, 0) / setScores.length;
     return Math.round(average);
+  }
+
+  /**
+   * Calculates the surplus for a single set: how much the user exceeded or
+   * fell short of the plan. Positive means exceeded, negative means fell short.
+   *
+   * Formula: `(actualReps - plannedReps) + (rir - plannedRir)`
+   *
+   * @param actualReps The actual reps performed.
+   * @param plannedReps The planned reps.
+   * @param rir The actual RIR (reps in reserve).
+   * @param plannedRir The planned RIR.
+   */
+  static calculateSetSurplus(
+    actualReps: number,
+    plannedReps: number,
+    rir: number,
+    plannedRir: number
+  ): number {
+    return actualReps - plannedReps + (rir - plannedRir);
   }
 
   /**

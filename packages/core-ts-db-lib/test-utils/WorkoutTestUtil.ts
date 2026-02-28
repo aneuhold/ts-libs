@@ -1,6 +1,8 @@
 import type { UUID } from 'crypto';
 import type { WorkoutExerciseCTO } from '../src/ctos/workout/WorkoutExerciseCTO.js';
 import { WorkoutExerciseCTOSchema } from '../src/ctos/workout/WorkoutExerciseCTO.js';
+import type { WorkoutMuscleGroupVolumeCTO } from '../src/ctos/workout/WorkoutMuscleGroupVolumeCTO.js';
+import { WorkoutMuscleGroupVolumeCTOSchema } from '../src/ctos/workout/WorkoutMuscleGroupVolumeCTO.js';
 import type { WorkoutEquipmentType } from '../src/documents/workout/WorkoutEquipmentType.js';
 import { WorkoutEquipmentTypeSchema } from '../src/documents/workout/WorkoutEquipmentType.js';
 import type { WorkoutExercise } from '../src/documents/workout/WorkoutExercise.js';
@@ -23,6 +25,7 @@ import { WorkoutSessionExerciseSchema } from '../src/documents/workout/WorkoutSe
 import type { WorkoutSet } from '../src/documents/workout/WorkoutSet.js';
 import { WorkoutSetSchema } from '../src/documents/workout/WorkoutSet.js';
 import type { Fatigue } from '../src/embedded-types/workout/Fatigue.js';
+import { MesocycleVolumeSummarySchema } from '../src/embedded-types/workout/MesocycleVolumeSummary.js';
 import type { RSM } from '../src/embedded-types/workout/Rsm.js';
 import DocumentService from '../src/services/DocumentService.js';
 import WorkoutMesocyclePlanContext from '../src/services/workout/Mesocycle/WorkoutMesocyclePlanContext.js';
@@ -652,6 +655,48 @@ class WorkoutTestUtil {
   }
 
   /**
+   * Creates a WorkoutMuscleGroupVolumeCTO with mesocycle history data for testing
+   * volume landmark estimation.
+   *
+   * @param mesocycleHistoryData Array of historical mesocycle data entries.
+   * @param muscleGroupId The muscle group ID to create the CTO for. Defaults to chest.
+   */
+  createMuscleGroupVolumeCTO(
+    mesocycleHistoryData: Array<{
+      startingSetCount: number;
+      peakSetCount: number;
+      avgRsm?: number | null;
+      avgPerformanceScore?: number | null;
+      recoverySessionCount?: number;
+    }>,
+    muscleGroupId?: UUID
+  ): WorkoutMuscleGroupVolumeCTO {
+    const muscleGroup = muscleGroupId
+      ? (Object.values(this.STANDARD_MUSCLE_GROUPS).find((mg) => mg._id === muscleGroupId) ??
+        this.STANDARD_MUSCLE_GROUPS.chest)
+      : this.STANDARD_MUSCLE_GROUPS.chest;
+
+    const mesocycleHistory = mesocycleHistoryData.map((data) =>
+      MesocycleVolumeSummarySchema.parse({
+        mesocycleId: DocumentService.generateID(),
+        cycleType: CycleType.MuscleGain,
+        startingSetCount: data.startingSetCount,
+        peakSetCount: data.peakSetCount,
+        avgRsm: data.avgRsm ?? null,
+        avgSorenessScore: null,
+        avgPerformanceScore: data.avgPerformanceScore ?? null,
+        recoverySessionCount: data.recoverySessionCount ?? 0,
+        completedDate: new Date()
+      })
+    );
+
+    return WorkoutMuscleGroupVolumeCTOSchema.parse({
+      ...muscleGroup,
+      mesocycleHistory
+    });
+  }
+
+  /**
    * Creates a workout set with sensible defaults.
    */
   createSet(options: {
@@ -678,6 +723,7 @@ class WorkoutTestUtil {
   createContext(options: {
     mesocycle?: WorkoutMesocycle;
     exerciseCTOs?: WorkoutExerciseCTO[];
+    volumeCTOs?: WorkoutMuscleGroupVolumeCTO[];
   }): WorkoutMesocyclePlanContext {
     const {
       mesocycle = this.createMesocycle(),
@@ -687,10 +733,11 @@ class WorkoutTestUtil {
           calibration: this.STANDARD_CALIBRATIONS.barbellSquat,
           equipmentType: this.STANDARD_EQUIPMENT_TYPES.barbell
         })
-      ]
+      ],
+      volumeCTOs = []
     } = options;
 
-    return new WorkoutMesocyclePlanContext(mesocycle, exerciseCTOs);
+    return new WorkoutMesocyclePlanContext(mesocycle, exerciseCTOs, volumeCTOs);
   }
 
   /**
@@ -752,6 +799,7 @@ class WorkoutTestUtil {
 
     // Use the actual service to generate all sessions, exercises, and sets
     const microcycleIndex = context.microcyclesToCreate.length - 1;
+    const setsCountBefore = context.setsToCreate.length;
     WorkoutMicrocycleService.generateSessionsForMicrocycle({
       context,
       microcycleIndex,
@@ -759,8 +807,8 @@ class WorkoutTestUtil {
       isDeloadMicrocycle
     });
 
-    // Mark all sets as completed with actual performance data
-    const newSets = context.setsToCreate.slice(-context.setsToCreate.length);
+    // Mark only the newly generated sets as completed with actual performance data
+    const newSets = context.setsToCreate.slice(setsCountBefore);
     newSets.forEach((set) => {
       set.actualReps = set.plannedReps;
       set.actualWeight = set.plannedWeight;
@@ -815,6 +863,7 @@ class WorkoutTestUtil {
             context.setsToCreate.forEach((s, index) => {
               if (s.workoutSessionExerciseId === sessionExercise._id) {
                 indicesToRemove.push(index);
+                context.setMap.delete(s._id);
               }
             });
             for (let i = indicesToRemove.length - 1; i >= 0; i--) {
@@ -837,7 +886,7 @@ class WorkoutTestUtil {
                   rir: targetRir
                 }
               });
-              context.setsToCreate.push(set);
+              context.addSets([set]);
               sessionExercise.setOrder.push(set._id);
             }
           }

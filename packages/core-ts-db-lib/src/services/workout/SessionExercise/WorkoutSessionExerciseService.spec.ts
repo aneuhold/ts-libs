@@ -239,6 +239,33 @@ describe('Unit Tests', () => {
     });
   });
 
+  describe('calculateSurplus', () => {
+    it('should return 0 when actual matches planned exactly', () => {
+      expect(WorkoutSessionExerciseService.calculateSetSurplus(15, 15, 3, 3)).toBe(0);
+    });
+
+    it('should return positive when user exceeded expectations', () => {
+      // 18 actual reps vs 15 planned, same RIR → surplus = 3
+      expect(WorkoutSessionExerciseService.calculateSetSurplus(18, 15, 3, 3)).toBe(3);
+    });
+
+    it('should return negative when user fell short', () => {
+      // 12 actual reps vs 15 planned, 1 RIR vs 3 planned → surplus = -3 + -2 = -5
+      expect(WorkoutSessionExerciseService.calculateSetSurplus(12, 15, 1, 3)).toBe(-5);
+    });
+
+    it('should account for RIR differences', () => {
+      // Hit target reps but at lower RIR → negative surplus
+      // 15 actual reps vs 15 planned, 1 RIR vs 3 planned → surplus = 0 + -2 = -2
+      expect(WorkoutSessionExerciseService.calculateSetSurplus(15, 15, 1, 3)).toBe(-2);
+    });
+
+    it('should combine rep and RIR surplus', () => {
+      // 14 actual reps vs 15 planned, 2 RIR vs 3 planned → surplus = -1 + -1 = -2
+      expect(WorkoutSessionExerciseService.calculateSetSurplus(14, 15, 2, 3)).toBe(-2);
+    });
+  });
+
   describe('getPerformanceScore', () => {
     it('should return null when no sets have complete data', () => {
       const sets = [
