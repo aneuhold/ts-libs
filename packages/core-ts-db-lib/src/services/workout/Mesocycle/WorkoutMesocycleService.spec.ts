@@ -6,11 +6,11 @@ import { CycleType, WorkoutMesocycleSchema } from '../../../documents/workout/Wo
 import type { WorkoutMicrocycle } from '../../../documents/workout/WorkoutMicrocycle.js';
 import type { WorkoutSessionExercise } from '../../../documents/workout/WorkoutSessionExercise.js';
 import type { WorkoutSet } from '../../../documents/workout/WorkoutSet.js';
+import WorkoutMesocycleService from './WorkoutMesocycleService.js';
 import {
   WorkoutDeloadSeverity,
   WorkoutDeloadTriggerRule
 } from './WorkoutMesocycleService.types.js';
-import WorkoutMesocycleService from './WorkoutMesocycleService.js';
 
 describe('Unit Tests', () => {
   describe('generateOrUpdateMesocycle', () => {
@@ -993,6 +993,213 @@ describe('Unit Tests', () => {
         const result = WorkoutMesocycleService.generateOrUpdateMesocycle(mesocycle, exerciseCTOs);
         expect(result.microcycles).toBeUndefined();
         expect(result.sessions).toBeUndefined();
+      });
+    });
+
+    describe('cross-mesocycle continuity', () => {
+      /**
+       * Helper to extract the first set of a given exercise from the first microcycle
+       * of a mesocycle generation result.
+       */
+      function getFirstSetForExercise(
+        result: ReturnType<typeof WorkoutMesocycleService.generateOrUpdateMesocycle>,
+        exerciseId: UUID
+      ): WorkoutSet | undefined {
+        const sets = result.sets?.create ?? [];
+        const microcycles = result.microcycles?.create ?? [];
+        const sessions = result.sessions?.create ?? [];
+        const sessionExercises = result.sessionExercises?.create ?? [];
+
+        if (microcycles.length === 0) return undefined;
+
+        const firstMicrocycleId = microcycles[0]._id;
+        const firstMicrocycleSessions = sessions.filter(
+          (s) => s.workoutMicrocycleId === firstMicrocycleId
+        );
+        const firstMicrocycleSessionIds = new Set(firstMicrocycleSessions.map((s) => s._id));
+
+        const matchingSessionExercise = sessionExercises.find(
+          (se) =>
+            se.workoutExerciseId === exerciseId &&
+            firstMicrocycleSessionIds.has(se.workoutSessionId)
+        );
+        if (!matchingSessionExercise) return undefined;
+
+        const firstSetId = matchingSessionExercise.setOrder[0];
+        return sets.find((s) => s._id === firstSetId);
+      }
+
+      it('should use previous performance data when exercise has lastFirstSet populated', () => {
+        // Create a CTO with lastFirstSet simulating a previous mesocycle's actual performance
+        const previousWeight = 225;
+        const lastFirstSet = workoutTestUtil.createSet({
+          exercise: workoutTestUtil.STANDARD_EXERCISES.barbellSquat,
+          overrides: {
+            plannedReps: 15,
+            plannedWeight: previousWeight,
+            plannedRir: 1,
+            actualReps: 15,
+            actualWeight: previousWeight,
+            rir: 1
+          }
+        });
+
+        const lastSessionExercise = workoutTestUtil.createSessionExercise({
+          exercise: workoutTestUtil.STANDARD_EXERCISES.barbellSquat
+        });
+
+        const exerciseCTOWithHistory = workoutTestUtil.createExerciseCTO({
+          exercise: workoutTestUtil.STANDARD_EXERCISES.barbellSquat,
+          calibration: workoutTestUtil.STANDARD_CALIBRATIONS.barbellSquat,
+          equipmentType: workoutTestUtil.STANDARD_EQUIPMENT_TYPES.barbell,
+          lastFirstSet,
+          lastSessionExercise
+        });
+
+        const exerciseCTOs = [exerciseCTOWithHistory];
+
+        const mesocycle = WorkoutMesocycleSchema.parse({
+          userId: workoutTestUtil.userId,
+          cycleType: CycleType.MuscleGain,
+          plannedSessionCountPerMicrocycle: 1,
+          plannedMicrocycleLengthInDays: 7,
+          plannedMicrocycleRestDays: [],
+          plannedMicrocycleCount: 3,
+          calibratedExercises: exerciseCTOs.flatMap((c) =>
+            c.bestCalibration ? [c.bestCalibration._id] : []
+          )
+        });
+
+        const result = WorkoutMesocycleService.generateOrUpdateMesocycle(mesocycle, exerciseCTOs);
+
+        const firstSet = getFirstSetForExercise(
+          result,
+          workoutTestUtil.STANDARD_EXERCISES.barbellSquat._id
+        );
+
+        if (!firstSet) {
+          throw new Error('Expected first set to be defined for history result');
+        }
+
+        // Also generate without history for comparison
+        const exerciseCTOWithoutHistory = workoutTestUtil.createExerciseCTO({
+          exercise: workoutTestUtil.STANDARD_EXERCISES.barbellSquat,
+          calibration: workoutTestUtil.STANDARD_CALIBRATIONS.barbellSquat,
+          equipmentType: workoutTestUtil.STANDARD_EQUIPMENT_TYPES.barbell
+        });
+
+        const resultNoHistory = WorkoutMesocycleService.generateOrUpdateMesocycle(mesocycle, [
+          exerciseCTOWithoutHistory
+        ]);
+
+        const firstSetNoHistory = getFirstSetForExercise(
+          resultNoHistory,
+          workoutTestUtil.STANDARD_EXERCISES.barbellSquat._id
+        );
+
+        if (!firstSet || !firstSetNoHistory) {
+          throw new Error('Expected first sets to be defined for both results');
+        }
+
+        // The weight with history should differ from the calibration-only weight,
+        // proving that autoregulation used the previous mesocycle's data.
+        // Load progression with surplus 0: weight increases by 2% from 225
+        expect(firstSet.plannedWeight).not.toBe(firstSetNoHistory.plannedWeight);
+        expect(firstSet.plannedWeight).toBeGreaterThanOrEqual(previousWeight * 1.02);
+      });
+
+      it('should use calibration formula when exercise CTO has no prior performance data', () => {
+        // CTO with calibration but no lastFirstSet or lastSessionExercise (new exercise)
+        const exerciseCTONew = workoutTestUtil.createExerciseCTO({
+          exercise: workoutTestUtil.STANDARD_EXERCISES.barbellSquat,
+          calibration: workoutTestUtil.STANDARD_CALIBRATIONS.barbellSquat,
+          equipmentType: workoutTestUtil.STANDARD_EQUIPMENT_TYPES.barbell,
+          lastFirstSet: null,
+          lastSessionExercise: null,
+          bestSet: null
+        });
+
+        const exerciseCTOs = [exerciseCTONew];
+
+        const mesocycle = WorkoutMesocycleSchema.parse({
+          userId: workoutTestUtil.userId,
+          cycleType: CycleType.MuscleGain,
+          plannedSessionCountPerMicrocycle: 1,
+          plannedMicrocycleLengthInDays: 7,
+          plannedMicrocycleRestDays: [],
+          plannedMicrocycleCount: 3,
+          calibratedExercises: exerciseCTOs.flatMap((c) =>
+            c.bestCalibration ? [c.bestCalibration._id] : []
+          )
+        });
+
+        const result = WorkoutMesocycleService.generateOrUpdateMesocycle(mesocycle, exerciseCTOs);
+
+        const firstSet = getFirstSetForExercise(
+          result,
+          workoutTestUtil.STANDARD_EXERCISES.barbellSquat._id
+        );
+
+        if (!firstSet) {
+          throw new Error('Expected first set to be defined');
+        }
+
+        expect(firstSet.plannedWeight).toBeGreaterThan(0);
+        expect(firstSet.plannedReps).toBeGreaterThan(0);
+
+        // Verify it matches the calibration-only path by generating independently
+        // with an explicit calibration-based CTO
+        const exerciseCTODefault = workoutTestUtil.createExerciseCTO({
+          exercise: workoutTestUtil.STANDARD_EXERCISES.barbellSquat,
+          calibration: workoutTestUtil.STANDARD_CALIBRATIONS.barbellSquat,
+          equipmentType: workoutTestUtil.STANDARD_EQUIPMENT_TYPES.barbell
+        });
+
+        const resultDefault = WorkoutMesocycleService.generateOrUpdateMesocycle(mesocycle, [
+          exerciseCTODefault
+        ]);
+
+        const firstSetDefault = getFirstSetForExercise(
+          resultDefault,
+          workoutTestUtil.STANDARD_EXERCISES.barbellSquat._id
+        );
+
+        if (!firstSetDefault) {
+          throw new Error('Expected default first set to be defined');
+        }
+
+        // Both should produce the same calibration-based weight
+        expect(firstSet.plannedWeight).toBe(firstSetDefault.plannedWeight);
+        expect(firstSet.plannedReps).toBe(firstSetDefault.plannedReps);
+      });
+
+      it('should throw when exercise CTO has no calibration data at all', () => {
+        // CTO with no calibration, no prior sets, no prior performance
+        const exerciseCTONoCal = workoutTestUtil.createExerciseCTO({
+          exercise: workoutTestUtil.STANDARD_EXERCISES.barbellSquat,
+          calibration: null,
+          equipmentType: workoutTestUtil.STANDARD_EQUIPMENT_TYPES.barbell,
+          lastFirstSet: null,
+          lastSessionExercise: null,
+          bestSet: null
+        });
+
+        const exerciseCTOs = [exerciseCTONoCal];
+
+        const mesocycle = WorkoutMesocycleSchema.parse({
+          userId: workoutTestUtil.userId,
+          cycleType: CycleType.MuscleGain,
+          plannedSessionCountPerMicrocycle: 1,
+          plannedMicrocycleLengthInDays: 7,
+          plannedMicrocycleRestDays: [],
+          plannedMicrocycleCount: 3,
+          calibratedExercises: []
+        });
+
+        // Should throw because no calibration exists for the exercise
+        expect(() => {
+          WorkoutMesocycleService.generateOrUpdateMesocycle(mesocycle, exerciseCTOs);
+        }).toThrow(/no bestCalibration/i);
       });
     });
   });
