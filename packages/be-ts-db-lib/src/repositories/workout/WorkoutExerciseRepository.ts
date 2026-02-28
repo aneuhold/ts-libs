@@ -1,8 +1,17 @@
-import type { User, WorkoutExercise, WorkoutExerciseCTO } from '@aneuhold/core-ts-db-lib';
+import type {
+  User,
+  WorkoutEquipmentType,
+  WorkoutExercise,
+  WorkoutExerciseCalibration,
+  WorkoutExerciseCTO,
+  WorkoutSessionExercise,
+  WorkoutSet
+} from '@aneuhold/core-ts-db-lib';
 import {
   WorkoutEquipmentType_docType,
   WorkoutExercise_docType,
   WorkoutExerciseCalibration_docType,
+  WorkoutExerciseCalibrationService,
   WorkoutExerciseCTOSchema,
   WorkoutSession_docType,
   WorkoutSessionExercise_docType,
@@ -57,27 +66,21 @@ export default class WorkoutExerciseRepository extends WorkoutBaseWithUserIdRepo
    */
   async buildExerciseCTOsForUser(userId: UUID): Promise<WorkoutExerciseCTO[]> {
     /** Raw shape of Pipeline A results. */
-    interface PipelineARow {
-      _id: UUID;
-      _equipArr: Record<string, unknown>[];
-      _bestCalArr: Record<string, unknown>[];
-      _bestSetArr: Record<string, unknown>[];
-      [key: string]: unknown;
+    interface PipelineARow extends WorkoutExercise {
+      _equipArr: WorkoutEquipmentType[];
+      _bestCalArr: WorkoutExerciseCalibration[];
+      _bestSetArr: WorkoutSet[];
     }
 
     /** Raw shape of Pipeline B results. */
     interface PipelineBRow {
       _id: string;
-      lastSessionExercise: Record<string, unknown>;
-      _lastFirstSetArr: Record<string, unknown>[];
+      lastSessionExercise: WorkoutSessionExercise;
+      _lastFirstSetArr: WorkoutSet[];
     }
 
     const collection = await this.getCollection();
     const collName = this.collectionName;
-
-    const oneRmExpr = (weightField: string, repsField: string) => ({
-      $add: [{ $divide: [{ $multiply: [weightField, repsField] }, 30.48] }, weightField]
-    });
 
     // Pipeline A: Exercise base + equipmentType + bestCalibration + bestSet
     const pipelineAPromise = collection
@@ -112,7 +115,11 @@ export default class WorkoutExerciseRepository extends WorkoutBaseWithUserIdRepo
                   docType: WorkoutExerciseCalibration_docType
                 }
               },
-              { $addFields: { _1rm: oneRmExpr('$weight', '$reps') } },
+              {
+                $addFields: {
+                  _1rm: WorkoutExerciseCalibrationService.get1RMMongoExpr('$weight', '$reps')
+                }
+              },
               { $sort: { _1rm: -1 } },
               { $limit: 1 },
               { $project: { _1rm: 0 } }
@@ -134,7 +141,14 @@ export default class WorkoutExerciseRepository extends WorkoutBaseWithUserIdRepo
                   actualReps: { $ne: null }
                 }
               },
-              { $addFields: { _1rm: oneRmExpr('$actualWeight', '$actualReps') } },
+              {
+                $addFields: {
+                  _1rm: WorkoutExerciseCalibrationService.get1RMMongoExpr(
+                    '$actualWeight',
+                    '$actualReps'
+                  )
+                }
+              },
               { $sort: { _1rm: -1 } },
               { $limit: 1 },
               { $project: { _1rm: 0 } }
@@ -222,8 +236,8 @@ export default class WorkoutExerciseRepository extends WorkoutBaseWithUserIdRepo
     const lastSessionMap = new Map<
       string,
       {
-        lastSessionExercise: Record<string, unknown>;
-        lastFirstSet: Record<string, unknown> | null;
+        lastSessionExercise: WorkoutSessionExercise;
+        lastFirstSet: WorkoutSet | null;
       }
     >();
     for (const row of rawLastSessions) {

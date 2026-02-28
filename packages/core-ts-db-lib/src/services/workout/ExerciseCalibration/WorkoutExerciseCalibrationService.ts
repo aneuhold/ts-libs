@@ -3,6 +3,9 @@ import type { WorkoutExerciseCTO } from '../../../ctos/workout/WorkoutExerciseCT
 import type { WorkoutExerciseCalibration } from '../../../documents/workout/WorkoutExerciseCalibration.js';
 import { WorkoutExerciseCalibrationSchema } from '../../../documents/workout/WorkoutExerciseCalibration.js';
 
+/** Divisor used in the NASM 1RM formula: 1RM = (weight × reps / 30.48) + weight */
+const NASM_1RM_DIVISOR = 30.48;
+
 /**
  * A service for handling operations related to {@link WorkoutExerciseCalibration}s.
  */
@@ -25,7 +28,21 @@ export default class WorkoutExerciseCalibrationService {
    * @param reps The number of reps performed.
    */
   static get1RMRaw(weight: number, reps: number): number {
-    return (weight * reps) / 30.48 + weight;
+    return (weight * reps) / NASM_1RM_DIVISOR + weight;
+  }
+
+  /**
+   * Returns the NASM 1RM formula as a MongoDB aggregation expression.
+   * This is the MongoDB-equivalent of {@link get1RMRaw} and must be kept
+   * in sync with it.
+   *
+   * @param weightField The MongoDB field reference for weight (e.g. `'$weight'`).
+   * @param repsField The MongoDB field reference for reps (e.g. `'$reps'`).
+   */
+  static get1RMMongoExpr(weightField: string, repsField: string) {
+    return {
+      $add: [{ $divide: [{ $multiply: [weightField, repsField] }, NASM_1RM_DIVISOR] }, weightField]
+    };
   }
 
   /**
