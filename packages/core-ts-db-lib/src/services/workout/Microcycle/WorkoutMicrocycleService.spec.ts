@@ -5,25 +5,35 @@ import WorkoutMicrocycleService from './WorkoutMicrocycleService.js';
 describe('WorkoutMicrocycleService', () => {
   describe('generateSessionsForMicrocycle', () => {
     // Setup
-    const exercises = [
+    const exerciseCTOs = [
       // Group A: High Fatigue (e.g. Deadlift ~9)
-      workoutTestUtil.STANDARD_EXERCISES.deadlift,
+      workoutTestUtil.createExerciseCTO({
+        exercise: workoutTestUtil.STANDARD_EXERCISES.deadlift,
+        calibration: workoutTestUtil.STANDARD_CALIBRATIONS.deadlift,
+        equipmentType: workoutTestUtil.STANDARD_EQUIPMENT_TYPES.barbell
+      }),
       // Group B: Medium Fatigue (e.g. Bench ~6)
-      workoutTestUtil.STANDARD_EXERCISES.barbellBenchPress,
+      workoutTestUtil.createExerciseCTO({
+        exercise: workoutTestUtil.STANDARD_EXERCISES.barbellBenchPress,
+        calibration: workoutTestUtil.STANDARD_CALIBRATIONS.barbellBenchPress,
+        equipmentType: workoutTestUtil.STANDARD_EQUIPMENT_TYPES.barbell
+      }),
       // Group C: Low Fatigue (e.g. Curls ~2)
-      workoutTestUtil.STANDARD_EXERCISES.dumbbellCurl
+      workoutTestUtil.createExerciseCTO({
+        exercise: workoutTestUtil.STANDARD_EXERCISES.dumbbellCurl,
+        calibration: workoutTestUtil.STANDARD_CALIBRATIONS.dumbbellCurl,
+        equipmentType: workoutTestUtil.STANDARD_EQUIPMENT_TYPES.dumbbell
+      })
     ];
 
-    const calibrations = [
-      workoutTestUtil.STANDARD_CALIBRATIONS.deadlift,
-      workoutTestUtil.STANDARD_CALIBRATIONS.barbellBenchPress,
-      workoutTestUtil.STANDARD_CALIBRATIONS.dumbbellCurl
-    ];
+    const calibrationIds = exerciseCTOs
+      .map((cto) => cto.bestCalibration?._id)
+      .filter((id): id is NonNullable<typeof id> => id != null);
 
     const mesocycle = workoutTestUtil.createMesocycle({
       plannedSessionCountPerMicrocycle: 3,
       plannedMicrocycleRestDays: [1], // Skip day 1 (index 1 = Tuesday if Monday start)
-      calibratedExercises: calibrations.map((c) => c._id)
+      calibratedExercises: calibrationIds
     });
 
     // Need `microcyclesToCreate` pre-populated in context because the service looks it up.
@@ -36,16 +46,14 @@ describe('WorkoutMicrocycleService', () => {
     const runGeneration = () => {
       const context = workoutTestUtil.createContext({
         mesocycle,
-        calibrations,
-        exercises
+        exerciseCTOs
       });
       context.addMicrocycle(microcycle);
 
-      context.setPlannedSessionExercisePairs(
+      context.setPlannedSessionExerciseCTOs(
         WorkoutMicrocycleService.distributeExercisesAcrossSessions(
           mesocycle.plannedSessionCountPerMicrocycle,
-          context.calibrationMap,
-          context.exerciseMap
+          exerciseCTOs
         )
       );
 
@@ -91,7 +99,7 @@ describe('WorkoutMicrocycleService', () => {
       const meso = workoutTestUtil.createMesocycle({
         plannedSessionCountPerMicrocycle: 6,
         plannedMicrocycleRestDays: [0, 6],
-        calibratedExercises: calibrations.map((c) => c._id)
+        calibratedExercises: calibrationIds
       });
 
       const micro = workoutTestUtil.createMicrocycle({
@@ -102,16 +110,14 @@ describe('WorkoutMicrocycleService', () => {
 
       const ctx = workoutTestUtil.createContext({
         mesocycle: meso,
-        calibrations,
-        exercises
+        exerciseCTOs
       });
       ctx.addMicrocycle(micro);
 
-      ctx.setPlannedSessionExercisePairs(
+      ctx.setPlannedSessionExerciseCTOs(
         WorkoutMicrocycleService.distributeExercisesAcrossSessions(
           meso.plannedSessionCountPerMicrocycle,
-          ctx.calibrationMap,
-          ctx.exerciseMap
+          exerciseCTOs
         )
       );
 

@@ -1,5 +1,5 @@
 import type { UUID } from 'crypto';
-import type { CalibrationExercisePair } from '../../../documents/workout/WorkoutExerciseCalibration.js';
+import type { WorkoutExerciseCTO } from '../../../ctos/workout/WorkoutExerciseCTO.js';
 import type { WorkoutMesocycle } from '../../../documents/workout/WorkoutMesocycle.js';
 import type { WorkoutMicrocycle } from '../../../documents/workout/WorkoutMicrocycle.js';
 import type { WorkoutSession } from '../../../documents/workout/WorkoutSession.js';
@@ -125,26 +125,6 @@ export default class WorkoutSessionService {
   }
 
   /**
-   * Returns true if any set in the session has actualReps != null.
-   * Traverses session → sessionExercises → sets via order arrays and map lookups.
-   */
-  private static sessionHasLoggedSets(
-    session: WorkoutSession,
-    sessionExerciseMap: Map<UUID, WorkoutSessionExercise>,
-    setMap: Map<UUID, WorkoutSet>
-  ): boolean {
-    for (const seId of session.sessionExerciseOrder) {
-      const se = sessionExerciseMap.get(seId);
-      if (!se) continue;
-      for (const setId of se.setOrder) {
-        const set = setMap.get(setId);
-        if (set?.actualReps != null) return true;
-      }
-    }
-    return false;
-  }
-
-  /**
    * Generates a session and its associated exercises and sets.
    */
   static generateSession({
@@ -161,7 +141,7 @@ export default class WorkoutSessionService {
     microcycleIndex: number;
     sessionIndex: number;
     sessionStartDate: Date;
-    sessionExerciseList: CalibrationExercisePair[];
+    sessionExerciseList: WorkoutExerciseCTO[];
     targetRir: number | null;
     isDeloadMicrocycle: boolean;
     setPlan: { exerciseIdToSetCount: Map<UUID, number>; recoveryExerciseIds: Set<UUID> };
@@ -181,39 +161,41 @@ export default class WorkoutSessionService {
 
     // Create session exercise groupings and associated sets
     for (let exerciseIndex = 0; exerciseIndex < sessionExerciseList.length; exerciseIndex++) {
-      const { calibration, exercise } = sessionExerciseList[exerciseIndex];
+      const exerciseCTO = sessionExerciseList[exerciseIndex];
+      const { bestCalibration } = exerciseCTO;
 
-      const setCountFromPlan = resolvedSetPlan.exerciseIdToSetCount.get(exercise._id);
+      if (!bestCalibration) {
+        throw new Error(
+          `No calibration found for exercise ${exerciseCTO._id}, ${exerciseCTO.exerciseName}`
+        );
+      }
+
+      const setCountFromPlan = resolvedSetPlan.exerciseIdToSetCount.get(exerciseCTO._id);
       if (setCountFromPlan == null) {
         throw new Error(
-          `No set plan found for exercise ${exercise._id}, ${exercise.exerciseName} in microcycle ${microcycleIndex}`
+          `No set plan found for exercise ${exerciseCTO._id}, ${exerciseCTO.exerciseName} in microcycle ${microcycleIndex}`
         );
       }
 
-      // Get equipment for weight calculations
-      const equipment = context.equipmentMap.get(exercise.workoutEquipmentTypeId);
-      if (!equipment) {
+      // Equipment is already available on the CTO
+      const { equipmentType } = exerciseCTO;
+      if (!equipmentType.weightOptions || equipmentType.weightOptions.length === 0) {
         throw new Error(
-          `Equipment type not found for exercise ${exercise._id}, ${exercise.exerciseName}`
-        );
-      }
-      if (!equipment.weightOptions || equipment.weightOptions.length === 0) {
-        throw new Error(
-          `No weight options defined for equipment type ${equipment._id}, ${equipment.title}`
+          `No weight options defined for equipment type ${equipmentType._id}, ${equipmentType.title}`
         );
       }
 
       const sessionExercise = WorkoutSessionExerciseSchema.parse({
         userId: mesocycle.userId,
         workoutSessionId: session._id,
-        workoutExerciseId: exercise._id,
-        isRecoveryExercise: resolvedSetPlan.recoveryExerciseIds.has(exercise._id)
+        workoutExerciseId: exerciseCTO._id,
+        isRecoveryExercise: resolvedSetPlan.recoveryExerciseIds.has(exerciseCTO._id)
       });
 
       WorkoutSetService.generateSetsForSessionExercise({
         context,
-        exercise,
-        calibration,
+        exercise: exerciseCTO,
+        calibration: bestCalibration,
         session,
         sessionExercise,
         microcycleIndex,
@@ -233,5 +215,25 @@ export default class WorkoutSessionService {
     // Add session to microcycle's session order and context
     microcycle.sessionOrder.push(session._id);
     context.addSession(session);
+  }
+
+  /**
+   * Returns true if any set in the session has actualReps != null.
+   * Traverses session -> sessionExercises -> sets via order arrays and map lookups.
+   */
+  private static sessionHasLoggedSets(
+    session: WorkoutSession,
+    sessionExerciseMap: Map<UUID, WorkoutSessionExercise>,
+    setMap: Map<UUID, WorkoutSet>
+  ): boolean {
+    for (const seId of session.sessionExerciseOrder) {
+      const se = sessionExerciseMap.get(seId);
+      if (!se) continue;
+      for (const setId of se.setOrder) {
+        const set = setMap.get(setId);
+        if (set?.actualReps != null) return true;
+      }
+    }
+    return false;
   }
 }

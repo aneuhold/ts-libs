@@ -9,9 +9,13 @@ import WorkoutMesocycleService from './WorkoutMesocycleService.js';
 describe('Unit Tests', () => {
   describe('generateOrUpdateMesocycle', () => {
     it('should not generate any plan documents for FreeForm mesocycles', () => {
-      const exercises = [workoutTestUtil.STANDARD_EXERCISES.barbellSquat];
-      const calibrations = [workoutTestUtil.STANDARD_CALIBRATIONS.barbellSquat];
-      const equipment = Object.values(workoutTestUtil.STANDARD_EQUIPMENT_TYPES);
+      const exerciseCTOs = [
+        workoutTestUtil.createExerciseCTO({
+          exercise: workoutTestUtil.STANDARD_EXERCISES.barbellSquat,
+          calibration: workoutTestUtil.STANDARD_CALIBRATIONS.barbellSquat,
+          equipmentType: workoutTestUtil.STANDARD_EQUIPMENT_TYPES.barbell
+        })
+      ];
 
       const mesocycle = WorkoutMesocycleSchema.parse({
         userId: workoutTestUtil.userId,
@@ -20,15 +24,12 @@ describe('Unit Tests', () => {
         plannedMicrocycleLengthInDays: 7,
         plannedMicrocycleRestDays: [],
         plannedMicrocycleCount: 3,
-        calibratedExercises: calibrations.map((c) => c._id)
+        calibratedExercises: exerciseCTOs.flatMap((c) =>
+          c.bestCalibration ? [c.bestCalibration._id] : []
+        )
       });
 
-      const result = WorkoutMesocycleService.generateOrUpdateMesocycle(
-        mesocycle,
-        calibrations,
-        exercises,
-        equipment
-      );
+      const result = WorkoutMesocycleService.generateOrUpdateMesocycle(mesocycle, exerciseCTOs);
 
       expect(result.microcycles?.create).toBeUndefined();
       expect(result.sessions?.create).toBeUndefined();
@@ -38,19 +39,28 @@ describe('Unit Tests', () => {
 
     it('(Smoke) should generate correct number of microcycles, sessions, exercises, and sets for super small mesocycle', () => {
       // Setup test data - using subset of 4 exercises
-      const exercises = [
-        workoutTestUtil.STANDARD_EXERCISES.barbellSquat,
-        workoutTestUtil.STANDARD_EXERCISES.barbellBenchPress,
-        workoutTestUtil.STANDARD_EXERCISES.deadlift,
-        workoutTestUtil.STANDARD_EXERCISES.dumbbellLateralRaise
+      const exerciseCTOs = [
+        workoutTestUtil.createExerciseCTO({
+          exercise: workoutTestUtil.STANDARD_EXERCISES.barbellSquat,
+          calibration: workoutTestUtil.STANDARD_CALIBRATIONS.barbellSquat,
+          equipmentType: workoutTestUtil.STANDARD_EQUIPMENT_TYPES.barbell
+        }),
+        workoutTestUtil.createExerciseCTO({
+          exercise: workoutTestUtil.STANDARD_EXERCISES.barbellBenchPress,
+          calibration: workoutTestUtil.STANDARD_CALIBRATIONS.barbellBenchPress,
+          equipmentType: workoutTestUtil.STANDARD_EQUIPMENT_TYPES.barbell
+        }),
+        workoutTestUtil.createExerciseCTO({
+          exercise: workoutTestUtil.STANDARD_EXERCISES.deadlift,
+          calibration: workoutTestUtil.STANDARD_CALIBRATIONS.deadlift,
+          equipmentType: workoutTestUtil.STANDARD_EQUIPMENT_TYPES.barbell
+        }),
+        workoutTestUtil.createExerciseCTO({
+          exercise: workoutTestUtil.STANDARD_EXERCISES.dumbbellLateralRaise,
+          calibration: workoutTestUtil.STANDARD_CALIBRATIONS.dumbbellLateralRaise,
+          equipmentType: workoutTestUtil.STANDARD_EQUIPMENT_TYPES.dumbbell
+        })
       ];
-      const calibrations = [
-        workoutTestUtil.STANDARD_CALIBRATIONS.barbellSquat,
-        workoutTestUtil.STANDARD_CALIBRATIONS.barbellBenchPress,
-        workoutTestUtil.STANDARD_CALIBRATIONS.deadlift,
-        workoutTestUtil.STANDARD_CALIBRATIONS.dumbbellLateralRaise
-      ];
-      const equipment = Object.values(workoutTestUtil.STANDARD_EQUIPMENT_TYPES);
 
       const mesocycle = WorkoutMesocycleSchema.parse({
         userId: workoutTestUtil.userId,
@@ -59,15 +69,12 @@ describe('Unit Tests', () => {
         plannedMicrocycleLengthInDays: 7,
         plannedMicrocycleRestDays: [2, 5],
         plannedMicrocycleCount: 3, // 3 microcycles for simpler testing
-        calibratedExercises: calibrations.map((c) => c._id)
+        calibratedExercises: exerciseCTOs.flatMap((c) =>
+          c.bestCalibration ? [c.bestCalibration._id] : []
+        )
       });
 
-      const result = WorkoutMesocycleService.generateOrUpdateMesocycle(
-        mesocycle,
-        calibrations,
-        exercises,
-        equipment
-      );
+      const result = WorkoutMesocycleService.generateOrUpdateMesocycle(mesocycle, exerciseCTOs);
 
       // Verify microcycles
       expect(result.microcycles?.create).toHaveLength(3);
@@ -93,24 +100,33 @@ describe('Unit Tests', () => {
       }
 
       // Print the mesocycle plan for visualization
-      workoutTestUtil.printMesocyclePlan(result, exercises);
+      workoutTestUtil.printMesocyclePlan(result, exerciseCTOs);
     });
 
     it('(Smoke) should correctly apply progression formulas for sets, reps, RIR, and weights', () => {
       // Setup test data - using subset of 4 exercises
-      const exercises = [
-        workoutTestUtil.STANDARD_EXERCISES.barbellSquat,
-        workoutTestUtil.STANDARD_EXERCISES.cableRow,
-        workoutTestUtil.STANDARD_EXERCISES.dumbbellCurl,
-        workoutTestUtil.STANDARD_EXERCISES.cableTricepPushdown
+      const exerciseCTOs = [
+        workoutTestUtil.createExerciseCTO({
+          exercise: workoutTestUtil.STANDARD_EXERCISES.barbellSquat,
+          calibration: workoutTestUtil.STANDARD_CALIBRATIONS.barbellSquat,
+          equipmentType: workoutTestUtil.STANDARD_EQUIPMENT_TYPES.barbell
+        }),
+        workoutTestUtil.createExerciseCTO({
+          exercise: workoutTestUtil.STANDARD_EXERCISES.cableRow,
+          calibration: workoutTestUtil.STANDARD_CALIBRATIONS.cableRow,
+          equipmentType: workoutTestUtil.STANDARD_EQUIPMENT_TYPES.cable
+        }),
+        workoutTestUtil.createExerciseCTO({
+          exercise: workoutTestUtil.STANDARD_EXERCISES.dumbbellCurl,
+          calibration: workoutTestUtil.STANDARD_CALIBRATIONS.dumbbellCurl,
+          equipmentType: workoutTestUtil.STANDARD_EQUIPMENT_TYPES.dumbbell
+        }),
+        workoutTestUtil.createExerciseCTO({
+          exercise: workoutTestUtil.STANDARD_EXERCISES.cableTricepPushdown,
+          calibration: workoutTestUtil.STANDARD_CALIBRATIONS.cableTricepPushdown,
+          equipmentType: workoutTestUtil.STANDARD_EQUIPMENT_TYPES.cable
+        })
       ];
-      const calibrations = [
-        workoutTestUtil.STANDARD_CALIBRATIONS.barbellSquat,
-        workoutTestUtil.STANDARD_CALIBRATIONS.cableRow,
-        workoutTestUtil.STANDARD_CALIBRATIONS.dumbbellCurl,
-        workoutTestUtil.STANDARD_CALIBRATIONS.cableTricepPushdown
-      ];
-      const equipment = Object.values(workoutTestUtil.STANDARD_EQUIPMENT_TYPES);
 
       const mesocycle = WorkoutMesocycleSchema.parse({
         userId: workoutTestUtil.userId,
@@ -119,15 +135,12 @@ describe('Unit Tests', () => {
         plannedMicrocycleLengthInDays: 7,
         plannedMicrocycleRestDays: [],
         plannedMicrocycleCount: 3,
-        calibratedExercises: calibrations.map((c) => c._id)
+        calibratedExercises: exerciseCTOs.flatMap((c) =>
+          c.bestCalibration ? [c.bestCalibration._id] : []
+        )
       });
 
-      const result = WorkoutMesocycleService.generateOrUpdateMesocycle(
-        mesocycle,
-        calibrations,
-        exercises,
-        equipment
-      );
+      const result = WorkoutMesocycleService.generateOrUpdateMesocycle(mesocycle, exerciseCTOs);
 
       const sets = result.sets?.create ?? [];
       const sessions = result.sessions?.create ?? [];
@@ -165,14 +178,12 @@ describe('Unit Tests', () => {
       });
 
       // Print the mesocycle plan for visualization
-      workoutTestUtil.printMesocyclePlan(result, exercises);
+      workoutTestUtil.printMesocyclePlan(result, exerciseCTOs);
     });
 
     it('(Smoke) should handle large mesocycle with 6 accumulation + 1 deload microcycles', () => {
-      // Setup test data - using all 10 exercises
-      const exercises = Object.values(workoutTestUtil.STANDARD_EXERCISES);
-      const calibrations = Object.values(workoutTestUtil.STANDARD_CALIBRATIONS);
-      const equipment = Object.values(workoutTestUtil.STANDARD_EQUIPMENT_TYPES);
+      // Setup test data - using all standard exercises as CTOs
+      const exerciseCTOs = workoutTestUtil.STANDARD_EXERCISE_CTOS;
 
       const mesocycle = WorkoutMesocycleSchema.parse({
         userId: workoutTestUtil.userId,
@@ -181,15 +192,12 @@ describe('Unit Tests', () => {
         plannedMicrocycleLengthInDays: 8,
         plannedMicrocycleRestDays: [4, 5], // 2 consecutive rest days
         plannedMicrocycleCount: 7, // 6 accumulation + 1 deload
-        calibratedExercises: calibrations.map((c) => c._id)
+        calibratedExercises: exerciseCTOs.flatMap((c) =>
+          c.bestCalibration ? [c.bestCalibration._id] : []
+        )
       });
 
-      const result = WorkoutMesocycleService.generateOrUpdateMesocycle(
-        mesocycle,
-        calibrations,
-        exercises,
-        equipment
-      );
+      const result = WorkoutMesocycleService.generateOrUpdateMesocycle(mesocycle, exerciseCTOs);
 
       // Verify microcycles
       expect(result.microcycles?.create).toHaveLength(7);
@@ -236,19 +244,22 @@ describe('Unit Tests', () => {
       });
 
       // Print the mesocycle plan for visualization
-      workoutTestUtil.printMesocyclePlan(result, exercises);
+      workoutTestUtil.printMesocyclePlan(result, exerciseCTOs);
     });
 
     it('should pass existing documents through without regenerating when all are complete', () => {
-      const exercises = [
-        workoutTestUtil.STANDARD_EXERCISES.barbellSquat,
-        workoutTestUtil.STANDARD_EXERCISES.barbellBenchPress
+      const exerciseCTOs = [
+        workoutTestUtil.createExerciseCTO({
+          exercise: workoutTestUtil.STANDARD_EXERCISES.barbellSquat,
+          calibration: workoutTestUtil.STANDARD_CALIBRATIONS.barbellSquat,
+          equipmentType: workoutTestUtil.STANDARD_EQUIPMENT_TYPES.barbell
+        }),
+        workoutTestUtil.createExerciseCTO({
+          exercise: workoutTestUtil.STANDARD_EXERCISES.barbellBenchPress,
+          calibration: workoutTestUtil.STANDARD_CALIBRATIONS.barbellBenchPress,
+          equipmentType: workoutTestUtil.STANDARD_EQUIPMENT_TYPES.barbell
+        })
       ];
-      const calibrations = [
-        workoutTestUtil.STANDARD_CALIBRATIONS.barbellSquat,
-        workoutTestUtil.STANDARD_CALIBRATIONS.barbellBenchPress
-      ];
-      const equipment = Object.values(workoutTestUtil.STANDARD_EQUIPMENT_TYPES);
 
       const mesocycle = WorkoutMesocycleSchema.parse({
         userId: workoutTestUtil.userId,
@@ -257,15 +268,15 @@ describe('Unit Tests', () => {
         plannedMicrocycleLengthInDays: 7,
         plannedMicrocycleRestDays: [],
         plannedMicrocycleCount: 2,
-        calibratedExercises: calibrations.map((c) => c._id)
+        calibratedExercises: exerciseCTOs.flatMap((c) =>
+          c.bestCalibration ? [c.bestCalibration._id] : []
+        )
       });
 
       // Generate initial plan
       const initialResult = WorkoutMesocycleService.generateOrUpdateMesocycle(
         mesocycle,
-        calibrations,
-        exercises,
-        equipment
+        exerciseCTOs
       );
 
       // Mark ALL sessions as complete
@@ -277,9 +288,7 @@ describe('Unit Tests', () => {
       // Regenerate - should not create, update, or delete anything
       const regenResult = WorkoutMesocycleService.generateOrUpdateMesocycle(
         mesocycle,
-        calibrations,
-        exercises,
-        equipment,
+        exerciseCTOs,
         initialResult.microcycles?.create ?? [],
         sessionsAllComplete,
         initialResult.sessionExercises?.create ?? [],
@@ -294,15 +303,18 @@ describe('Unit Tests', () => {
     });
 
     it('should incrementally generate new microcycles after existing complete ones', () => {
-      const exercises = [
-        workoutTestUtil.STANDARD_EXERCISES.barbellSquat,
-        workoutTestUtil.STANDARD_EXERCISES.barbellBenchPress
+      const exerciseCTOs = [
+        workoutTestUtil.createExerciseCTO({
+          exercise: workoutTestUtil.STANDARD_EXERCISES.barbellSquat,
+          calibration: workoutTestUtil.STANDARD_CALIBRATIONS.barbellSquat,
+          equipmentType: workoutTestUtil.STANDARD_EQUIPMENT_TYPES.barbell
+        }),
+        workoutTestUtil.createExerciseCTO({
+          exercise: workoutTestUtil.STANDARD_EXERCISES.barbellBenchPress,
+          calibration: workoutTestUtil.STANDARD_CALIBRATIONS.barbellBenchPress,
+          equipmentType: workoutTestUtil.STANDARD_EQUIPMENT_TYPES.barbell
+        })
       ];
-      const calibrations = [
-        workoutTestUtil.STANDARD_CALIBRATIONS.barbellSquat,
-        workoutTestUtil.STANDARD_CALIBRATIONS.barbellBenchPress
-      ];
-      const equipment = Object.values(workoutTestUtil.STANDARD_EQUIPMENT_TYPES);
 
       const mesocycle = WorkoutMesocycleSchema.parse({
         userId: workoutTestUtil.userId,
@@ -311,16 +323,16 @@ describe('Unit Tests', () => {
         plannedMicrocycleLengthInDays: 7,
         plannedMicrocycleRestDays: [],
         plannedMicrocycleCount: 4, // Will generate in 2 batches
-        calibratedExercises: calibrations.map((c) => c._id)
+        calibratedExercises: exerciseCTOs.flatMap((c) =>
+          c.bestCalibration ? [c.bestCalibration._id] : []
+        )
       });
 
       // Generate initial plan with only 2 microcycles
       const initialMesocycle = { ...mesocycle, plannedMicrocycleCount: 2 };
       const initialResult = WorkoutMesocycleService.generateOrUpdateMesocycle(
         initialMesocycle,
-        calibrations,
-        exercises,
-        equipment
+        exerciseCTOs
       );
 
       expect(initialResult.microcycles?.create).toHaveLength(2);
@@ -335,9 +347,7 @@ describe('Unit Tests', () => {
       // Now generate with the full 4 microcycles - should create 2 more
       const extendedResult = WorkoutMesocycleService.generateOrUpdateMesocycle(
         mesocycle,
-        calibrations,
-        exercises,
-        equipment,
+        exerciseCTOs,
         initialResult.microcycles?.create ?? [],
         sessionsComplete,
         initialResult.sessionExercises?.create ?? [],
@@ -363,15 +373,18 @@ describe('Unit Tests', () => {
     });
 
     it('should clean up incomplete microcycle that has not started', () => {
-      const exercises = [
-        workoutTestUtil.STANDARD_EXERCISES.barbellSquat,
-        workoutTestUtil.STANDARD_EXERCISES.barbellBenchPress
+      const exerciseCTOs = [
+        workoutTestUtil.createExerciseCTO({
+          exercise: workoutTestUtil.STANDARD_EXERCISES.barbellSquat,
+          calibration: workoutTestUtil.STANDARD_CALIBRATIONS.barbellSquat,
+          equipmentType: workoutTestUtil.STANDARD_EQUIPMENT_TYPES.barbell
+        }),
+        workoutTestUtil.createExerciseCTO({
+          exercise: workoutTestUtil.STANDARD_EXERCISES.barbellBenchPress,
+          calibration: workoutTestUtil.STANDARD_CALIBRATIONS.barbellBenchPress,
+          equipmentType: workoutTestUtil.STANDARD_EQUIPMENT_TYPES.barbell
+        })
       ];
-      const calibrations = [
-        workoutTestUtil.STANDARD_CALIBRATIONS.barbellSquat,
-        workoutTestUtil.STANDARD_CALIBRATIONS.barbellBenchPress
-      ];
-      const equipment = Object.values(workoutTestUtil.STANDARD_EQUIPMENT_TYPES);
 
       const mesocycle = WorkoutMesocycleSchema.parse({
         userId: workoutTestUtil.userId,
@@ -380,15 +393,15 @@ describe('Unit Tests', () => {
         plannedMicrocycleLengthInDays: 7,
         plannedMicrocycleRestDays: [],
         plannedMicrocycleCount: 3,
-        calibratedExercises: calibrations.map((c) => c._id)
+        calibratedExercises: exerciseCTOs.flatMap((c) =>
+          c.bestCalibration ? [c.bestCalibration._id] : []
+        )
       });
 
       // Generate initial plan
       const initialResult = WorkoutMesocycleService.generateOrUpdateMesocycle(
         mesocycle,
-        calibrations,
-        exercises,
-        equipment
+        exerciseCTOs
       );
 
       // Mark first microcycle's sessions as complete
@@ -404,9 +417,7 @@ describe('Unit Tests', () => {
       // Regenerate - should clean up microcycles 2 and 3, keep microcycle 1
       const regenResult = WorkoutMesocycleService.generateOrUpdateMesocycle(
         mesocycle,
-        calibrations,
-        exercises,
-        equipment,
+        exerciseCTOs,
         initialResult.microcycles?.create ?? [],
         sessionsPartialComplete,
         initialResult.sessionExercises?.create ?? [],
@@ -427,15 +438,18 @@ describe('Unit Tests', () => {
     });
 
     it('should clean up microcycle with no sessions', () => {
-      const exercises = [
-        workoutTestUtil.STANDARD_EXERCISES.barbellSquat,
-        workoutTestUtil.STANDARD_EXERCISES.barbellBenchPress
+      const exerciseCTOs = [
+        workoutTestUtil.createExerciseCTO({
+          exercise: workoutTestUtil.STANDARD_EXERCISES.barbellSquat,
+          calibration: workoutTestUtil.STANDARD_CALIBRATIONS.barbellSquat,
+          equipmentType: workoutTestUtil.STANDARD_EQUIPMENT_TYPES.barbell
+        }),
+        workoutTestUtil.createExerciseCTO({
+          exercise: workoutTestUtil.STANDARD_EXERCISES.barbellBenchPress,
+          calibration: workoutTestUtil.STANDARD_CALIBRATIONS.barbellBenchPress,
+          equipmentType: workoutTestUtil.STANDARD_EQUIPMENT_TYPES.barbell
+        })
       ];
-      const calibrations = [
-        workoutTestUtil.STANDARD_CALIBRATIONS.barbellSquat,
-        workoutTestUtil.STANDARD_CALIBRATIONS.barbellBenchPress
-      ];
-      const equipment = Object.values(workoutTestUtil.STANDARD_EQUIPMENT_TYPES);
 
       const mesocycle = WorkoutMesocycleSchema.parse({
         userId: workoutTestUtil.userId,
@@ -444,15 +458,15 @@ describe('Unit Tests', () => {
         plannedMicrocycleLengthInDays: 7,
         plannedMicrocycleRestDays: [],
         plannedMicrocycleCount: 2,
-        calibratedExercises: calibrations.map((c) => c._id)
+        calibratedExercises: exerciseCTOs.flatMap((c) =>
+          c.bestCalibration ? [c.bestCalibration._id] : []
+        )
       });
 
       // Generate initial plan
       const initialResult = WorkoutMesocycleService.generateOrUpdateMesocycle(
         mesocycle,
-        calibrations,
-        exercises,
-        equipment
+        exerciseCTOs
       );
 
       // Create a microcycle with no sessions (empty sessionOrder)
@@ -468,9 +482,7 @@ describe('Unit Tests', () => {
       // Regenerate - should clean up the empty microcycle
       const regenResult = WorkoutMesocycleService.generateOrUpdateMesocycle(
         mesocycle,
-        calibrations,
-        exercises,
-        equipment,
+        exerciseCTOs,
         modifiedMicrocycles,
         sessionsComplete,
         initialResult.sessionExercises?.create ?? [],
@@ -486,15 +498,18 @@ describe('Unit Tests', () => {
     });
 
     it('should preserve microcycles with completedDate set even when sessions are not all complete', () => {
-      const exercises = [
-        workoutTestUtil.STANDARD_EXERCISES.barbellSquat,
-        workoutTestUtil.STANDARD_EXERCISES.barbellBenchPress
+      const exerciseCTOs = [
+        workoutTestUtil.createExerciseCTO({
+          exercise: workoutTestUtil.STANDARD_EXERCISES.barbellSquat,
+          calibration: workoutTestUtil.STANDARD_CALIBRATIONS.barbellSquat,
+          equipmentType: workoutTestUtil.STANDARD_EQUIPMENT_TYPES.barbell
+        }),
+        workoutTestUtil.createExerciseCTO({
+          exercise: workoutTestUtil.STANDARD_EXERCISES.barbellBenchPress,
+          calibration: workoutTestUtil.STANDARD_CALIBRATIONS.barbellBenchPress,
+          equipmentType: workoutTestUtil.STANDARD_EQUIPMENT_TYPES.barbell
+        })
       ];
-      const calibrations = [
-        workoutTestUtil.STANDARD_CALIBRATIONS.barbellSquat,
-        workoutTestUtil.STANDARD_CALIBRATIONS.barbellBenchPress
-      ];
-      const equipment = Object.values(workoutTestUtil.STANDARD_EQUIPMENT_TYPES);
 
       const mesocycle = WorkoutMesocycleSchema.parse({
         userId: workoutTestUtil.userId,
@@ -503,15 +518,15 @@ describe('Unit Tests', () => {
         plannedMicrocycleLengthInDays: 7,
         plannedMicrocycleRestDays: [],
         plannedMicrocycleCount: 3,
-        calibratedExercises: calibrations.map((c) => c._id)
+        calibratedExercises: exerciseCTOs.flatMap((c) =>
+          c.bestCalibration ? [c.bestCalibration._id] : []
+        )
       });
 
       // Generate initial plan
       const initialResult = WorkoutMesocycleService.generateOrUpdateMesocycle(
         mesocycle,
-        calibrations,
-        exercises,
-        equipment
+        exerciseCTOs
       );
 
       const initialMicrocycles = initialResult.microcycles?.create ?? [];
@@ -523,9 +538,7 @@ describe('Unit Tests', () => {
       // microcycles 1 and 2 (no completedDate, sessions incomplete) should be cleaned up
       const regenResult = WorkoutMesocycleService.generateOrUpdateMesocycle(
         mesocycle,
-        calibrations,
-        exercises,
-        equipment,
+        exerciseCTOs,
         initialMicrocycles,
         initialResult.sessions?.create ?? [],
         initialResult.sessionExercises?.create ?? [],
@@ -544,17 +557,23 @@ describe('Unit Tests', () => {
     });
 
     it('should throw error when incomplete microcycle has already started', () => {
-      const exercises = [
-        workoutTestUtil.STANDARD_EXERCISES.barbellSquat,
-        workoutTestUtil.STANDARD_EXERCISES.barbellBenchPress,
-        workoutTestUtil.STANDARD_EXERCISES.deadlift
+      const exerciseCTOs = [
+        workoutTestUtil.createExerciseCTO({
+          exercise: workoutTestUtil.STANDARD_EXERCISES.barbellSquat,
+          calibration: workoutTestUtil.STANDARD_CALIBRATIONS.barbellSquat,
+          equipmentType: workoutTestUtil.STANDARD_EQUIPMENT_TYPES.barbell
+        }),
+        workoutTestUtil.createExerciseCTO({
+          exercise: workoutTestUtil.STANDARD_EXERCISES.barbellBenchPress,
+          calibration: workoutTestUtil.STANDARD_CALIBRATIONS.barbellBenchPress,
+          equipmentType: workoutTestUtil.STANDARD_EQUIPMENT_TYPES.barbell
+        }),
+        workoutTestUtil.createExerciseCTO({
+          exercise: workoutTestUtil.STANDARD_EXERCISES.deadlift,
+          calibration: workoutTestUtil.STANDARD_CALIBRATIONS.deadlift,
+          equipmentType: workoutTestUtil.STANDARD_EQUIPMENT_TYPES.barbell
+        })
       ];
-      const calibrations = [
-        workoutTestUtil.STANDARD_CALIBRATIONS.barbellSquat,
-        workoutTestUtil.STANDARD_CALIBRATIONS.barbellBenchPress,
-        workoutTestUtil.STANDARD_CALIBRATIONS.deadlift
-      ];
-      const equipment = Object.values(workoutTestUtil.STANDARD_EQUIPMENT_TYPES);
 
       const mesocycle = WorkoutMesocycleSchema.parse({
         userId: workoutTestUtil.userId,
@@ -563,15 +582,15 @@ describe('Unit Tests', () => {
         plannedMicrocycleLengthInDays: 7,
         plannedMicrocycleRestDays: [],
         plannedMicrocycleCount: 2,
-        calibratedExercises: calibrations.map((c) => c._id)
+        calibratedExercises: exerciseCTOs.flatMap((c) =>
+          c.bestCalibration ? [c.bestCalibration._id] : []
+        )
       });
 
       // Generate initial plan
       const initialResult = WorkoutMesocycleService.generateOrUpdateMesocycle(
         mesocycle,
-        calibrations,
-        exercises,
-        equipment
+        exerciseCTOs
       );
 
       // Mark all sessions of the first microcycle as complete, and only the first session
@@ -596,9 +615,7 @@ describe('Unit Tests', () => {
       expect(() => {
         WorkoutMesocycleService.generateOrUpdateMesocycle(
           mesocycle,
-          calibrations,
-          exercises,
-          equipment,
+          exerciseCTOs,
           initialResult.microcycles?.create ?? [],
           sessionsPartialComplete,
           initialResult.sessionExercises?.create ?? [],
@@ -608,15 +625,18 @@ describe('Unit Tests', () => {
     });
 
     it('should use provided startDate for first microcycle when given', () => {
-      const exercises = [
-        workoutTestUtil.STANDARD_EXERCISES.barbellSquat,
-        workoutTestUtil.STANDARD_EXERCISES.barbellBenchPress
+      const exerciseCTOs = [
+        workoutTestUtil.createExerciseCTO({
+          exercise: workoutTestUtil.STANDARD_EXERCISES.barbellSquat,
+          calibration: workoutTestUtil.STANDARD_CALIBRATIONS.barbellSquat,
+          equipmentType: workoutTestUtil.STANDARD_EQUIPMENT_TYPES.barbell
+        }),
+        workoutTestUtil.createExerciseCTO({
+          exercise: workoutTestUtil.STANDARD_EXERCISES.barbellBenchPress,
+          calibration: workoutTestUtil.STANDARD_CALIBRATIONS.barbellBenchPress,
+          equipmentType: workoutTestUtil.STANDARD_EQUIPMENT_TYPES.barbell
+        })
       ];
-      const calibrations = [
-        workoutTestUtil.STANDARD_CALIBRATIONS.barbellSquat,
-        workoutTestUtil.STANDARD_CALIBRATIONS.barbellBenchPress
-      ];
-      const equipment = Object.values(workoutTestUtil.STANDARD_EQUIPMENT_TYPES);
 
       const mesocycle = WorkoutMesocycleSchema.parse({
         userId: workoutTestUtil.userId,
@@ -625,16 +645,16 @@ describe('Unit Tests', () => {
         plannedMicrocycleLengthInDays: 7,
         plannedMicrocycleRestDays: [],
         plannedMicrocycleCount: 3,
-        calibratedExercises: calibrations.map((c) => c._id)
+        calibratedExercises: exerciseCTOs.flatMap((c) =>
+          c.bestCalibration ? [c.bestCalibration._id] : []
+        )
       });
 
       const customStartDate = new Date('2026-03-01T00:00:00.000Z');
 
       const result = WorkoutMesocycleService.generateOrUpdateMesocycle(
         mesocycle,
-        calibrations,
-        exercises,
-        equipment,
+        exerciseCTOs,
         [],
         [],
         [],
@@ -657,15 +677,18 @@ describe('Unit Tests', () => {
     });
 
     it('should default to current date when startDate is not provided', () => {
-      const exercises = [
-        workoutTestUtil.STANDARD_EXERCISES.barbellSquat,
-        workoutTestUtil.STANDARD_EXERCISES.barbellBenchPress
+      const exerciseCTOs = [
+        workoutTestUtil.createExerciseCTO({
+          exercise: workoutTestUtil.STANDARD_EXERCISES.barbellSquat,
+          calibration: workoutTestUtil.STANDARD_CALIBRATIONS.barbellSquat,
+          equipmentType: workoutTestUtil.STANDARD_EQUIPMENT_TYPES.barbell
+        }),
+        workoutTestUtil.createExerciseCTO({
+          exercise: workoutTestUtil.STANDARD_EXERCISES.barbellBenchPress,
+          calibration: workoutTestUtil.STANDARD_CALIBRATIONS.barbellBenchPress,
+          equipmentType: workoutTestUtil.STANDARD_EQUIPMENT_TYPES.barbell
+        })
       ];
-      const calibrations = [
-        workoutTestUtil.STANDARD_CALIBRATIONS.barbellSquat,
-        workoutTestUtil.STANDARD_CALIBRATIONS.barbellBenchPress
-      ];
-      const equipment = Object.values(workoutTestUtil.STANDARD_EQUIPMENT_TYPES);
 
       const mesocycle = WorkoutMesocycleSchema.parse({
         userId: workoutTestUtil.userId,
@@ -674,16 +697,13 @@ describe('Unit Tests', () => {
         plannedMicrocycleLengthInDays: 7,
         plannedMicrocycleRestDays: [],
         plannedMicrocycleCount: 2,
-        calibratedExercises: calibrations.map((c) => c._id)
+        calibratedExercises: exerciseCTOs.flatMap((c) =>
+          c.bestCalibration ? [c.bestCalibration._id] : []
+        )
       });
 
       const before = Date.now();
-      const result = WorkoutMesocycleService.generateOrUpdateMesocycle(
-        mesocycle,
-        calibrations,
-        exercises,
-        equipment
-      );
+      const result = WorkoutMesocycleService.generateOrUpdateMesocycle(mesocycle, exerciseCTOs);
       const after = Date.now();
 
       const microcycles = result.microcycles?.create ?? [];
@@ -696,15 +716,18 @@ describe('Unit Tests', () => {
     });
 
     it('should clean up all associated documents when deleting incomplete microcycles', () => {
-      const exercises = [
-        workoutTestUtil.STANDARD_EXERCISES.barbellSquat,
-        workoutTestUtil.STANDARD_EXERCISES.barbellBenchPress
+      const exerciseCTOs = [
+        workoutTestUtil.createExerciseCTO({
+          exercise: workoutTestUtil.STANDARD_EXERCISES.barbellSquat,
+          calibration: workoutTestUtil.STANDARD_CALIBRATIONS.barbellSquat,
+          equipmentType: workoutTestUtil.STANDARD_EQUIPMENT_TYPES.barbell
+        }),
+        workoutTestUtil.createExerciseCTO({
+          exercise: workoutTestUtil.STANDARD_EXERCISES.barbellBenchPress,
+          calibration: workoutTestUtil.STANDARD_CALIBRATIONS.barbellBenchPress,
+          equipmentType: workoutTestUtil.STANDARD_EQUIPMENT_TYPES.barbell
+        })
       ];
-      const calibrations = [
-        workoutTestUtil.STANDARD_CALIBRATIONS.barbellSquat,
-        workoutTestUtil.STANDARD_CALIBRATIONS.barbellBenchPress
-      ];
-      const equipment = Object.values(workoutTestUtil.STANDARD_EQUIPMENT_TYPES);
 
       const mesocycle = WorkoutMesocycleSchema.parse({
         userId: workoutTestUtil.userId,
@@ -713,15 +736,15 @@ describe('Unit Tests', () => {
         plannedMicrocycleLengthInDays: 7,
         plannedMicrocycleRestDays: [],
         plannedMicrocycleCount: 3,
-        calibratedExercises: calibrations.map((c) => c._id)
+        calibratedExercises: exerciseCTOs.flatMap((c) =>
+          c.bestCalibration ? [c.bestCalibration._id] : []
+        )
       });
 
       // Generate initial plan
       const initialResult = WorkoutMesocycleService.generateOrUpdateMesocycle(
         mesocycle,
-        calibrations,
-        exercises,
-        equipment
+        exerciseCTOs
       );
 
       // Mark only first microcycle as complete
@@ -751,9 +774,7 @@ describe('Unit Tests', () => {
       // Regenerate
       const regenResult = WorkoutMesocycleService.generateOrUpdateMesocycle(
         mesocycle,
-        calibrations,
-        exercises,
-        equipment,
+        exerciseCTOs,
         initialResult.microcycles?.create ?? [],
         sessionsComplete,
         initialResult.sessionExercises?.create ?? [],

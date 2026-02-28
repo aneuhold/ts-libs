@@ -1,5 +1,5 @@
 import type { UUID } from 'crypto';
-import type { CalibrationExercisePair } from '../../../../documents/workout/WorkoutExerciseCalibration.js';
+import type { WorkoutExerciseCTO } from '../../../../ctos/workout/WorkoutExerciseCTO.js';
 import type { WorkoutSessionExercise } from '../../../../documents/workout/WorkoutSessionExercise.js';
 import type WorkoutMesocyclePlanContext from '../../Mesocycle/WorkoutMesocyclePlanContext.js';
 import WorkoutSessionExerciseService from '../../SessionExercise/WorkoutSessionExerciseService.js';
@@ -32,20 +32,20 @@ export default class WorkoutVolumePlanningService {
     microcycleIndex: number,
     isDeloadMicrocycle: boolean
   ): { exerciseIdToSetCount: Map<UUID, number>; recoveryExerciseIds: Set<UUID> } {
-    if (!context.muscleGroupToExercisePairsMap) {
+    if (!context.muscleGroupToExerciseCTOsMap) {
       throw new Error(
-        'WorkoutMesocyclePlanContext.muscleGroupToExercisePairsMap is not initialized. This should be set during mesocycle planning.'
+        'WorkoutMesocyclePlanContext.muscleGroupToExerciseCTOsMap is not initialized. This should be set during mesocycle planning.'
       );
     }
 
     const exerciseIdToSetCount = new Map<UUID, number>();
     const recoveryExerciseIds = new Set<UUID>();
 
-    context.muscleGroupToExercisePairsMap.values().forEach((muscleGroupExercisePairs) => {
+    context.muscleGroupToExerciseCTOsMap.values().forEach((muscleGroupExerciseCTOs) => {
       const result = this.calculateSetCountForEachExerciseInMuscleGroup(
         context,
         microcycleIndex,
-        muscleGroupExercisePairs,
+        muscleGroupExerciseCTOs,
         isDeloadMicrocycle
       );
       for (const [workoutExerciseId, setCount] of result.exerciseIdToSetCount) {
@@ -68,7 +68,7 @@ export default class WorkoutVolumePlanningService {
   private static calculateSetCountForEachExerciseInMuscleGroup(
     context: WorkoutMesocyclePlanContext,
     microcycleIndex: number,
-    muscleGroupExercisePairs: CalibrationExercisePair[],
+    muscleGroupExerciseCTOs: WorkoutExerciseCTO[],
     isDeloadMicrocycle: boolean
   ): { exerciseIdToSetCount: Map<UUID, number>; recoveryExerciseIds: Set<UUID> } {
     const exerciseIdToSetCount = new Map<UUID, number>();
@@ -76,23 +76,23 @@ export default class WorkoutVolumePlanningService {
     const sessionIndexToExerciseIds = new Map<number, UUID[]>();
 
     // 1. Calculate baselines for all exercises in muscle group
-    muscleGroupExercisePairs.forEach((pair, index) => {
+    muscleGroupExerciseCTOs.forEach((cto, index) => {
       const baseline = this.calculateBaselineSetCount(
         microcycleIndex,
-        muscleGroupExercisePairs.length,
+        muscleGroupExerciseCTOs.length,
         index,
         isDeloadMicrocycle
       );
-      exerciseIdToSetCount.set(pair.exercise._id, Math.min(baseline, this.MAX_SETS_PER_EXERCISE));
+      exerciseIdToSetCount.set(cto._id, Math.min(baseline, this.MAX_SETS_PER_EXERCISE));
 
       // Build out the map for session indices to the array of exercise IDs as it pertains to this
       // muscle group.
       if (!context.exerciseIdToSessionIndex) return;
-      const exerciseSessionIndex = context.exerciseIdToSessionIndex.get(pair.exercise._id);
+      const exerciseSessionIndex = context.exerciseIdToSessionIndex.get(cto._id);
       if (exerciseSessionIndex === undefined) return;
       const existingExerciseIdsForSession =
         sessionIndexToExerciseIds.get(exerciseSessionIndex) || [];
-      existingExerciseIdsForSession.push(pair.exercise._id);
+      existingExerciseIdsForSession.push(cto._id);
       sessionIndexToExerciseIds.set(exerciseSessionIndex, existingExerciseIdsForSession);
     });
 
@@ -103,7 +103,7 @@ export default class WorkoutVolumePlanningService {
     if (!previousMicrocycle) return { exerciseIdToSetCount, recoveryExerciseIds };
 
     // Map previous session exercises
-    const exerciseIds = new Set(muscleGroupExercisePairs.map((p) => p.exercise._id));
+    const exerciseIds = new Set(muscleGroupExerciseCTOs.map((cto) => cto._id));
     const exerciseIdToPrevSessionExercise = new Map<UUID, WorkoutSessionExercise>();
     const foundExerciseIds = new Set<UUID>();
     const exercisesThatWerePreviouslyInRecovery = new Set<UUID>();
@@ -150,8 +150,8 @@ export default class WorkoutVolumePlanningService {
     // For deload microcycles, halve the historical count (minimum 1 set). We don't use baseline
     // because the user may have adjusted over the mesocycle in a way that the baseline is actually
     // a higher set count than what would be calculated by halving the previous microcycle's sets.
-    muscleGroupExercisePairs.forEach((pair) => {
-      const previousSessionExercise = exerciseIdToPrevSessionExercise.get(pair.exercise._id);
+    muscleGroupExerciseCTOs.forEach((cto) => {
+      const previousSessionExercise = exerciseIdToPrevSessionExercise.get(cto._id);
       if (previousSessionExercise) {
         let setCount = Math.min(
           previousSessionExercise.setOrder.length,
@@ -160,7 +160,7 @@ export default class WorkoutVolumePlanningService {
         if (isDeloadMicrocycle) {
           setCount = Math.max(1, Math.floor(setCount / 2));
         }
-        exerciseIdToSetCount.set(pair.exercise._id, setCount);
+        exerciseIdToSetCount.set(cto._id, setCount);
       }
     });
 
@@ -201,12 +201,12 @@ export default class WorkoutVolumePlanningService {
       muscleGroupIndex: number;
       previousSetCount: number;
     }[] = [];
-    muscleGroupExercisePairs.forEach((pair, muscleGroupIndex) => {
-      const previousSessionExercise = exerciseIdToPrevSessionExercise.get(pair.exercise._id);
+    muscleGroupExerciseCTOs.forEach((cto, muscleGroupIndex) => {
+      const previousSessionExercise = exerciseIdToPrevSessionExercise.get(cto._id);
       if (!previousSessionExercise) return;
 
       let recommendation: number | null;
-      if (!exercisesThatWerePreviouslyInRecovery.has(pair.exercise._id)) {
+      if (!exercisesThatWerePreviouslyInRecovery.has(cto._id)) {
         recommendation =
           WorkoutSessionExerciseService.getRecommendedSetAdditionsOrRecovery(
             previousSessionExercise
@@ -220,21 +220,21 @@ export default class WorkoutVolumePlanningService {
       }
 
       if (recommendation === -1) {
-        recoveryExerciseIds.add(pair.exercise._id);
+        recoveryExerciseIds.add(cto._id);
         // Cut sets in half (rounded down, minimum 1) for recovery
         const previousSetCount = previousSessionExercise.setOrder.length;
         const recoverySets = Math.max(1, Math.floor(previousSetCount / 2));
-        exerciseIdToSetCount.set(pair.exercise._id, recoverySets);
+        exerciseIdToSetCount.set(cto._id, recoverySets);
       } else if (recommendation != null && recommendation >= 0) {
         totalSetsToAdd += recommendation;
 
         // Consider as candidate if session is not already capped
         if (
           previousSessionExercise.setOrder.length < this.MAX_SETS_PER_EXERCISE &&
-          !sessionIsCapped(pair.exercise._id)
+          !sessionIsCapped(cto._id)
         ) {
           candidates.push({
-            exerciseId: pair.exercise._id,
+            exerciseId: cto._id,
             // Don't error if SFR is null for now, just treat as very low
             sfr:
               WorkoutSessionExerciseService.getSFR(previousSessionExercise) ??

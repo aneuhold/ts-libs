@@ -1,13 +1,7 @@
 import { DateService } from '@aneuhold/core-ts-lib';
 import type { UUID } from 'crypto';
-import {
-  ExerciseRepRange,
-  type WorkoutExercise
-} from '../../../documents/workout/WorkoutExercise.js';
-import type {
-  CalibrationExercisePair,
-  WorkoutExerciseCalibration
-} from '../../../documents/workout/WorkoutExerciseCalibration.js';
+import type { WorkoutExerciseCTO } from '../../../ctos/workout/WorkoutExerciseCTO.js';
+import { ExerciseRepRange } from '../../../documents/workout/WorkoutExercise.js';
 import WorkoutExerciseService from '../Exercise/WorkoutExerciseService.js';
 import type WorkoutMesocyclePlanContext from '../Mesocycle/WorkoutMesocyclePlanContext.js';
 import WorkoutSessionService from '../Session/WorkoutSessionService.js';
@@ -34,18 +28,18 @@ export default class WorkoutMicrocycleService {
     const mesocycle = context.mesocycle;
     const microcycle = context.microcyclesInOrder[microcycleIndex];
 
-    if (!context.plannedSessionExercisePairs) {
+    if (!context.plannedSessionExerciseCTOs) {
       throw new Error(
-        'WorkoutMesocyclePlanContext.plannedSessionExercisePairs is not initialized. This should be set during mesocycle planning.'
+        'WorkoutMesocyclePlanContext.plannedSessionExerciseCTOs is not initialized. This should be set during mesocycle planning.'
       );
     }
-    if (!context.muscleGroupToExercisePairsMap) {
+    if (!context.muscleGroupToExerciseCTOsMap) {
       throw new Error(
-        'WorkoutMesocyclePlanContext.muscleGroupToExercisePairsMap is not initialized. This should be derived when the planned session exercise pairs are set.'
+        'WorkoutMesocyclePlanContext.muscleGroupToExerciseCTOsMap is not initialized. This should be derived when the planned session exercise CTOs are set.'
       );
     }
 
-    const sessionsToExerciseSessionsArray = context.plannedSessionExercisePairs;
+    const sessionsToExerciseCTOsArray = context.plannedSessionExerciseCTOs;
 
     const setPlan = WorkoutVolumePlanningService.calculateSetPlanForMicrocycle(
       context,
@@ -74,7 +68,7 @@ export default class WorkoutMicrocycleService {
     for (let dayIndex = 0; dayIndex < dayCount; dayIndex++) {
       const sessionsOnThisDay = basePerDay + (dayIndex < remainder ? 1 : 0);
       for (let s = 0; s < sessionsOnThisDay; s++) {
-        const sessionExerciseList = sessionsToExerciseSessionsArray[sessionIndex] || [];
+        const sessionExerciseList = sessionsToExerciseCTOsArray[sessionIndex] || [];
 
         WorkoutSessionService.generateSession({
           context,
@@ -97,44 +91,30 @@ export default class WorkoutMicrocycleService {
    * array of arrays structure. The embedded array is the list of exercises for that session.
    *
    * @param sessionCount The number of sessions to distribute exercises across.
-   * @param calibrationMap The map of calibration documents.
-   * @param exerciseMap The map of exercise documents.
+   * @param exerciseCTOs The exercise CTOs to distribute.
    */
   static distributeExercisesAcrossSessions(
     sessionCount: number,
-    calibrationMap: Map<UUID, WorkoutExerciseCalibration>,
-    exerciseMap: Map<UUID, WorkoutExercise>
-  ): CalibrationExercisePair[][] {
-    // Build calibration-exercise pairs from the provided maps
-    const validExercises: CalibrationExercisePair[] = [];
-    for (const calibration of calibrationMap.values()) {
-      const exercise = exerciseMap.get(calibration.workoutExerciseId);
-      if (!exercise) {
-        throw new Error(
-          `Exercise ${calibration.workoutExerciseId} not found for calibration ${calibration._id}`
-        );
-      }
-      validExercises.push({ calibration, exercise });
-    }
-
+    exerciseCTOs: WorkoutExerciseCTO[]
+  ): WorkoutExerciseCTO[][] {
     // Group exercises by their primary muscle group (use first one as main identifier, this might
     // need to be revisited later for multi-group exercises)
-    const muscleGroupsMap = new Map<UUID, CalibrationExercisePair[]>();
-    for (const exercisePair of validExercises) {
-      const muscleGroupId = exercisePair.exercise.primaryMuscleGroups[0];
+    const muscleGroupsMap = new Map<UUID, WorkoutExerciseCTO[]>();
+    for (const cto of exerciseCTOs) {
+      const muscleGroupId = cto.primaryMuscleGroups[0];
       const existingGroup = muscleGroupsMap.get(muscleGroupId);
       if (existingGroup) {
-        existingGroup.push(exercisePair);
+        existingGroup.push(cto);
       } else {
-        muscleGroupsMap.set(muscleGroupId, [exercisePair]);
+        muscleGroupsMap.set(muscleGroupId, [cto]);
       }
     }
 
     // 1. Calculate max fatigue for each muscle group to sort them initially
     const muscleGroupFatigueScores = new Map<UUID, number>();
-    for (const [muscleGroupId, muscleGroupExercises] of muscleGroupsMap.entries()) {
-      const fatigueScores = muscleGroupExercises.map((pair) =>
-        WorkoutExerciseService.getFatigueScore(pair.exercise)
+    for (const [muscleGroupId, muscleGroupCTOs] of muscleGroupsMap.entries()) {
+      const fatigueScores = muscleGroupCTOs.map((cto) =>
+        WorkoutExerciseService.getFatigueScore(cto)
       );
       const maxFatigue = Math.max(...fatigueScores);
       muscleGroupFatigueScores.set(muscleGroupId, maxFatigue);
@@ -148,7 +128,7 @@ export default class WorkoutMicrocycleService {
     });
 
     // Prepare sessions array (so we can push exercises into each empty array)
-    const sessions: CalibrationExercisePair[][] = Array.from({ length: sessionCount }, () => []);
+    const sessions: WorkoutExerciseCTO[][] = Array.from({ length: sessionCount }, () => []);
     const usedStarterGroups = new Set<UUID>();
 
     // 3. Assign Headliners (Priority 1 & 2)
@@ -168,10 +148,10 @@ export default class WorkoutMicrocycleService {
       if (!candidateMuscleGroupId) {
         let maxFatigue = -1;
         for (const groupId of sortedMuscleGroupIds) {
-          const exercisePairs = muscleGroupsMap.get(groupId);
-          if (exercisePairs && exercisePairs.length > 0) {
-            const fatigueScoresAmongExercises = exercisePairs.map((pair) =>
-              WorkoutExerciseService.getFatigueScore(pair.exercise)
+          const ctos = muscleGroupsMap.get(groupId);
+          if (ctos && ctos.length > 0) {
+            const fatigueScoresAmongExercises = ctos.map((cto) =>
+              WorkoutExerciseService.getFatigueScore(cto)
             );
             const groupMax = Math.max(...fatigueScoresAmongExercises);
             if (groupMax > maxFatigue) {
@@ -188,8 +168,7 @@ export default class WorkoutMicrocycleService {
           // Pick highest fatigue exercise in this group to be the headliner
           group.sort(
             (a, b) =>
-              WorkoutExerciseService.getFatigueScore(b.exercise) -
-              WorkoutExerciseService.getFatigueScore(a.exercise)
+              WorkoutExerciseService.getFatigueScore(b) - WorkoutExerciseService.getFatigueScore(a)
           );
           const headliner = group.shift();
           if (headliner) {
@@ -201,7 +180,7 @@ export default class WorkoutMicrocycleService {
     }
 
     // 4. Distribute Remainder (Priority 2 continued)
-    const remainingExercises: CalibrationExercisePair[] = [];
+    const remainingExercises: WorkoutExerciseCTO[] = [];
     for (const group of muscleGroupsMap.values()) {
       remainingExercises.push(...group);
     }
@@ -209,14 +188,13 @@ export default class WorkoutMicrocycleService {
     // Sort remaining by fatigue (High -> Low)
     remainingExercises.sort(
       (a, b) =>
-        WorkoutExerciseService.getFatigueScore(b.exercise) -
-        WorkoutExerciseService.getFatigueScore(a.exercise)
+        WorkoutExerciseService.getFatigueScore(b) - WorkoutExerciseService.getFatigueScore(a)
     );
 
     // Distribute round-robin
     let currentSessionIndex = 0;
-    for (const pair of remainingExercises) {
-      sessions[currentSessionIndex].push(pair);
+    for (const cto of remainingExercises) {
+      sessions[currentSessionIndex].push(cto);
       currentSessionIndex = (currentSessionIndex + 1) % sessionCount;
     }
 
@@ -231,7 +209,7 @@ export default class WorkoutMicrocycleService {
           [ExerciseRepRange.Medium]: 1,
           [ExerciseRepRange.Light]: 2
         };
-        return order[a.exercise.repRange] - order[b.exercise.repRange];
+        return order[a.repRange] - order[b.repRange];
       });
       session.length = 0;
       session.push(headliner, ...rest);

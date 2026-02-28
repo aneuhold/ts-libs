@@ -1,4 +1,7 @@
+import type { UUID } from 'crypto';
+import type { WorkoutExerciseCTO } from '../../../ctos/workout/WorkoutExerciseCTO.js';
 import type { WorkoutExerciseCalibration } from '../../../documents/workout/WorkoutExerciseCalibration.js';
+import { WorkoutExerciseCalibrationSchema } from '../../../documents/workout/WorkoutExerciseCalibration.js';
 
 /**
  * A service for handling operations related to {@link WorkoutExerciseCalibration}s.
@@ -38,6 +41,50 @@ export default class WorkoutExerciseCalibrationService {
     const oneRepMax = this.get1RM(calibration);
     const targetPercentage = this.getTargetPercentage(targetReps);
     return (targetPercentage / 100) * oneRepMax;
+  }
+
+  /**
+   * Generates auto-calibrations from exercise CTOs whose best set 1RM exceeds
+   * their best calibration 1RM.
+   *
+   * The CTO already provides `bestCalibration` and `bestSet` per exercise, so
+   * this method just compares those two pre-computed values and creates new
+   * calibrations where the set wins.
+   *
+   * @param exerciseCTOs The exercise CTOs to evaluate.
+   * @param userId The user ID for the new calibrations.
+   * @param dateRecorded The date to use as dateRecorded for new calibrations.
+   */
+  static generateAutoCalibrations(
+    exerciseCTOs: WorkoutExerciseCTO[],
+    userId: UUID,
+    dateRecorded: Date
+  ): WorkoutExerciseCalibration[] {
+    const newCalibrations: WorkoutExerciseCalibration[] = [];
+
+    for (const cto of exerciseCTOs) {
+      const { bestSet, bestCalibration } = cto;
+      if (!bestSet?.actualWeight || !bestSet.actualReps || bestSet.actualReps <= 0) continue;
+
+      const set1RM = this.get1RMRaw(bestSet.actualWeight, bestSet.actualReps);
+      const cal1RM = bestCalibration ? this.get1RM(bestCalibration) : 0;
+
+      if (set1RM > cal1RM) {
+        newCalibrations.push(
+          WorkoutExerciseCalibrationSchema.parse({
+            userId,
+            workoutExerciseId: cto._id,
+            weight: bestSet.actualWeight,
+            reps: bestSet.actualReps,
+            exerciseProperties: bestSet.exerciseProperties,
+            dateRecorded,
+            associatedWorkoutSetId: bestSet._id
+          })
+        );
+      }
+    }
+
+    return newCalibrations;
   }
 
   /**

@@ -98,4 +98,163 @@ describe('Unit Tests', () => {
       expect(targetWeight).toBeLessThan(30);
     });
   });
+
+  describe('generateAutoCalibrations', () => {
+    const exercise = workoutTestUtil.STANDARD_EXERCISES.barbellBenchPress;
+    const calibration = workoutTestUtil.STANDARD_CALIBRATIONS.barbellBenchPress;
+    const equipmentType = workoutTestUtil.STANDARD_EQUIPMENT_TYPES.barbell;
+    const dateRecorded = new Date(2024, 5, 15);
+
+    it('should create a calibration when bestSet 1RM exceeds bestCalibration 1RM', () => {
+      // Calibration: 135lb x 10 reps → 1RM ≈ 179.29
+      // Best set: 200lb x 5 reps → 1RM ≈ 232.81
+      const bestSet = workoutTestUtil.createSet({
+        exercise,
+        overrides: { actualWeight: 200, actualReps: 5 }
+      });
+      const cto = workoutTestUtil.createExerciseCTO({
+        exercise,
+        calibration,
+        equipmentType,
+        bestSet
+      });
+
+      const result = WorkoutExerciseCalibrationService.generateAutoCalibrations(
+        [cto],
+        workoutTestUtil.userId,
+        dateRecorded
+      );
+
+      expect(result).toHaveLength(1);
+      expect(result[0].weight).toBe(200);
+      expect(result[0].reps).toBe(5);
+      expect(result[0].associatedWorkoutSetId).toBe(bestSet._id);
+      expect(result[0].workoutExerciseId).toBe(exercise._id);
+      expect(result[0].dateRecorded).toEqual(dateRecorded);
+    });
+
+    it('should not create a calibration when bestSet 1RM is below bestCalibration 1RM', () => {
+      // Calibration: 135lb x 10 reps → 1RM ≈ 179.29
+      // Best set: 100lb x 5 reps → 1RM ≈ 116.40
+      const bestSet = workoutTestUtil.createSet({
+        exercise,
+        overrides: { actualWeight: 100, actualReps: 5 }
+      });
+      const cto = workoutTestUtil.createExerciseCTO({
+        exercise,
+        calibration,
+        equipmentType,
+        bestSet
+      });
+
+      const result = WorkoutExerciseCalibrationService.generateAutoCalibrations(
+        [cto],
+        workoutTestUtil.userId,
+        dateRecorded
+      );
+
+      expect(result).toHaveLength(0);
+    });
+
+    it('should create a calibration when no bestCalibration exists', () => {
+      const bestSet = workoutTestUtil.createSet({
+        exercise,
+        overrides: { actualWeight: 100, actualReps: 8 }
+      });
+      const cto = workoutTestUtil.createExerciseCTO({
+        exercise,
+        calibration: null,
+        equipmentType,
+        bestSet
+      });
+
+      const result = WorkoutExerciseCalibrationService.generateAutoCalibrations(
+        [cto],
+        workoutTestUtil.userId,
+        dateRecorded
+      );
+
+      expect(result).toHaveLength(1);
+      expect(result[0].weight).toBe(100);
+      expect(result[0].reps).toBe(8);
+      expect(result[0].associatedWorkoutSetId).toBe(bestSet._id);
+    });
+
+    it('should skip CTOs with null bestSet', () => {
+      const cto = workoutTestUtil.createExerciseCTO({
+        exercise,
+        calibration,
+        equipmentType,
+        bestSet: null
+      });
+
+      const result = WorkoutExerciseCalibrationService.generateAutoCalibrations(
+        [cto],
+        workoutTestUtil.userId,
+        dateRecorded
+      );
+
+      expect(result).toHaveLength(0);
+    });
+
+    it('should skip CTOs where bestSet has zero reps', () => {
+      const bestSet = workoutTestUtil.createSet({
+        exercise,
+        overrides: { actualWeight: 100, actualReps: 0 }
+      });
+      const cto = workoutTestUtil.createExerciseCTO({
+        exercise,
+        calibration: null,
+        equipmentType,
+        bestSet
+      });
+
+      const result = WorkoutExerciseCalibrationService.generateAutoCalibrations(
+        [cto],
+        workoutTestUtil.userId,
+        dateRecorded
+      );
+
+      expect(result).toHaveLength(0);
+    });
+
+    it('should handle multiple exercises independently', () => {
+      const exercise2 = workoutTestUtil.STANDARD_EXERCISES.barbellSquat;
+      const equipmentType2 = workoutTestUtil.STANDARD_EQUIPMENT_TYPES.barbell;
+
+      const benchSet = workoutTestUtil.createSet({
+        exercise,
+        overrides: { actualWeight: 200, actualReps: 5 }
+      });
+      const squatSet = workoutTestUtil.createSet({
+        exercise: exercise2,
+        overrides: { actualWeight: 300, actualReps: 5 }
+      });
+
+      const benchCTO = workoutTestUtil.createExerciseCTO({
+        exercise,
+        calibration: null,
+        equipmentType,
+        bestSet: benchSet
+      });
+      const squatCTO = workoutTestUtil.createExerciseCTO({
+        exercise: exercise2,
+        calibration: null,
+        equipmentType: equipmentType2,
+        bestSet: squatSet
+      });
+
+      const result = WorkoutExerciseCalibrationService.generateAutoCalibrations(
+        [benchCTO, squatCTO],
+        workoutTestUtil.userId,
+        dateRecorded
+      );
+
+      expect(result).toHaveLength(2);
+      const benchCal = result.find((c) => c.workoutExerciseId === exercise._id);
+      const squatCal = result.find((c) => c.workoutExerciseId === exercise2._id);
+      expect(benchCal?.weight).toBe(200);
+      expect(squatCal?.weight).toBe(300);
+    });
+  });
 });

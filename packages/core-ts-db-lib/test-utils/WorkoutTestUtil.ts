@@ -1,4 +1,6 @@
 import type { UUID } from 'crypto';
+import type { WorkoutExerciseCTO } from '../src/ctos/workout/WorkoutExerciseCTO.js';
+import { WorkoutExerciseCTOSchema } from '../src/ctos/workout/WorkoutExerciseCTO.js';
 import type { WorkoutEquipmentType } from '../src/documents/workout/WorkoutEquipmentType.js';
 import { WorkoutEquipmentTypeSchema } from '../src/documents/workout/WorkoutEquipmentType.js';
 import type { WorkoutExercise } from '../src/documents/workout/WorkoutExercise.js';
@@ -7,10 +9,7 @@ import {
   ExerciseRepRange,
   WorkoutExerciseSchema
 } from '../src/documents/workout/WorkoutExercise.js';
-import type {
-  CalibrationExercisePair,
-  WorkoutExerciseCalibration
-} from '../src/documents/workout/WorkoutExerciseCalibration.js';
+import type { WorkoutExerciseCalibration } from '../src/documents/workout/WorkoutExerciseCalibration.js';
 import { WorkoutExerciseCalibrationSchema } from '../src/documents/workout/WorkoutExerciseCalibration.js';
 import type { WorkoutMesocycle } from '../src/documents/workout/WorkoutMesocycle.js';
 import { CycleType, WorkoutMesocycleSchema } from '../src/documents/workout/WorkoutMesocycle.js';
@@ -365,6 +364,16 @@ class WorkoutTestUtil {
     })
   } as const;
 
+  public readonly STANDARD_EXERCISE_CTOS: WorkoutExerciseCTO[] = Object.entries(
+    this.STANDARD_EXERCISES
+  ).map(([key, exercise]) => {
+    const calibration = this.STANDARD_CALIBRATIONS[key as keyof typeof this.STANDARD_CALIBRATIONS];
+    const equipmentType = Object.values(this.STANDARD_EQUIPMENT_TYPES).find(
+      (et) => et._id === exercise.workoutEquipmentTypeId
+    );
+    return this.createExerciseCTO({ exercise, calibration, equipmentType });
+  });
+
   /**
    * Prints a formatted view of the mesocycle plan showing progression across
    * microcycles, sessions, exercises, and sets.
@@ -601,6 +610,36 @@ class WorkoutTestUtil {
   }
 
   /**
+   * Creates a WorkoutExerciseCTO from an exercise, calibration, and equipment type.
+   */
+  createExerciseCTO(options: {
+    exercise?: WorkoutExercise;
+    calibration?: WorkoutExerciseCalibration | null;
+    equipmentType?: WorkoutEquipmentType;
+    bestSet?: WorkoutSet | null;
+    lastSessionExercise?: WorkoutSessionExercise | null;
+    lastFirstSet?: WorkoutSet | null;
+  }): WorkoutExerciseCTO {
+    const {
+      exercise = this.STANDARD_EXERCISES.barbellSquat,
+      calibration = this.STANDARD_CALIBRATIONS.barbellSquat,
+      equipmentType = this.STANDARD_EQUIPMENT_TYPES.barbell,
+      bestSet = null,
+      lastSessionExercise = null,
+      lastFirstSet = null
+    } = options;
+
+    return WorkoutExerciseCTOSchema.parse({
+      ...exercise,
+      equipmentType,
+      bestCalibration: calibration,
+      bestSet,
+      lastSessionExercise,
+      lastFirstSet
+    });
+  }
+
+  /**
    * Creates a workout equipment type with sensible defaults.
    */
   createEquipmentType(overrides: Partial<WorkoutEquipmentType> = {}): WorkoutEquipmentType {
@@ -638,18 +677,20 @@ class WorkoutTestUtil {
    */
   createContext(options: {
     mesocycle?: WorkoutMesocycle;
-    calibrations?: WorkoutExerciseCalibration[];
-    exercises?: WorkoutExercise[];
-    equipmentTypes?: WorkoutEquipmentType[];
+    exerciseCTOs?: WorkoutExerciseCTO[];
   }): WorkoutMesocyclePlanContext {
     const {
       mesocycle = this.createMesocycle(),
-      calibrations = [this.STANDARD_CALIBRATIONS.barbellSquat],
-      exercises = [this.STANDARD_EXERCISES.barbellSquat],
-      equipmentTypes = Object.values(this.STANDARD_EQUIPMENT_TYPES)
+      exerciseCTOs = [
+        this.createExerciseCTO({
+          exercise: this.STANDARD_EXERCISES.barbellSquat,
+          calibration: this.STANDARD_CALIBRATIONS.barbellSquat,
+          equipmentType: this.STANDARD_EQUIPMENT_TYPES.barbell
+        })
+      ]
     } = options;
 
-    return new WorkoutMesocyclePlanContext(mesocycle, calibrations, exercises, equipmentTypes);
+    return new WorkoutMesocyclePlanContext(mesocycle, exerciseCTOs);
   }
 
   /**
@@ -659,7 +700,7 @@ class WorkoutTestUtil {
    */
   createHistoricalMicrocycle(options: {
     context: WorkoutMesocyclePlanContext;
-    exercisePairs: CalibrationExercisePair[][];
+    exerciseCTOs: WorkoutExerciseCTO[][];
     microcycleStartDate?: Date;
     targetRir?: number;
     isDeloadMicrocycle?: boolean;
@@ -686,7 +727,7 @@ class WorkoutTestUtil {
   }): void {
     const {
       context,
-      exercisePairs,
+      exerciseCTOs,
       microcycleStartDate = new Date(),
       targetRir = 2,
       isDeloadMicrocycle = false,
@@ -706,8 +747,8 @@ class WorkoutTestUtil {
     });
     context.addMicrocycle(microcycle);
 
-    // Set planned session pairs (this also builds exerciseIdToSessionIndex automatically)
-    context.setPlannedSessionExercisePairs(exercisePairs);
+    // Set planned session CTOs (this also builds exerciseIdToSessionIndex automatically)
+    context.setPlannedSessionExerciseCTOs(exerciseCTOs);
 
     // Use the actual service to generate all sessions, exercises, and sets
     const microcycleIndex = context.microcyclesToCreate.length - 1;
@@ -744,7 +785,7 @@ class WorkoutTestUtil {
           if (!overrides || exerciseIndex >= sessionExercises.length) return;
 
           const sessionExercise = sessionExercises[exerciseIndex];
-          const exercise = exercisePairs[sessionIndex][exerciseIndex].exercise;
+          const exercise = exerciseCTOs[sessionIndex][exerciseIndex];
 
           // Apply performance scores
           if (overrides.sorenessScore !== undefined) {
