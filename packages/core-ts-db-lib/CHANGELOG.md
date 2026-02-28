@@ -9,11 +9,21 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### ✅ Added
 
+- Added `WorkoutVolumePlanningService` with `estimateVolumeLandmarks()` and `evaluateMevProximity()` static methods for computing MEV/MRV/MAV landmarks from historical mesocycle data and assessing first-microcycle RSM proximity.
+- Added `WorkoutDeloadSeverity` and `WorkoutDeloadTriggerRule` enums, and `WorkoutDeloadRecommendation` type for structured early-deload evaluation.
+- Added `WorkoutMesocycleService.shouldTriggerEarlyDeload()` to detect when recovery session counts or consecutive performance drops warrant an early deload.
+- Added `WorkoutSetService.calculateSetSurplus()` static method computing the signed difference between actual and planned reps/RIR for a single set.
+- Added `WorkoutExerciseService.getTargetWeightFrom1RM()` static method to compute target weight directly from a precomputed effective 1RM.
+- Added `CompletedWorkoutSet` type: a `WorkoutSet` with all nullable fields guaranteed non-null.
+- Added `WorkoutVolumeLandmarkEstimate` type for estimated MEV, MRV, and MAV derived from historical mesocycle volume CTOs.
+
 ### 🏗️ Changed
 
-### 🩹 Fixed
-
-### 🔥 Removed
+- `WorkoutMesocycleService.planMesocycle()` now accepts an optional `volumeCTOs: WorkoutMuscleGroupVolumeCTO[]` parameter to seed volume landmark estimates for the plan.
+- `WorkoutMesocyclePlanContext` now exposes `firstMicrocycleRir`, `progressionInterval`, `skipDeload`, and `muscleGroupToVolumeLandmarkMap`; constructor accepts `volumeCTOs` to populate landmark estimates.
+- `WorkoutExerciseService.calculateTargetRepsAndWeightForFirstSet()` now applies autoregulation: accelerates rep target when surplus ≥ 3, holds when −2 to −1, and regresses when surplus ≤ −3.
+- `WorkoutSessionExerciseService` now uses per-exercise previous-microcycle first-set lookup to drive autoregulated progression across all planned microcycles.
+- MEV proximity adjustments from the first microcycle are now applied when generating the second microcycle via `WorkoutVolumePlanningService.evaluateMevProximity()`.
 
 ## 🔖 [4.1.12] (2026-02-28)
 
@@ -348,6 +358,7 @@ Updated dependency: now requires `@aneuhold/core-ts-lib@^2.3.11`.
 - Updated workflow permissions to allow repository write access
 
 <!-- Link References -->
+
 [4.1.13]: https://github.com/aneuhold/ts-libs/compare/core-ts-db-lib-v4.1.12...core-ts-db-lib-v4.1.13
 [4.1.12]: https://github.com/aneuhold/ts-libs/compare/core-ts-db-lib-v4.1.11...core-ts-db-lib-v4.1.12
 [4.1.11]: https://github.com/aneuhold/ts-libs/compare/core-ts-db-lib-v4.1.10...core-ts-db-lib-v4.1.11
