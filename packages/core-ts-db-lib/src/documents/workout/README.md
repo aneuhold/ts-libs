@@ -1,5 +1,7 @@
 # MesoPro Data Model + System Description
 
+Last copied from core-ts-db-lib: 2/7/2026
+
 ## Document Diagram
 
 ```mermaid
@@ -243,8 +245,10 @@ These are requirements that were developed after taking all the notes in the mor
 - **Reps in Reserve (RIR)** (pg 30): Reps in Reserve are the set's proximity to muscle failure. In other words, how many reps do you have left before you completely fail to produce the movement.
 - **Effective Sets** (pg 33): Effective sets are a set that is done within 5-30 reps, and within 0-5 RIR.
 - **Volume** (pg 34+): From page 34 and onwards, the book discusses volume as the number of effective sets. Even though this isn't the technical definition, everything averages out as long as you are using effective sets.
+- **Maintenance Volume (MV)** (pg. 34): The minimum volume necessary to avoid muscle loss. Training below this volume (or not training at all), will result in a loss of muscle over time.
 - **Minimum Effective Volume (MEV)** (pg. 34): The minimum volume which leads to muscle growth. This varies by age, training experience, and existing muscle mass. As you get stronger / bigger, this gets higher.
-- **Maximum Recoverable Volume (MRV)** (pg. 34,117): The maximum volume that can be done before muscle loss begins.
+- **Maximum Adaptive Volume (MAV)** (pg. 34): The amount of training which at any given time provides the greatest muscle growth per unit of time. It shifts over the course of a mesocycle as fatigue accumulates and volume sensitivity changes. When looking at the chart on page 34, this it the "peak" of growth.
+- **Maximum Recoverable Volume (MRV)** (pg. 34,117): The maximum volume that can be done before muscle loss begins. Detected in practice by under-performing two sessions in a row (a drop in reps at any given RIR compared to last week, even adjusted for potentially increased load).
 - **Raw Stimulus Magnitude (RSM)** (pg. 50-53): RSM is the amount of muscle growth stimulus any given Workout Session gives.
 - **Microcycle**: The shortest cycle of training that includes all workout sessions and rest days and is repeated. Typically, but not always, this is a week.
 - **Mesocycle**: An organized sequence of microcycles ordered to elicit a set of distinct training adaptations. The typical mesocycle is composed of two distinct phases: an accumulation phase, and a shorter deload phase.
@@ -367,12 +371,12 @@ To get your MEV, do the RSM calculation for the first 2-3 days of the mesocycle.
 
 After you get this information, go ahead and finish out the first week at MEV, then calculate how you should progress by answering the following questions:
 
-On a scale of 0-3 how sore did you get in the target muscle group?
+On a scale of 0-3 how sore did you get in the target muscles?
 
-- 0: You did not get at all sore in the target muscle group
-- 1: You got stiff for a few hours after training and had mild soreness in the target muscle group that resolved by next session targeting the same muscle group
-- 2: You got DOMS in the target muscle group that resolved just in time for the next session targeting the same muscle group
-- 3: You got DOMS in the target muscle group that remained for the next session targeting the same muscle group
+- 0: You did not get at all sore in the target muscles
+- 1: You got stiff for a few hours after training and had mild soreness in the target muscles that resolved by next session targeting the same muscles
+- 2: You got DOMS in the target muscles that resolved just in time for the next session targeting the same muscles
+- 3: You got DOMS in the target muscles that remained for the next session targeting the same muscles
 
 On a scale of 0-3 how was your performance?
 
@@ -402,6 +406,10 @@ The user can choose how they want to progress between two types of progression f
 - Load Progression: Add the lowest increment available for the weight that the exercise uses each week, within reason. Like if someone is lifting 300lbs, then perhaps increase by 10 lbs instead of 5lbs. A good rule of thumb is if the weight increase is less than 2% of the overall weight, then use the next higher increment available to get at, or above a 2% increase in the weight.
 - Rep Progression (Default): Add 2 reps per week to each set that is being executed. The reps should be above the previous week's by 2 once data starts coming in. Don't adjust the weight unless the target reps goes above the maximum for that exercise, in which case increase by the lowest increment available.
 
+These defaults should be auto-regulated based on actual performance. The book's core progression rule is: "If you are increasing load weekly, add only enough to allow at least the same reps, at the same or slightly lower RIR with at least four weeks of accumulation being the goal." The same principle applies in reverse for rep progression: add only enough reps to allow the same load at the same or slightly lower RIR. (Ch. 6: Phase Potentiation, "Hypertrophy Load Progression" / "Hypertrophy Rep Progression"; also repeated in Ch. 8: Summary)
+
+In practice this means: if RIR drops faster than planned (e.g. you added weight and went from 4 RIR to 1 RIR in one week), hold the same weight or reps for the next week until RIR catches up. If RIR is unexpectedly high (e.g. staying at 4 RIR when it should have dropped), add more load or reps than the default increment. A very important recommendation is to almost always err on the lighter side of load progression—if you under-add weight, you can make up for it later, but if you over-add, accumulated fatigue may force you to cut the mesocycle short. (Ch. 2: Overload, "Load Progression")
+
 So, with this in mind, the default projection might look like this:
 
 - Week 1: 4 RIR, 2 sets per exercise
@@ -426,6 +434,18 @@ How to take a deload?
 - How to choose the exercises: This can be done in 3 different ways, which are choosing the current mesocycle's exercises, the next mesocycle's, or specifically low stress exercises. To keep things simple for the purposes of my own program, I am just going to go with the first option. It is safest, and easiest to calculate.
 - How much stimulus to impose: Similar to recovery sessions, for the first half of the week, cut the last microcycle's sets and reps in half, but keep the same weight. The the second half of the week, cut the weight in half as well.
 
+#### Mesocycle-to-Mesocycle Progression (Ch. 8: Summary, "Mesocycle to Mesocycle Progress"; Ch. 3: Fatigue Management, "Dropping fatigue to reveal performance")
+
+Fatigue masks performance during a mesocycle. The deload removes fatigue and reveals the underlying fitness gains—it does not reset the strength baseline. Because of this, performance data from previous mesocycles should inform planning for new ones.
+
+When starting a new mesocycle, how to set starting weights depends on the exercise's relationship to the previous mesocycle:
+
+- **Same exercise, same rep range:** Start conservatively, below the ending weight from the previous mesocycle. The ending weight was achieved under peak fatigue and is not a sustainable starting point. It is always better to start a bit more conservative—it is less detrimental to add more weight across a meso when load is too light than to deal with the accumulated fatigue of overshooting load early on. (Ch. 8: Summary, "Progression with matched rep range for the same exercise across mesocycles")
+- **Same exercise, different rep range:** Pick the approximate RM for the new target rep range. For example, if switching from the 5-10 range to the 10-20 range, choose a weight between your 14 and 24 rep maxes (offset by the starting 4 RIR). Progress between loading ranges is not expected, only within them. (Ch. 8: Summary, "Progression with different rep ranges for the same exercise across mesocycles")
+- **New exercise:** Loading should be assessed independently and not based on weight used for other lifts. Different people have different exercise-to-exercise load ratios, so trial and error with a logbook is the practical approach. Because loading ranges are wide, estimating a weight to get within the target rep range at ~4 RIR is straightforward enough. (Ch. 8: Summary, "Progression with different exercises across mesocycles")
+
+RIR progression resets to ~4 RIR at the start of every mesocycle, progressing down to ~1-0 RIR (or ~2 RIR for beginners) by the final accumulation week. This reset is universal—it allows the longest productive accumulation phase regardless of where the previous mesocycle ended. (Ch. 8: Summary, "Mesocycle Length Choices"; Ch. 2: Overload)
+
 #### Phase Potentiation (pg. 181-191)
 
 This is a more advanced concept, and could be explored further later on. Basically, it is a way to organize mesocycles, outside of the periodic active rest periods, to get better performance. This seems to be characterized by a maintenance training phase which is an entire mesocycle training at MV (so very low volumes), but with high weight.
@@ -435,6 +455,23 @@ Page 190 talks about the muscle-gain block -> maintenance block -> fat loss bloc
 A clean middle-ground might be to just take a resensitization phase every 3-4 mesocycles, in addition to the active break once a year. So that would be 1-2 months of MV training basically. But a month is most likely all you need. See page 194 for more info.
 
 Identifying the type of mesocycle that is happening in the data model may be helpful to provide even more context. For example, a strength gain mesocycle will likely always be more productive than a cutting mesocycle. There are some great tips on how to track progress during a cutting mesocycle and how to track on page 220-221. What it comes down to is trying to stay around MEV for as long as possible until your cut is complete. You don't want your cut to ever last longer than a single mesocycle, so for example, instead of progressing from 5 sets to 9 sets over four weeks, you might go from 5 to 7 sets over six weeks. You still take the deload at the end of course, and progress with the roughly normal (but reduced) set and rep progression algorithm.
+
+#### Cycle-Type-Specific Training Modifications
+
+**Cut (Fat Loss) Mesocycles** (Ch. 7: Individualization, fat loss training section):
+
+The training goal during a fat loss phase is to prevent net muscle loss, not to maximize growth. Training can be altered to extend the mesocycle (improving the accumulation-to-deload ratio) without much downside. Key modifications:
+
+- Stay near MEV rather than pushing aggressively toward MRV. Just get some pumps, some metabolites, some soreness, and maintain performance microcycle to microcycle via the Set Progression Algorithm and muscle should be retained.
+- Add only the smallest needed volumes to stay ahead of the MEV landmark. This allows extending the accumulation phase (e.g. going from 5 to 7 sets over six weeks instead of 5 to 9 over four weeks).
+- RIR progression starts at ~4 RIR as normal—no modification is prescribed for cuts.
+
+**Resensitization (Maintenance) Mesocycles** (Ch. 6: Phase Potentiation, "Volume Potentiation"; Ch. 7: Individualization):
+
+- MV-level training: very low volume. You should rarely get sore, achieve a pump, or even feel very challenged. (Ch. 6: Phase Potentiation, maintenance training phase description)
+- Bias toward the heavy rep range. Muscle conservation during maintenance dieting is best when heavier weights are used at low volumes. (Ch. 6: Phase Potentiation, "Volume Potentiation")
+- Frequency can be very low: 1-2 sessions per muscle group per microcycle, as sparing muscle requires minimal stimulation (as little as once per week per muscle group). (Ch. 6: Phase Potentiation; Ch. 7: Individualization)
+- Duration: 3-6 weeks for the maintenance training phase. (Ch. 6: Phase Potentiation)
 
 ### Fatigue (pg. 87-89)
 
@@ -498,6 +535,7 @@ In addition to the above, which help improve the SFR, which can also help reduce
   - Recovery sessions should target the affected muscle group. In bad cases, you may need to take it easy for the entire session, but it is better if just the impacted muscle group has lower volume.
   - To actually take a recovery session, simply cut the planned reps and sets in half. So if you planned to do 5 sets of 20 reps roughly, then do 2 sets of 10 reps. Use the same weight though. If you feel that you can't do any reps at the same weight, then cut the weight and sets in half, but leave the reps the same.
   - Note that cutting things in half may seem like overkill. But what you want to avoid is only reducing the number of sets by 1, or number of reps by a couple and calling that a recovery. That just reduces stimulation AND doesn't reduce fatigue. Making both problems worse.
+  - If the recovery session was taken because MRV was hit too early, the next stimulative session can progress in load as planned, but volume should be dropped to around midway between MEV and MRV. For example, if you did week one with 10 sets and your MRV is around 20 sets, then re-starting at ~15 sets after your recovery session(s) is a good idea. From there, apply the Set Progression Algorithm and move forward with volume as needed. (Ch. 3: Fatigue Management, "Taking Recovery Sessions")
 - Active rest periods (pg. 112): This happens once per year and lasts 1-4 weeks. Take the time completely off and try not to binge eat lol. Normally this is done right after a deload, and works well with holidays. This is actually not needed for recreational hypertrophy training because the training is a hobby and not a career and the amount of stresses on the body is much less, but it is encouraged.
 
 If you are sick, and it is a fever or bad sickness, then take as many rest days as you need to fully recover. You don't want to exacerbate the problem by training early which will make it take even longer to recover and lose more time. After a sickness that takes more than a few days to recover, you need to take a deload and then start a new mesocycle.
@@ -553,5 +591,3 @@ There isn't a definitive part in the book that says this, but it seems implied: 
 These are exhausting to test, and dangerous. You will be strongest at the end of a resensitization phase, or phase where you are working at MV for an extended period of time. The upsides, are you get an accurate representation of 1RM that you can use, the downsides are the danger and fluctuations. Also testing causes 0 gains on it's own. [Here is a Youtube video from RP that discusses this](https://www.youtube.com/watch?v=4luBPhK-rlE). The primary reason this information is needed, is for the algorithms.
 
 [NASM provides a 1-rep max calculator](https://www.nasm.org/resources/one-rep-max-calculator) / algorithm that seems like it is relatively accurate. It comes from a reputable organization so it seems safe to trust them. The algorithm can be done by trying to do the most weight you can for the lowest reps possible (lower reps makes it more accurate) and plug it in to: 1RM = (Weight Lifted x Reps / 30.48) + Weight Lifted.
-
-# Todo
