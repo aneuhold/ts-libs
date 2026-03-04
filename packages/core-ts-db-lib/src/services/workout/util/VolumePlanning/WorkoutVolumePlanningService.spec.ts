@@ -617,6 +617,77 @@ describe('WorkoutVolumePlanningService', () => {
       expect(totalSets).toBe(4 + 3); // 2+2 baseline + 3 MEV adjustment
     });
 
+    it('should cap combined SFR + MEV additions at MAX_TOTAL_SET_ADDITIONS', () => {
+      const chestExercises: WorkoutExercise[] = [
+        workoutTestUtil.STANDARD_EXERCISES.barbellBenchPress,
+        workoutTestUtil.STANDARD_EXERCISES.inclineBenchPress
+      ];
+
+      const chestCTOs = [
+        workoutTestUtil.createExerciseCTO({
+          exercise: chestExercises[0],
+          calibration: workoutTestUtil.STANDARD_CALIBRATIONS.barbellBenchPress,
+          equipmentType: workoutTestUtil.STANDARD_EQUIPMENT_TYPES.barbell
+        }),
+        workoutTestUtil.createExerciseCTO({
+          exercise: chestExercises[1],
+          calibration: workoutTestUtil.STANDARD_CALIBRATIONS.inclineBenchPress,
+          equipmentType: workoutTestUtil.STANDARD_EQUIPMENT_TYPES.barbell
+        })
+      ];
+
+      const volumeCTO = workoutTestUtil.createMuscleGroupVolumeCTO(
+        [{ startingSetCount: 3, peakSetCount: 7, avgRsm: 5, avgPerformanceScore: 2.5 }],
+        workoutTestUtil.STANDARD_MUSCLE_GROUPS.chest._id
+      );
+
+      // SFR: sorenessScore=0, performanceScore=0 → +2 per exercise (+4 total)
+      // MEV: low RSM → +3
+      // Combined = 7, but MAX_TOTAL_SET_ADDITIONS = 3, so capped at 3
+      const { result } = calculateSetPlan({
+        exerciseCTOs: chestCTOs,
+        microcycleIndex: 1,
+        sessionStructure: [[0, 1]],
+        volumeCTOs: [volumeCTO],
+        historicalMicrocycles: [
+          {
+            sessionExerciseOverrides: [
+              [
+                {
+                  setCount: 2,
+                  rsm: { mindMuscleConnection: 1, pump: 1, disruption: 0 }, // RSM = 2, below MEV
+                  fatigue: {
+                    jointAndTissueDisruption: 1,
+                    perceivedEffort: 1,
+                    unusedMusclePerformance: 1
+                  },
+                  sorenessScore: 0,
+                  performanceScore: 0
+                },
+                {
+                  setCount: 2,
+                  rsm: { mindMuscleConnection: 1, pump: 0, disruption: 1 }, // RSM = 2
+                  fatigue: {
+                    jointAndTissueDisruption: 1,
+                    perceivedEffort: 1,
+                    unusedMusclePerformance: 1
+                  },
+                  sorenessScore: 0,
+                  performanceScore: 0
+                }
+              ]
+            ]
+          }
+        ]
+      });
+
+      const totalSets =
+        (result.exerciseIdToSetCount.get(chestExercises[0]._id) ?? 0) +
+        (result.exerciseIdToSetCount.get(chestExercises[1]._id) ?? 0);
+      // Baseline 2+2=4, capped additions of 3 → total 7
+      expect(totalSets).toBe(4 + 3);
+    });
+
     it('should use estimatedMav as return set count when exercise comes back from recovery with volume landmarks', () => {
       const chestExercises: WorkoutExercise[] = [
         workoutTestUtil.STANDARD_EXERCISES.barbellBenchPress,
@@ -811,7 +882,7 @@ describe('WorkoutVolumePlanningService', () => {
       .map((cto) => cto.bestCalibration?._id)
       .filter((id): id is NonNullable<typeof id> => id != null);
 
-    it('should return "below" with +3 adjustment when average RSM is 0-3', () => {
+    it('should return +3 adjustment when average RSM is 0-3 (below MEV)', () => {
       const mesocycle = workoutTestUtil.createMesocycle({
         plannedSessionCountPerMicrocycle: 1,
         calibratedExercises: chestCalibrationIds
@@ -829,12 +900,11 @@ describe('WorkoutVolumePlanningService', () => {
       const result = WorkoutVolumePlanningService.evaluateMevProximity(context, chestGroupId);
 
       expect(result).not.toBeNull();
-      expect(result?.proximity).toBe('below');
       expect(result?.recommendedSetAdjustment).toBe(3);
       expect(result?.averageRsm).toBe(2);
     });
 
-    it('should return "at" with 0 adjustment when average RSM is 4-6', () => {
+    it('should return 0 adjustment when average RSM is 4-6', () => {
       const mesocycle = workoutTestUtil.createMesocycle({
         plannedSessionCountPerMicrocycle: 1,
         calibratedExercises: chestCalibrationIds
@@ -852,12 +922,11 @@ describe('WorkoutVolumePlanningService', () => {
       const result = WorkoutVolumePlanningService.evaluateMevProximity(context, chestGroupId);
 
       expect(result).not.toBeNull();
-      expect(result?.proximity).toBe('at');
       expect(result?.recommendedSetAdjustment).toBe(0);
       expect(result?.averageRsm).toBe(5);
     });
 
-    it('should return "above" with -2 adjustment when average RSM is 7-9', () => {
+    it('should return 0 adjustment when average RSM is 7-9', () => {
       const mesocycle = workoutTestUtil.createMesocycle({
         plannedSessionCountPerMicrocycle: 1,
         calibratedExercises: chestCalibrationIds
@@ -875,8 +944,7 @@ describe('WorkoutVolumePlanningService', () => {
       const result = WorkoutVolumePlanningService.evaluateMevProximity(context, chestGroupId);
 
       expect(result).not.toBeNull();
-      expect(result?.proximity).toBe('above');
-      expect(result?.recommendedSetAdjustment).toBe(-2);
+      expect(result?.recommendedSetAdjustment).toBe(0);
       expect(result?.averageRsm).toBe(8);
     });
 
@@ -922,10 +990,10 @@ describe('WorkoutVolumePlanningService', () => {
 
       const result = WorkoutVolumePlanningService.evaluateMevProximity(context, chestGroupId);
       expect(result?.averageRsm).toBe(8);
-      expect(result?.proximity).toBe('above');
+      expect(result?.recommendedSetAdjustment).toBe(0);
     });
 
-    it('should handle boundary value where average RSM floors to 3 (bracket 0-3)', () => {
+    it('should handle boundary value where average RSM floors to 3 (below MEV)', () => {
       // Two chest exercises in separate sessions: RSM 3 and RSM 4 => avg 3.5, floor = 3
       const mesocycle = workoutTestUtil.createMesocycle({
         plannedSessionCountPerMicrocycle: 2,
@@ -944,8 +1012,8 @@ describe('WorkoutVolumePlanningService', () => {
 
       const result = WorkoutVolumePlanningService.evaluateMevProximity(context, chestGroupId);
 
-      // Average = (3 + 4) / 2 = 3.5, floor(3.5) = 3 => 'below'
-      expect(result?.proximity).toBe('below');
+      // Average = (3 + 4) / 2 = 3.5, floor(3.5) = 3 => below MEV, +3
+      expect(result?.recommendedSetAdjustment).toBe(3);
     });
   });
 

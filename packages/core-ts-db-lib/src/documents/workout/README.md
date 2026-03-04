@@ -367,7 +367,7 @@ To get your MEV, do the RSM calculation for the first 2-3 days of the mesocycle.
 | 0–1 | Stimulus likely below MEV | Increase volume the following week by two to four sets |
 | 2–3 | Stimulus likely at or below MEV | Increase volume the following week by two to four sets |
 | 4–6 | Stimulus likely at or just above MEV (a great place to start your mesocycle) | Progress normally |
-| 7–9 | Stimulus likely between MEV and MRV, possibly exceeding MRV | Drop volume the following week |
+| 7–9 | Stimulus likely between MEV and MRV, possibly exceeding MRV | Drop volume the following week (this is handled by recovery sessions) |
 
 After you get this information, go ahead and finish out the first week at MEV, then calculate how you should progress by answering the following questions:
 

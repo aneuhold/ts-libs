@@ -44,17 +44,11 @@ export default class WorkoutVolumePlanningService {
   /** Default estimated MRV when no mesocycle history exists at all. */
   private static readonly DEFAULT_MRV = 8;
 
-  /** RSM bracket upper bound for "below MEV" proximity (0 to this value inclusive). */
-  private static readonly MEV_PROXIMITY_BELOW_THRESHOLD = 3;
-
-  /** RSM bracket upper bound for "at MEV" proximity (above BELOW threshold up to this value inclusive). */
-  private static readonly MEV_PROXIMITY_AT_THRESHOLD = 6;
+  /** RSM bracket upper bound for "below MEV" (0 to this value inclusive). */
+  private static readonly MEV_BELOW_RSM_THRESHOLD = 3;
 
   /** Recommended set adjustment when volume is below MEV. */
   private static readonly MEV_BELOW_SET_ADJUSTMENT = 3;
-
-  /** Recommended set adjustment when volume is above MEV. */
-  private static readonly MEV_ABOVE_SET_ADJUSTMENT = -2;
 
   /** Maximum sets that can be added to a single exercise in one progression step. */
   private static readonly MAX_SET_ADDITION_PER_EXERCISE = 2;
@@ -93,17 +87,6 @@ export default class WorkoutVolumePlanningService {
         recoveryExerciseIds.add(recoveryExerciseId);
       }
     });
-
-    // Apply MEV proximity adjustment when generating the second microcycle (index 1)
-    // after the first microcycle is complete with RSM data. Only applies when volume
-    // data (volumeCTOs) was provided to the context.
-    if (
-      microcycleIndex === 1 &&
-      !isDeloadMicrocycle &&
-      context.muscleGroupToVolumeLandmarkMap.size > 0
-    ) {
-      this.applyMevProximityAdjustments(context, exerciseIdToSetCount);
-    }
 
     return { exerciseIdToSetCount, recoveryExerciseIds };
   }
@@ -168,9 +151,8 @@ export default class WorkoutVolumePlanningService {
   }
 
   /**
-   * Evaluates MEV (Minimum Effective Volume) proximity for a muscle group based on
-   * RSM scores from the first microcycle. Called when generating the second microcycle to adjust
-   * the volume baseline.
+   * Evaluates whether a muscle group's volume is below MEV based on RSM scores from the first
+   * microcycle. Called when generating the second microcycle to boost volume when RSM is low.
    *
    * Returns `null` when the first microcycle is incomplete or has no RSM data for the muscle group.
    *
@@ -181,13 +163,9 @@ export default class WorkoutVolumePlanningService {
     context: WorkoutMesocyclePlanContext,
     muscleGroupId: UUID
   ): {
-    /** 'below' = RSM 0-3, 'at' = RSM 4-6, 'above' = RSM 7-9 */
-    proximity: 'below' | 'at' | 'above';
-
     /**
      * Recommended total set adjustment for this muscle group.
-     * Positive = add sets, negative = remove sets, 0 = no change.
-     * Range: -2 to +3
+     * +3 when average RSM is low (0-3), 0 otherwise.
      */
     recommendedSetAdjustment: number;
 
@@ -224,53 +202,10 @@ export default class WorkoutVolumePlanningService {
     const averageRsm = rsmTotals.reduce((sum, val) => sum + val, 0) / rsmTotals.length;
     const bracket = Math.floor(averageRsm);
 
-    if (bracket <= this.MEV_PROXIMITY_BELOW_THRESHOLD) {
-      return {
-        proximity: 'below',
-        recommendedSetAdjustment: this.MEV_BELOW_SET_ADJUSTMENT,
-        averageRsm
-      };
-    } else if (bracket <= this.MEV_PROXIMITY_AT_THRESHOLD) {
-      return { proximity: 'at', recommendedSetAdjustment: 0, averageRsm };
+    if (bracket <= this.MEV_BELOW_RSM_THRESHOLD) {
+      return { recommendedSetAdjustment: this.MEV_BELOW_SET_ADJUSTMENT, averageRsm };
     }
-    return {
-      proximity: 'above',
-      recommendedSetAdjustment: this.MEV_ABOVE_SET_ADJUSTMENT,
-      averageRsm
-    };
-  }
-
-  /**
-   * Applies MEV proximity adjustments based on RSM data from the first microcycle.
-   * Adjusts set counts per muscle group when the first microcycle indicates volume
-   * was below or above MEV.
-   */
-  private static applyMevProximityAdjustments(
-    context: WorkoutMesocyclePlanContext,
-    exerciseIdToSetCount: Map<UUID, number>
-  ): void {
-    if (!context.muscleGroupToExerciseCTOsMap) return;
-
-    for (const [muscleGroupId, muscleGroupExerciseCTOs] of context.muscleGroupToExerciseCTOsMap) {
-      const mevResult = this.evaluateMevProximity(context, muscleGroupId);
-      if (!mevResult || mevResult.recommendedSetAdjustment === 0) continue;
-
-      // Distribute the adjustment evenly across exercises in this muscle group
-      const exerciseCount = muscleGroupExerciseCTOs.length;
-      const adjustmentPerExercise = Math.floor(mevResult.recommendedSetAdjustment / exerciseCount);
-      const adjustmentRemainder = mevResult.recommendedSetAdjustment % exerciseCount;
-
-      muscleGroupExerciseCTOs.forEach((cto, index) => {
-        const currentSets = exerciseIdToSetCount.get(cto._id) ?? 2;
-        const extra =
-          index < Math.abs(adjustmentRemainder) ? Math.sign(mevResult.recommendedSetAdjustment) : 0;
-        const newSets = Math.max(
-          1,
-          Math.min(currentSets + adjustmentPerExercise + extra, this.MAX_SETS_PER_EXERCISE)
-        );
-        exerciseIdToSetCount.set(cto._id, newSets);
-      });
-    }
+    return { recommendedSetAdjustment: 0, averageRsm };
   }
 
   /**
@@ -425,6 +360,19 @@ export default class WorkoutVolumePlanningService {
 
     // 3. Determine sets to add and valid candidates
     let totalSetsToAdd = 0;
+
+    // MEV proximity boost (microcycle index 1 only; deload already returned early)
+    if (
+      microcycleIndex === 1 &&
+      primaryMuscleGroupId &&
+      context.muscleGroupToVolumeLandmarkMap.size > 0
+    ) {
+      const mevResult = this.evaluateMevProximity(context, primaryMuscleGroupId);
+      if (mevResult && mevResult.recommendedSetAdjustment > 0) {
+        totalSetsToAdd += mevResult.recommendedSetAdjustment;
+      }
+    }
+
     const candidates: {
       exerciseId: UUID;
       sfr: number;
