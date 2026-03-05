@@ -334,30 +334,6 @@ export default class WorkoutVolumePlanningService {
       return { exerciseIdToSetCount, recoveryExerciseIds };
     }
 
-    /**
-     * Determines if the session for the given exercise is already capped for this muscle group.
-     */
-    function sessionIsCapped(exerciseId: UUID): boolean {
-      if (!context.exerciseIdToSessionIndex) {
-        throw new Error(
-          'WorkoutMesocyclePlanContext.exerciseIdToSessionIndex is not initialized. This should be set during mesocycle planning.'
-        );
-      }
-      const sessionIndex = context.exerciseIdToSessionIndex.get(exerciseId);
-      if (sessionIndex === undefined) return false;
-
-      const exerciseIdsInSession = sessionIndexToExerciseIds.get(sessionIndex);
-      if (!exerciseIdsInSession) return false;
-      let totalSetsInSession = 0;
-      exerciseIdsInSession.forEach((id) => {
-        // Use the sets from the previous microcycle's session exercise
-        totalSetsInSession += exerciseIdToPrevSessionExercise.get(id)?.setOrder.length || 0;
-      });
-      return (
-        totalSetsInSession >= WorkoutVolumePlanningService.MAX_SETS_PER_MUSCLE_GROUP_PER_SESSION
-      );
-    }
-
     // 3. Determine sets to add and valid candidates
     let totalSetsToAdd = 0;
 
@@ -409,7 +385,12 @@ export default class WorkoutVolumePlanningService {
         // Consider as candidate if session is not already capped
         if (
           previousSessionExercise.setOrder.length < this.MAX_SETS_PER_EXERCISE &&
-          !sessionIsCapped(cto._id)
+          !this.sessionIsCapped(
+            cto._id,
+            context.exerciseIdToSessionIndex,
+            sessionIndexToExerciseIds,
+            exerciseIdToPrevSessionExercise
+          )
         ) {
           candidates.push({
             exerciseId: cto._id,
@@ -437,55 +418,18 @@ export default class WorkoutVolumePlanningService {
         : candidateA.muscleGroupIndex - candidateB.muscleGroupIndex
     );
 
-    /**
-     * Gets the total sets currently planned for a session.
-     */
-    function getSessionTotal(exerciseId: UUID): number {
-      if (!context.exerciseIdToSessionIndex) return 0;
-      const sessionIndex = context.exerciseIdToSessionIndex.get(exerciseId);
-      if (sessionIndex === undefined) return 0;
-
-      const exerciseIdsInSession = sessionIndexToExerciseIds.get(sessionIndex);
-      if (!exerciseIdsInSession) return 0;
-
-      let total = 0;
-      exerciseIdsInSession.forEach((id) => {
-        total += exerciseIdToSetCount.get(id) || 0;
-      });
-      return total;
-    }
-
-    /**
-     * Attempts to add sets to an exercise, respecting all constraints.
-     * Returns the number of sets actually added.
-     */
-    function addSetsToExercise(exerciseId: UUID, setsToAdd: number): number {
-      const currentSets = exerciseIdToSetCount.get(exerciseId) || 0;
-      const sessionTotal = getSessionTotal(exerciseId);
-
-      const maxDueToExerciseLimit =
-        WorkoutVolumePlanningService.MAX_SETS_PER_EXERCISE - currentSets;
-      const maxDueToSessionLimit =
-        WorkoutVolumePlanningService.MAX_SETS_PER_MUSCLE_GROUP_PER_SESSION - sessionTotal;
-      const maxAddable = Math.min(
-        setsToAdd,
-        maxDueToExerciseLimit,
-        maxDueToSessionLimit,
-        WorkoutVolumePlanningService.MAX_SET_ADDITION_PER_EXERCISE
-      );
-
-      if (maxAddable > 0) {
-        exerciseIdToSetCount.set(exerciseId, currentSets + maxAddable);
-      }
-      return maxAddable;
-    }
-
     let setsRemaining =
-      totalSetsToAdd >= WorkoutVolumePlanningService.MAX_TOTAL_SET_ADDITIONS
-        ? WorkoutVolumePlanningService.MAX_TOTAL_SET_ADDITIONS
+      totalSetsToAdd >= this.MAX_TOTAL_SET_ADDITIONS
+        ? this.MAX_TOTAL_SET_ADDITIONS
         : totalSetsToAdd;
     for (const candidate of candidates) {
-      const added = addSetsToExercise(candidate.exerciseId, setsRemaining);
+      const added = this.addSetsToExercise(
+        candidate.exerciseId,
+        setsRemaining,
+        exerciseIdToSetCount,
+        context.exerciseIdToSessionIndex,
+        sessionIndexToExerciseIds
+      );
       setsRemaining -= added;
       if (setsRemaining === 0) break;
     }
@@ -545,5 +489,106 @@ export default class WorkoutVolumePlanningService {
     return exerciseIndexInMuscleGroupForMicrocycle < remainder
       ? baseSetsPerExercise + 1
       : baseSetsPerExercise;
+  }
+
+  /**
+   * Determines if the session containing the given exercise is already at the
+   * per-muscle-group-per-session cap, based on previous microcycle set counts.
+   *
+   * @param exerciseId The exercise to check.
+   * @param exerciseIdToSessionIndex Map from exercise ID to its session index.
+   * @param sessionIndexToExerciseIds Map from session index to exercise IDs in that session.
+   * @param exerciseIdToPrevSessionExercise Map from exercise ID to its previous session exercise.
+   */
+  private static sessionIsCapped(
+    exerciseId: UUID,
+    exerciseIdToSessionIndex: Map<UUID, number> | undefined,
+    sessionIndexToExerciseIds: Map<number, UUID[]>,
+    exerciseIdToPrevSessionExercise: Map<UUID, WorkoutSessionExercise>
+  ): boolean {
+    if (!exerciseIdToSessionIndex) {
+      throw new Error(
+        'WorkoutMesocyclePlanContext.exerciseIdToSessionIndex is not initialized. This should be set during mesocycle planning.'
+      );
+    }
+    const sessionIndex = exerciseIdToSessionIndex.get(exerciseId);
+    if (sessionIndex === undefined) return false;
+
+    const exerciseIdsInSession = sessionIndexToExerciseIds.get(sessionIndex);
+    if (!exerciseIdsInSession) return false;
+    let totalSetsInSession = 0;
+    exerciseIdsInSession.forEach((id) => {
+      totalSetsInSession += exerciseIdToPrevSessionExercise.get(id)?.setOrder.length || 0;
+    });
+    return totalSetsInSession >= this.MAX_SETS_PER_MUSCLE_GROUP_PER_SESSION;
+  }
+
+  /**
+   * Gets the total sets currently planned for a session containing the given exercise.
+   *
+   * @param exerciseId The exercise whose session total to compute.
+   * @param exerciseIdToSetCount Current set count assignments.
+   * @param exerciseIdToSessionIndex Map from exercise ID to its session index.
+   * @param sessionIndexToExerciseIds Map from session index to exercise IDs in that session.
+   */
+  private static getSessionSetTotal(
+    exerciseId: UUID,
+    exerciseIdToSetCount: Map<UUID, number>,
+    exerciseIdToSessionIndex: Map<UUID, number> | undefined,
+    sessionIndexToExerciseIds: Map<number, UUID[]>
+  ): number {
+    if (!exerciseIdToSessionIndex) return 0;
+    const sessionIndex = exerciseIdToSessionIndex.get(exerciseId);
+    if (sessionIndex === undefined) return 0;
+
+    const exerciseIdsInSession = sessionIndexToExerciseIds.get(sessionIndex);
+    if (!exerciseIdsInSession) return 0;
+
+    let total = 0;
+    exerciseIdsInSession.forEach((id) => {
+      total += exerciseIdToSetCount.get(id) || 0;
+    });
+    return total;
+  }
+
+  /**
+   * Attempts to add sets to an exercise, respecting per-exercise, per-session, and
+   * per-addition caps. Mutates `exerciseIdToSetCount` in place.
+   *
+   * @param exerciseId The exercise to add sets to.
+   * @param setsToAdd The desired number of sets to add.
+   * @param exerciseIdToSetCount Current set count assignments (mutated).
+   * @param exerciseIdToSessionIndex Map from exercise ID to its session index.
+   * @param sessionIndexToExerciseIds Map from session index to exercise IDs in that session.
+   * @returns The number of sets actually added.
+   */
+  private static addSetsToExercise(
+    exerciseId: UUID,
+    setsToAdd: number,
+    exerciseIdToSetCount: Map<UUID, number>,
+    exerciseIdToSessionIndex: Map<UUID, number> | undefined,
+    sessionIndexToExerciseIds: Map<number, UUID[]>
+  ): number {
+    const currentSets = exerciseIdToSetCount.get(exerciseId) || 0;
+    const sessionTotal = this.getSessionSetTotal(
+      exerciseId,
+      exerciseIdToSetCount,
+      exerciseIdToSessionIndex,
+      sessionIndexToExerciseIds
+    );
+
+    const maxDueToExerciseLimit = this.MAX_SETS_PER_EXERCISE - currentSets;
+    const maxDueToSessionLimit = this.MAX_SETS_PER_MUSCLE_GROUP_PER_SESSION - sessionTotal;
+    const maxAddable = Math.min(
+      setsToAdd,
+      maxDueToExerciseLimit,
+      maxDueToSessionLimit,
+      this.MAX_SET_ADDITION_PER_EXERCISE
+    );
+
+    if (maxAddable > 0) {
+      exerciseIdToSetCount.set(exerciseId, currentSets + maxAddable);
+    }
+    return maxAddable;
   }
 }
