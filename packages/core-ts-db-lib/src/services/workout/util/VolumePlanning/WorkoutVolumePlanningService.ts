@@ -9,10 +9,16 @@ import type WorkoutMesocyclePlanContext from '../../Mesocycle/WorkoutMesocyclePl
 import WorkoutSessionExerciseService from '../../SessionExercise/WorkoutSessionExerciseService.js';
 import WorkoutSFRService from '../SFR/WorkoutSFRService.js';
 
+/** An exercise eligible to receive additional sets during SFR-based distribution. */
+type SetAdditionCandidate = {
+  exerciseId: UUID;
+  sfr: number;
+  muscleGroupIndex: number;
+  previousSetCount: number;
+};
+
 /**
  * A service for handling volume planning operations across microcycles.
- *
- * SCOPE: Microcycle-level volume distribution (calculating set counts per exercise)
  *
  * RESPONSIBILITIES:
  * - Calculate set counts for exercises across a microcycle
@@ -211,8 +217,14 @@ export default class WorkoutVolumePlanningService {
   /**
    * Calculates the set count for each exercise in a particular muscle group for this microcycle.
    *
-   * If there is no previous microcycle data for the muscle group, this falls back to
-   * the baseline progression rules.
+   * Pipeline:
+   * 1. **Baseline** — Calculate default set counts from progression rules
+   * 2. **Resolve history** — Find the most recent session exercise data for each exercise
+   * 3. **Apply history** — Override baselines with historical set counts (or MAV for recovery returns)
+   * 4. **Evaluate SFR** — Determine recovery exercises and candidates for set additions
+   * 5. **Distribute sets** — Allocate added sets to candidates by SFR quality
+   *
+   * Falls back to baseline when no previous microcycle data exists.
    */
   private static calculateSetCountForEachExerciseInMuscleGroup(
     context: WorkoutMesocyclePlanContext,
@@ -223,10 +235,9 @@ export default class WorkoutVolumePlanningService {
     const exerciseIdToSetCount = new Map<UUID, number>();
     const recoveryExerciseIds = new Set<UUID>();
     const sessionIndexToExerciseIds = new Map<number, UUID[]>();
-
     const { progressionInterval } = context;
 
-    // 1. Calculate baselines for all exercises in muscle group
+    // 1. Calculate baselines and build session-to-exercise index
     muscleGroupExerciseCTOs.forEach((cto, index) => {
       const baseline = this.calculateBaselineSetCount(
         microcycleIndex,
@@ -237,8 +248,6 @@ export default class WorkoutVolumePlanningService {
       );
       exerciseIdToSetCount.set(cto._id, Math.min(baseline, this.MAX_SETS_PER_EXERCISE));
 
-      // Build out the map for session indices to the array of exercise IDs as it pertains to this
-      // muscle group.
       if (!context.exerciseIdToSessionIndex) return;
       const exerciseSessionIndex = context.exerciseIdToSessionIndex.get(cto._id);
       if (exerciseSessionIndex === undefined) return;
@@ -248,17 +257,91 @@ export default class WorkoutVolumePlanningService {
       sessionIndexToExerciseIds.set(exerciseSessionIndex, existingExerciseIdsForSession);
     });
 
-    // 2. Resolve historical performance data
-    // Return if no previous microcycle
+    // 2. Resolve historical data — returns null if no usable history exists
+    const exerciseIds = new Set(muscleGroupExerciseCTOs.map((cto) => cto._id));
+    const historicalData = this.resolveHistoricalExerciseData(
+      context,
+      microcycleIndex,
+      exerciseIds
+    );
+    if (!historicalData) return { exerciseIdToSetCount, recoveryExerciseIds };
+
+    // 3. Apply historical set counts (overrides baselines)
+    const primaryMuscleGroupId = muscleGroupExerciseCTOs[0]?.primaryMuscleGroups[0];
+    const volumeLandmark = primaryMuscleGroupId
+      ? context.muscleGroupToVolumeLandmarkMap.get(primaryMuscleGroupId)
+      : undefined;
+
+    this.applyHistoricalSetCounts(
+      muscleGroupExerciseCTOs,
+      historicalData.exerciseIdToPrevSessionExercise,
+      historicalData.exercisesThatWerePreviouslyInRecovery,
+      exerciseIdToSetCount,
+      isDeloadMicrocycle,
+      volumeLandmark
+    );
+
+    // Deload microcycles and zero-progression cycles (Resensitization) skip SFR-based set additions
+    if (isDeloadMicrocycle || progressionInterval === 0) {
+      return { exerciseIdToSetCount, recoveryExerciseIds };
+    }
+
+    // 4. Evaluate SFR recommendations (MEV boost + per-exercise SFR + recovery detection)
+    const { totalSetsToAdd, candidates } = this.evaluateSfrRecommendations(
+      context,
+      microcycleIndex,
+      muscleGroupExerciseCTOs,
+      historicalData.exerciseIdToPrevSessionExercise,
+      historicalData.exercisesThatWerePreviouslyInRecovery,
+      exerciseIdToSetCount,
+      recoveryExerciseIds,
+      primaryMuscleGroupId,
+      sessionIndexToExerciseIds
+    );
+
+    if (totalSetsToAdd === 0 || candidates.length === 0) {
+      return { exerciseIdToSetCount, recoveryExerciseIds };
+    }
+
+    // 5. Distribute added sets to candidates by SFR quality
+    this.distributeSetsToExercises(
+      candidates,
+      totalSetsToAdd,
+      exerciseIdToSetCount,
+      context.exerciseIdToSessionIndex,
+      sessionIndexToExerciseIds
+    );
+
+    return { exerciseIdToSetCount, recoveryExerciseIds };
+  }
+
+  /**
+   * Walks backward through completed microcycles to find the most recent non-recovery
+   * session exercise for each exercise in the muscle group.
+   *
+   * Returns `null` when no usable historical data exists (no previous microcycle, or
+   * previous microcycles are incomplete/have no matching exercises).
+   *
+   * @param context The mesocycle planning context.
+   * @param microcycleIndex The current microcycle index.
+   * @param exerciseIds The exercise IDs to search for.
+   */
+  private static resolveHistoricalExerciseData(
+    context: WorkoutMesocyclePlanContext,
+    microcycleIndex: number,
+    exerciseIds: Set<UUID>
+  ): {
+    exerciseIdToPrevSessionExercise: Map<UUID, WorkoutSessionExercise>;
+    exercisesThatWerePreviouslyInRecovery: Set<UUID>;
+  } | null {
     let previousMicrocycleIndex = microcycleIndex - 1;
     let previousMicrocycle = context.microcyclesInOrder[previousMicrocycleIndex];
-    if (!previousMicrocycle) return { exerciseIdToSetCount, recoveryExerciseIds };
+    if (!previousMicrocycle) return null;
 
-    // Map previous session exercises
-    const exerciseIds = new Set(muscleGroupExerciseCTOs.map((cto) => cto._id));
     const exerciseIdToPrevSessionExercise = new Map<UUID, WorkoutSessionExercise>();
     const foundExerciseIds = new Set<UUID>();
     const exercisesThatWerePreviouslyInRecovery = new Set<UUID>();
+
     // Loop through each previous microcycle until we find all exercises or run out of microcycles
     while (exerciseIdToPrevSessionExercise.size < exerciseIds.size && previousMicrocycle) {
       // Check if the previous microcycle is complete; if not, we cannot use its data
@@ -269,14 +352,12 @@ export default class WorkoutVolumePlanningService {
         break;
       }
 
-      // Start with session order
+      // Scan all session exercises in this microcycle for matching non-recovery exercises
       for (const sessionId of previousMicrocycle.sessionOrder) {
         const session = context.sessionMap.get(sessionId);
         if (!session) continue;
-        // Get the session exercises for this session
         for (const sessionExerciseId of session.sessionExerciseOrder) {
           const sessionExercise = context.sessionExerciseMap.get(sessionExerciseId);
-          // Map if in our muscle group && it isn't a recovery exercise
           if (
             sessionExercise &&
             exerciseIds.has(sessionExercise.workoutExerciseId) &&
@@ -285,59 +366,92 @@ export default class WorkoutVolumePlanningService {
           ) {
             exerciseIdToPrevSessionExercise.set(sessionExercise.workoutExerciseId, sessionExercise);
             foundExerciseIds.add(sessionExercise.workoutExerciseId);
+            // If we had to go back more than one microcycle, the exercise was in recovery
             if (previousMicrocycleIndex < microcycleIndex - 1) {
               exercisesThatWerePreviouslyInRecovery.add(sessionExercise.workoutExerciseId);
             }
           }
         }
       }
-      // Move to earlier microcycle
       previousMicrocycleIndex = previousMicrocycleIndex - 1;
       previousMicrocycle = context.microcyclesInOrder[previousMicrocycleIndex];
     }
-    if (exerciseIdToPrevSessionExercise.size === 0)
-      return { exerciseIdToSetCount, recoveryExerciseIds };
 
-    // Update baseline with historical set counts when available.
-    // For deload microcycles, halve the historical count (minimum 1 set). We don't use baseline
-    // because the user may have adjusted over the mesocycle in a way that the baseline is actually
-    // a higher set count than what would be calculated by halving the previous microcycle's sets.
-    //
-    // For exercises returning from recovery, use the estimated MAV from volume landmarks
-    // when available, instead of the pre-recovery historical count.
-    const primaryMuscleGroupId = muscleGroupExerciseCTOs[0]?.primaryMuscleGroups[0];
-    const volumeLandmark = primaryMuscleGroupId
-      ? context.muscleGroupToVolumeLandmarkMap.get(primaryMuscleGroupId)
-      : undefined;
+    if (exerciseIdToPrevSessionExercise.size === 0) return null;
+    return { exerciseIdToPrevSessionExercise, exercisesThatWerePreviouslyInRecovery };
+  }
 
+  /**
+   * Overrides baseline set counts with historical data from the previous microcycle.
+   *
+   * For exercises returning from recovery, uses the estimated MAV from volume landmarks
+   * when available. For deload microcycles, halves the historical count (minimum 1 set).
+   *
+   * @param muscleGroupExerciseCTOs Exercises in this muscle group.
+   * @param exerciseIdToPrevSessionExercise Map from exercise ID to its previous session exercise.
+   * @param exercisesThatWerePreviouslyInRecovery Exercises returning from recovery.
+   * @param exerciseIdToSetCount Current set count assignments (mutated).
+   * @param isDeloadMicrocycle Whether this is a deload microcycle.
+   * @param volumeLandmark Volume landmark estimate for the primary muscle group, if available.
+   */
+  private static applyHistoricalSetCounts(
+    muscleGroupExerciseCTOs: WorkoutExerciseCTO[],
+    exerciseIdToPrevSessionExercise: Map<UUID, WorkoutSessionExercise>,
+    exercisesThatWerePreviouslyInRecovery: Set<UUID>,
+    exerciseIdToSetCount: Map<UUID, number>,
+    isDeloadMicrocycle: boolean,
+    volumeLandmark: WorkoutVolumeLandmarkEstimate | undefined
+  ): void {
     muscleGroupExerciseCTOs.forEach((cto) => {
       const previousSessionExercise = exerciseIdToPrevSessionExercise.get(cto._id);
-      if (previousSessionExercise) {
-        let setCount: number;
+      if (!previousSessionExercise) return;
 
-        if (exercisesThatWerePreviouslyInRecovery.has(cto._id) && volumeLandmark) {
-          // Exercise is returning from recovery — resume at the estimated MAV
-          setCount = Math.min(volumeLandmark.estimatedMav, this.MAX_SETS_PER_EXERCISE);
-        } else {
-          setCount = Math.min(previousSessionExercise.setOrder.length, this.MAX_SETS_PER_EXERCISE);
-        }
-
-        if (isDeloadMicrocycle) {
-          setCount = Math.max(1, Math.floor(setCount / 2));
-        }
-        exerciseIdToSetCount.set(cto._id, setCount);
+      let setCount: number;
+      if (exercisesThatWerePreviouslyInRecovery.has(cto._id) && volumeLandmark) {
+        // Returning from recovery — use estimated MAV as a safe re-entry volume
+        setCount = Math.min(volumeLandmark.estimatedMav, this.MAX_SETS_PER_EXERCISE);
+      } else {
+        // Carry forward last microcycle's set count
+        setCount = Math.min(previousSessionExercise.setOrder.length, this.MAX_SETS_PER_EXERCISE);
       }
+
+      if (isDeloadMicrocycle) {
+        // Deload: halve volume, minimum 1 set
+        setCount = Math.max(1, Math.floor(setCount / 2));
+      }
+      exerciseIdToSetCount.set(cto._id, setCount);
     });
+  }
 
-    // Deload microcycles and zero-progression cycles (Resensitization) skip SFR-based set additions
-    if (isDeloadMicrocycle || progressionInterval === 0) {
-      return { exerciseIdToSetCount, recoveryExerciseIds };
-    }
-
-    // 3. Determine sets to add and valid candidates
+  /**
+   * Evaluates each exercise's performance feedback to determine recovery exercises,
+   * set addition recommendations, and candidates for volume increases. Also includes
+   * the MEV boost for the second microcycle.
+   *
+   * @param context The mesocycle planning context.
+   * @param microcycleIndex The current microcycle index.
+   * @param muscleGroupExerciseCTOs Exercises in this muscle group.
+   * @param exerciseIdToPrevSessionExercise Map from exercise ID to its previous session exercise.
+   * @param exercisesThatWerePreviouslyInRecovery Exercises returning from recovery.
+   * @param exerciseIdToSetCount Current set count assignments (mutated for recovery exercises).
+   * @param recoveryExerciseIds Set of exercise IDs flagged for recovery (mutated).
+   * @param primaryMuscleGroupId The primary muscle group ID, for MEV evaluation.
+   * @param sessionIndexToExerciseIds Map from session index to exercise IDs in that session.
+   */
+  private static evaluateSfrRecommendations(
+    context: WorkoutMesocyclePlanContext,
+    microcycleIndex: number,
+    muscleGroupExerciseCTOs: WorkoutExerciseCTO[],
+    exerciseIdToPrevSessionExercise: Map<UUID, WorkoutSessionExercise>,
+    exercisesThatWerePreviouslyInRecovery: Set<UUID>,
+    exerciseIdToSetCount: Map<UUID, number>,
+    recoveryExerciseIds: Set<UUID>,
+    primaryMuscleGroupId: UUID | undefined,
+    sessionIndexToExerciseIds: Map<number, UUID[]>
+  ): { totalSetsToAdd: number; candidates: SetAdditionCandidate[] } {
     let totalSetsToAdd = 0;
 
-    // MEV proximity boost (microcycle index 1 only; deload already returned early)
+    // MEV proximity boost: if microcycle 1 RSM was low, add sets to approach MEV
     if (
       microcycleIndex === 1 &&
       primaryMuscleGroupId &&
@@ -349,16 +463,12 @@ export default class WorkoutVolumePlanningService {
       }
     }
 
-    const candidates: {
-      exerciseId: UUID;
-      sfr: number;
-      muscleGroupIndex: number;
-      previousSetCount: number;
-    }[] = [];
+    const candidates: SetAdditionCandidate[] = [];
     muscleGroupExerciseCTOs.forEach((cto, muscleGroupIndex) => {
       const previousSessionExercise = exerciseIdToPrevSessionExercise.get(cto._id);
       if (!previousSessionExercise) return;
 
+      // Get SFR-based recommendation: positive = add sets, 0 = maintain, -1 = recovery needed
       let recommendation: number | null;
       if (!exercisesThatWerePreviouslyInRecovery.has(cto._id)) {
         recommendation =
@@ -366,23 +476,21 @@ export default class WorkoutVolumePlanningService {
             previousSessionExercise
           );
       } else {
-        // If previously in recovery, do not recommend adding sets this microcycle. Also, this is
-        // the only thing we are overriding. We still want to use the historical data for
-        // SFR calculations, even though that one was the one that triggered a recovery session.
-        // This should make it so that it is less likely to have sets added to it.
+        // Returning from recovery — don't add sets yet, but still use SFR for candidate ranking
         recommendation = 0;
       }
 
       if (recommendation === -1) {
+        // Recovery needed: halve sets and flag as recovery exercise
         recoveryExerciseIds.add(cto._id);
-        // Cut sets in half (rounded down, minimum 1) for recovery
         const previousSetCount = previousSessionExercise.setOrder.length;
         const recoverySets = Math.max(1, Math.floor(previousSetCount / 2));
         exerciseIdToSetCount.set(cto._id, recoverySets);
       } else if (recommendation !== null && recommendation >= 0) {
+        // Accumulate SFR-recommended additions into shared total
         totalSetsToAdd += recommendation;
 
-        // Consider as candidate if session is not already capped
+        // Only exercises below per-exercise cap and in uncapped sessions are candidates
         if (
           previousSessionExercise.setOrder.length < this.MAX_SETS_PER_EXERCISE &&
           !this.sessionIsCapped(
@@ -405,36 +513,51 @@ export default class WorkoutVolumePlanningService {
       }
     });
 
-    // Return if nothing to add or no candidates
-    if (totalSetsToAdd === 0 || candidates.length === 0) {
-      return { exerciseIdToSetCount, recoveryExerciseIds };
-    }
+    return { totalSetsToAdd, candidates };
+  }
 
-    // 4. Distribute added sets based on SFR quality
-    // Sort by SFR descending, then by muscleGroupIndex ascending (as tie-breaker)
+  /**
+   * Distributes added sets across candidate exercises, prioritizing higher SFR scores.
+   * Respects per-exercise, per-session, and per-addition caps.
+   *
+   * @param candidates Exercises eligible for set additions, with SFR scores.
+   * @param totalSetsToAdd Total sets recommended for addition (before capping).
+   * @param exerciseIdToSetCount Current set count assignments (mutated).
+   * @param exerciseIdToSessionIndex Map from exercise ID to its session index.
+   * @param sessionIndexToExerciseIds Map from session index to exercise IDs in that session.
+   */
+  private static distributeSetsToExercises(
+    candidates: SetAdditionCandidate[],
+    totalSetsToAdd: number,
+    exerciseIdToSetCount: Map<UUID, number>,
+    exerciseIdToSessionIndex: Map<UUID, number> | undefined,
+    sessionIndexToExerciseIds: Map<number, UUID[]>
+  ): void {
+    // Prioritize exercises with highest SFR (best stimulus-to-fatigue ratio)
     candidates.sort((candidateA, candidateB) =>
       candidateA.sfr !== candidateB.sfr
         ? candidateB.sfr - candidateA.sfr
         : candidateA.muscleGroupIndex - candidateB.muscleGroupIndex
     );
 
+    // Cap total additions at MAX_TOTAL_SET_ADDITIONS regardless of raw recommendation
     let setsRemaining =
       totalSetsToAdd >= this.MAX_TOTAL_SET_ADDITIONS
         ? this.MAX_TOTAL_SET_ADDITIONS
         : totalSetsToAdd;
+
+    // Distribute sets one candidate at a time until budget is exhausted
     for (const candidate of candidates) {
       const added = this.addSetsToExercise(
         candidate.exerciseId,
         setsRemaining,
         exerciseIdToSetCount,
-        context.exerciseIdToSessionIndex,
+        exerciseIdToSessionIndex,
         sessionIndexToExerciseIds
       );
       setsRemaining -= added;
       if (setsRemaining === 0) break;
     }
-
-    return { exerciseIdToSetCount, recoveryExerciseIds };
   }
 
   /**
@@ -577,6 +700,7 @@ export default class WorkoutVolumePlanningService {
       sessionIndexToExerciseIds
     );
 
+    // Respect all caps: per-exercise max, per-session max, and per-addition max
     const maxDueToExerciseLimit = this.MAX_SETS_PER_EXERCISE - currentSets;
     const maxDueToSessionLimit = this.MAX_SETS_PER_MUSCLE_GROUP_PER_SESSION - sessionTotal;
     const maxAddable = Math.min(
