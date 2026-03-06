@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import workoutTestUtil from '../../../../../test-utils/WorkoutTestUtil.js';
 import type { WorkoutExerciseCTO } from '../../../../ctos/workout/WorkoutExerciseCTO.js';
 import type { WorkoutMuscleGroupVolumeCTO } from '../../../../ctos/workout/WorkoutMuscleGroupVolumeCTO.js';
@@ -546,149 +546,7 @@ describe('WorkoutVolumePlanningService', () => {
       expect(result.recoveryExerciseIds.size).toBe(0);
     });
 
-    it('should apply MEV proximity adjustments at microcycle index 1 when volume CTOs are provided', () => {
-      const chestExercises: WorkoutExercise[] = [
-        workoutTestUtil.STANDARD_EXERCISES.barbellBenchPress,
-        workoutTestUtil.STANDARD_EXERCISES.inclineBenchPress
-      ];
-
-      const chestCTOs = [
-        workoutTestUtil.createExerciseCTO({
-          exercise: chestExercises[0],
-          calibration: workoutTestUtil.STANDARD_CALIBRATIONS.barbellBenchPress,
-          equipmentType: workoutTestUtil.STANDARD_EQUIPMENT_TYPES.barbell
-        }),
-        workoutTestUtil.createExerciseCTO({
-          exercise: chestExercises[1],
-          calibration: workoutTestUtil.STANDARD_CALIBRATIONS.inclineBenchPress,
-          equipmentType: workoutTestUtil.STANDARD_EQUIPMENT_TYPES.barbell
-        })
-      ];
-
-      // Volume CTO provides landmark data so MEV proximity kicks in
-      const volumeCTO = workoutTestUtil.createMuscleGroupVolumeCTO(
-        [{ startingSetCount: 3, peakSetCount: 7, avgRsm: 5, avgPerformanceScore: 2.5 }],
-        workoutTestUtil.STANDARD_MUSCLE_GROUPS.chest._id
-      );
-
-      // Historical microcycle with low RSM (below MEV) => should trigger +3 adjustment
-      const { result } = calculateSetPlan({
-        exerciseCTOs: chestCTOs,
-        microcycleIndex: 1,
-        sessionStructure: [[0, 1]],
-        volumeCTOs: [volumeCTO],
-        historicalMicrocycles: [
-          {
-            sessionExerciseOverrides: [
-              [
-                {
-                  setCount: 2,
-                  rsm: { mindMuscleConnection: 1, pump: 1, disruption: 0 }, // RSM = 2, below MEV
-                  fatigue: {
-                    jointAndTissueDisruption: 1,
-                    perceivedEffort: 1,
-                    unusedMusclePerformance: 1
-                  },
-                  sorenessScore: 2, // table[2][0] = 0 → no SFR-based set additions
-                  performanceScore: 0
-                },
-                {
-                  setCount: 2,
-                  rsm: { mindMuscleConnection: 1, pump: 0, disruption: 1 }, // RSM = 2
-                  fatigue: {
-                    jointAndTissueDisruption: 1,
-                    perceivedEffort: 1,
-                    unusedMusclePerformance: 1
-                  },
-                  sorenessScore: 2,
-                  performanceScore: 0
-                }
-              ]
-            ]
-          }
-        ]
-      });
-
-      // Without MEV adjustment, both exercises would stay at 2 sets (no SFR-based additions
-      // since recommendation is 0). With MEV "below" adjustment of +3, sets should increase.
-      const totalSets =
-        (result.exerciseIdToSetCount.get(chestExercises[0]._id) ?? 0) +
-        (result.exerciseIdToSetCount.get(chestExercises[1]._id) ?? 0);
-      expect(totalSets).toBe(4 + 3); // 2+2 baseline + 3 MEV adjustment
-    });
-
-    it('should cap combined SFR + MEV additions at MAX_TOTAL_SET_ADDITIONS', () => {
-      const chestExercises: WorkoutExercise[] = [
-        workoutTestUtil.STANDARD_EXERCISES.barbellBenchPress,
-        workoutTestUtil.STANDARD_EXERCISES.inclineBenchPress
-      ];
-
-      const chestCTOs = [
-        workoutTestUtil.createExerciseCTO({
-          exercise: chestExercises[0],
-          calibration: workoutTestUtil.STANDARD_CALIBRATIONS.barbellBenchPress,
-          equipmentType: workoutTestUtil.STANDARD_EQUIPMENT_TYPES.barbell
-        }),
-        workoutTestUtil.createExerciseCTO({
-          exercise: chestExercises[1],
-          calibration: workoutTestUtil.STANDARD_CALIBRATIONS.inclineBenchPress,
-          equipmentType: workoutTestUtil.STANDARD_EQUIPMENT_TYPES.barbell
-        })
-      ];
-
-      const volumeCTO = workoutTestUtil.createMuscleGroupVolumeCTO(
-        [{ startingSetCount: 3, peakSetCount: 7, avgRsm: 5, avgPerformanceScore: 2.5 }],
-        workoutTestUtil.STANDARD_MUSCLE_GROUPS.chest._id
-      );
-
-      // SFR: sorenessScore=0, performanceScore=0 → +2 per exercise (+4 total)
-      // MEV: low RSM → +3
-      // Combined = 7, but MAX_TOTAL_SET_ADDITIONS = 3, so capped at 3
-      const { result } = calculateSetPlan({
-        exerciseCTOs: chestCTOs,
-        microcycleIndex: 1,
-        sessionStructure: [[0, 1]],
-        volumeCTOs: [volumeCTO],
-        historicalMicrocycles: [
-          {
-            sessionExerciseOverrides: [
-              [
-                {
-                  setCount: 2,
-                  rsm: { mindMuscleConnection: 1, pump: 1, disruption: 0 }, // RSM = 2, below MEV
-                  fatigue: {
-                    jointAndTissueDisruption: 1,
-                    perceivedEffort: 1,
-                    unusedMusclePerformance: 1
-                  },
-                  sorenessScore: 0,
-                  performanceScore: 0
-                },
-                {
-                  setCount: 2,
-                  rsm: { mindMuscleConnection: 1, pump: 0, disruption: 1 }, // RSM = 2
-                  fatigue: {
-                    jointAndTissueDisruption: 1,
-                    perceivedEffort: 1,
-                    unusedMusclePerformance: 1
-                  },
-                  sorenessScore: 0,
-                  performanceScore: 0
-                }
-              ]
-            ]
-          }
-        ]
-      });
-
-      const totalSets =
-        (result.exerciseIdToSetCount.get(chestExercises[0]._id) ?? 0) +
-        (result.exerciseIdToSetCount.get(chestExercises[1]._id) ?? 0);
-      // Baseline 2+2=4, capped additions of 3 → total 7
-      expect(totalSets).toBe(4 + 3);
-    });
-
-    it('should use estimatedMav as return set count when exercise comes back from recovery with volume landmarks', () => {
+    it('should use per-exercise estimatedMav as return set count when exercise comes back from recovery with volume landmarks', () => {
       const chestExercises: WorkoutExercise[] = [
         workoutTestUtil.STANDARD_EXERCISES.barbellBenchPress,
         workoutTestUtil.STANDARD_EXERCISES.inclineBenchPress
@@ -781,9 +639,94 @@ describe('WorkoutVolumePlanningService', () => {
         ]
       });
 
-      // Exercise A is returning from recovery. With volume landmarks, it should use
-      // estimatedMav (5) instead of the pre-recovery historical count (6).
-      expect(result.exerciseIdToSetCount.get(chestExercises[0]._id)).toBe(5);
+      // Exercise A is returning from recovery. With volume landmarks, MAV=5 is distributed
+      // across 2 exercises: ceil(5/2) = 3 per exercise.
+      expect(result.exerciseIdToSetCount.get(chestExercises[0]._id)).toBe(3);
+    });
+
+    it('should start baseline at estimated MEV when volume landmarks have history', () => {
+      const chestCTO = workoutTestUtil.createExerciseCTO({
+        exercise: workoutTestUtil.STANDARD_EXERCISES.barbellBenchPress,
+        calibration: workoutTestUtil.STANDARD_CALIBRATIONS.barbellBenchPress,
+        equipmentType: workoutTestUtil.STANDARD_EQUIPMENT_TYPES.barbell
+      });
+
+      // Volume CTO with history: MEV=4 (muscle-group total for 1 exercise)
+      const volumeCTO = workoutTestUtil.createMuscleGroupVolumeCTO(
+        [
+          { startingSetCount: 4, peakSetCount: 8, avgRsm: 5 },
+          { startingSetCount: 4, peakSetCount: 7, avgRsm: 5 }
+        ],
+        workoutTestUtil.STANDARD_MUSCLE_GROUPS.chest._id
+      );
+
+      const { result } = calculateSetPlan({
+        exerciseCTOs: [chestCTO],
+        microcycleIndex: 0,
+        sessionStructure: [[0]],
+        volumeCTOs: [volumeCTO]
+      });
+
+      // With history, baseline starts at estimated MEV (4) instead of default 2
+      expect(result.exerciseIdToSetCount.get(chestCTO._id)).toBe(4);
+    });
+
+    it('should use legacy progression from MEV starting point when flag is off', () => {
+      const exerciseCTOs = [
+        workoutTestUtil.createExerciseCTO({
+          exercise: workoutTestUtil.STANDARD_EXERCISES.barbellBenchPress,
+          calibration: workoutTestUtil.STANDARD_CALIBRATIONS.barbellBenchPress,
+          equipmentType: workoutTestUtil.STANDARD_EQUIPMENT_TYPES.barbell
+        }),
+        workoutTestUtil.createExerciseCTO({
+          exercise: workoutTestUtil.STANDARD_EXERCISES.inclineBenchPress,
+          calibration: workoutTestUtil.STANDARD_CALIBRATIONS.inclineBenchPress,
+          equipmentType: workoutTestUtil.STANDARD_EQUIPMENT_TYPES.barbell
+        })
+      ];
+
+      // Volume CTO with history: MEV=5 (muscle-group total for 2 exercises)
+      const volumeCTO = workoutTestUtil.createMuscleGroupVolumeCTO(
+        [{ startingSetCount: 5, peakSetCount: 9, avgRsm: 5 }],
+        workoutTestUtil.STANDARD_MUSCLE_GROUPS.chest._id
+      );
+
+      const mesocycle = workoutTestUtil.createMesocycle({
+        plannedSessionCountPerMicrocycle: 1,
+        plannedMicrocycleCount: 6,
+        calibratedExercises: exerciseCTOs
+          .map((cto) => cto.bestCalibration?._id)
+          .filter((id): id is NonNullable<typeof id> => id != null)
+      });
+
+      const context = workoutTestUtil.createContext({
+        mesocycle,
+        exerciseCTOs,
+        volumeCTOs: [volumeCTO]
+      });
+
+      const sessionExerciseCTOs = [[exerciseCTOs[0], exerciseCTOs[1]]];
+      context.setPlannedSessionExerciseCTOs(sessionExerciseCTOs);
+      context.addMicrocycle(workoutTestUtil.createMicrocycle({ mesocycle }));
+
+      const benchId = workoutTestUtil.STANDARD_EXERCISES.barbellBenchPress._id;
+      const inclineId = workoutTestUtil.STANDARD_EXERCISES.inclineBenchPress._id;
+
+      // MuscleGain, 2 exercises, MEV=5, legacy progression (+1 per microcycle from MEV)
+      // mic 0: 5 → distribute(5,2) = [3,2]
+      const result0 = WorkoutVolumePlanningService.calculateSetPlanForMicrocycle(context, 0, false);
+      expect(result0.exerciseIdToSetCount.get(benchId)).toBe(3);
+      expect(result0.exerciseIdToSetCount.get(inclineId)).toBe(2);
+
+      // mic 1: 5+1=6 → distribute(6,2) = [3,3]
+      const result1 = WorkoutVolumePlanningService.calculateSetPlanForMicrocycle(context, 1, false);
+      expect(result1.exerciseIdToSetCount.get(benchId)).toBe(3);
+      expect(result1.exerciseIdToSetCount.get(inclineId)).toBe(3);
+
+      // mic 2: 5+2=7 → distribute(7,2) = [4,3]
+      const result2 = WorkoutVolumePlanningService.calculateSetPlanForMicrocycle(context, 2, false);
+      expect(result2.exerciseIdToSetCount.get(benchId)).toBe(4);
+      expect(result2.exerciseIdToSetCount.get(inclineId)).toBe(3);
     });
 
     /**
@@ -862,161 +805,6 @@ describe('WorkoutVolumePlanningService', () => {
     }
   });
 
-  describe('evaluateMevProximity', () => {
-    const chestGroupId = workoutTestUtil.STANDARD_MUSCLE_GROUPS.chest._id;
-
-    const chestCTOs = [
-      workoutTestUtil.createExerciseCTO({
-        exercise: workoutTestUtil.STANDARD_EXERCISES.barbellBenchPress,
-        calibration: workoutTestUtil.STANDARD_CALIBRATIONS.barbellBenchPress,
-        equipmentType: workoutTestUtil.STANDARD_EQUIPMENT_TYPES.barbell
-      }),
-      workoutTestUtil.createExerciseCTO({
-        exercise: workoutTestUtil.STANDARD_EXERCISES.inclineBenchPress,
-        calibration: workoutTestUtil.STANDARD_CALIBRATIONS.inclineBenchPress,
-        equipmentType: workoutTestUtil.STANDARD_EQUIPMENT_TYPES.barbell
-      })
-    ];
-
-    const chestCalibrationIds = chestCTOs
-      .map((cto) => cto.bestCalibration?._id)
-      .filter((id): id is NonNullable<typeof id> => id != null);
-
-    it('should return +3 adjustment when average RSM is 0-3 (below MEV)', () => {
-      const mesocycle = workoutTestUtil.createMesocycle({
-        plannedSessionCountPerMicrocycle: 1,
-        calibratedExercises: chestCalibrationIds
-      });
-      const context = workoutTestUtil.createContext({ mesocycle, exerciseCTOs: chestCTOs });
-
-      workoutTestUtil.createHistoricalMicrocycle({
-        context,
-        exerciseCTOs: [[chestCTOs[0]]],
-        sessionExerciseOverrides: [
-          [{ rsm: { mindMuscleConnection: 1, pump: 1, disruption: 0 } }] // RSM = 2
-        ]
-      });
-
-      const result = WorkoutVolumePlanningService.evaluateMevProximity(context, chestGroupId);
-
-      expect(result).not.toBeNull();
-      expect(result?.recommendedSetAdjustment).toBe(3);
-      expect(result?.averageRsm).toBe(2);
-    });
-
-    it('should return 0 adjustment when average RSM is 4-6', () => {
-      const mesocycle = workoutTestUtil.createMesocycle({
-        plannedSessionCountPerMicrocycle: 1,
-        calibratedExercises: chestCalibrationIds
-      });
-      const context = workoutTestUtil.createContext({ mesocycle, exerciseCTOs: chestCTOs });
-
-      workoutTestUtil.createHistoricalMicrocycle({
-        context,
-        exerciseCTOs: [[chestCTOs[0]]],
-        sessionExerciseOverrides: [
-          [{ rsm: { mindMuscleConnection: 2, pump: 2, disruption: 1 } }] // RSM = 5
-        ]
-      });
-
-      const result = WorkoutVolumePlanningService.evaluateMevProximity(context, chestGroupId);
-
-      expect(result).not.toBeNull();
-      expect(result?.recommendedSetAdjustment).toBe(0);
-      expect(result?.averageRsm).toBe(5);
-    });
-
-    it('should return 0 adjustment when average RSM is 7-9', () => {
-      const mesocycle = workoutTestUtil.createMesocycle({
-        plannedSessionCountPerMicrocycle: 1,
-        calibratedExercises: chestCalibrationIds
-      });
-      const context = workoutTestUtil.createContext({ mesocycle, exerciseCTOs: chestCTOs });
-
-      workoutTestUtil.createHistoricalMicrocycle({
-        context,
-        exerciseCTOs: [[chestCTOs[0]]],
-        sessionExerciseOverrides: [
-          [{ rsm: { mindMuscleConnection: 3, pump: 3, disruption: 2 } }] // RSM = 8
-        ]
-      });
-
-      const result = WorkoutVolumePlanningService.evaluateMevProximity(context, chestGroupId);
-
-      expect(result).not.toBeNull();
-      expect(result?.recommendedSetAdjustment).toBe(0);
-      expect(result?.averageRsm).toBe(8);
-    });
-
-    it('should return null when first microcycle has no completed sessions', () => {
-      const mesocycle = workoutTestUtil.createMesocycle({
-        plannedSessionCountPerMicrocycle: 1,
-        calibratedExercises: chestCalibrationIds
-      });
-      const context = workoutTestUtil.createContext({ mesocycle, exerciseCTOs: chestCTOs });
-      // Add a microcycle but no sessions — incomplete
-      context.addMicrocycle(workoutTestUtil.createMicrocycle({ mesocycle }));
-
-      const result = WorkoutVolumePlanningService.evaluateMevProximity(context, chestGroupId);
-      expect(result).toBeNull();
-    });
-
-    it('should only consider session exercises targeting the specified muscle group', () => {
-      // Bench press (chest) and squat (quads) in separate sessions
-      const chestCTO = chestCTOs[0];
-      const quadsCTO = workoutTestUtil.createExerciseCTO({
-        exercise: workoutTestUtil.STANDARD_EXERCISES.barbellSquat,
-        calibration: workoutTestUtil.STANDARD_CALIBRATIONS.barbellSquat,
-        equipmentType: workoutTestUtil.STANDARD_EQUIPMENT_TYPES.barbell
-      });
-      const allCTOs = [chestCTO, quadsCTO];
-
-      const mesocycle = workoutTestUtil.createMesocycle({
-        plannedSessionCountPerMicrocycle: 2,
-        calibratedExercises: allCTOs
-          .map((cto) => cto.bestCalibration?._id)
-          .filter((id): id is NonNullable<typeof id> => id != null)
-      });
-      const context = workoutTestUtil.createContext({ mesocycle, exerciseCTOs: allCTOs });
-
-      workoutTestUtil.createHistoricalMicrocycle({
-        context,
-        exerciseCTOs: [[chestCTO], [quadsCTO]],
-        sessionExerciseOverrides: [
-          [{ rsm: { mindMuscleConnection: 3, pump: 3, disruption: 2 } }], // Chest, RSM = 8
-          [{ rsm: { mindMuscleConnection: 1, pump: 0, disruption: 0 } }] // Quads, RSM = 1
-        ]
-      });
-
-      const result = WorkoutVolumePlanningService.evaluateMevProximity(context, chestGroupId);
-      expect(result?.averageRsm).toBe(8);
-      expect(result?.recommendedSetAdjustment).toBe(0);
-    });
-
-    it('should handle boundary value where average RSM floors to 3 (below MEV)', () => {
-      // Two chest exercises in separate sessions: RSM 3 and RSM 4 => avg 3.5, floor = 3
-      const mesocycle = workoutTestUtil.createMesocycle({
-        plannedSessionCountPerMicrocycle: 2,
-        calibratedExercises: chestCalibrationIds
-      });
-      const context = workoutTestUtil.createContext({ mesocycle, exerciseCTOs: chestCTOs });
-
-      workoutTestUtil.createHistoricalMicrocycle({
-        context,
-        exerciseCTOs: [[chestCTOs[0]], [chestCTOs[1]]],
-        sessionExerciseOverrides: [
-          [{ rsm: { mindMuscleConnection: 1, pump: 1, disruption: 1 } }], // RSM = 3
-          [{ rsm: { mindMuscleConnection: 2, pump: 1, disruption: 1 } }] // RSM = 4
-        ]
-      });
-
-      const result = WorkoutVolumePlanningService.evaluateMevProximity(context, chestGroupId);
-
-      // Average = (3 + 4) / 2 = 3.5, floor(3.5) = 3 => below MEV, +3
-      expect(result?.recommendedSetAdjustment).toBe(3);
-    });
-  });
-
   describe('estimateVolumeLandmarks', () => {
     it('should return defaults when no history exists', () => {
       const volumeCTO = workoutTestUtil.createMuscleGroupVolumeCTO([]);
@@ -1091,14 +879,14 @@ describe('WorkoutVolumePlanningService', () => {
       expect(result.estimatedMrv).toBe(8);
     });
 
-    it('should cap MRV at 10', () => {
+    it('should not cap MRV at per-session limits since MRV is a per-microcycle total', () => {
       const volumeCTO = workoutTestUtil.createMuscleGroupVolumeCTO([
         { startingSetCount: 3, peakSetCount: 9, avgRsm: 5, avgPerformanceScore: 1 }
       ]);
       const result = WorkoutVolumePlanningService.estimateVolumeLandmarks(volumeCTO);
 
-      // 9 + 2 = 11, capped at 10
-      expect(result.estimatedMrv).toBe(10);
+      // 9 + 2 = 11, not capped (MRV spans multiple sessions)
+      expect(result.estimatedMrv).toBe(11);
     });
 
     it('should calculate MAV as midpoint of MEV and MRV', () => {
@@ -1225,7 +1013,6 @@ describe('WorkoutVolumePlanningService', () => {
 
     it('should return at estimatedMav when recovering with asymmetric landmarks (MEV=2, MRV=6)', () => {
       // Two mesocycles: one effective (avgRsm=5), one stressed (peakSetCount=6, avgPerformanceScore=3)
-      // estimatedMev = round((2+3)/2) = round(2.5) = 3... wait, let me be precise.
       // Effective mesocycles (avgRsm >= 4): only the first with avgRsm=5
       //   estimatedMev = round(2/1) = 2
       // Stressed mesocycles (avgPerformanceScore >= 2.5 or recoverySessionCount > 0): both
@@ -1275,10 +1062,9 @@ describe('WorkoutVolumePlanningService', () => {
     });
 
     it('should cap recovery return set count at MAX_SETS_PER_EXERCISE (8)', () => {
-      // Create landmarks where MAV would exceed 8
-      // Multiple stressed mesocycles with high peak set counts push MRV high,
-      // but MRV is capped at 10. With MEV=8, MRV gets bumped to 9, MAV=ceil((8+9)/2)=9.
-      // But 9 > MAX_SETS_PER_EXERCISE (8), so it should be capped at 8.
+      // Create landmarks where per-exercise MAV would exceed 8
+      // MEV = round((8+8)/2) = 8, MRV = round((10+10)/2) = 10
+      // MAV = ceil((8+10)/2) = 9, but 9 > MAX_SETS_PER_EXERCISE (8)
       const volumeCTO = workoutTestUtil.createMuscleGroupVolumeCTO(
         [
           { startingSetCount: 8, peakSetCount: 10, avgRsm: 5, avgPerformanceScore: 3 },
@@ -1288,9 +1074,6 @@ describe('WorkoutVolumePlanningService', () => {
       );
 
       const landmarks = WorkoutVolumePlanningService.estimateVolumeLandmarks(volumeCTO);
-      // MEV = round((8+8)/2) = 8, MRV = round((10+10)/2) = 10
-      // MRV (10) > MEV (8), so no bump needed
-      // MAV = ceil((8+10)/2) = 9
       expect(landmarks.estimatedMev).toBe(8);
       expect(landmarks.estimatedMrv).toBe(10);
       expect(landmarks.estimatedMav).toBe(9);
@@ -1382,10 +1165,58 @@ describe('WorkoutVolumePlanningService', () => {
           microcycleIndex,
           false
         );
-        // Resensitization: flat 2 sets per exercise at every microcycle
+        // Resensitization without history: flat 2 sets per exercise at every microcycle
         expect(
           result.exerciseIdToSetCount.get(workoutTestUtil.STANDARD_EXERCISES.barbellBenchPress._id)
         ).toBe(2);
+      }
+    });
+
+    it('should use estimated MEV for Resensitization when volume landmarks have history', () => {
+      const exerciseCTOs = [
+        workoutTestUtil.createExerciseCTO({
+          exercise: workoutTestUtil.STANDARD_EXERCISES.barbellBenchPress,
+          calibration: workoutTestUtil.STANDARD_CALIBRATIONS.barbellBenchPress,
+          equipmentType: workoutTestUtil.STANDARD_EQUIPMENT_TYPES.barbell
+        })
+      ];
+
+      // Volume CTO with history: MEV=4 (from effective mesocycles with avgRsm >= 4)
+      const volumeCTO = workoutTestUtil.createMuscleGroupVolumeCTO(
+        [
+          { startingSetCount: 4, peakSetCount: 7, avgRsm: 5 },
+          { startingSetCount: 4, peakSetCount: 8, avgRsm: 5 }
+        ],
+        workoutTestUtil.STANDARD_MUSCLE_GROUPS.chest._id
+      );
+
+      const mesocycle = workoutTestUtil.createMesocycle({
+        cycleType: CycleType.Resensitization,
+        plannedSessionCountPerMicrocycle: 1,
+        plannedMicrocycleCount: 4,
+        calibratedExercises: exerciseCTOs
+          .map((cto) => cto.bestCalibration?._id)
+          .filter((id): id is NonNullable<typeof id> => id != null)
+      });
+
+      const context = workoutTestUtil.createContext({
+        mesocycle,
+        exerciseCTOs,
+        volumeCTOs: [volumeCTO]
+      });
+      context.setPlannedSessionExerciseCTOs([[exerciseCTOs[0]]]);
+      context.addMicrocycle(workoutTestUtil.createMicrocycle({ mesocycle }));
+
+      // With history, Resensitization uses estimated MEV (4) instead of default (2)
+      for (const microcycleIndex of [0, 1, 2, 3]) {
+        const result = WorkoutVolumePlanningService.calculateSetPlanForMicrocycle(
+          context,
+          microcycleIndex,
+          false
+        );
+        expect(
+          result.exerciseIdToSetCount.get(workoutTestUtil.STANDARD_EXERCISES.barbellBenchPress._id)
+        ).toBe(4);
       }
     });
 
@@ -1479,6 +1310,251 @@ describe('WorkoutVolumePlanningService', () => {
           result.exerciseIdToSetCount.get(workoutTestUtil.STANDARD_EXERCISES.barbellBenchPress._id)
         ).toBe(expectedSets);
       }
+    });
+  });
+
+  describe('MEV-to-MRV interpolation (USE_VOLUME_LANDMARK_PROGRESSION=true)', () => {
+    beforeEach(() => {
+      WorkoutVolumePlanningService.USE_VOLUME_LANDMARK_PROGRESSION = true;
+    });
+
+    afterEach(() => {
+      WorkoutVolumePlanningService.USE_VOLUME_LANDMARK_PROGRESSION = false;
+    });
+
+    it('should interpolate from startVolume to endVolume across accumulation microcycles (1 exercise, no history)', () => {
+      const exerciseCTOs = [
+        workoutTestUtil.createExerciseCTO({
+          exercise: workoutTestUtil.STANDARD_EXERCISES.barbellBenchPress,
+          calibration: workoutTestUtil.STANDARD_CALIBRATIONS.barbellBenchPress,
+          equipmentType: workoutTestUtil.STANDARD_EQUIPMENT_TYPES.barbell
+        })
+      ];
+
+      // 5 accumulation + 1 deload = 6 total
+      const mesocycle = workoutTestUtil.createMesocycle({
+        cycleType: CycleType.MuscleGain,
+        plannedSessionCountPerMicrocycle: 1,
+        plannedMicrocycleCount: 6,
+        calibratedExercises: exerciseCTOs
+          .map((cto) => cto.bestCalibration?._id)
+          .filter((id): id is NonNullable<typeof id> => id != null)
+      });
+
+      const context = workoutTestUtil.createContext({ mesocycle, exerciseCTOs });
+      context.setPlannedSessionExerciseCTOs([[exerciseCTOs[0]]]);
+      context.addMicrocycle(workoutTestUtil.createMicrocycle({ mesocycle }));
+
+      const benchId = workoutTestUtil.STANDARD_EXERCISES.barbellBenchPress._id;
+
+      // No history: startVolume=2, endVolume=8 (1 exercise)
+      // round(2 + 6*i/4): mic 0=2, mic 1=4, mic 2=5, mic 3=7, mic 4=8
+      const expected = [2, 4, 5, 7, 8];
+      for (let i = 0; i < expected.length; i++) {
+        const result = WorkoutVolumePlanningService.calculateSetPlanForMicrocycle(
+          context,
+          i,
+          false
+        );
+        expect(result.exerciseIdToSetCount.get(benchId)).toBe(expected[i]);
+      }
+    });
+
+    it('should halve last accumulation counts for deload', () => {
+      const exerciseCTOs = [
+        workoutTestUtil.createExerciseCTO({
+          exercise: workoutTestUtil.STANDARD_EXERCISES.barbellBenchPress,
+          calibration: workoutTestUtil.STANDARD_CALIBRATIONS.barbellBenchPress,
+          equipmentType: workoutTestUtil.STANDARD_EQUIPMENT_TYPES.barbell
+        })
+      ];
+
+      const mesocycle = workoutTestUtil.createMesocycle({
+        cycleType: CycleType.MuscleGain,
+        plannedSessionCountPerMicrocycle: 1,
+        plannedMicrocycleCount: 6,
+        calibratedExercises: exerciseCTOs
+          .map((cto) => cto.bestCalibration?._id)
+          .filter((id): id is NonNullable<typeof id> => id != null)
+      });
+
+      const context = workoutTestUtil.createContext({ mesocycle, exerciseCTOs });
+      context.setPlannedSessionExerciseCTOs([[exerciseCTOs[0]]]);
+      context.addMicrocycle(workoutTestUtil.createMicrocycle({ mesocycle }));
+
+      const benchId = workoutTestUtil.STANDARD_EXERCISES.barbellBenchPress._id;
+
+      // Last accumulation microcycle (index 4) has 8 sets, deload = floor(8/2) = 4
+      const result = WorkoutVolumePlanningService.calculateSetPlanForMicrocycle(context, 5, true);
+      expect(result.exerciseIdToSetCount.get(benchId)).toBe(4);
+    });
+
+    it('should interpolate with MEV and MRV from volume landmarks', () => {
+      const exerciseCTOs = [
+        workoutTestUtil.createExerciseCTO({
+          exercise: workoutTestUtil.STANDARD_EXERCISES.barbellBenchPress,
+          calibration: workoutTestUtil.STANDARD_CALIBRATIONS.barbellBenchPress,
+          equipmentType: workoutTestUtil.STANDARD_EQUIPMENT_TYPES.barbell
+        }),
+        workoutTestUtil.createExerciseCTO({
+          exercise: workoutTestUtil.STANDARD_EXERCISES.inclineBenchPress,
+          calibration: workoutTestUtil.STANDARD_CALIBRATIONS.inclineBenchPress,
+          equipmentType: workoutTestUtil.STANDARD_EQUIPMENT_TYPES.barbell
+        })
+      ];
+
+      // Volume CTO with history: MEV=5, MRV=9
+      const volumeCTO = workoutTestUtil.createMuscleGroupVolumeCTO(
+        [{ startingSetCount: 5, peakSetCount: 9, avgRsm: 5, avgPerformanceScore: 2.5 }],
+        workoutTestUtil.STANDARD_MUSCLE_GROUPS.chest._id
+      );
+
+      // 5 accumulation + 1 deload = 6 total
+      const mesocycle = workoutTestUtil.createMesocycle({
+        cycleType: CycleType.MuscleGain,
+        plannedSessionCountPerMicrocycle: 1,
+        plannedMicrocycleCount: 6,
+        calibratedExercises: exerciseCTOs
+          .map((cto) => cto.bestCalibration?._id)
+          .filter((id): id is NonNullable<typeof id> => id != null)
+      });
+
+      const context = workoutTestUtil.createContext({
+        mesocycle,
+        exerciseCTOs,
+        volumeCTOs: [volumeCTO]
+      });
+      context.setPlannedSessionExerciseCTOs([[exerciseCTOs[0], exerciseCTOs[1]]]);
+      context.addMicrocycle(workoutTestUtil.createMicrocycle({ mesocycle }));
+
+      const benchId = workoutTestUtil.STANDARD_EXERCISES.barbellBenchPress._id;
+      const inclineId = workoutTestUtil.STANDARD_EXERCISES.inclineBenchPress._id;
+
+      // MEV=5, MRV=9, 5 accumulation microcycles, 2 exercises
+      // round(5 + 4*i/4) = round(5+i): mic 0=5, mic 1=6, mic 2=7, mic 3=8, mic 4=9
+      // distribute(5,2)=[3,2], distribute(6,2)=[3,3], distribute(7,2)=[4,3],
+      // distribute(8,2)=[4,4], distribute(9,2)=[5,4]
+      const expectedBench = [3, 3, 4, 4, 5];
+      const expectedIncline = [2, 3, 3, 4, 4];
+      for (let i = 0; i < expectedBench.length; i++) {
+        const result = WorkoutVolumePlanningService.calculateSetPlanForMicrocycle(
+          context,
+          i,
+          false
+        );
+        expect(result.exerciseIdToSetCount.get(benchId)).toBe(expectedBench[i]);
+        expect(result.exerciseIdToSetCount.get(inclineId)).toBe(expectedIncline[i]);
+      }
+    });
+
+    it('should target MAV for Cut cycles instead of MRV', () => {
+      const exerciseCTOs = [
+        workoutTestUtil.createExerciseCTO({
+          exercise: workoutTestUtil.STANDARD_EXERCISES.barbellBenchPress,
+          calibration: workoutTestUtil.STANDARD_CALIBRATIONS.barbellBenchPress,
+          equipmentType: workoutTestUtil.STANDARD_EQUIPMENT_TYPES.barbell
+        })
+      ];
+
+      // 5 accumulation + 1 deload = 6 total
+      const mesocycle = workoutTestUtil.createMesocycle({
+        cycleType: CycleType.Cut,
+        plannedSessionCountPerMicrocycle: 1,
+        plannedMicrocycleCount: 6,
+        calibratedExercises: exerciseCTOs
+          .map((cto) => cto.bestCalibration?._id)
+          .filter((id): id is NonNullable<typeof id> => id != null)
+      });
+
+      const context = workoutTestUtil.createContext({ mesocycle, exerciseCTOs });
+      context.setPlannedSessionExerciseCTOs([[exerciseCTOs[0]]]);
+      context.addMicrocycle(workoutTestUtil.createMicrocycle({ mesocycle }));
+
+      const benchId = workoutTestUtil.STANDARD_EXERCISES.barbellBenchPress._id;
+
+      // No history, Cut: startVolume=2, endVolume=ceil((2+8)/2)=5 (MAV of defaults)
+      // round(2 + 3*i/4): mic 0=2, mic 1=3, mic 2=4, mic 3=4, mic 4=5
+      const expected = [2, 3, 4, 4, 5];
+      for (let i = 0; i < expected.length; i++) {
+        const result = WorkoutVolumePlanningService.calculateSetPlanForMicrocycle(
+          context,
+          i,
+          false
+        );
+        expect(result.exerciseIdToSetCount.get(benchId)).toBe(expected[i]);
+      }
+    });
+
+    it('should keep Resensitization flat regardless of flag', () => {
+      const exerciseCTOs = [
+        workoutTestUtil.createExerciseCTO({
+          exercise: workoutTestUtil.STANDARD_EXERCISES.barbellBenchPress,
+          calibration: workoutTestUtil.STANDARD_CALIBRATIONS.barbellBenchPress,
+          equipmentType: workoutTestUtil.STANDARD_EQUIPMENT_TYPES.barbell
+        }),
+        workoutTestUtil.createExerciseCTO({
+          exercise: workoutTestUtil.STANDARD_EXERCISES.inclineBenchPress,
+          calibration: workoutTestUtil.STANDARD_CALIBRATIONS.inclineBenchPress,
+          equipmentType: workoutTestUtil.STANDARD_EQUIPMENT_TYPES.barbell
+        })
+      ];
+
+      const mesocycle = workoutTestUtil.createMesocycle({
+        cycleType: CycleType.Resensitization,
+        plannedSessionCountPerMicrocycle: 1,
+        plannedMicrocycleCount: 4,
+        calibratedExercises: exerciseCTOs
+          .map((cto) => cto.bestCalibration?._id)
+          .filter((id): id is NonNullable<typeof id> => id != null)
+      });
+
+      const context = workoutTestUtil.createContext({ mesocycle, exerciseCTOs });
+      context.setPlannedSessionExerciseCTOs([[exerciseCTOs[0], exerciseCTOs[1]]]);
+      context.addMicrocycle(workoutTestUtil.createMicrocycle({ mesocycle }));
+
+      const benchId = workoutTestUtil.STANDARD_EXERCISES.barbellBenchPress._id;
+      const inclineId = workoutTestUtil.STANDARD_EXERCISES.inclineBenchPress._id;
+
+      // Resensitization: flat at 2 per exercise regardless of flag
+      for (const microcycleIndex of [0, 1, 2, 3]) {
+        const result = WorkoutVolumePlanningService.calculateSetPlanForMicrocycle(
+          context,
+          microcycleIndex,
+          false
+        );
+        expect(result.exerciseIdToSetCount.get(benchId)).toBe(2);
+        expect(result.exerciseIdToSetCount.get(inclineId)).toBe(2);
+      }
+    });
+
+    it('should handle single accumulation microcycle gracefully', () => {
+      const exerciseCTOs = [
+        workoutTestUtil.createExerciseCTO({
+          exercise: workoutTestUtil.STANDARD_EXERCISES.barbellBenchPress,
+          calibration: workoutTestUtil.STANDARD_CALIBRATIONS.barbellBenchPress,
+          equipmentType: workoutTestUtil.STANDARD_EQUIPMENT_TYPES.barbell
+        })
+      ];
+
+      // 1 accumulation + 1 deload = 2 total
+      const mesocycle = workoutTestUtil.createMesocycle({
+        cycleType: CycleType.MuscleGain,
+        plannedSessionCountPerMicrocycle: 1,
+        plannedMicrocycleCount: 2,
+        calibratedExercises: exerciseCTOs
+          .map((cto) => cto.bestCalibration?._id)
+          .filter((id): id is NonNullable<typeof id> => id != null)
+      });
+
+      const context = workoutTestUtil.createContext({ mesocycle, exerciseCTOs });
+      context.setPlannedSessionExerciseCTOs([[exerciseCTOs[0]]]);
+      context.addMicrocycle(workoutTestUtil.createMicrocycle({ mesocycle }));
+
+      const benchId = workoutTestUtil.STANDARD_EXERCISES.barbellBenchPress._id;
+
+      // accumulationMicrocycleCount = 1, so should use startVolume
+      const result = WorkoutVolumePlanningService.calculateSetPlanForMicrocycle(context, 0, false);
+      expect(result.exerciseIdToSetCount.get(benchId)).toBe(2);
     });
   });
 });

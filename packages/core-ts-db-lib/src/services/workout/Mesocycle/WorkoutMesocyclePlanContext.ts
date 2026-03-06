@@ -1,6 +1,9 @@
 import type { UUID } from 'crypto';
 import type { WorkoutExerciseCTO } from '../../../ctos/workout/WorkoutExerciseCTO.js';
-import type { WorkoutMuscleGroupVolumeCTO } from '../../../ctos/workout/WorkoutMuscleGroupVolumeCTO.js';
+import type {
+  WorkoutMuscleGroupVolumeCTO,
+  WorkoutVolumeLandmarkEstimate
+} from '../../../ctos/workout/WorkoutMuscleGroupVolumeCTO.js';
 import type { WorkoutEquipmentType } from '../../../documents/workout/WorkoutEquipmentType.js';
 import type { WorkoutExercise } from '../../../documents/workout/WorkoutExercise.js';
 import type { WorkoutMesocycle } from '../../../documents/workout/WorkoutMesocycle.js';
@@ -9,7 +12,6 @@ import type { WorkoutMicrocycle } from '../../../documents/workout/WorkoutMicroc
 import type { WorkoutSession } from '../../../documents/workout/WorkoutSession.js';
 import type { WorkoutSessionExercise } from '../../../documents/workout/WorkoutSessionExercise.js';
 import type { WorkoutSet } from '../../../documents/workout/WorkoutSet.js';
-import type { WorkoutVolumeLandmarkEstimate } from '../../../ctos/workout/WorkoutMuscleGroupVolumeCTO.js';
 import WorkoutVolumePlanningService from '../util/VolumePlanning/WorkoutVolumePlanningService.js';
 
 /**
@@ -37,6 +39,12 @@ export default class WorkoutMesocyclePlanContext {
    * Resensitization cycles.
    */
   public readonly skipDeload: boolean;
+
+  /**
+   * Number of accumulation (non-deload) microcycles in this mesocycle.
+   * Equal to the total planned count when deload is skipped, or total minus one otherwise.
+   */
+  public readonly accumulationMicrocycleCount: number;
 
   public readonly exerciseMap: Map<UUID, WorkoutExercise>;
   public readonly equipmentMap: Map<UUID, WorkoutEquipmentType>;
@@ -103,6 +111,9 @@ export default class WorkoutMesocyclePlanContext {
       this.progressionInterval = 1;
       this.skipDeload = false;
     }
+
+    const totalMicrocycles = mesocycle.plannedMicrocycleCount ?? 6;
+    this.accumulationMicrocycleCount = this.skipDeload ? totalMicrocycles : totalMicrocycles - 1;
 
     // Build volume landmark estimates from historical CTOs
     this.muscleGroupToVolumeLandmarkMap = new Map(
