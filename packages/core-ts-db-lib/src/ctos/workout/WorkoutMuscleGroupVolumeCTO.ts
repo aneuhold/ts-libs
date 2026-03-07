@@ -33,7 +33,7 @@ export type WorkoutMuscleGroupVolumeCTO = z.infer<typeof WorkoutMuscleGroupVolum
  * from historical mesocycle data.
  */
 export type WorkoutVolumeLandmarkEstimate = {
-  /** Estimated minimum effective volume (sets per muscle group per session). */
+  /** Estimated minimum effective volume (sets per microcycle for this muscle group). */
   estimatedMev: number;
 
   /** Estimated maximum recoverable volume. */
