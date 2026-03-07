@@ -7,13 +7,19 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## 🔖 [4.1.14] (2026-03-07)
 
-### ✅ Added
-
 ### 🏗️ Changed
 
-### 🩹 Fixed
+- Refactored `WorkoutVolumePlanningService` into a cleaner multi-step pipeline with dedicated extracted methods: `getVolumeTargetsForMuscleGroup`, `calculateBaselineSetCounts`, `distributeEvenly`, `resolveHistoricalExerciseData`, `applyHistoricalSetCounts`, `evaluateSfrRecommendations`, `distributeSetsToExercises`, `sessionIsCapped`, `getSessionSetTotal`, and `addSetsToExercise`.
+- `WorkoutMesocyclePlanContext` now exposes `accumulationMicrocycleCount` (total microcycles minus the deload, when applicable).
+- `WorkoutVolumeLandmarkEstimate.estimatedMev` now represents total sets per microcycle for the muscle group, not per session.
+- Default volume constants renamed: `DEFAULT_MEV` → `DEFAULT_MEV_PER_EXERCISE`, `DEFAULT_MRV` → `DEFAULT_MRV_PER_EXERCISE`.
+- Cut cycle baseline progression now targets MAV (midpoint) instead of MRV.
+- MAV for exercises returning from recovery is now distributed evenly across all exercises in the muscle group using floor-based distribution.
+- MRV estimate is no longer hard-capped at `MAX_SETS_PER_MUSCLE_GROUP_PER_SESSION` in `estimateVolumeLandmarks()`.
 
 ### 🔥 Removed
+
+- Removed `WorkoutVolumePlanningService.evaluateMevProximity()` static method and the associated second-microcycle MEV proximity adjustment logic.
 
 ## 🔖 [4.1.13] (2026-02-28)
 
@@ -368,6 +374,7 @@ Updated dependency: now requires `@aneuhold/core-ts-lib@^2.3.11`.
 - Updated workflow permissions to allow repository write access
 
 <!-- Link References -->
+
 [4.1.14]: https://github.com/aneuhold/ts-libs/compare/core-ts-db-lib-v4.1.13...core-ts-db-lib-v4.1.14
 [4.1.13]: https://github.com/aneuhold/ts-libs/compare/core-ts-db-lib-v4.1.12...core-ts-db-lib-v4.1.13
 [4.1.12]: https://github.com/aneuhold/ts-libs/compare/core-ts-db-lib-v4.1.11...core-ts-db-lib-v4.1.12
