@@ -1,7 +1,5 @@
 # MesoPro Data Model + System Description
 
-Last copied from core-ts-db-lib: 2/7/2026
-
 ## Document Diagram
 
 ```mermaid

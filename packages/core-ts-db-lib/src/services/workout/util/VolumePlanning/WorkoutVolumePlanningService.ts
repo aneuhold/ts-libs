@@ -486,17 +486,25 @@ export default class WorkoutVolumePlanningService {
     isDeloadMicrocycle: boolean,
     volumeLandmark: WorkoutVolumeLandmarkEstimate | undefined
   ): void {
-    muscleGroupExerciseCTOs.forEach((cto) => {
+    // Pre-compute per-exercise MAV distribution for exercises returning from recovery.
+    // Uses floor-based even distribution (conservative) per the source material's guidance
+    // to err on the lighter side when returning from recovery.
+    const hasExerciseReturningFromRecovery = muscleGroupExerciseCTOs.some((cto) =>
+      exercisesThatWerePreviouslyInRecovery.has(cto._id)
+    );
+    const mavDistribution =
+      hasExerciseReturningFromRecovery && volumeLandmark
+        ? this.distributeEvenly(volumeLandmark.estimatedMav, muscleGroupExerciseCTOs.length)
+        : undefined;
+
+    muscleGroupExerciseCTOs.forEach((cto, index) => {
       const previousSessionExercise = exerciseIdToPrevSessionExercise.get(cto._id);
       if (!previousSessionExercise) return;
 
       let setCount: number;
-      if (exercisesThatWerePreviouslyInRecovery.has(cto._id) && volumeLandmark) {
-        // Returning from recovery — distribute MAV proportionally across exercises
-        const perExerciseMav = Math.ceil(
-          volumeLandmark.estimatedMav / muscleGroupExerciseCTOs.length
-        );
-        setCount = Math.min(perExerciseMav, this.MAX_SETS_PER_EXERCISE);
+      if (exercisesThatWerePreviouslyInRecovery.has(cto._id) && mavDistribution) {
+        // Returning from recovery — resume at conservatively distributed MAV
+        setCount = Math.min(mavDistribution[index], this.MAX_SETS_PER_EXERCISE);
       } else {
         // Carry forward last microcycle's set count
         setCount = Math.min(previousSessionExercise.setOrder.length, this.MAX_SETS_PER_EXERCISE);

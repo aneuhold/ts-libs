@@ -640,7 +640,7 @@ describe('WorkoutVolumePlanningService', () => {
       });
 
       // Exercise A is returning from recovery. With volume landmarks, MAV=5 is distributed
-      // across 2 exercises: ceil(5/2) = 3 per exercise.
+      // conservatively across 2 exercises: distributeEvenly(5,2) = [3,2]. Exercise A gets 3.
       expect(result.exerciseIdToSetCount.get(chestExercises[0]._id)).toBe(3);
     });
 
