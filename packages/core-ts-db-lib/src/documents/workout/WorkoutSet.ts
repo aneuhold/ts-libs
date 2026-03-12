@@ -90,10 +90,13 @@ export const WorkoutSetSchema = z.object({
 export type WorkoutSet = z.infer<typeof WorkoutSetSchema>;
 
 /**
- * A {@link WorkoutSet} with all nullable fields guaranteed to be defined.
- * Zod's `.nullish()` produces `T | null | undefined`, so `Required` alone
- * only strips the optional `?` — `NonNullable` is needed to also strip `null`.
+ * A {@link WorkoutSet} with all planned and actual performance fields guaranteed non-nullable.
  */
-export type CompletedWorkoutSet = Required<{
-  [K in keyof WorkoutSet]: NonNullable<WorkoutSet[K]>;
-}>;
+export type CompletedWorkoutSet = WorkoutSet & {
+  plannedReps: NonNullable<WorkoutSet['plannedReps']>;
+  plannedWeight: NonNullable<WorkoutSet['plannedWeight']>;
+  plannedRir: NonNullable<WorkoutSet['plannedRir']>;
+  actualReps: NonNullable<WorkoutSet['actualReps']>;
+  actualWeight: NonNullable<WorkoutSet['actualWeight']>;
+  rir: NonNullable<WorkoutSet['rir']>;
+};

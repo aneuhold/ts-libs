@@ -57,14 +57,13 @@ export default class WorkoutSetService {
         : this.findPreviousFirstSet(context, exerciseCTO._id, microcycleIndex);
 
     // Calculate progressed targets for the first set.
-    // For deload microcycles, use the previous microcycle's index so we base
-    // the deload on the last accumulation weight rather than progressing further.
+    // Autoregulation/forecasting handles progression from the previous set's data.
+    // Calibration is only used when no previous set exists (first microcycle ever).
     const { targetReps: firstSetReps, targetWeight: firstSetWeight } =
       WorkoutExerciseService.calculateTargetRepsAndWeightForFirstSet({
         exercise: exerciseCTO,
         calibration: bestCalibration,
         equipment: equipmentType,
-        microcycleIndex: isDeloadMicrocycle ? microcycleIndex - 1 : microcycleIndex,
         firstMicrocycleRir: context.firstMicrocycleRir,
         previousFirstSet
       });
