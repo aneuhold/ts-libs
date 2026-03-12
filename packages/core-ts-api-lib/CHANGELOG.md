@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## 🔖 [3.0.26] (2026-03-12)
+
+### 🏗️ Changed
+
+- Updated dependency: now requires `@aneuhold/core-ts-db-lib@^4.1.15`.
+
 ## 🔖 [3.0.25] (2026-03-07)
 
 ### 🏗️ Changed
@@ -317,6 +323,7 @@ No direct code changes; version bump for compatibility.
 
 <!-- Link References -->
 
+[3.0.26]: https://github.com/aneuhold/ts-libs/compare/core-ts-api-lib-v3.0.25...core-ts-api-lib-v3.0.26
 [3.0.25]: https://github.com/aneuhold/ts-libs/compare/core-ts-api-lib-v3.0.24...core-ts-api-lib-v3.0.25
 [3.0.24]: https://github.com/aneuhold/ts-libs/compare/core-ts-api-lib-v3.0.23...core-ts-api-lib-v3.0.24
 [3.0.23]: https://github.com/aneuhold/ts-libs/compare/core-ts-api-lib-v3.0.22...core-ts-api-lib-v3.0.23

@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## 🔖 [4.1.15] (2026-03-12)
+
+### 🏗️ Changed
+
+- `CompletedWorkoutSet` type refined to only require planned and actual performance fields (`plannedReps`, `plannedWeight`, `plannedRir`, `actualReps`, `actualWeight`, `rir`) to be non-nullable, rather than all fields.
+- `WorkoutExerciseService.calculateTargetRepsAndWeightForFirstSet` no longer accepts a `microcycleIndex` parameter; all microcycle-to-microcycle progression is now handled by autoregulation/forecasting from the previous set.
+- Replaced `hasCompleteAutoRegulationData` with `toCompletedSet`, which converts a `WorkoutSet` to a `CompletedWorkoutSet` and forecasts planned-only sets (surplus = 0) so progression continues smoothly even without actual performance data.
+- `calculateCalibrationBasedTargets` now computes initial targets only (no microcycle loops); it is used exclusively when no previous set exists.
+- `WorkoutSetService` no longer passes `microcycleIndex` to `calculateTargetRepsAndWeightForFirstSet`.
+
 ## 🔖 [4.1.14] (2026-03-07)
 
 ### 🏗️ Changed
@@ -375,6 +385,7 @@ Updated dependency: now requires `@aneuhold/core-ts-lib@^2.3.11`.
 
 <!-- Link References -->
 
+[4.1.15]: https://github.com/aneuhold/ts-libs/compare/core-ts-db-lib-v4.1.14...core-ts-db-lib-v4.1.15
 [4.1.14]: https://github.com/aneuhold/ts-libs/compare/core-ts-db-lib-v4.1.13...core-ts-db-lib-v4.1.14
 [4.1.13]: https://github.com/aneuhold/ts-libs/compare/core-ts-db-lib-v4.1.12...core-ts-db-lib-v4.1.13
 [4.1.12]: https://github.com/aneuhold/ts-libs/compare/core-ts-db-lib-v4.1.11...core-ts-db-lib-v4.1.12

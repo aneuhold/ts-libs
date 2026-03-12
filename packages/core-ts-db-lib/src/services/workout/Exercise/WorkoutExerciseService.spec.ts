@@ -28,63 +28,26 @@ describe('Unit Tests', () => {
   });
 
   describe('calculateProgressedTargets', () => {
-    describe('Rep Progression', () => {
-      it('should start new block with reset reps and increased weight', () => {
+    describe('Calibration-Based Initial Targets', () => {
+      it('should compute initial weight from calibration for rep progression', () => {
         const equipment = workoutTestUtil.STANDARD_EQUIPMENT_TYPES.barbell;
         const exercise = workoutTestUtil.STANDARD_EXERCISES.deadlift;
         const calibration = workoutTestUtil.STANDARD_CALIBRATIONS.deadlift;
 
-        // Medium range: After hitting max (20), resets by subtracting 6
-        // Microcycle 5: 20 reps
-        // Microcycle 6: would be 22, resets to 22 - 6 = 16
-        const result5 = WorkoutExerciseService.calculateTargetRepsAndWeightForFirstSet({
+        const result = WorkoutExerciseService.calculateTargetRepsAndWeightForFirstSet({
           exercise,
           calibration,
           equipment,
-          microcycleIndex: 5,
           firstMicrocycleRir: 4
         });
 
-        const result6 = WorkoutExerciseService.calculateTargetRepsAndWeightForFirstSet({
-          exercise,
-          calibration,
-          equipment,
-          microcycleIndex: 6,
-          firstMicrocycleRir: 4
-        });
-
-        // Reps reset to 15 for block 1 (21 - 6)
-        expect(result6.targetReps).toBe(15);
-        // Weight should be at least 2% more
-        expect(result6.targetWeight).toBeGreaterThanOrEqual(result5.targetWeight * 1.02);
+        // Medium range midpoint = 15 reps
+        expect(result.targetReps).toBe(15);
+        expect(result.targetWeight).toBeGreaterThan(0);
+        expect(equipment.weightOptions).toContain(result.targetWeight);
       });
 
-      it('should maintain same weight within a block for rep progression', () => {
-        const equipment = workoutTestUtil.STANDARD_EQUIPMENT_TYPES.barbell;
-        const exercise = workoutTestUtil.STANDARD_EXERCISES.deadlift;
-        const calibration = workoutTestUtil.STANDARD_CALIBRATIONS.deadlift;
-
-        const result0 = WorkoutExerciseService.calculateTargetRepsAndWeightForFirstSet({
-          exercise,
-          calibration,
-          equipment,
-          microcycleIndex: 0,
-          firstMicrocycleRir: 4
-        });
-        const result2 = WorkoutExerciseService.calculateTargetRepsAndWeightForFirstSet({
-          exercise,
-          calibration,
-          equipment,
-          microcycleIndex: 2,
-          firstMicrocycleRir: 4
-        });
-
-        expect(result0.targetWeight).toBe(result2.targetWeight);
-      });
-    });
-
-    describe('Load Progression', () => {
-      it('should not increase weight in microcycle 0', () => {
+      it('should compute initial weight from calibration for load progression', () => {
         const equipment = workoutTestUtil.STANDARD_EQUIPMENT_TYPES.barbell;
         const exercise = workoutTestUtil.STANDARD_EXERCISES.barbellSquat;
         const calibration = workoutTestUtil.STANDARD_CALIBRATIONS.barbellSquat;
@@ -93,67 +56,13 @@ describe('Unit Tests', () => {
           exercise,
           calibration,
           equipment,
-          microcycleIndex: 0,
           firstMicrocycleRir: 4
         });
 
-        expect(result.targetReps).toBe(15); // Heavy max (no RIR subtraction)
-        // Weight should be based on calibration, not increased
+        // Heavy max = 15 reps for load progression
+        expect(result.targetReps).toBe(15);
         expect(result.targetWeight).toBeGreaterThan(0);
-      });
-
-      it('should increase weight by at least 2% in subsequent microcycles', () => {
-        const equipment = workoutTestUtil.STANDARD_EQUIPMENT_TYPES.barbell;
-        const exercise = workoutTestUtil.STANDARD_EXERCISES.barbellSquat;
-        const calibration = workoutTestUtil.STANDARD_CALIBRATIONS.barbellSquat;
-
-        const result0 = WorkoutExerciseService.calculateTargetRepsAndWeightForFirstSet({
-          exercise,
-          calibration,
-          equipment,
-          microcycleIndex: 0,
-          firstMicrocycleRir: 4
-        });
-
-        const result1 = WorkoutExerciseService.calculateTargetRepsAndWeightForFirstSet({
-          exercise,
-          calibration,
-          equipment,
-          microcycleIndex: 1,
-          firstMicrocycleRir: 4
-        });
-
-        // Weight should increase by at least 2%
-        expect(result1.targetWeight).toBeGreaterThanOrEqual(result0.targetWeight * 1.02);
-        // Reps stay at max for load progression
-        expect(result1.targetReps).toBe(15);
-      });
-
-      it('should increase reps when max weight is reached', () => {
-        const equipment = workoutTestUtil.STANDARD_EQUIPMENT_TYPES.dumbbell;
-        const exercise = workoutTestUtil.STANDARD_EXERCISES.dumbbellLateralRaise;
-        const calibration = workoutTestUtil.STANDARD_CALIBRATIONS.dumbbellLateralRaise;
-
-        const result0 = WorkoutExerciseService.calculateTargetRepsAndWeightForFirstSet({
-          exercise,
-          calibration,
-          equipment,
-          microcycleIndex: 0,
-          firstMicrocycleRir: 4
-        });
-
-        const result1 = WorkoutExerciseService.calculateTargetRepsAndWeightForFirstSet({
-          exercise,
-          calibration,
-          equipment,
-          microcycleIndex: 1,
-          firstMicrocycleRir: 4
-        });
-
-        // dumbbellLateralRaise is Rep progression, block-based:
-        // Light range (15-30): starts at midpoint (22) reps
-        expect(result0.targetReps).toBe(22);
-        expect(result1.targetReps).toBe(24); // 22 + 2
+        expect(equipment.weightOptions).toContain(result.targetWeight);
       });
     });
 
@@ -167,7 +76,6 @@ describe('Unit Tests', () => {
           exercise,
           calibration,
           equipment,
-          microcycleIndex: 0,
           firstMicrocycleRir: 4
         });
 
@@ -184,7 +92,6 @@ describe('Unit Tests', () => {
           exercise,
           calibration,
           equipment,
-          microcycleIndex: 0,
           firstMicrocycleRir: 4
         });
 
@@ -221,7 +128,6 @@ describe('Unit Tests', () => {
           exercise: calfRaise,
           calibration,
           equipment: weightBelt,
-          microcycleIndex: 0,
           firstMicrocycleRir: 4
         });
 
@@ -256,7 +162,6 @@ describe('Unit Tests', () => {
           exercise,
           calibration,
           equipment,
-          microcycleIndex: 1,
           firstMicrocycleRir: 4,
           previousFirstSet
         });
@@ -288,7 +193,6 @@ describe('Unit Tests', () => {
           exercise,
           calibration,
           equipment,
-          microcycleIndex: 1,
           firstMicrocycleRir: 4,
           previousFirstSet
         });
@@ -321,7 +225,6 @@ describe('Unit Tests', () => {
           exercise,
           calibration,
           equipment,
-          microcycleIndex: 1,
           firstMicrocycleRir: 4,
           previousFirstSet
         });
@@ -353,7 +256,6 @@ describe('Unit Tests', () => {
           exercise,
           calibration,
           equipment,
-          microcycleIndex: 1,
           firstMicrocycleRir: 4,
           previousFirstSet
         });
@@ -385,7 +287,6 @@ describe('Unit Tests', () => {
           exercise,
           calibration,
           equipment,
-          microcycleIndex: 1,
           firstMicrocycleRir: 4,
           previousFirstSet
         });
@@ -417,7 +318,6 @@ describe('Unit Tests', () => {
           exercise,
           calibration,
           equipment,
-          microcycleIndex: 1,
           firstMicrocycleRir: 4,
           previousFirstSet
         });
@@ -449,7 +349,6 @@ describe('Unit Tests', () => {
           exercise,
           calibration,
           equipment,
-          microcycleIndex: 1,
           firstMicrocycleRir: 4,
           previousFirstSet
         });
@@ -481,7 +380,6 @@ describe('Unit Tests', () => {
           exercise,
           calibration,
           equipment,
-          microcycleIndex: 1,
           firstMicrocycleRir: 4,
           previousFirstSet
         });
@@ -522,7 +420,6 @@ describe('Unit Tests', () => {
           exercise,
           calibration,
           equipment,
-          microcycleIndex: 1,
           firstMicrocycleRir: 4,
           previousFirstSet
         });
@@ -553,7 +450,6 @@ describe('Unit Tests', () => {
           exercise,
           calibration,
           equipment,
-          microcycleIndex: 1,
           firstMicrocycleRir: 4,
           previousFirstSet
         });
@@ -586,7 +482,6 @@ describe('Unit Tests', () => {
           exercise,
           calibration,
           equipment,
-          microcycleIndex: 1,
           firstMicrocycleRir: 4,
           previousFirstSet
         });
@@ -618,7 +513,6 @@ describe('Unit Tests', () => {
           exercise,
           calibration,
           equipment,
-          microcycleIndex: 1,
           firstMicrocycleRir: 4,
           previousFirstSet
         });
@@ -668,7 +562,6 @@ describe('Unit Tests', () => {
           exercise,
           calibration,
           equipment: fineEquipment,
-          microcycleIndex: 1,
           firstMicrocycleRir: 4,
           previousFirstSet
         });
@@ -716,7 +609,6 @@ describe('Unit Tests', () => {
           exercise,
           calibration,
           equipment: fineEquipment,
-          microcycleIndex: 1,
           firstMicrocycleRir: 4,
           previousFirstSet
         });
@@ -777,7 +669,6 @@ describe('Unit Tests', () => {
           exercise,
           calibration,
           equipment: fineEquipment,
-          microcycleIndex: 1,
           firstMicrocycleRir: 4,
           previousFirstSet: normalSet
         });
@@ -786,7 +677,6 @@ describe('Unit Tests', () => {
           exercise,
           calibration,
           equipment: fineEquipment,
-          microcycleIndex: 1,
           firstMicrocycleRir: 4,
           previousFirstSet: accelerateSet
         });
@@ -816,7 +706,6 @@ describe('Unit Tests', () => {
           exercise,
           calibration,
           equipment,
-          microcycleIndex: 1,
           firstMicrocycleRir: 4,
           previousFirstSet
         });
@@ -847,7 +736,6 @@ describe('Unit Tests', () => {
           exercise,
           calibration,
           equipment,
-          microcycleIndex: 1,
           firstMicrocycleRir: 4,
           previousFirstSet
         });
@@ -878,7 +766,6 @@ describe('Unit Tests', () => {
           exercise,
           calibration,
           equipment,
-          microcycleIndex: 1,
           firstMicrocycleRir: 4,
           previousFirstSet
         });
@@ -909,7 +796,6 @@ describe('Unit Tests', () => {
           exercise,
           calibration,
           equipment,
-          microcycleIndex: 1,
           firstMicrocycleRir: 4,
           previousFirstSet
         });
@@ -950,7 +836,6 @@ describe('Unit Tests', () => {
             exercise,
             calibration,
             equipment,
-            microcycleIndex: 1,
             firstMicrocycleRir: 4,
             previousFirstSet
           });
@@ -990,7 +875,6 @@ describe('Unit Tests', () => {
             exercise,
             calibration,
             equipment,
-            microcycleIndex: 1,
             firstMicrocycleRir: 4,
             previousFirstSet
           });
@@ -1000,13 +884,13 @@ describe('Unit Tests', () => {
       });
     });
 
-    describe('Autoregulation Fallback', () => {
-      it('should use calibration formula when previousFirstSet has no actual data', () => {
+    describe('Forecasting from planned data', () => {
+      it('should forecast from planned values when previousFirstSet has no actual data', () => {
         const equipment = workoutTestUtil.STANDARD_EQUIPMENT_TYPES.barbell;
         const exercise = workoutTestUtil.STANDARD_EXERCISES.deadlift;
         const calibration = workoutTestUtil.STANDARD_CALIBRATIONS.deadlift;
 
-        // Previous set with no actual data
+        // Previous set with no actual data (generated but not yet performed)
         const previousFirstSet = workoutTestUtil.createSet({
           exercise,
           overrides: {
@@ -1019,11 +903,42 @@ describe('Unit Tests', () => {
           }
         });
 
+        const result = WorkoutExerciseService.calculateTargetRepsAndWeightForFirstSet({
+          exercise,
+          calibration,
+          equipment,
+          firstMicrocycleRir: 4,
+          previousFirstSet
+        });
+
+        // Forecasting treats planned as actual with surplus = 0.
+        // Rep progression, surplus 0: plannedReps + 2 = 17, weight stays at 200.
+        expect(result.targetReps).toBe(17);
+        expect(result.targetWeight).toBe(200);
+      });
+
+      it('should fall back to calibration when previousFirstSet has no planned RIR', () => {
+        const equipment = workoutTestUtil.STANDARD_EQUIPMENT_TYPES.barbell;
+        const exercise = workoutTestUtil.STANDARD_EXERCISES.deadlift;
+        const calibration = workoutTestUtil.STANDARD_CALIBRATIONS.deadlift;
+
+        // A deload set has no plannedRir, so forecasting cannot produce a surplus
+        const previousFirstSet = workoutTestUtil.createSet({
+          exercise,
+          overrides: {
+            plannedReps: 8,
+            plannedWeight: 100,
+            plannedRir: null,
+            actualReps: null,
+            actualWeight: null,
+            rir: null
+          }
+        });
+
         const resultWithPrevious = WorkoutExerciseService.calculateTargetRepsAndWeightForFirstSet({
           exercise,
           calibration,
           equipment,
-          microcycleIndex: 1,
           firstMicrocycleRir: 4,
           previousFirstSet
         });
@@ -1032,11 +947,10 @@ describe('Unit Tests', () => {
           exercise,
           calibration,
           equipment,
-          microcycleIndex: 1,
           firstMicrocycleRir: 4
         });
 
-        // Should be the same as without previous set (calibration formula)
+        // With no planned RIR, forecasting can't work — falls back to calibration
         expect(resultWithPrevious.targetReps).toBe(resultWithout.targetReps);
         expect(resultWithPrevious.targetWeight).toBe(resultWithout.targetWeight);
       });
@@ -1058,7 +972,6 @@ describe('Unit Tests', () => {
             exercise,
             calibration,
             equipment,
-            microcycleIndex: 0,
             firstMicrocycleRir: 4
           })
         ).toThrow('No weight options defined');
@@ -1084,12 +997,11 @@ describe('Unit Tests', () => {
           }
         });
 
-        // This is microcycleIndex 0 of a NEW mesocycle, with previousFirstSet from CTO
+        // First microcycle of a NEW mesocycle, with previousFirstSet from CTO
         const result = WorkoutExerciseService.calculateTargetRepsAndWeightForFirstSet({
           exercise,
           calibration,
           equipment,
-          microcycleIndex: 0,
           firstMicrocycleRir: 4,
           previousFirstSet: lastFirstSet
         });
@@ -1102,7 +1014,6 @@ describe('Unit Tests', () => {
             exercise,
             calibration,
             equipment,
-            microcycleIndex: 0,
             firstMicrocycleRir: 4
           });
 
@@ -1135,7 +1046,6 @@ describe('Unit Tests', () => {
           exercise,
           calibration,
           equipment,
-          microcycleIndex: 0,
           firstMicrocycleRir: 4,
           previousFirstSet: lastFirstSet
         });
@@ -1156,7 +1066,6 @@ describe('Unit Tests', () => {
           exercise,
           calibration,
           equipment,
-          microcycleIndex: 0,
           firstMicrocycleRir: 4
         });
 
@@ -1170,7 +1079,6 @@ describe('Unit Tests', () => {
             exercise,
             calibration,
             equipment,
-            microcycleIndex: 0,
             firstMicrocycleRir: 4,
             previousFirstSet: undefined
           });
@@ -1190,7 +1098,6 @@ describe('Unit Tests', () => {
           exercise,
           calibration,
           equipment,
-          microcycleIndex: 0,
           firstMicrocycleRir: 4
         });
 
@@ -1206,7 +1113,6 @@ describe('Unit Tests', () => {
           exercise,
           calibration,
           equipment,
-          microcycleIndex: 0,
           firstMicrocycleRir: 4
         });
 
@@ -1223,7 +1129,6 @@ describe('Unit Tests', () => {
           exercise,
           calibration,
           equipment,
-          microcycleIndex: 0,
           firstMicrocycleRir: 4
         });
 
