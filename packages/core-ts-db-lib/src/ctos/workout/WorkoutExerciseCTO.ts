@@ -52,14 +52,13 @@ export const WorkoutExerciseCTOSchema = z.object({
   lastSessionExercise: WorkoutSessionExerciseSchema.nullable(),
 
   /**
-   * The first WorkoutSet from the lastSessionExercise's setOrder.
-   * This is the "anchor" set that progression calculations use since
-   * subsequent sets are derived from the first via intra-session fatigue
-   * drops.
+   * All WorkoutSets from the lastSessionExercise's setOrder. Surplus is
+   * averaged across all sets for a holistic performance signal during
+   * autoregulation (the first set alone can mask poor later-set performance).
    *
-   * Null if no previous accumulation performance exists.
+   * Empty array if no previous accumulation performance exists.
    */
-  lastFirstSet: WorkoutSetSchema.nullable()
+  lastSessionSets: z.array(WorkoutSetSchema).default([])
 });
 
 /**

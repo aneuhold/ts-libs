@@ -38,7 +38,8 @@ describe('Unit Tests', () => {
           exercise,
           calibration,
           equipment,
-          firstMicrocycleRir: 4
+          firstMicrocycleRir: 4,
+          previousSets: []
         });
 
         // Medium range midpoint = 15 reps
@@ -56,7 +57,8 @@ describe('Unit Tests', () => {
           exercise,
           calibration,
           equipment,
-          firstMicrocycleRir: 4
+          firstMicrocycleRir: 4,
+          previousSets: []
         });
 
         // Heavy max = 15 reps for load progression
@@ -76,7 +78,8 @@ describe('Unit Tests', () => {
           exercise,
           calibration,
           equipment,
-          firstMicrocycleRir: 4
+          firstMicrocycleRir: 4,
+          previousSets: []
         });
 
         // Should be an available weight option
@@ -92,7 +95,8 @@ describe('Unit Tests', () => {
           exercise,
           calibration,
           equipment,
-          firstMicrocycleRir: 4
+          firstMicrocycleRir: 4,
+          previousSets: []
         });
 
         // Should round up to lowest available (45lbs for barbell)
@@ -128,7 +132,8 @@ describe('Unit Tests', () => {
           exercise: calfRaise,
           calibration,
           equipment: weightBelt,
-          firstMicrocycleRir: 4
+          firstMicrocycleRir: 4,
+          previousSets: []
         });
 
         // Target reps for microcycle 0 should be the midpoint (22 for Light range)
@@ -163,7 +168,7 @@ describe('Unit Tests', () => {
           calibration,
           equipment,
           firstMicrocycleRir: 4,
-          previousFirstSet
+          previousSets: [previousFirstSet]
         });
 
         // Accelerate: 18 + 2 = 20 (from actual, not planned)
@@ -194,7 +199,7 @@ describe('Unit Tests', () => {
           calibration,
           equipment,
           firstMicrocycleRir: 4,
-          previousFirstSet
+          previousSets: [previousFirstSet]
         });
 
         // Normal: 15 + 2 = 17 (from planned)
@@ -226,7 +231,7 @@ describe('Unit Tests', () => {
           calibration,
           equipment,
           firstMicrocycleRir: 4,
-          previousFirstSet
+          previousSets: [previousFirstSet]
         });
 
         // Normal path: plannedReps + 2 = 17 (NOT actualReps + 2 = 18)
@@ -257,7 +262,7 @@ describe('Unit Tests', () => {
           calibration,
           equipment,
           firstMicrocycleRir: 4,
-          previousFirstSet
+          previousSets: [previousFirstSet]
         });
 
         // Hold: keep at 15 (planned reps)
@@ -288,7 +293,7 @@ describe('Unit Tests', () => {
           calibration,
           equipment,
           firstMicrocycleRir: 4,
-          previousFirstSet
+          previousSets: [previousFirstSet]
         });
 
         // Hold: plannedReps stays at 15 (no rep addition, no regression)
@@ -296,19 +301,19 @@ describe('Unit Tests', () => {
         expect(result.targetWeight).toBe(200);
       });
 
-      it('should regress when surplus <= -3 (significantly missed)', () => {
+      it('should regress reps without weight change when surplus is exactly -3', () => {
         const equipment = workoutTestUtil.STANDARD_EQUIPMENT_TYPES.barbell;
         const exercise = workoutTestUtil.STANDARD_EXERCISES.deadlift;
         const calibration = workoutTestUtil.STANDARD_CALIBRATIONS.deadlift;
 
-        // Previous: planned 15 reps @ 3 RIR, actual 12 reps @ 1 RIR → surplus = -5
+        // Previous: planned 15 reps @ 3 RIR, actual 14 reps @ 1 RIR → surplus = -3
         const previousFirstSet = workoutTestUtil.createSet({
           exercise,
           overrides: {
             plannedReps: 15,
             plannedWeight: 200,
             plannedRir: 3,
-            actualReps: 12,
+            actualReps: 14,
             actualWeight: 200,
             rir: 1
           }
@@ -319,12 +324,43 @@ describe('Unit Tests', () => {
           calibration,
           equipment,
           firstMicrocycleRir: 4,
-          previousFirstSet
+          previousSets: [previousFirstSet]
         });
 
-        // Regress: use actual reps (12)
-        expect(result.targetReps).toBe(12);
+        // Regress: use actual reps (14), keep weight
+        expect(result.targetReps).toBe(14);
         expect(result.targetWeight).toBe(200);
+      });
+
+      it('should regress reps AND reduce weight when surplus < -3 (severely missed)', () => {
+        const equipment = workoutTestUtil.STANDARD_EQUIPMENT_TYPES.barbell;
+        const exercise = workoutTestUtil.STANDARD_EXERCISES.deadlift;
+        const calibration = workoutTestUtil.STANDARD_CALIBRATIONS.deadlift;
+
+        // Previous: planned 15 reps @ 3 RIR, actual 12 reps @ 2 RIR → surplus = -4
+        const previousFirstSet = workoutTestUtil.createSet({
+          exercise,
+          overrides: {
+            plannedReps: 15,
+            plannedWeight: 200,
+            plannedRir: 3,
+            actualReps: 12,
+            actualWeight: 200,
+            rir: 2
+          }
+        });
+
+        const result = WorkoutExerciseService.calculateTargetRepsAndWeightForFirstSet({
+          exercise,
+          calibration,
+          equipment,
+          firstMicrocycleRir: 4,
+          previousSets: [previousFirstSet]
+        });
+
+        // Severe regress: use actual reps (clamped to min 10) AND reduce weight
+        expect(result.targetReps).toBe(12);
+        expect(result.targetWeight).toBeLessThan(200);
       });
 
       it('should regress at surplus boundary of exactly -3', () => {
@@ -350,7 +386,7 @@ describe('Unit Tests', () => {
           calibration,
           equipment,
           firstMicrocycleRir: 4,
-          previousFirstSet
+          previousSets: [previousFirstSet]
         });
 
         // Regress: use actual reps (14), not hold at planned (15)
@@ -381,7 +417,7 @@ describe('Unit Tests', () => {
           calibration,
           equipment,
           firstMicrocycleRir: 4,
-          previousFirstSet
+          previousSets: [previousFirstSet]
         });
 
         // Should clamp to rep range min (10 for Medium)
@@ -421,14 +457,14 @@ describe('Unit Tests', () => {
           calibration,
           equipment,
           firstMicrocycleRir: 4,
-          previousFirstSet
+          previousSets: [previousFirstSet]
         });
 
         // Should clamp to Heavy rep range min (5)
         expect(result.targetReps).toBe(5);
       });
 
-      it('should cap at rep range max and bump weight when acceleration exceeds ceiling', () => {
+      it('should reset to midpoint and bump weight when acceleration exceeds ceiling', () => {
         const equipment = workoutTestUtil.STANDARD_EQUIPMENT_TYPES.barbell;
         const exercise = workoutTestUtil.STANDARD_EXERCISES.deadlift; // Medium range max = 20
         const calibration = workoutTestUtil.STANDARD_CALIBRATIONS.deadlift;
@@ -451,15 +487,15 @@ describe('Unit Tests', () => {
           calibration,
           equipment,
           firstMicrocycleRir: 4,
-          previousFirstSet
+          previousSets: [previousFirstSet]
         });
 
-        // 22 + 2 = 24, exceeds max (20), so cap at 20 and bump weight
-        expect(result.targetReps).toBe(20);
+        // 22 + 2 = 24, exceeds max (20), so reset to midpoint (15) and bump weight
+        expect(result.targetReps).toBe(15);
         expect(result.targetWeight).toBeGreaterThan(200);
       });
 
-      it('should cap at rep range max when normal progression exceeds ceiling', () => {
+      it('should reset to midpoint when normal progression exceeds ceiling', () => {
         const equipment = workoutTestUtil.STANDARD_EQUIPMENT_TYPES.barbell;
         const exercise = workoutTestUtil.STANDARD_EXERCISES.deadlift; // Medium range max = 20
         const calibration = workoutTestUtil.STANDARD_CALIBRATIONS.deadlift;
@@ -483,11 +519,11 @@ describe('Unit Tests', () => {
           calibration,
           equipment,
           firstMicrocycleRir: 4,
-          previousFirstSet
+          previousSets: [previousFirstSet]
         });
 
-        // 19 + 2 = 21, exceeds max (20), so cap at 20 and bump weight
-        expect(result.targetReps).toBe(20);
+        // 19 + 2 = 21, exceeds max (20), so reset to midpoint (15) and bump weight
+        expect(result.targetReps).toBe(15);
         expect(result.targetWeight).toBeGreaterThan(200);
       });
 
@@ -514,11 +550,117 @@ describe('Unit Tests', () => {
           calibration,
           equipment,
           firstMicrocycleRir: 4,
-          previousFirstSet
+          previousSets: [previousFirstSet]
         });
 
         // Output weight must always be a valid equipment weight option
         expect(equipment.weightOptions).toContain(result.targetWeight);
+      });
+    });
+
+    describe('Multi-Set Surplus Averaging', () => {
+      it('should average surplus across all sets and trigger regress when average is -3', () => {
+        const equipment = workoutTestUtil.STANDARD_EQUIPMENT_TYPES.barbell;
+        const exercise = workoutTestUtil.STANDARD_EXERCISES.deadlift; // Medium, Rep progression
+        const calibration = workoutTestUtil.STANDARD_CALIBRATIONS.deadlift;
+
+        // Set 1: planned 15 @ 3 RIR, actual 14 @ 2 RIR → surplus = -2
+        const set1 = workoutTestUtil.createSet({
+          exercise,
+          overrides: {
+            plannedReps: 15,
+            plannedWeight: 200,
+            plannedRir: 3,
+            actualReps: 14,
+            actualWeight: 200,
+            rir: 2
+          }
+        });
+
+        // Set 2: planned 13 @ 3 RIR, actual 11 @ 1 RIR → surplus = -4 (terrible)
+        const set2 = workoutTestUtil.createSet({
+          exercise,
+          overrides: {
+            plannedReps: 13,
+            plannedWeight: 200,
+            plannedRir: 3,
+            actualReps: 11,
+            actualWeight: 200,
+            rir: 1
+          }
+        });
+
+        // Average surplus = (-2 + -4) / 2 = -3
+        // With only first set (surplus = -2), algorithm would "hold" at planned reps (15)
+        // With averaged surplus (-3), it triggers "regress" to actual reps (14)
+        const resultMultiSet = WorkoutExerciseService.calculateTargetRepsAndWeightForFirstSet({
+          exercise,
+          calibration,
+          equipment,
+          firstMicrocycleRir: 4,
+          previousSets: [set1, set2]
+        });
+
+        const resultFirstSetOnly = WorkoutExerciseService.calculateTargetRepsAndWeightForFirstSet({
+          exercise,
+          calibration,
+          equipment,
+          firstMicrocycleRir: 4,
+          previousSets: [set1]
+        });
+
+        // First set only: surplus = -2, "hold" → keeps planned reps (15)
+        expect(resultFirstSetOnly.targetReps).toBe(15);
+        expect(resultFirstSetOnly.targetWeight).toBe(200);
+
+        // Multi-set averaged: surplus = -3, "regress" → uses first set's actual reps (14)
+        expect(resultMultiSet.targetReps).toBe(14);
+        expect(resultMultiSet.targetWeight).toBe(200);
+      });
+
+      it('should trigger severe regress (weight reduction) when multi-set average is very negative', () => {
+        const equipment = workoutTestUtil.STANDARD_EQUIPMENT_TYPES.barbell;
+        const exercise = workoutTestUtil.STANDARD_EXERCISES.deadlift;
+        const calibration = workoutTestUtil.STANDARD_CALIBRATIONS.deadlift;
+
+        // Set 1: planned 15 @ 4 RIR, actual 15 @ 1 RIR → surplus = -3
+        const set1 = workoutTestUtil.createSet({
+          exercise,
+          overrides: {
+            plannedReps: 15,
+            plannedWeight: 200,
+            plannedRir: 4,
+            actualReps: 15,
+            actualWeight: 200,
+            rir: 1
+          }
+        });
+
+        // Set 2: planned 13 @ 4 RIR, actual 10 @ 0 RIR → surplus = -7
+        const set2 = workoutTestUtil.createSet({
+          exercise,
+          overrides: {
+            plannedReps: 13,
+            plannedWeight: 200,
+            plannedRir: 4,
+            actualReps: 10,
+            actualWeight: 200,
+            rir: 0
+          }
+        });
+
+        // Average surplus = (-3 + -7) / 2 = -5 → severe regress (< -3)
+        const result = WorkoutExerciseService.calculateTargetRepsAndWeightForFirstSet({
+          exercise,
+          calibration,
+          equipment,
+          firstMicrocycleRir: 4,
+          previousSets: [set1, set2]
+        });
+
+        // Severe regress: actual reps from first set (15) AND reduced weight
+        expect(result.targetReps).toBe(15);
+        expect(result.targetWeight).toBeLessThan(200);
       });
     });
 
@@ -563,7 +705,7 @@ describe('Unit Tests', () => {
           calibration,
           equipment: fineEquipment,
           firstMicrocycleRir: 4,
-          previousFirstSet
+          previousSets: [previousFirstSet]
         });
 
         // 4% of 100 = 104, nearest 'up' >= 104 is 104
@@ -610,7 +752,7 @@ describe('Unit Tests', () => {
           calibration,
           equipment: fineEquipment,
           firstMicrocycleRir: 4,
-          previousFirstSet
+          previousSets: [previousFirstSet]
         });
 
         // 2% of 100 = 102, nearest 'up' >= 102 is 102
@@ -670,7 +812,7 @@ describe('Unit Tests', () => {
           calibration,
           equipment: fineEquipment,
           firstMicrocycleRir: 4,
-          previousFirstSet: normalSet
+          previousSets: [normalSet]
         });
 
         const accelerateResult = WorkoutExerciseService.calculateTargetRepsAndWeightForFirstSet({
@@ -678,7 +820,7 @@ describe('Unit Tests', () => {
           calibration,
           equipment: fineEquipment,
           firstMicrocycleRir: 4,
-          previousFirstSet: accelerateSet
+          previousSets: [accelerateSet]
         });
 
         // Accelerated weight should be strictly greater than normal weight
@@ -707,7 +849,7 @@ describe('Unit Tests', () => {
           calibration,
           equipment,
           firstMicrocycleRir: 4,
-          previousFirstSet
+          previousSets: [previousFirstSet]
         });
 
         // Hold: same weight
@@ -737,7 +879,7 @@ describe('Unit Tests', () => {
           calibration,
           equipment,
           firstMicrocycleRir: 4,
-          previousFirstSet
+          previousSets: [previousFirstSet]
         });
 
         // Hold: weight stays unchanged at surplus = -1
@@ -767,7 +909,7 @@ describe('Unit Tests', () => {
           calibration,
           equipment,
           firstMicrocycleRir: 4,
-          previousFirstSet
+          previousSets: [previousFirstSet]
         });
 
         // Reduce by minimum equipment increment
@@ -797,7 +939,7 @@ describe('Unit Tests', () => {
           calibration,
           equipment,
           firstMicrocycleRir: 4,
-          previousFirstSet
+          previousSets: [previousFirstSet]
         });
 
         // Surplus = -3 triggers reduce, not hold
@@ -837,7 +979,7 @@ describe('Unit Tests', () => {
             calibration,
             equipment,
             firstMicrocycleRir: 4,
-            previousFirstSet
+            previousSets: [previousFirstSet]
           });
 
           // Load progression always targets rep range max (15 for Heavy)
@@ -876,7 +1018,7 @@ describe('Unit Tests', () => {
             calibration,
             equipment,
             firstMicrocycleRir: 4,
-            previousFirstSet
+            previousSets: [previousFirstSet]
           });
 
           expect(equipment.weightOptions).toContain(result.targetWeight);
@@ -885,7 +1027,7 @@ describe('Unit Tests', () => {
     });
 
     describe('Forecasting from planned data', () => {
-      it('should forecast from planned values when previousFirstSet has no actual data', () => {
+      it('should forecast from planned values when previousSets has no actual data', () => {
         const equipment = workoutTestUtil.STANDARD_EQUIPMENT_TYPES.barbell;
         const exercise = workoutTestUtil.STANDARD_EXERCISES.deadlift;
         const calibration = workoutTestUtil.STANDARD_CALIBRATIONS.deadlift;
@@ -908,7 +1050,7 @@ describe('Unit Tests', () => {
           calibration,
           equipment,
           firstMicrocycleRir: 4,
-          previousFirstSet
+          previousSets: [previousFirstSet]
         });
 
         // Forecasting treats planned as actual with surplus = 0.
@@ -917,7 +1059,7 @@ describe('Unit Tests', () => {
         expect(result.targetWeight).toBe(200);
       });
 
-      it('should fall back to calibration when previousFirstSet has no planned RIR', () => {
+      it('should fall back to calibration when previousSets has no planned RIR', () => {
         const equipment = workoutTestUtil.STANDARD_EQUIPMENT_TYPES.barbell;
         const exercise = workoutTestUtil.STANDARD_EXERCISES.deadlift;
         const calibration = workoutTestUtil.STANDARD_CALIBRATIONS.deadlift;
@@ -940,14 +1082,15 @@ describe('Unit Tests', () => {
           calibration,
           equipment,
           firstMicrocycleRir: 4,
-          previousFirstSet
+          previousSets: [previousFirstSet]
         });
 
         const resultWithout = WorkoutExerciseService.calculateTargetRepsAndWeightForFirstSet({
           exercise,
           calibration,
           equipment,
-          firstMicrocycleRir: 4
+          firstMicrocycleRir: 4,
+          previousSets: []
         });
 
         // With no planned RIR, forecasting can't work — falls back to calibration
@@ -972,14 +1115,15 @@ describe('Unit Tests', () => {
             exercise,
             calibration,
             equipment,
-            firstMicrocycleRir: 4
+            firstMicrocycleRir: 4,
+            previousSets: []
           })
         ).toThrow('No weight options defined');
       });
     });
 
     describe('Cross-Mesocycle Continuity', () => {
-      it('should use lastFirstSet actual weight when exercise was used previously with same rep range', () => {
+      it('should use lastSessionSets actual weight when exercise was used previously with same rep range', () => {
         const equipment = workoutTestUtil.STANDARD_EQUIPMENT_TYPES.barbell;
         const exercise = workoutTestUtil.STANDARD_EXERCISES.barbellSquat; // Heavy, Load progression
         const calibration = workoutTestUtil.STANDARD_CALIBRATIONS.barbellSquat;
@@ -997,13 +1141,13 @@ describe('Unit Tests', () => {
           }
         });
 
-        // First microcycle of a NEW mesocycle, with previousFirstSet from CTO
+        // First microcycle of a NEW mesocycle, with previousSets from CTO
         const result = WorkoutExerciseService.calculateTargetRepsAndWeightForFirstSet({
           exercise,
           calibration,
           equipment,
           firstMicrocycleRir: 4,
-          previousFirstSet: lastFirstSet
+          previousSets: [lastFirstSet]
         });
 
         // The calibration-based weight for this exercise would be different from 225.
@@ -1014,7 +1158,8 @@ describe('Unit Tests', () => {
             exercise,
             calibration,
             equipment,
-            firstMicrocycleRir: 4
+            firstMicrocycleRir: 4,
+            previousSets: []
           });
 
         // The autoregulated result should differ from the calibration-only result,
@@ -1024,7 +1169,7 @@ describe('Unit Tests', () => {
         expect(result.targetWeight).toBeGreaterThanOrEqual(225 * 1.02);
       });
 
-      it('should use lastFirstSet actual weight for rep progression exercises from previous mesocycle', () => {
+      it('should use lastSessionSets actual weight for rep progression exercises from previous mesocycle', () => {
         const equipment = workoutTestUtil.STANDARD_EQUIPMENT_TYPES.barbell;
         const exercise = workoutTestUtil.STANDARD_EXERCISES.deadlift; // Medium, Rep progression
         const calibration = workoutTestUtil.STANDARD_CALIBRATIONS.deadlift;
@@ -1047,7 +1192,7 @@ describe('Unit Tests', () => {
           calibration,
           equipment,
           firstMicrocycleRir: 4,
-          previousFirstSet: lastFirstSet
+          previousSets: [lastFirstSet]
         });
 
         // Surplus = 0 (met expectations), rep progression: planned + 2 = 20
@@ -1061,30 +1206,18 @@ describe('Unit Tests', () => {
         const exercise = workoutTestUtil.STANDARD_EXERCISES.barbellSquat;
         const calibration = workoutTestUtil.STANDARD_CALIBRATIONS.barbellSquat;
 
-        // No previousFirstSet at all (new exercise in the mesocycle)
-        const resultNoPrevious = WorkoutExerciseService.calculateTargetRepsAndWeightForFirstSet({
+        // No previousSets (empty array — new exercise in the mesocycle)
+        const result = WorkoutExerciseService.calculateTargetRepsAndWeightForFirstSet({
           exercise,
           calibration,
           equipment,
-          firstMicrocycleRir: 4
+          firstMicrocycleRir: 4,
+          previousSets: []
         });
 
         // Should use calibration-based formula
-        expect(resultNoPrevious.targetWeight).toBeGreaterThan(0);
-        expect(resultNoPrevious.targetReps).toBe(15); // Heavy max for load progression
-
-        // Explicitly passing undefined should give the same result
-        const resultExplicitUndefined =
-          WorkoutExerciseService.calculateTargetRepsAndWeightForFirstSet({
-            exercise,
-            calibration,
-            equipment,
-            firstMicrocycleRir: 4,
-            previousFirstSet: undefined
-          });
-
-        expect(resultExplicitUndefined.targetWeight).toBe(resultNoPrevious.targetWeight);
-        expect(resultExplicitUndefined.targetReps).toBe(resultNoPrevious.targetReps);
+        expect(result.targetWeight).toBeGreaterThan(0);
+        expect(result.targetReps).toBe(15); // Heavy max for load progression
       });
     });
 
@@ -1098,7 +1231,8 @@ describe('Unit Tests', () => {
           exercise,
           calibration,
           equipment,
-          firstMicrocycleRir: 4
+          firstMicrocycleRir: 4,
+          previousSets: []
         });
 
         expect(result.targetReps).toBe(15); // Max for load progression (no RIR subtraction)
@@ -1113,7 +1247,8 @@ describe('Unit Tests', () => {
           exercise,
           calibration,
           equipment,
-          firstMicrocycleRir: 4
+          firstMicrocycleRir: 4,
+          previousSets: []
         });
 
         // Rep progression: starts at midpoint (15)
@@ -1129,7 +1264,8 @@ describe('Unit Tests', () => {
           exercise,
           calibration,
           equipment,
-          firstMicrocycleRir: 4
+          firstMicrocycleRir: 4,
+          previousSets: []
         });
 
         // Rep progression: starts at midpoint (22)

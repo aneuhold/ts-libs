@@ -47,11 +47,12 @@ export default class WorkoutExerciseService {
   /**
    * Calculates the target weight and reps for the FIRST set of an exercise.
    *
-   * When a `previousFirstSet` is provided (completed or planned-only), autoregulation
-   * computes a surplus and applies progression. Planned-only sets are forecasted with
-   * surplus = 0 so the plan progresses smoothly without falling back to calibration.
+   * When `previousSets` are provided (completed or planned-only), autoregulation
+   * computes an average surplus across all sets and applies progression. Planned-only
+   * sets are forecasted with surplus = 0 so the plan progresses smoothly without
+   * falling back to calibration.
    *
-   * When no previous set exists (first mesocycle or new exercise), the calibration-based
+   * When no previous sets exist (first mesocycle or new exercise), the calibration-based
    * formula computes initial targets from the exercise's 1RM and rep range.
    */
   static calculateTargetRepsAndWeightForFirstSet(params: {
@@ -59,9 +60,9 @@ export default class WorkoutExerciseService {
     calibration: WorkoutExerciseCalibration;
     equipment: WorkoutEquipmentType;
     firstMicrocycleRir: number;
-    previousFirstSet?: WorkoutSet;
+    previousSets: WorkoutSet[];
   }): { targetWeight: number; targetReps: number } {
-    const { exercise, calibration, equipment, firstMicrocycleRir, previousFirstSet } = params;
+    const { exercise, calibration, equipment, firstMicrocycleRir, previousSets } = params;
 
     // Validate equipment has weight options
     if (!equipment.weightOptions || equipment.weightOptions.length === 0) {
@@ -74,16 +75,19 @@ export default class WorkoutExerciseService {
     const repRange = this.getRepRangeValues(exercise.repRange);
     const repRangeMidpoint = Math.floor((repRange.min + repRange.max) / 2);
 
-    // When a previous set is available, use autoregulation for progression.
+    // Convert all previous sets to completed sets (forecasting planned → actual if needed).
     // toCompletedSet returns the real data when actual performance exists, or
     // forecasts by copying planned values into actuals (surplus = 0) so the
     // plan progresses smoothly from the planned baseline.
-    const completedPreviousSet = this.toCompletedSet(previousFirstSet);
-    if (completedPreviousSet) {
+    const completedSets = previousSets
+      .map((set) => this.toCompletedSet(set))
+      .filter((set): set is CompletedWorkoutSet => set !== null);
+
+    if (completedSets.length > 0) {
       return this.calculateAutoRegulatedTargets({
         exercise,
         equipment,
-        previousFirstSet: completedPreviousSet,
+        previousSets: completedSets,
         repRange
       });
     }
@@ -100,22 +104,26 @@ export default class WorkoutExerciseService {
   }
 
   /**
-   * Calculates targets using auto-regulation based on actual performance from a previous set.
+   * Calculates targets using auto-regulation based on actual performance from previous sets.
+   * Surplus is averaged across all sets for a more representative performance signal.
+   * Previously only the first set's surplus was used, which masked poor performance
+   * on later sets (e.g., first set hits target but second set falls far short).
    */
   private static calculateAutoRegulatedTargets(params: {
     exercise: WorkoutExercise;
     equipment: WorkoutEquipmentType;
-    previousFirstSet: CompletedWorkoutSet;
+    previousSets: CompletedWorkoutSet[];
     repRange: { min: number; max: number };
   }): { targetWeight: number; targetReps: number } {
-    const { exercise, equipment, previousFirstSet, repRange } = params;
+    const { exercise, equipment, previousSets, repRange } = params;
 
-    const surplus = WorkoutSessionExerciseService.calculateSetSurplus(
-      previousFirstSet.actualReps,
-      previousFirstSet.plannedReps,
-      previousFirstSet.rir,
-      previousFirstSet.plannedRir
-    );
+    // The first set is the reference for rep/weight targets (subsequent sets are
+    // derived from the first via intra-session fatigue drops).
+    const previousFirstSet = previousSets[0];
+
+    // Average surplus across all sets for a holistic performance signal.
+    // previousSets are CompletedWorkoutSets (all fields non-null), so this always returns a number.
+    const surplus = WorkoutSessionExerciseService.calculateAverageSurplus(previousSets) ?? 0;
 
     if (exercise.preferredProgressionType === ExerciseProgressionType.Rep) {
       return this.calculateAutoRegulatedRepTargets(previousFirstSet, surplus, repRange, equipment);
@@ -125,14 +133,16 @@ export default class WorkoutExerciseService {
   }
 
   /**
-   * Auto-regulated rep progression. Weight stays the same, reps adjust based on surplus.
+   * Auto-regulated rep progression. Attempts to increase reps until hitting rep range max,
+   * then resets reps and increases weight.
    *
    * | Surplus | Action |
    * |---:|---|
    * | >= 3 | Accelerate: actualReps + 2 (progress from actual, not planned) |
    * | 0 to 2 | Normal: plannedReps + 2 |
    * | -1 to -2 | Hold: plannedReps (don't add reps) |
-   * | <= -3 | Regress: actualReps (use actual as new baseline) |
+   * | -3 | Regress: actualReps (use actual as new baseline) |
+   * | < -3 | Severe regress: actualReps + reduce weight (weight is too heavy for rep range) |
    */
   private static calculateAutoRegulatedRepTargets(
     previousSet: CompletedWorkoutSet,
@@ -149,8 +159,21 @@ export default class WorkoutExerciseService {
       targetReps = previousSet.plannedReps + 2;
     } else if (surplus >= -2) {
       targetReps = previousSet.plannedReps;
-    } else {
+    } else if (surplus >= -3) {
       targetReps = previousSet.actualReps;
+    } else {
+      // Severe underperformance: the weight is too heavy for this rep range.
+      // Reduce weight by one equipment increment so the user can actually
+      // train in the target rep range.
+      targetReps = previousSet.actualReps;
+      const reducedWeight = WorkoutEquipmentTypeService.findNearestWeight(
+        equipment,
+        targetWeight - 0.01,
+        'down'
+      );
+      if (reducedWeight !== null) {
+        targetWeight = reducedWeight;
+      }
     }
 
     // Clamp to rep range floor (never target below min, even if actual was 0)
@@ -158,7 +181,7 @@ export default class WorkoutExerciseService {
 
     // Handle rep range ceiling: if target exceeds max, reset and bump weight
     if (targetReps > repRange.max) {
-      targetReps = repRange.max;
+      targetReps = Math.floor((repRange.min + repRange.max) / 2);
       const nextWeight = this.findNextTwoPercentWeight(targetWeight, equipment);
       if (nextWeight !== null) {
         targetWeight = nextWeight;

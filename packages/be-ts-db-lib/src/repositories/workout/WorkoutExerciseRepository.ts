@@ -60,7 +60,7 @@ export default class WorkoutExerciseRepository extends WorkoutBaseWithUserIdRepo
    * Builds {@link WorkoutExerciseCTO} objects for all exercises belonging to a user.
    * Uses two parallel MongoDB aggregation pipelines:
    * - Pipeline A: exercise + equipmentType + bestCalibration + bestSet
-   * - Pipeline B: lastSessionExercise + lastFirstSet (from most recent non-deload session)
+   * - Pipeline B: lastSessionExercise + lastSessionSets (from most recent non-deload session)
    *
    * @param userId The user whose exercise CTOs to build.
    */
@@ -76,7 +76,7 @@ export default class WorkoutExerciseRepository extends WorkoutBaseWithUserIdRepo
     interface PipelineBRow {
       _id: string;
       lastSessionExercise: WorkoutSessionExercise;
-      _lastFirstSetArr: WorkoutSet[];
+      _lastSessionSetsArr: WorkoutSet[];
     }
 
     const collection = await this.getCollection();
@@ -211,20 +211,28 @@ export default class WorkoutExerciseRepository extends WorkoutBaseWithUserIdRepo
             lastSessionExercise: { $first: '$_se' }
           }
         },
-        // Join the first set from that session exercise's setOrder
+        // Join all sets from the session exercise's setOrder
         {
           $lookup: {
             from: collName,
-            let: { firstSetId: { $arrayElemAt: ['$lastSessionExercise.setOrder', 0] } },
+            let: { setIds: '$lastSessionExercise.setOrder' },
             pipeline: [
               {
                 $match: {
-                  $expr: { $eq: ['$_id', '$$firstSetId'] },
+                  $expr: { $in: ['$_id', '$$setIds'] },
                   docType: WorkoutSet_docType
                 }
-              }
+              },
+              // Preserve the original setOrder by sorting on index position
+              {
+                $addFields: {
+                  _sortIdx: { $indexOfArray: ['$$setIds', '$_id'] }
+                }
+              },
+              { $sort: { _sortIdx: 1 } },
+              { $project: { _sortIdx: 0 } }
             ],
-            as: '_lastFirstSetArr'
+            as: '_lastSessionSetsArr'
           }
         }
       ])
@@ -237,13 +245,13 @@ export default class WorkoutExerciseRepository extends WorkoutBaseWithUserIdRepo
       string,
       {
         lastSessionExercise: WorkoutSessionExercise;
-        lastFirstSet: WorkoutSet | null;
+        lastSessionSets: WorkoutSet[];
       }
     >();
     for (const row of rawLastSessions) {
       lastSessionMap.set(row._id, {
         lastSessionExercise: row.lastSessionExercise,
-        lastFirstSet: row._lastFirstSetArr[0] ?? null
+        lastSessionSets: row._lastSessionSetsArr
       });
     }
 
@@ -262,7 +270,7 @@ export default class WorkoutExerciseRepository extends WorkoutBaseWithUserIdRepo
         bestCalibration: _bestCalArr[0] ?? null,
         bestSet: _bestSetArr[0] ?? null,
         lastSessionExercise: lastData?.lastSessionExercise ?? null,
-        lastFirstSet: lastData?.lastFirstSet ?? null
+        lastSessionSets: lastData?.lastSessionSets
       });
     });
   }

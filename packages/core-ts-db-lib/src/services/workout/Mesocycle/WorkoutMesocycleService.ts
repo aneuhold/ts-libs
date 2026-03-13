@@ -550,26 +550,16 @@ export default class WorkoutMesocycleService {
           continue;
         }
 
-        const firstSetId = se.setOrder[0];
-        const firstSet = setMap.get(firstSetId);
+        // Average surplus across all completed sets for a holistic performance signal.
+        const sets = se.setOrder
+          .map((setId) => setMap.get(setId))
+          .filter((s): s is WorkoutSet => s != null);
+        const surplus = WorkoutSessionExerciseService.calculateAverageSurplus(sets);
 
-        if (
-          !firstSet ||
-          firstSet.actualReps == null ||
-          firstSet.plannedReps == null ||
-          firstSet.rir == null ||
-          firstSet.plannedRir == null
-        ) {
+        if (surplus == null) {
           consecutiveDrops = 0;
           continue;
         }
-
-        const surplus = WorkoutSessionExerciseService.calculateSetSurplus(
-          firstSet.actualReps,
-          firstSet.plannedReps,
-          firstSet.rir,
-          firstSet.plannedRir
-        );
 
         if (surplus <= this.PERFORMANCE_DROP_SURPLUS_THRESHOLD) {
           consecutiveDrops++;

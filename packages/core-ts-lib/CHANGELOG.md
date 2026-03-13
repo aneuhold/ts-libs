@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## 🔖 [2.4.2] (2026-03-13)
+
+### 🩹 Fixed
+
+- Replaced deprecated `rmdir` with `rm` in `ChangelogService` test cleanup.
+
 ## 🔖 [2.4.1] (2026-02-28)
 
 ### 🏗️ Changed
@@ -209,6 +215,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 <!-- Link References -->
 
+[2.4.2]: https://github.com/aneuhold/ts-libs/compare/core-ts-lib-v2.4.1...core-ts-lib-v2.4.2
 [2.4.1]: https://github.com/aneuhold/ts-libs/compare/core-ts-lib-v2.4.0...core-ts-lib-v2.4.1
 [2.4.0]: https://github.com/aneuhold/ts-libs/compare/core-ts-lib-v2.3.19...core-ts-lib-v2.4.0
 [2.3.19]: https://github.com/aneuhold/ts-libs/compare/core-ts-lib-v2.3.18...core-ts-lib-v2.3.19
