@@ -125,7 +125,8 @@ export default class WorkoutExerciseService {
   }
 
   /**
-   * Auto-regulated rep progression. Weight stays the same, reps adjust based on surplus.
+   * Auto-regulated rep progression. Attempts to increase reps until hitting rep range max,
+   * then resets reps and increases weight.
    *
    * | Surplus | Action |
    * |---:|---|
@@ -158,7 +159,7 @@ export default class WorkoutExerciseService {
 
     // Handle rep range ceiling: if target exceeds max, reset and bump weight
     if (targetReps > repRange.max) {
-      targetReps = repRange.max;
+      targetReps = Math.floor((repRange.min + repRange.max) / 2);
       const nextWeight = this.findNextTwoPercentWeight(targetWeight, equipment);
       if (nextWeight !== null) {
         targetWeight = nextWeight;

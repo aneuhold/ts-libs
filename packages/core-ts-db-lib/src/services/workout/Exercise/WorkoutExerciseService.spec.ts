@@ -428,7 +428,7 @@ describe('Unit Tests', () => {
         expect(result.targetReps).toBe(5);
       });
 
-      it('should cap at rep range max and bump weight when acceleration exceeds ceiling', () => {
+      it('should reset to midpoint and bump weight when acceleration exceeds ceiling', () => {
         const equipment = workoutTestUtil.STANDARD_EQUIPMENT_TYPES.barbell;
         const exercise = workoutTestUtil.STANDARD_EXERCISES.deadlift; // Medium range max = 20
         const calibration = workoutTestUtil.STANDARD_CALIBRATIONS.deadlift;
@@ -454,12 +454,12 @@ describe('Unit Tests', () => {
           previousFirstSet
         });
 
-        // 22 + 2 = 24, exceeds max (20), so cap at 20 and bump weight
-        expect(result.targetReps).toBe(20);
+        // 22 + 2 = 24, exceeds max (20), so reset to midpoint (15) and bump weight
+        expect(result.targetReps).toBe(15);
         expect(result.targetWeight).toBeGreaterThan(200);
       });
 
-      it('should cap at rep range max when normal progression exceeds ceiling', () => {
+      it('should reset to midpoint when normal progression exceeds ceiling', () => {
         const equipment = workoutTestUtil.STANDARD_EQUIPMENT_TYPES.barbell;
         const exercise = workoutTestUtil.STANDARD_EXERCISES.deadlift; // Medium range max = 20
         const calibration = workoutTestUtil.STANDARD_CALIBRATIONS.deadlift;
@@ -486,8 +486,8 @@ describe('Unit Tests', () => {
           previousFirstSet
         });
 
-        // 19 + 2 = 21, exceeds max (20), so cap at 20 and bump weight
-        expect(result.targetReps).toBe(20);
+        // 19 + 2 = 21, exceeds max (20), so reset to midpoint (15) and bump weight
+        expect(result.targetReps).toBe(15);
         expect(result.targetWeight).toBeGreaterThan(200);
       });
 
