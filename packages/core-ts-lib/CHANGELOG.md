@@ -7,13 +7,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## 🔖 [2.4.2] (2026-03-13)
 
-### ✅ Added
-
-### 🏗️ Changed
-
 ### 🩹 Fixed
 
-### 🔥 Removed
+- Replaced deprecated `rmdir` with `rm` in `ChangelogService` test cleanup.
 
 ## 🔖 [2.4.1] (2026-02-28)
 
@@ -218,6 +214,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Updated workflow permissions to allow repository write access
 
 <!-- Link References -->
+
 [2.4.2]: https://github.com/aneuhold/ts-libs/compare/core-ts-lib-v2.4.1...core-ts-lib-v2.4.2
 [2.4.1]: https://github.com/aneuhold/ts-libs/compare/core-ts-lib-v2.4.0...core-ts-lib-v2.4.1
 [2.4.0]: https://github.com/aneuhold/ts-libs/compare/core-ts-lib-v2.3.19...core-ts-lib-v2.4.0

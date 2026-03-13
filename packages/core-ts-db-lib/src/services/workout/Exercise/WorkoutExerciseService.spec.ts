@@ -301,50 +301,19 @@ describe('Unit Tests', () => {
         expect(result.targetWeight).toBe(200);
       });
 
-      it('should regress reps without weight change when surplus is -3 to -4', () => {
+      it('should regress reps without weight change when surplus is exactly -3', () => {
         const equipment = workoutTestUtil.STANDARD_EQUIPMENT_TYPES.barbell;
         const exercise = workoutTestUtil.STANDARD_EXERCISES.deadlift;
         const calibration = workoutTestUtil.STANDARD_CALIBRATIONS.deadlift;
 
-        // Previous: planned 15 reps @ 3 RIR, actual 13 reps @ 2 RIR → surplus = -4
+        // Previous: planned 15 reps @ 3 RIR, actual 14 reps @ 1 RIR → surplus = -3
         const previousFirstSet = workoutTestUtil.createSet({
           exercise,
           overrides: {
             plannedReps: 15,
             plannedWeight: 200,
             plannedRir: 3,
-            actualReps: 13,
-            actualWeight: 200,
-            rir: 2
-          }
-        });
-
-        const result = WorkoutExerciseService.calculateTargetRepsAndWeightForFirstSet({
-          exercise,
-          calibration,
-          equipment,
-          firstMicrocycleRir: 4,
-          previousSets: [previousFirstSet]
-        });
-
-        // Regress: use actual reps (13), keep weight
-        expect(result.targetReps).toBe(13);
-        expect(result.targetWeight).toBe(200);
-      });
-
-      it('should regress reps AND reduce weight when surplus < -4 (severely missed)', () => {
-        const equipment = workoutTestUtil.STANDARD_EQUIPMENT_TYPES.barbell;
-        const exercise = workoutTestUtil.STANDARD_EXERCISES.deadlift;
-        const calibration = workoutTestUtil.STANDARD_CALIBRATIONS.deadlift;
-
-        // Previous: planned 15 reps @ 3 RIR, actual 12 reps @ 1 RIR → surplus = -5
-        const previousFirstSet = workoutTestUtil.createSet({
-          exercise,
-          overrides: {
-            plannedReps: 15,
-            plannedWeight: 200,
-            plannedRir: 3,
-            actualReps: 12,
+            actualReps: 14,
             actualWeight: 200,
             rir: 1
           }
@@ -358,7 +327,38 @@ describe('Unit Tests', () => {
           previousSets: [previousFirstSet]
         });
 
-        // Severe regress: use actual reps (12) AND reduce weight
+        // Regress: use actual reps (14), keep weight
+        expect(result.targetReps).toBe(14);
+        expect(result.targetWeight).toBe(200);
+      });
+
+      it('should regress reps AND reduce weight when surplus < -3 (severely missed)', () => {
+        const equipment = workoutTestUtil.STANDARD_EQUIPMENT_TYPES.barbell;
+        const exercise = workoutTestUtil.STANDARD_EXERCISES.deadlift;
+        const calibration = workoutTestUtil.STANDARD_CALIBRATIONS.deadlift;
+
+        // Previous: planned 15 reps @ 3 RIR, actual 12 reps @ 2 RIR → surplus = -4
+        const previousFirstSet = workoutTestUtil.createSet({
+          exercise,
+          overrides: {
+            plannedReps: 15,
+            plannedWeight: 200,
+            plannedRir: 3,
+            actualReps: 12,
+            actualWeight: 200,
+            rir: 2
+          }
+        });
+
+        const result = WorkoutExerciseService.calculateTargetRepsAndWeightForFirstSet({
+          exercise,
+          calibration,
+          equipment,
+          firstMicrocycleRir: 4,
+          previousSets: [previousFirstSet]
+        });
+
+        // Severe regress: use actual reps (clamped to min 10) AND reduce weight
         expect(result.targetReps).toBe(12);
         expect(result.targetWeight).toBeLessThan(200);
       });
@@ -559,7 +559,7 @@ describe('Unit Tests', () => {
     });
 
     describe('Multi-Set Surplus Averaging', () => {
-      it('should average surplus across all sets and trigger weight reduction when average is severe', () => {
+      it('should average surplus across all sets and trigger regress when average is -3', () => {
         const equipment = workoutTestUtil.STANDARD_EQUIPMENT_TYPES.barbell;
         const exercise = workoutTestUtil.STANDARD_EXERCISES.deadlift; // Medium, Rep progression
         const calibration = workoutTestUtil.STANDARD_CALIBRATIONS.deadlift;
@@ -577,22 +577,22 @@ describe('Unit Tests', () => {
           }
         });
 
-        // Set 2: planned 13 @ 3 RIR, actual 10 @ 0 RIR → surplus = -6 (terrible)
+        // Set 2: planned 13 @ 3 RIR, actual 11 @ 0 RIR → surplus = -5 (terrible)
         const set2 = workoutTestUtil.createSet({
           exercise,
           overrides: {
             plannedReps: 13,
             plannedWeight: 200,
             plannedRir: 3,
-            actualReps: 10,
+            actualReps: 11,
             actualWeight: 200,
             rir: 0
           }
         });
 
-        // Average surplus = (-1 + -6) / 2 = -3.5
+        // Average surplus = (-1 + -5) / 2 = -3
         // With only first set (surplus = -1), algorithm would "hold" (keep same reps)
-        // With averaged surplus (-3.5), it triggers "regress" to actual reps (15)
+        // With averaged surplus (-3), it triggers "regress" to actual reps (15)
         const resultMultiSet = WorkoutExerciseService.calculateTargetRepsAndWeightForFirstSet({
           exercise,
           calibration,
@@ -614,10 +614,10 @@ describe('Unit Tests', () => {
         expect(resultFirstSetOnly.targetReps).toBe(15);
         expect(resultFirstSetOnly.targetWeight).toBe(200);
 
-        // Multi-set averaged: surplus = -3.5, "regress" → uses actual reps (15 from first set)
+        // Multi-set averaged: surplus = -3, "regress" → uses actual reps (15 from first set)
         // The regression uses the first set's actual reps as the target base
         expect(resultMultiSet.targetReps).toBe(15);
-        // Weight stays the same since surplus >= -4
+        // Weight stays the same since surplus >= -3
         expect(resultMultiSet.targetWeight).toBe(200);
       });
 
@@ -652,7 +652,7 @@ describe('Unit Tests', () => {
           }
         });
 
-        // Average surplus = (-3 + -7) / 2 = -5 → severe regress (< -4)
+        // Average surplus = (-3 + -7) / 2 = -5 → severe regress (< -3)
         const result = WorkoutExerciseService.calculateTargetRepsAndWeightForFirstSet({
           exercise,
           calibration,

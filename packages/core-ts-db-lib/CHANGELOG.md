@@ -5,15 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## 🔖 [4.1.16] (2026-03-13)
-
-### ✅ Added
+## 🔖 [5.0.0] (2026-03-13)
 
 ### 🏗️ Changed
 
-### 🩹 Fixed
-
-### 🔥 Removed
+- _Breaking Change:_ `WorkoutExerciseCTO.lastFirstSet` (nullable `WorkoutSet`) replaced by `lastSessionSets` (array of `WorkoutSet`).
+- _Breaking Change:_ `WorkoutExerciseService.calculateTargetRepsAndWeightForFirstSet` parameter `previousFirstSet?: WorkoutSet` replaced by `previousSets: WorkoutSet[]`.
+- Autoregulation now averages surplus across all sets in a session exercise instead of using only the first set, providing a more representative performance signal.
+- `WorkoutSessionExerciseService.calculateSetSurplus` is now private; the new public `calculateAverageSurplus(sets)` method handles multi-set aggregation.
+- `WorkoutMesocycleService` performance-drop detection now averages surplus across all sets rather than using only the first set.
+- `WorkoutSetService` now retrieves all sets from the previous microcycle for autoregulation instead of only the first set.
+- Rep progression severe underperformance (average surplus < -3) now also reduces weight by one equipment increment.
 
 ## 🔖 [4.1.15] (2026-03-12)
 
@@ -394,7 +396,7 @@ Updated dependency: now requires `@aneuhold/core-ts-lib@^2.3.11`.
 - Updated workflow permissions to allow repository write access
 
 <!-- Link References -->
-[4.1.16]: https://github.com/aneuhold/ts-libs/compare/core-ts-db-lib-v4.1.15...core-ts-db-lib-v4.1.16
+[5.0.0]: https://github.com/aneuhold/ts-libs/compare/core-ts-db-lib-v4.1.15...core-ts-db-lib-v5.0.0
 [4.1.15]: https://github.com/aneuhold/ts-libs/compare/core-ts-db-lib-v4.1.14...core-ts-db-lib-v4.1.15
 [4.1.14]: https://github.com/aneuhold/ts-libs/compare/core-ts-db-lib-v4.1.13...core-ts-db-lib-v4.1.14
 [4.1.13]: https://github.com/aneuhold/ts-libs/compare/core-ts-db-lib-v4.1.12...core-ts-db-lib-v4.1.13

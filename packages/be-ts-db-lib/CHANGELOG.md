@@ -7,13 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## 🔖 [4.2.17] (2026-03-13)
 
-### ✅ Added
-
 ### 🏗️ Changed
 
-### 🩹 Fixed
-
-### 🔥 Removed
+- `WorkoutExerciseRepository` now fetches all sets from the last session exercise (not just the first) to populate `lastSessionSets` via an updated MongoDB aggregation pipeline.
+- Updated dependencies: now requires `@aneuhold/be-ts-lib@^3.1.4` and `@aneuhold/core-ts-db-lib@^5.0.0`.
 
 ## 🔖 [4.2.16] (2026-03-12)
 
@@ -329,6 +326,7 @@ Updated dependencies: now requires `@aneuhold/core-ts-db-lib@^3.0.0`, `@aneuhold
 - Updated workflow permissions to allow repository write access
 
 <!-- Link References -->
+
 [4.2.17]: https://github.com/aneuhold/ts-libs/compare/be-ts-db-lib-v4.2.16...be-ts-db-lib-v4.2.17
 [4.2.16]: https://github.com/aneuhold/ts-libs/compare/be-ts-db-lib-v4.2.15...be-ts-db-lib-v4.2.16
 [4.2.15]: https://github.com/aneuhold/ts-libs/compare/be-ts-db-lib-v4.2.14...be-ts-db-lib-v4.2.15

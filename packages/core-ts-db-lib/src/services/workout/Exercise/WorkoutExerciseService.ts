@@ -146,8 +146,8 @@ export default class WorkoutExerciseService {
    * | >= 3 | Accelerate: actualReps + 2 (progress from actual, not planned) |
    * | 0 to 2 | Normal: plannedReps + 2 |
    * | -1 to -2 | Hold: plannedReps (don't add reps) |
-   * | -3 to -4 | Regress: actualReps (use actual as new baseline) |
-   * | < -4 | Severe regress: actualReps + reduce weight (weight is too heavy for rep range) |
+   * | -3 | Regress: actualReps (use actual as new baseline) |
+   * | < -3 | Severe regress: actualReps + reduce weight (weight is too heavy for rep range) |
    */
   private static calculateAutoRegulatedRepTargets(
     previousSet: CompletedWorkoutSet,
@@ -164,7 +164,7 @@ export default class WorkoutExerciseService {
       targetReps = previousSet.plannedReps + 2;
     } else if (surplus >= -2) {
       targetReps = previousSet.plannedReps;
-    } else if (surplus >= -4) {
+    } else if (surplus >= -3) {
       targetReps = previousSet.actualReps;
     } else {
       // Severe underperformance: the weight is too heavy for this rep range.
