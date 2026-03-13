@@ -564,20 +564,20 @@ describe('Unit Tests', () => {
         const exercise = workoutTestUtil.STANDARD_EXERCISES.deadlift; // Medium, Rep progression
         const calibration = workoutTestUtil.STANDARD_CALIBRATIONS.deadlift;
 
-        // Set 1: planned 15 @ 3 RIR, actual 15 @ 2 RIR → surplus = -1 (OK-ish)
+        // Set 1: planned 15 @ 3 RIR, actual 14 @ 2 RIR → surplus = -2
         const set1 = workoutTestUtil.createSet({
           exercise,
           overrides: {
             plannedReps: 15,
             plannedWeight: 200,
             plannedRir: 3,
-            actualReps: 15,
+            actualReps: 14,
             actualWeight: 200,
             rir: 2
           }
         });
 
-        // Set 2: planned 13 @ 3 RIR, actual 11 @ 0 RIR → surplus = -5 (terrible)
+        // Set 2: planned 13 @ 3 RIR, actual 11 @ 1 RIR → surplus = -4 (terrible)
         const set2 = workoutTestUtil.createSet({
           exercise,
           overrides: {
@@ -586,13 +586,13 @@ describe('Unit Tests', () => {
             plannedRir: 3,
             actualReps: 11,
             actualWeight: 200,
-            rir: 0
+            rir: 1
           }
         });
 
-        // Average surplus = (-1 + -5) / 2 = -3
-        // With only first set (surplus = -1), algorithm would "hold" (keep same reps)
-        // With averaged surplus (-3), it triggers "regress" to actual reps (15)
+        // Average surplus = (-2 + -4) / 2 = -3
+        // With only first set (surplus = -2), algorithm would "hold" at planned reps (15)
+        // With averaged surplus (-3), it triggers "regress" to actual reps (14)
         const resultMultiSet = WorkoutExerciseService.calculateTargetRepsAndWeightForFirstSet({
           exercise,
           calibration,
@@ -601,7 +601,6 @@ describe('Unit Tests', () => {
           previousSets: [set1, set2]
         });
 
-        // With only the first set, surplus is -1 → "hold" at planned reps (15 + 0 = 15... wait, hold = planned)
         const resultFirstSetOnly = WorkoutExerciseService.calculateTargetRepsAndWeightForFirstSet({
           exercise,
           calibration,
@@ -610,14 +609,12 @@ describe('Unit Tests', () => {
           previousSets: [set1]
         });
 
-        // First set only: surplus = -1, "hold" → keeps planned reps (15)
+        // First set only: surplus = -2, "hold" → keeps planned reps (15)
         expect(resultFirstSetOnly.targetReps).toBe(15);
         expect(resultFirstSetOnly.targetWeight).toBe(200);
 
-        // Multi-set averaged: surplus = -3, "regress" → uses actual reps (15 from first set)
-        // The regression uses the first set's actual reps as the target base
-        expect(resultMultiSet.targetReps).toBe(15);
-        // Weight stays the same since surplus >= -3
+        // Multi-set averaged: surplus = -3, "regress" → uses first set's actual reps (14)
+        expect(resultMultiSet.targetReps).toBe(14);
         expect(resultMultiSet.targetWeight).toBe(200);
       });
 

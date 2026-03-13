@@ -122,13 +122,8 @@ export default class WorkoutExerciseService {
     const previousFirstSet = previousSets[0];
 
     // Average surplus across all sets for a holistic performance signal.
-    const surplus = WorkoutSessionExerciseService.calculateAverageSurplus(previousSets);
-    if (surplus == null) {
-      return {
-        targetWeight: previousFirstSet.plannedWeight,
-        targetReps: previousFirstSet.plannedReps
-      };
-    }
+    // previousSets are CompletedWorkoutSets (all fields non-null), so this always returns a number.
+    const surplus = WorkoutSessionExerciseService.calculateAverageSurplus(previousSets) ?? 0;
 
     if (exercise.preferredProgressionType === ExerciseProgressionType.Rep) {
       return this.calculateAutoRegulatedRepTargets(previousFirstSet, surplus, repRange, equipment);
