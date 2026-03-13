@@ -403,7 +403,7 @@ describe('WorkoutExerciseRepository', () => {
       expect(cto.lastSessionExercise._id).toBe(accumSE._id);
     });
 
-    it('should return lastFirstSet matching lastSessionExercise.setOrder[0]', async () => {
+    it('should return all lastSessionSets in setOrder with correct count and order', async () => {
       const user = await workoutTestUtil.insertUser('WorkoutExerciseRepository.buildCTOs');
       const mg = await workoutTestUtil.insertMuscleGroup(user._id, 'Chest');
       const eq = await workoutTestUtil.insertEquipmentType(user._id, 'Barbell');
@@ -429,13 +429,21 @@ describe('WorkoutExerciseRepository', () => {
 
       expect(cto).toBeDefined();
       if (!cto) return;
-      expect(cto.lastFirstSet).not.toBeNull();
-      if (!cto.lastFirstSet) return;
-      expect(cto.lastFirstSet._id).toBe(sessionExercise.setOrder[0]);
-      expect(cto.lastFirstSet._id).toBe(sets[0]._id);
+
+      // All 3 sets should be present
+      expect(cto.lastSessionSets).toHaveLength(3);
+
+      // IDs should match setOrder exactly (preserving order)
+      const returnedIds = cto.lastSessionSets.map((s) => s._id);
+      expect(returnedIds).toEqual(sessionExercise.setOrder);
+
+      // Each returned set should match the inserted set at that position
+      for (let i = 0; i < sets.length; i++) {
+        expect(cto.lastSessionSets[i]._id).toBe(sets[i]._id);
+      }
     });
 
-    it('should return null for all nullable fields when exercise has no data', async () => {
+    it('should return empty lastSessionSets and null fields when exercise has no data', async () => {
       const user = await workoutTestUtil.insertUser('WorkoutExerciseRepository.buildCTOs');
       const mg = await workoutTestUtil.insertMuscleGroup(user._id, 'Abs');
       const eq = await workoutTestUtil.insertEquipmentType(user._id, 'Bodyweight');
@@ -454,7 +462,7 @@ describe('WorkoutExerciseRepository', () => {
       expect(cto.bestCalibration).toBeNull();
       expect(cto.bestSet).toBeNull();
       expect(cto.lastSessionExercise).toBeNull();
-      expect(cto.lastFirstSet).toBeNull();
+      expect(cto.lastSessionSets).toEqual([]);
     });
 
     it('should return multiple exercises correctly in one call', async () => {

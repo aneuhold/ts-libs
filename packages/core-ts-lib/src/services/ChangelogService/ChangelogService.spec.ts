@@ -1,4 +1,4 @@
-import { access, mkdir, readFile, rmdir, writeFile } from 'fs/promises';
+import { access, mkdir, readFile, rm, writeFile } from 'fs/promises';
 import path from 'path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import ChangelogService from './ChangelogService.js';
@@ -15,7 +15,7 @@ describe('Unit Tests', () => {
   beforeEach(async () => {
     // Clean up test directory before each test
     try {
-      await rmdir(TEST_DIR, { recursive: true });
+      await rm(TEST_DIR, { recursive: true });
     } catch {
       // Directory might not exist, ignore
     }
@@ -28,7 +28,7 @@ describe('Unit Tests', () => {
   afterEach(async () => {
     // Clean up test directory after each test
     try {
-      await rmdir(TEST_DIR, { recursive: true });
+      await rm(TEST_DIR, { recursive: true });
     } catch {
       // Directory might not exist, ignore
     }

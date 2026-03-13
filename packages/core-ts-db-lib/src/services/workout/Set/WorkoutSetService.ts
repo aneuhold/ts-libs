@@ -50,14 +50,15 @@ export default class WorkoutSetService {
     const sets: WorkoutSet[] = [];
 
     // For the first microcycle, use the CTO's previous performance data.
-    // For subsequent microcycles, look up the previous microcycle's first set from the context.
-    const previousFirstSet =
+    // For subsequent microcycles, look up all previous sets from the context.
+    const previousSets =
       microcycleIndex === 0
-        ? (exerciseCTO.lastFirstSet ?? undefined)
-        : this.findPreviousFirstSet(context, exerciseCTO._id, microcycleIndex);
+        ? exerciseCTO.lastSessionSets
+        : this.findPreviousSets(context, exerciseCTO._id, microcycleIndex);
 
     // Calculate progressed targets for the first set.
-    // Autoregulation/forecasting handles progression from the previous set's data.
+    // Autoregulation/forecasting handles progression from the previous sets' data.
+    // Surplus is averaged across all sets for a holistic performance signal.
     // Calibration is only used when no previous set exists (first microcycle ever).
     const { targetReps: firstSetReps, targetWeight: firstSetWeight } =
       WorkoutExerciseService.calculateTargetRepsAndWeightForFirstSet({
@@ -65,7 +66,7 @@ export default class WorkoutSetService {
         calibration: bestCalibration,
         equipment: equipmentType,
         firstMicrocycleRir: context.firstMicrocycleRir,
-        previousFirstSet
+        previousSets
       });
 
     for (let setIndex = 0; setIndex < setCount; setIndex++) {
@@ -113,29 +114,30 @@ export default class WorkoutSetService {
   }
 
   /**
-   * Finds the previous microcycle's first set for an exercise to use for autoregulation.
+   * Finds all sets from the previous microcycle's session exercise to use for autoregulation.
+   * Returns all sets in order so surplus can be averaged across the full exercise performance.
    *
    * Uses the mesocycle's fixed exercise-to-session mapping to go directly to the
    * correct session and exercise position rather than iterating all sessions.
    *
-   * Returns undefined if the previous microcycle doesn't exist or has no sessions
+   * Returns an empty array if the previous microcycle doesn't exist or has no sessions
    * (the context may not have full history). Throws if the structure is present but
    * inconsistent with the mesocycle plan.
    *
    * @throws {Error} If the session/exercise structure doesn't match the plan.
    */
-  private static findPreviousFirstSet(
+  private static findPreviousSets(
     context: WorkoutMesocyclePlanContext,
     exerciseId: UUID,
     microcycleIndex: number
-  ): WorkoutSet | undefined {
+  ): WorkoutSet[] {
     if (microcycleIndex <= 0) {
-      return undefined;
+      return [];
     }
 
     const previousMicrocycle = context.microcyclesInOrder[microcycleIndex - 1];
     if (!previousMicrocycle || previousMicrocycle.sessionOrder.length === 0) {
-      return undefined;
+      return [];
     }
 
     // Exercise-to-session mapping is fixed for the mesocycle — look up directly
@@ -148,7 +150,7 @@ export default class WorkoutSetService {
     if (!sessionId) {
       // The previous microcycle may have fewer sessions than the plan (e.g. pruned
       // during early deload). Treat as missing history rather than a structural error.
-      return undefined;
+      return [];
     }
 
     const session = context.sessionMap.get(sessionId);
@@ -179,16 +181,20 @@ export default class WorkoutSetService {
       throw new Error(`Session exercise ${seId} not found in context`);
     }
 
-    const firstSetId = sessionExercise.setOrder[0];
-    if (!firstSetId) {
+    if (sessionExercise.setOrder.length === 0) {
       throw new Error(`Session exercise ${seId} for exercise ${exerciseId} has no sets`);
     }
 
-    const set = context.setMap.get(firstSetId);
-    if (!set) {
-      throw new Error(`Set ${firstSetId} not found in context`);
+    // Return all sets in order
+    const sets: WorkoutSet[] = [];
+    for (const setId of sessionExercise.setOrder) {
+      const set = context.setMap.get(setId);
+      if (!set) {
+        throw new Error(`Set ${setId} not found in context`);
+      }
+      sets.push(set);
     }
-    return set;
+    return sets;
   }
 
   /**

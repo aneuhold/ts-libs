@@ -89,23 +89,36 @@ export default class WorkoutSessionExerciseService {
   }
 
   /**
-   * Calculates the surplus for a single set: how much the user exceeded or
-   * fell short of the plan. Positive means exceeded, negative means fell short.
+   * Calculates the average surplus across an array of sets. Sets missing
+   * required planned/actual data are skipped. Returns null if no sets
+   * have complete data.
    *
-   * Formula: `(actualReps - plannedReps) + (rir - plannedRir)`
+   * Surplus formula per set: `(actualReps - plannedReps) + (rir - plannedRir)`
    *
-   * @param actualReps The actual reps performed.
-   * @param plannedReps The planned reps.
-   * @param rir The actual RIR (reps in reserve).
-   * @param plannedRir The planned RIR.
+   * @param sets The sets to calculate average surplus for.
    */
-  static calculateSetSurplus(
-    actualReps: number,
-    plannedReps: number,
-    rir: number,
-    plannedRir: number
-  ): number {
-    return actualReps - plannedReps + (rir - plannedRir);
+  static calculateAverageSurplus(sets: WorkoutSet[]): number | null {
+    let totalSurplus = 0;
+    let completedCount = 0;
+    for (const set of sets) {
+      if (
+        set.actualReps == null ||
+        set.plannedReps == null ||
+        set.rir == null ||
+        set.plannedRir == null
+      ) {
+        continue;
+      }
+      totalSurplus += this.calculateSetSurplus(
+        set.actualReps,
+        set.plannedReps,
+        set.rir,
+        set.plannedRir
+      );
+      completedCount++;
+    }
+    if (completedCount === 0) return null;
+    return totalSurplus / completedCount;
   }
 
   /**
@@ -196,5 +209,20 @@ export default class WorkoutSessionExerciseService {
       sessionExercise.fatigue.perceivedEffort != null &&
       sessionExercise.sorenessScore != null
     );
+  }
+
+  /**
+   * Calculates the surplus for a single set: how much the user exceeded or
+   * fell short of the plan. Positive means exceeded, negative means fell short.
+   *
+   * Formula: `(actualReps - plannedReps) + (rir - plannedRir)`
+   */
+  private static calculateSetSurplus(
+    actualReps: number,
+    plannedReps: number,
+    rir: number,
+    plannedRir: number
+  ): number {
+    return actualReps - plannedReps + (rir - plannedRir);
   }
 }

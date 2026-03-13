@@ -1029,8 +1029,8 @@ describe('Unit Tests', () => {
         return sets.find((s) => s._id === firstSetId);
       }
 
-      it('should use previous performance data when exercise has lastFirstSet populated', () => {
-        // Create a CTO with lastFirstSet simulating a previous mesocycle's actual performance
+      it('should use previous performance data when exercise has lastSessionSets populated', () => {
+        // Create a CTO with lastSessionSets simulating a previous mesocycle's actual performance
         const previousWeight = 225;
         const lastFirstSet = workoutTestUtil.createSet({
           exercise: workoutTestUtil.STANDARD_EXERCISES.barbellSquat,
@@ -1052,7 +1052,7 @@ describe('Unit Tests', () => {
           exercise: workoutTestUtil.STANDARD_EXERCISES.barbellSquat,
           calibration: workoutTestUtil.STANDARD_CALIBRATIONS.barbellSquat,
           equipmentType: workoutTestUtil.STANDARD_EQUIPMENT_TYPES.barbell,
-          lastFirstSet,
+          lastSessionSets: [lastFirstSet],
           lastSessionExercise
         });
 
@@ -1109,12 +1109,12 @@ describe('Unit Tests', () => {
       });
 
       it('should use calibration formula when exercise CTO has no prior performance data', () => {
-        // CTO with calibration but no lastFirstSet or lastSessionExercise (new exercise)
+        // CTO with calibration but no lastSessionSets or lastSessionExercise (new exercise)
         const exerciseCTONew = workoutTestUtil.createExerciseCTO({
           exercise: workoutTestUtil.STANDARD_EXERCISES.barbellSquat,
           calibration: workoutTestUtil.STANDARD_CALIBRATIONS.barbellSquat,
           equipmentType: workoutTestUtil.STANDARD_EQUIPMENT_TYPES.barbell,
-          lastFirstSet: null,
+          lastSessionSets: [],
           lastSessionExercise: null,
           bestSet: null
         });
@@ -1179,7 +1179,7 @@ describe('Unit Tests', () => {
           exercise: workoutTestUtil.STANDARD_EXERCISES.barbellSquat,
           calibration: null,
           equipmentType: workoutTestUtil.STANDARD_EQUIPMENT_TYPES.barbell,
-          lastFirstSet: null,
+          lastSessionSets: [],
           lastSessionExercise: null,
           bestSet: null
         });
