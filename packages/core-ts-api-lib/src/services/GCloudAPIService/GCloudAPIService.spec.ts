@@ -66,11 +66,8 @@ describe('Unit Tests', () => {
         );
 
         const callArgs = mockFetch.mock.calls[0] as [string, RequestInit];
-        expect(callArgs[1].headers).toEqual(
-          expect.objectContaining({
-            'Content-Type': 'application/json'
-          })
-        );
+        const headers = callArgs[1].headers as Headers;
+        expect(headers.get('Content-Type')).toBe('application/json');
         expect(result).toEqual(mockResponse);
       });
     });

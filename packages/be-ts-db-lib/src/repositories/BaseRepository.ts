@@ -1,4 +1,5 @@
 import type { BaseDocument } from '@aneuhold/core-ts-db-lib';
+import type { DeepPartial } from '@aneuhold/core-ts-lib';
 import type { UUID } from 'crypto';
 import type {
   AnyBulkWriteOperation,
@@ -133,7 +134,7 @@ export default abstract class BaseRepository<TBaseType extends BaseDocument> {
    * @param filter - The filter to apply.
    * @returns The matching document or null if no document was found.
    */
-  async get(filter: Partial<TBaseType>): Promise<TBaseType | null> {
+  async get(filter: DeepPartial<TBaseType>): Promise<TBaseType | null> {
     const collection = await this.getCollection();
     const result = await collection.findOne(this.getFilterWithDefault(filter as Filter<TBaseType>));
     return result as TBaseType | null;

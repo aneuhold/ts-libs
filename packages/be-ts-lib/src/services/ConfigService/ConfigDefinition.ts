@@ -7,4 +7,6 @@ export default interface Config {
   mongoRootUsername: string;
   mongoRootPassword: string;
   mongoUrl: string;
+  /** Secret used to sign JWT access tokens. */
+  jwtAccessSecret: string;
 }

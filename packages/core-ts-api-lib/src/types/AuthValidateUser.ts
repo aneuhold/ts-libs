@@ -5,14 +5,12 @@ import type { DashboardConfig } from './project/dashboard/DashboardConfig.js';
  * Interface representing the input to the AuthValidateUser endpoint.
  */
 export interface AuthValidateUserInput {
-  /**
-   * The username of the user to be validated.
-   */
-  userName: string;
-  /**
-   * The password of the user to be validated.
-   */
-  password: string;
+  /** The username of the user to be validated (password flow). */
+  userName?: string;
+  /** The password of the user to be validated (password flow). */
+  password?: string;
+  /** Google ID token received from Google Identity Services (Google flow). */
+  googleCredentialToken?: string;
 }
 
 /**
@@ -26,6 +24,10 @@ export interface AuthValidateUserOutput {
     user: User;
     apiKey: ApiKey;
   };
+  /** JWT access token for authenticating API requests. */
+  accessToken?: string;
+  /** Raw refresh token string for obtaining new access tokens. */
+  refreshTokenString?: string;
   /**
    * Basic configuration for the projects that the user has access to.
    */
