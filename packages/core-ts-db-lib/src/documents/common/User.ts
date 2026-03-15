@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { BaseDocumentSchema } from '../BaseDocument.js';
+import { RefreshTokenHashSchema } from '../../embedded-types/common/RefreshTokenHash.js';
 
 /**
  * The schema for {@link UserCTO} documents. This also acts a base for the {@link UserSchema}.
@@ -16,9 +17,11 @@ export const UserSchema = UserCTOSchema.extend({
   auth: z
     .object({
       password: z.string().nullish(),
-      googleId: z.string().nullish()
+      googleId: z.string().nullish(),
+      /** Active refresh token hashes. One per device/session. */
+      refreshTokenHashes: z.array(RefreshTokenHashSchema).default([])
     })
-    .default({}),
+    .default({ refreshTokenHashes: [] }),
   projectAccess: z
     .object({
       dashboard: z.boolean().default(false),

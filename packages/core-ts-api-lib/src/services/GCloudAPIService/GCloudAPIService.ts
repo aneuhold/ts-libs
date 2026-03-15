@@ -1,5 +1,6 @@
 import { DateService, ErrorUtils } from '@aneuhold/core-ts-lib';
 import type { APIResponse } from '../../types/APIResponse.js';
+import type { AuthRefreshTokenOutput } from '../../types/AuthRefreshToken.js';
 import type {
   AuthValidateUserInput,
   AuthValidateUserOutput
@@ -14,6 +15,12 @@ import type {
 } from '../../types/project/workout/ProjectWorkout.js';
 
 /**
+ * Callback invoked after tokens are successfully refreshed. The frontend
+ * should use this to persist the new tokens (e.g. to localStorage).
+ */
+type OnTokensRefreshedCallback = (accessToken: string, refreshTokenString: string) => void;
+
+/**
  * A service for interacting with the Google Cloud API service for personal projects.
  */
 export default class GCloudAPIService {
@@ -24,6 +31,12 @@ export default class GCloudAPIService {
    * the trailing slash.
    */
   static #baseUrl: string = this.defaultUrl;
+
+  static #accessToken: string | undefined;
+
+  static #refreshTokenString: string | undefined;
+
+  static #onTokensRefreshed: OnTokensRefreshedCallback | null = null;
 
   /**
    * Gets the current URL of the Google Cloud API.
@@ -44,14 +57,58 @@ export default class GCloudAPIService {
   }
 
   /**
-   * Calls the project dashboard endpoint to get, insert, update, or delete dashboard data.
+   * Sets the JWT access token to attach to all API requests.
    *
-   * @param input - The input for the project dashboard function.
+   * @param token - The access token.
+   */
+  static setAccessToken(token: string): void {
+    this.#accessToken = token;
+  }
+
+  /**
+   * Sets the refresh token string used for automatic token refresh on 401
+   * responses.
+   *
+   * @param token - The refresh token string.
+   */
+  static setRefreshTokenString(token: string): void {
+    this.#refreshTokenString = token;
+  }
+
+  /**
+   * Registers a callback that is invoked after tokens are automatically
+   * refreshed. Use this to persist the new tokens to storage (e.g.
+   * localStorage).
+   *
+   * @param callback - The callback receiving the new accessToken and refreshTokenString.
+   */
+  static setOnTokensRefreshed(callback: OnTokensRefreshedCallback | null): void {
+    this.#onTokensRefreshed = callback;
+  }
+
+  /**
+   * Calls the auth validateUser endpoint.
+   *
+   * @param input - The input for the validateUser endpoint.
    */
   static async authValidateUser(
     input: AuthValidateUserInput
   ): Promise<APIResponse<AuthValidateUserOutput>> {
-    return this.call<AuthValidateUserInput, AuthValidateUserOutput>('auth/validateUser', input);
+    return this.call<AuthValidateUserOutput>('auth/validateUser', input);
+  }
+
+  /**
+   * Calls the auth logout endpoint to delete the current refresh token
+   * server-side using the stored refresh token string.
+   */
+  static async authLogout(): Promise<APIResponse<undefined>> {
+    if (!this.#refreshTokenString) {
+      return { success: true, errors: [], data: undefined };
+    }
+    const { decoded } = await this.fetchAndDecode<undefined>('auth/logout', {
+      refreshTokenString: this.#refreshTokenString
+    });
+    return decoded;
   }
 
   /**
@@ -62,7 +119,7 @@ export default class GCloudAPIService {
   static async projectDashboard(
     input: ProjectDashboardInput
   ): Promise<APIResponse<ProjectDashboardOutput>> {
-    return this.call<ProjectDashboardInput, ProjectDashboardOutput>('project/dashboard', input);
+    return this.call<ProjectDashboardOutput>('project/dashboard', input);
   }
 
   /**
@@ -73,41 +130,95 @@ export default class GCloudAPIService {
   static async projectWorkout(
     input: ProjectWorkoutPrimaryInput
   ): Promise<APIResponse<ProjectWorkoutPrimaryOutput>> {
-    return this.call<ProjectWorkoutPrimaryInput, ProjectWorkoutPrimaryOutput>(
-      'project/workout',
-      input
-    );
+    return this.call<ProjectWorkoutPrimaryOutput>('project/workout', input);
   }
 
   /**
-   * Makes a call to the Google Cloud API.
+   * Makes a call to the API. On a 401 response, automatically attempts to
+   * refresh the access token using the stored refresh token. If refresh
+   * succeeds, the original request is retried once.
    *
    * @param urlPath - The path to the endpoint.
    * @param input - The input to the endpoint.
-   * @throws {Error} Will throw an error if the URL is not set.
    */
-  private static async call<TInput extends object, TOutput>(
+  private static async call<TOutput>(
     urlPath: string,
-    input: TInput
+    input: object
   ): Promise<APIResponse<TOutput>> {
-    const response = await fetch(this.#baseUrl + urlPath, {
-      method: 'POST',
-      headers: {
-        Connection: 'keep-alive',
-        'Content-Type': 'application/json',
-        Accept: 'application/json'
-      },
-      body: JSON.stringify(input)
-    });
-    const decodedResponse = await this.decodeResponse<TOutput>(response);
-    return decodedResponse;
+    const { response, decoded } = await this.fetchAndDecode<TOutput>(urlPath, input);
+
+    if (response.status === 401 && this.#refreshTokenString) {
+      const refreshed = await this.tryRefreshTokens();
+      if (refreshed) {
+        const retry = await this.fetchAndDecode<TOutput>(urlPath, input);
+        return retry.decoded;
+      }
+    }
+
+    return decoded;
   }
 
   /**
-   * Decodes the response from the Google Cloud API.
+   * Attempts to refresh the access token using the stored refresh token.
+   * On success, updates the stored tokens and notifies via the
+   * {@link #onTokensRefreshed} callback.
+   */
+  private static async tryRefreshTokens(): Promise<boolean> {
+    if (!this.#refreshTokenString) {
+      return false;
+    }
+
+    const { decoded } = await this.fetchAndDecode<AuthRefreshTokenOutput>('auth/refresh', {
+      refreshTokenString: this.#refreshTokenString
+    });
+
+    if (!decoded.success) {
+      return false;
+    }
+
+    this.#accessToken = decoded.data.accessToken;
+    this.#refreshTokenString = decoded.data.refreshTokenString;
+
+    if (this.#onTokensRefreshed) {
+      this.#onTokensRefreshed(decoded.data.accessToken, decoded.data.refreshTokenString);
+    }
+
+    return true;
+  }
+
+  /**
+   * Performs a POST request and decodes the JSON response.
    *
-   * @param response - The response to decode.
-   * @returns The decoded output.
+   * @param urlPath - The path to the endpoint.
+   * @param input - The input to the endpoint.
+   */
+  private static async fetchAndDecode<TOutput>(
+    urlPath: string,
+    input: object
+  ): Promise<{ response: Response; decoded: APIResponse<TOutput> }> {
+    const headers = new Headers({
+      Connection: 'keep-alive',
+      'Content-Type': 'application/json',
+      Accept: 'application/json'
+    });
+
+    if (this.#accessToken) {
+      headers.set('Authorization', `Bearer ${this.#accessToken}`);
+    }
+
+    const response = await fetch(this.#baseUrl + urlPath, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(input)
+    });
+    const decoded = await this.decodeResponse<TOutput>(response);
+    return { response, decoded };
+  }
+
+  /**
+   * Decodes a fetch Response into an APIResponse.
+   *
+   * @param response - The fetch response to decode.
    */
   private static async decodeResponse<TOutput>(response: Response): Promise<APIResponse<TOutput>> {
     try {

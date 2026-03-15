@@ -19,24 +19,60 @@ import GCloudAPIService from '../GCloudAPIService/GCloudAPIService.js';
  */
 export default class APIService {
   /**
-   * Validates the provided username and password against the database and
-   * returns the user's information if successful.
+   * Validates the provided credentials against the database and returns the
+   * user's information if successful. Supports both password and Google
+   * sign-in flows.
    *
-   * @param input - The input containing username and password.
-   * @returns A promise that resolves to the user's information if validation is successful.
+   * @param input - The input containing credentials (username/password or Google credential token).
    */
   static async validateUser(
     input: AuthValidateUserInput
   ): Promise<APIResponse<AuthValidateUserOutput>> {
-    return await GCloudAPIService.authValidateUser(input);
+    return GCloudAPIService.authValidateUser(input);
   }
 
   /**
-   * Calls the dashboard API and returns the result. This will fail if the
-   * dashboard API URL has not been set. See {@link setDashboardAPIUrl}.
+   * Logs out the current session by deleting the stored refresh token
+   * server-side.
+   */
+  static async logout(): Promise<APIResponse<undefined>> {
+    return GCloudAPIService.authLogout();
+  }
+
+  /**
+   * Sets the JWT access token to attach to all API requests.
+   *
+   * @param token - The access token.
+   */
+  static setAccessToken(token: string): void {
+    GCloudAPIService.setAccessToken(token);
+  }
+
+  /**
+   * Sets the refresh token string used for automatic token refresh on 401.
+   *
+   * @param token - The refresh token string.
+   */
+  static setRefreshTokenString(token: string): void {
+    GCloudAPIService.setRefreshTokenString(token);
+  }
+
+  /**
+   * Registers a callback that is invoked after tokens are automatically
+   * refreshed (e.g. to persist new tokens to localStorage).
+   *
+   * @param callback - The callback receiving the new accessToken and refreshTokenString.
+   */
+  static setOnTokensRefreshed(
+    callback: ((accessToken: string, refreshTokenString: string) => void) | null
+  ): void {
+    GCloudAPIService.setOnTokensRefreshed(callback);
+  }
+
+  /**
+   * Calls the dashboard API and returns the result.
    *
    * @param input - The input for the dashboard API call.
-   * @returns A promise that resolves to the result of the dashboard API call.
    */
   static async callDashboardAPI(
     input: ProjectDashboardInput
@@ -48,7 +84,6 @@ export default class APIService {
    * Calls the workout API and returns the result.
    *
    * @param input - The input for the workout API call.
-   * @returns A promise that resolves to the result of the workout API call.
    */
   static async callWorkoutAPI(
     input: ProjectWorkoutPrimaryInput

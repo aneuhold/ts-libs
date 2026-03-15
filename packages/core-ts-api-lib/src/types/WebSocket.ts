@@ -4,17 +4,20 @@ import type { ProjectWorkoutPrimaryOutput } from './project/workout/ProjectWorko
 
 /**
  * The data each client is expected to send over with a request. For example on the client side:
- * 
+ *
  * ```
    const socket = io('http://localhost:8080', {
     auth: {
-      apiKey: 'your-api-key' // Replace with your actual API key
+      accessToken: 'your-jwt-token'
     }
   });
  * ```
  */
 export type WebSocketHandshakeAuth = {
+  /** @deprecated Use accessToken instead. Kept for backward compatibility. */
   apiKey?: UUID;
+  /** JWT access token for authenticating the WebSocket connection. */
+  accessToken?: string;
 };
 
 /**

@@ -19,6 +19,8 @@ import type { ApiKey } from './documents/common/ApiKey.js';
 import { ApiKeySchema } from './documents/common/ApiKey.js';
 import type { User, UserCTO } from './documents/common/User.js';
 import { UserCTOSchema, UserSchema } from './documents/common/User.js';
+import type { RefreshTokenHash } from './embedded-types/common/RefreshTokenHash.js';
+import { RefreshTokenHashSchema } from './embedded-types/common/RefreshTokenHash.js';
 import type { NonogramKatanaItem } from './documents/dashboard/NonogramKatanaItem.js';
 import {
   NonogramKatanaItem_docType,
@@ -171,11 +173,14 @@ import WorkoutSessionExerciseService from './services/workout/SessionExercise/Wo
 import WorkoutSetService from './services/workout/Set/WorkoutSetService.js';
 import WorkoutSFRService from './services/workout/util/SFR/WorkoutSFRService.js';
 import WorkoutVolumePlanningService from './services/workout/util/VolumePlanning/WorkoutVolumePlanningService.js';
+import { GOOGLE_CLIENT_ID } from './constants/googleClientId.js';
 
 // Export all browser-safe functions and classes from this library
 export {
   ApiKeySchema,
+  GOOGLE_CLIENT_ID,
   BaseDocumentSchema,
+  RefreshTokenHashSchema,
   BaseDocumentWithTypeSchema,
   BaseDocumentWithUpdatedAndCreatedDatesSchema,
   CycleType,
@@ -266,6 +271,7 @@ export {
 export type {
   ApiKey,
   BaseDocument,
+  RefreshTokenHash,
   WorkoutDeloadRecommendation,
   BaseDocumentWithType,
   BaseDocumentWithUpdatedAndCreatedDates,

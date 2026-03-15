@@ -2,7 +2,7 @@
   "name": "@aneuhold/be-ts-lib",
   "author": "Anton G. Neuhold Jr.",
   "license": "MIT",
-  "version": "3.1.4",
+  "version": "3.1.5",
   "description": "A backend TypeScript library used for common functionality in personal backend projects.",
   "packageManager": "pnpm@10.25.0",
   "type": "module",
@@ -54,15 +54,15 @@
     "TypeScript"
   ],
   "dependencies": {
-    "@aneuhold/core-ts-api-lib": "^3.0.27",
-    "@aneuhold/core-ts-lib": "^2.4.2",
+    "@aneuhold/core-ts-api-lib": "^3.0.28",
+    "@aneuhold/core-ts-lib": "^2.4.3",
     "dotenv": "^17.2.3",
     "jsonc-parser": "^3.3.1",
     "node-fetch": "^3.3.2",
     "octokit": "^5.0.5"
   },
   "devDependencies": {
-    "@aneuhold/local-npm-registry": "^0.2.29",
+    "@aneuhold/local-npm-registry": "^0.2.30",
     "@aneuhold/main-scripts": "^2.8.3",
     "@types/node": "^25.0.2",
     "@types/node-fetch": "^2.6.13",

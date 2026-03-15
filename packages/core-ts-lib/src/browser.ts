@@ -7,6 +7,7 @@ import ArrayService from './services/ArrayService.js';
 import DateService from './services/DateService/DateService.js';
 import { DependencyRegistry, DR } from './services/DependencyRegistry.js';
 import StringService from './services/StringService.js';
+import type { DeepPartial } from './types/DeepPartial.js';
 import type { PackageJson } from './types/PackageJson.js';
 import { VersionType } from './types/VersionType.js';
 import ErrorUtils from './utils/ErrorUtils.js';
@@ -28,4 +29,4 @@ export {
 };
 
 // Export TypeScript types where needed
-export type { ILogger, ISpan, ITracer, PackageJson };
+export type { DeepPartial, ILogger, ISpan, ITracer, PackageJson };
