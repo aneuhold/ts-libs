@@ -9,11 +9,16 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### ✅ Added
 
+- Added `AuthRefreshToken` types (`AuthRefreshTokenInput`, `AuthRefreshTokenOutput`) for the token refresh endpoint.
+- Added `APIService.logout()` to delete the current session's refresh token server-side.
+- Added `APIService.setAccessToken()`, `APIService.setRefreshTokenString()`, and `APIService.setOnTokensRefreshed()` for JWT token management.
+- `GCloudAPIService` now automatically retries requests after refreshing tokens on 401 responses.
+- `GCloudAPIService` attaches a `Bearer` `Authorization` header to all requests when an access token is set.
+
 ### 🏗️ Changed
 
-### 🩹 Fixed
-
-### 🔥 Removed
+- `AuthValidateUserInput` now accepts an optional `googleCredentialToken` for Google sign-in, with `userName` and `password` made optional to support both auth flows.
+- `AuthValidateUserOutput` now includes optional `accessToken` and `refreshTokenString` fields.
 
 ## 🔖 [3.0.27] (2026-03-13)
 
@@ -338,6 +343,7 @@ No direct code changes; version bump for compatibility.
 - Updated workflow permissions to allow repository write access
 
 <!-- Link References -->
+
 [3.0.28]: https://github.com/aneuhold/ts-libs/compare/core-ts-api-lib-v3.0.27...core-ts-api-lib-v3.0.28
 [3.0.27]: https://github.com/aneuhold/ts-libs/compare/core-ts-api-lib-v3.0.26...core-ts-api-lib-v3.0.27
 [3.0.26]: https://github.com/aneuhold/ts-libs/compare/core-ts-api-lib-v3.0.25...core-ts-api-lib-v3.0.26

@@ -9,11 +9,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### ✅ Added
 
+- Added `GoogleAuthService` which verifies Google ID tokens and finds or creates the associated user, including email-based account linking.
+- Added `google-auth-library` dependency for Google OAuth token verification.
+
 ### 🏗️ Changed
 
-### 🩹 Fixed
-
-### 🔥 Removed
+- `BaseRepository.get()` filter parameter type changed from `Partial<T>` to `DeepPartial<T>` to allow filtering on nested fields.
 
 ## 🔖 [4.2.17] (2026-03-13)
 
@@ -336,6 +337,7 @@ Updated dependencies: now requires `@aneuhold/core-ts-db-lib@^3.0.0`, `@aneuhold
 - Updated workflow permissions to allow repository write access
 
 <!-- Link References -->
+
 [4.2.18]: https://github.com/aneuhold/ts-libs/compare/be-ts-db-lib-v4.2.17...be-ts-db-lib-v4.2.18
 [4.2.17]: https://github.com/aneuhold/ts-libs/compare/be-ts-db-lib-v4.2.16...be-ts-db-lib-v4.2.17
 [4.2.16]: https://github.com/aneuhold/ts-libs/compare/be-ts-db-lib-v4.2.15...be-ts-db-lib-v4.2.16

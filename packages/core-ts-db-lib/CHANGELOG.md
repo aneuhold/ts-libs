@@ -9,11 +9,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### ✅ Added
 
-### 🏗️ Changed
-
-### 🩹 Fixed
-
-### 🔥 Removed
+- Added `RefreshTokenHash` embedded type and `RefreshTokenHashSchema` for storing hashed refresh tokens on users.
+- Added `GOOGLE_CLIENT_ID` constant (public Google OAuth 2.0 Client ID), exported from the browser entry point.
+- Added `refreshTokenHashes` array field to `User.auth` to track active refresh token hashes per device/session.
 
 ## 🔖 [5.0.0] (2026-03-13)
 
@@ -406,6 +404,7 @@ Updated dependency: now requires `@aneuhold/core-ts-lib@^2.3.11`.
 - Updated workflow permissions to allow repository write access
 
 <!-- Link References -->
+
 [5.0.1]: https://github.com/aneuhold/ts-libs/compare/core-ts-db-lib-v5.0.0...core-ts-db-lib-v5.0.1
 [5.0.0]: https://github.com/aneuhold/ts-libs/compare/core-ts-db-lib-v4.1.15...core-ts-db-lib-v5.0.0
 [4.1.15]: https://github.com/aneuhold/ts-libs/compare/core-ts-db-lib-v4.1.14...core-ts-db-lib-v4.1.15

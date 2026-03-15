@@ -9,11 +9,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### ✅ Added
 
-### 🏗️ Changed
-
-### 🩹 Fixed
-
-### 🔥 Removed
+- Added `DeepPartial<T>` utility type that recursively makes all properties of a type optional, exported from both the main and browser entry points.
 
 ## 🔖 [2.4.2] (2026-03-13)
 
@@ -224,6 +220,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Updated workflow permissions to allow repository write access
 
 <!-- Link References -->
+
 [2.4.3]: https://github.com/aneuhold/ts-libs/compare/core-ts-lib-v2.4.2...core-ts-lib-v2.4.3
 [2.4.2]: https://github.com/aneuhold/ts-libs/compare/core-ts-lib-v2.4.1...core-ts-lib-v2.4.2
 [2.4.1]: https://github.com/aneuhold/ts-libs/compare/core-ts-lib-v2.4.0...core-ts-lib-v2.4.1
