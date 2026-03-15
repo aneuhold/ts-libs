@@ -62,6 +62,7 @@
     "@aneuhold/core-ts-db-lib": "^5.0.0",
     "@aneuhold/core-ts-lib": "^2.4.2",
     "bson": "^7.0.0",
+    "google-auth-library": "^10.6.1",
     "mongodb": "^7.0.0",
     "uuid": "^13.0.0",
     "zod": "^4.1.13"
