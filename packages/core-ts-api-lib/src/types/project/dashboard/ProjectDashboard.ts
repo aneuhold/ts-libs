@@ -83,7 +83,8 @@ export interface ProjectDashboardOptions {
  * Represents the input to the project dashboard function.
  */
 export interface ProjectDashboardInput {
-  apiKey: UUID;
+  /** @deprecated Use JWT access token via Authorization header instead. */
+  apiKey?: UUID;
   options: ProjectDashboardOptions;
   socketId?: string;
 }
