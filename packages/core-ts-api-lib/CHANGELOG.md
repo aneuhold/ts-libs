@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## 🔖 [3.0.29] (2026-03-18)
+
+### 🏗️ Changed
+
+- `ProjectDashboardInput.apiKey` is now optional and deprecated; use JWT access token via `Authorization` header instead.
+- `ProjectWorkoutPrimaryInput.apiKey` is now optional and deprecated; use JWT access token via `Authorization` header instead.
+
 ## 🔖 [3.0.28] (2026-03-15)
 
 ### ✅ Added
@@ -344,6 +351,7 @@ No direct code changes; version bump for compatibility.
 
 <!-- Link References -->
 
+[3.0.29]: https://github.com/aneuhold/ts-libs/compare/core-ts-api-lib-v3.0.28...core-ts-api-lib-v3.0.29
 [3.0.28]: https://github.com/aneuhold/ts-libs/compare/core-ts-api-lib-v3.0.27...core-ts-api-lib-v3.0.28
 [3.0.27]: https://github.com/aneuhold/ts-libs/compare/core-ts-api-lib-v3.0.26...core-ts-api-lib-v3.0.27
 [3.0.26]: https://github.com/aneuhold/ts-libs/compare/core-ts-api-lib-v3.0.25...core-ts-api-lib-v3.0.26

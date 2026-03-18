@@ -9,4 +9,9 @@ export default interface Config {
   mongoUrl: string;
   /** Secret used to sign JWT access tokens. */
   jwtAccessSecret: string;
+  /** Test user credentials for e2e tests. */
+  testUserInfo: {
+    userName: string;
+    password: string;
+  };
 }

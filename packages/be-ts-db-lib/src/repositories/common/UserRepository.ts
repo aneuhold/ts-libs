@@ -61,6 +61,19 @@ export default class UserRepository extends BaseRepository<User> {
     return null;
   }
 
+  /**
+   * Finds a user that has a refresh token with the given SHA-256 hash.
+   *
+   * @param tokenHash - The SHA-256 hash of the refresh token.
+   */
+  async getUserByRefreshTokenHash(tokenHash: string): Promise<User | null> {
+    const collection = await this.getCollection();
+    const result = await collection.findOne({
+      'auth.refreshTokenHashes.tokenHash': tokenHash
+    });
+    return result;
+  }
+
   async getUserCTOsByIds(userIds: UUID[]): Promise<UserCTO[]> {
     const users = await this.getList(userIds);
     return users.map((user) => ({

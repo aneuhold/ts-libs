@@ -1,5 +1,6 @@
 import type { User } from '@aneuhold/core-ts-db-lib';
 import { UserSchema } from '@aneuhold/core-ts-db-lib';
+import { createHash } from 'crypto';
 import { describe, expect, it } from 'vitest';
 import { expectToThrow, getTestUserName } from '../../../test-util/testsUtil.js';
 import ApiKeyRepository from './ApiKeyRepository.js';
@@ -170,5 +171,31 @@ describe('Update operations', () => {
     // Verify email is now cleared
     userInDb = await userRepo.get({ _id: newUser._id });
     expect(userInDb?.email).toBeNull();
+  });
+});
+
+describe('getUserByRefreshTokenHash', () => {
+  it('finds a user by a refresh token hash stored in auth.refreshTokenHashes', async () => {
+    const newUser = UserSchema.parse({ userName: getTestUserName() });
+    await userRepo.insertNew(newUser);
+
+    const tokenHash = createHash('sha256').update('test-refresh-token').digest('hex');
+    await userRepo.update({
+      _id: newUser._id,
+      auth: {
+        ...newUser.auth,
+        refreshTokenHashes: [{ tokenHash, expiresAt: new Date(Date.now() + 60000) }]
+      }
+    });
+
+    const found = await userRepo.getUserByRefreshTokenHash(tokenHash);
+    expect(found).toBeTruthy();
+    expect(found?._id).toEqual(newUser._id);
+  });
+
+  it('returns null when no user has the given token hash', async () => {
+    const nonExistentHash = createHash('sha256').update('nonexistent-token').digest('hex');
+    const found = await userRepo.getUserByRefreshTokenHash(nonExistentHash);
+    expect(found).toBeNull();
   });
 });

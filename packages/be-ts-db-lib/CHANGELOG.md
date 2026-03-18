@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## 🔖 [4.2.19] (2026-03-18)
+
+### ✅ Added
+
+- Added `UserRepository.getUserByRefreshTokenHash()` to look up a user by a SHA-256 hashed refresh token stored in `auth.refreshTokenHashes`.
+
+### 🏗️ Changed
+
+- `MigrationService` updated to backfill `auth.refreshTokenHashes` for users missing the field; removed the previous large ObjectId-to-UUID migration logic.
+
 ## 🔖 [4.2.18] (2026-03-15)
 
 ### ✅ Added
@@ -338,6 +348,7 @@ Updated dependencies: now requires `@aneuhold/core-ts-db-lib@^3.0.0`, `@aneuhold
 
 <!-- Link References -->
 
+[4.2.19]: https://github.com/aneuhold/ts-libs/compare/be-ts-db-lib-v4.2.18...be-ts-db-lib-v4.2.19
 [4.2.18]: https://github.com/aneuhold/ts-libs/compare/be-ts-db-lib-v4.2.17...be-ts-db-lib-v4.2.18
 [4.2.17]: https://github.com/aneuhold/ts-libs/compare/be-ts-db-lib-v4.2.16...be-ts-db-lib-v4.2.17
 [4.2.16]: https://github.com/aneuhold/ts-libs/compare/be-ts-db-lib-v4.2.15...be-ts-db-lib-v4.2.16
