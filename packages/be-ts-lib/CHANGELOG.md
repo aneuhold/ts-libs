@@ -9,11 +9,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### ✅ Added
 
-### 🏗️ Changed
-
-### 🩹 Fixed
-
-### 🔥 Removed
+- Added `testUserInfo` field to the `Config` interface for providing test user credentials in e2e tests.
 
 ## 🔖 [3.1.5] (2026-03-15)
 
@@ -275,6 +271,7 @@ No direct code changes; version bump for compatibility with new major versions o
 - Updated workflow permissions to allow repository write access
 
 <!-- Link References -->
+
 [3.1.6]: https://github.com/aneuhold/ts-libs/compare/be-ts-lib-v3.1.5...be-ts-lib-v3.1.6
 [3.1.5]: https://github.com/aneuhold/ts-libs/compare/be-ts-lib-v3.1.4...be-ts-lib-v3.1.5
 [3.1.4]: https://github.com/aneuhold/ts-libs/compare/be-ts-lib-v3.1.3...be-ts-lib-v3.1.4

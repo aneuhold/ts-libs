@@ -7,13 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## 🔖 [3.0.29] (2026-03-18)
 
-### ✅ Added
-
 ### 🏗️ Changed
 
-### 🩹 Fixed
-
-### 🔥 Removed
+- `ProjectDashboardInput.apiKey` is now optional and deprecated; use JWT access token via `Authorization` header instead.
+- `ProjectWorkoutPrimaryInput.apiKey` is now optional and deprecated; use JWT access token via `Authorization` header instead.
 
 ## 🔖 [3.0.28] (2026-03-15)
 
@@ -353,6 +350,7 @@ No direct code changes; version bump for compatibility.
 - Updated workflow permissions to allow repository write access
 
 <!-- Link References -->
+
 [3.0.29]: https://github.com/aneuhold/ts-libs/compare/core-ts-api-lib-v3.0.28...core-ts-api-lib-v3.0.29
 [3.0.28]: https://github.com/aneuhold/ts-libs/compare/core-ts-api-lib-v3.0.27...core-ts-api-lib-v3.0.28
 [3.0.27]: https://github.com/aneuhold/ts-libs/compare/core-ts-api-lib-v3.0.26...core-ts-api-lib-v3.0.27
