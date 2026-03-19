@@ -9,11 +9,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### ✅ Added
 
+- Added required `project: ProjectName` field to `AuthValidateUserInput`.
+
 ### 🏗️ Changed
 
-### 🩹 Fixed
-
-### 🔥 Removed
+- Updated dependency on `@aneuhold/core-ts-db-lib` to `^5.0.2`.
 
 ## 🔖 [3.0.29] (2026-03-18)
 
@@ -360,6 +360,7 @@ No direct code changes; version bump for compatibility.
 - Updated workflow permissions to allow repository write access
 
 <!-- Link References -->
+
 [3.0.30]: https://github.com/aneuhold/ts-libs/compare/core-ts-api-lib-v3.0.29...core-ts-api-lib-v3.0.30
 [3.0.29]: https://github.com/aneuhold/ts-libs/compare/core-ts-api-lib-v3.0.28...core-ts-api-lib-v3.0.29
 [3.0.28]: https://github.com/aneuhold/ts-libs/compare/core-ts-api-lib-v3.0.27...core-ts-api-lib-v3.0.28

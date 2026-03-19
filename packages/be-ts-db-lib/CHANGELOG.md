@@ -9,11 +9,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### ✅ Added
 
+- Added `GoogleAuthService.verifyAndFindUser` method that returns `null` when no matching user exists (does not create one).
+
 ### 🏗️ Changed
 
-### 🩹 Fixed
-
-### 🔥 Removed
+- Refactored `GoogleAuthService`: extracted private `verifyToken` helper and restructured `verifyAndFindOrCreateUser` to delegate to `verifyAndFindUser`.
+- Refactored `MigrationService` to fill in missing `projectAccess` fields with safe defaults instead of patching `refreshTokenHashes`.
+- Updated dependencies on `@aneuhold/be-ts-lib` to `^3.1.7` and `@aneuhold/core-ts-db-lib` to `^5.0.2`.
 
 ## 🔖 [4.2.19] (2026-03-18)
 
@@ -357,6 +359,7 @@ Updated dependencies: now requires `@aneuhold/core-ts-db-lib@^3.0.0`, `@aneuhold
 - Updated workflow permissions to allow repository write access
 
 <!-- Link References -->
+
 [4.2.20]: https://github.com/aneuhold/ts-libs/compare/be-ts-db-lib-v4.2.19...be-ts-db-lib-v4.2.20
 [4.2.19]: https://github.com/aneuhold/ts-libs/compare/be-ts-db-lib-v4.2.18...be-ts-db-lib-v4.2.19
 [4.2.18]: https://github.com/aneuhold/ts-libs/compare/be-ts-db-lib-v4.2.17...be-ts-db-lib-v4.2.18

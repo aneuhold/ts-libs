@@ -9,11 +9,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### ✅ Added
 
+- Added `ProjectName` enum (`Dashboard`, `Workout`) exported from the browser entry point.
+
 ### 🏗️ Changed
 
-### 🩹 Fixed
-
-### 🔥 Removed
+- `User.projectAccess` keys now use `ProjectName` enum values instead of plain string literals.
 
 ## 🔖 [5.0.1] (2026-03-15)
 
@@ -414,6 +414,7 @@ Updated dependency: now requires `@aneuhold/core-ts-lib@^2.3.11`.
 - Updated workflow permissions to allow repository write access
 
 <!-- Link References -->
+
 [5.0.2]: https://github.com/aneuhold/ts-libs/compare/core-ts-db-lib-v5.0.1...core-ts-db-lib-v5.0.2
 [5.0.1]: https://github.com/aneuhold/ts-libs/compare/core-ts-db-lib-v5.0.0...core-ts-db-lib-v5.0.1
 [5.0.0]: https://github.com/aneuhold/ts-libs/compare/core-ts-db-lib-v4.1.15...core-ts-db-lib-v5.0.0
