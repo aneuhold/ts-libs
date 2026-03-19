@@ -1,4 +1,5 @@
 import type { ApiKey, User } from '@aneuhold/core-ts-db-lib';
+import { ProjectName } from '@aneuhold/core-ts-db-lib';
 import type { DashboardConfig } from './project/dashboard/DashboardConfig.js';
 
 /**
@@ -11,6 +12,8 @@ export interface AuthValidateUserInput {
   password?: string;
   /** Google ID token received from Google Identity Services (Google flow). */
   googleCredentialToken?: string;
+  /** The project the user is logging into. */
+  project: ProjectName;
 }
 
 /**

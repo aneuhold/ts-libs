@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## 🔖 [3.0.30] (2026-03-19)
+
+### ✅ Added
+
+- Added required `project: ProjectName` field to `AuthValidateUserInput`.
+
+### 🏗️ Changed
+
+- Updated dependency on `@aneuhold/core-ts-db-lib` to `^5.0.2`.
+
 ## 🔖 [3.0.29] (2026-03-18)
 
 ### 🏗️ Changed
@@ -351,6 +361,7 @@ No direct code changes; version bump for compatibility.
 
 <!-- Link References -->
 
+[3.0.30]: https://github.com/aneuhold/ts-libs/compare/core-ts-api-lib-v3.0.29...core-ts-api-lib-v3.0.30
 [3.0.29]: https://github.com/aneuhold/ts-libs/compare/core-ts-api-lib-v3.0.28...core-ts-api-lib-v3.0.29
 [3.0.28]: https://github.com/aneuhold/ts-libs/compare/core-ts-api-lib-v3.0.27...core-ts-api-lib-v3.0.28
 [3.0.27]: https://github.com/aneuhold/ts-libs/compare/core-ts-api-lib-v3.0.26...core-ts-api-lib-v3.0.27

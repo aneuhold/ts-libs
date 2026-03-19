@@ -1,3 +1,4 @@
+import { ProjectName } from '@aneuhold/core-ts-db-lib';
 import type { UUID } from 'crypto';
 import { afterEach, describe, expect, it, type MockInstance, vi } from 'vitest';
 import type { APIResponse } from '../../types/APIResponse.js';
@@ -22,7 +23,8 @@ describe('Unit Tests', () => {
       it('should call GCloudAPIService.authValidateUser with correct input', async () => {
         const input: AuthValidateUserInput = {
           userName: 'testuser',
-          password: 'password123'
+          password: 'password123',
+          project: ProjectName.Dashboard
         };
         const mockResponse: APIResponse<AuthValidateUserOutput> = {
           success: true,

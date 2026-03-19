@@ -22,7 +22,7 @@ tools:
     'read/problems',
     'github/pull_request_read'
   ]
-model: GPT-4.1 (copilot)
+model: Claude Sonnet 4.6 (copilot)
 ---
 
 Your sole task is to generate an updated set of changelogs based on the current branch as compared to main. If you are given a prompt such as "start" / "begin" / "changelog" it means you should just execute the task without any further instructions.

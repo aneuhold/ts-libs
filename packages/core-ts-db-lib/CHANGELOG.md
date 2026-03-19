@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## 🔖 [5.0.2] (2026-03-19)
+
+### ✅ Added
+
+- Added `ProjectName` enum (`Dashboard`, `Workout`) exported from the browser entry point.
+
+### 🏗️ Changed
+
+- `User.projectAccess` keys now use `ProjectName` enum values instead of plain string literals.
+
 ## 🔖 [5.0.1] (2026-03-15)
 
 ### ✅ Added
@@ -405,6 +415,7 @@ Updated dependency: now requires `@aneuhold/core-ts-lib@^2.3.11`.
 
 <!-- Link References -->
 
+[5.0.2]: https://github.com/aneuhold/ts-libs/compare/core-ts-db-lib-v5.0.1...core-ts-db-lib-v5.0.2
 [5.0.1]: https://github.com/aneuhold/ts-libs/compare/core-ts-db-lib-v5.0.0...core-ts-db-lib-v5.0.1
 [5.0.0]: https://github.com/aneuhold/ts-libs/compare/core-ts-db-lib-v4.1.15...core-ts-db-lib-v5.0.0
 [4.1.15]: https://github.com/aneuhold/ts-libs/compare/core-ts-db-lib-v4.1.14...core-ts-db-lib-v4.1.15

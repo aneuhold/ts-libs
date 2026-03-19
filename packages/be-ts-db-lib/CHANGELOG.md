@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## 🔖 [4.2.20] (2026-03-19)
+
+### ✅ Added
+
+- Added `GoogleAuthService.verifyAndFindUser` method that returns `null` when no matching user exists (does not create one).
+
+### 🏗️ Changed
+
+- Refactored `GoogleAuthService`: extracted private `verifyToken` helper and restructured `verifyAndFindOrCreateUser` to delegate to `verifyAndFindUser`.
+- Refactored `MigrationService` to fill in missing `projectAccess` fields with safe defaults instead of patching `refreshTokenHashes`.
+- Updated dependencies on `@aneuhold/be-ts-lib` to `^3.1.7` and `@aneuhold/core-ts-db-lib` to `^5.0.2`.
+
 ## 🔖 [4.2.19] (2026-03-18)
 
 ### ✅ Added
@@ -348,6 +360,7 @@ Updated dependencies: now requires `@aneuhold/core-ts-db-lib@^3.0.0`, `@aneuhold
 
 <!-- Link References -->
 
+[4.2.20]: https://github.com/aneuhold/ts-libs/compare/be-ts-db-lib-v4.2.19...be-ts-db-lib-v4.2.20
 [4.2.19]: https://github.com/aneuhold/ts-libs/compare/be-ts-db-lib-v4.2.18...be-ts-db-lib-v4.2.19
 [4.2.18]: https://github.com/aneuhold/ts-libs/compare/be-ts-db-lib-v4.2.17...be-ts-db-lib-v4.2.18
 [4.2.17]: https://github.com/aneuhold/ts-libs/compare/be-ts-db-lib-v4.2.16...be-ts-db-lib-v4.2.17
