@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { BaseDocumentSchema } from '../BaseDocument.js';
+import ProjectName from '../../embedded-types/common/ProjectName.js';
 import { RefreshTokenHashSchema } from '../../embedded-types/common/RefreshTokenHash.js';
 
 /**
@@ -24,12 +25,12 @@ export const UserSchema = UserCTOSchema.extend({
     .default({ refreshTokenHashes: [] }),
   projectAccess: z
     .object({
-      dashboard: z.boolean().default(false),
-      workout: z.boolean().default(true)
+      [ProjectName.Dashboard]: z.boolean().default(false),
+      [ProjectName.Workout]: z.boolean().default(true)
     })
     .default({
-      dashboard: false,
-      workout: true
+      [ProjectName.Dashboard]: false,
+      [ProjectName.Workout]: true
     })
 });
 

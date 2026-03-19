@@ -4,6 +4,16 @@ import { DR } from '@aneuhold/core-ts-lib';
 import UserRepository from '../repositories/common/UserRepository.js';
 
 /**
+ * The default values for each project access field. New fields should be
+ * added here and defaulted to `false` so existing users don't gain access
+ * automatically.
+ */
+const PROJECT_ACCESS_DEFAULTS = {
+  dashboard: false,
+  workout: false
+};
+
+/**
  * A service for migrating the DB to a new state after an existing document
  * change.
  *
@@ -26,11 +36,17 @@ export default class MigrationService {
     const userRepo = UserRepository.getRepo();
     const users = await userRepo.getAll();
 
-    // Add refreshTokenHashes to users that don't have it yet
-    const usersToUpdate = users.filter((user) => !user.auth.refreshTokenHashes);
+    // Find users that are missing projectAccess entirely or are missing
+    // any of the expected fields.
+    const usersToUpdate = users.filter((user) => {
+      if (!user.projectAccess) return true;
+      return Object.keys(PROJECT_ACCESS_DEFAULTS).some(
+        (key) => user.projectAccess[key] === undefined
+      );
+    });
 
     DR.logger.info(
-      `Found ${usersToUpdate.length} of ${users.length} users missing auth.refreshTokenHashes.`
+      `Found ${usersToUpdate.length} of ${users.length} users with missing projectAccess fields.`
     );
 
     if (usersToUpdate.length === 0) {
@@ -41,17 +57,25 @@ export default class MigrationService {
     if (dryRun) {
       DR.logger.info('Dry run: Would update the following users:');
       usersToUpdate.forEach((user) => {
-        DR.logger.info(`  - ${user.userName} (${user._id})`);
+        const existing = user.projectAccess ?? {};
+        const merged = { ...PROJECT_ACCESS_DEFAULTS, ...existing };
+        DR.logger.info(
+          `  - ${user.userName} (${user._id}): ${JSON.stringify(existing)} → ${JSON.stringify(merged)}`
+        );
       });
       return;
     }
 
     for (const user of usersToUpdate) {
+      const existing = user.projectAccess ?? {};
+      const merged = { ...PROJECT_ACCESS_DEFAULTS, ...existing };
       await userRepo.update({
         _id: user._id,
-        auth: { ...user.auth, refreshTokenHashes: [] }
+        projectAccess: merged
       });
-      DR.logger.info(`Updated user ${user.userName} (${user._id})`);
+      DR.logger.info(
+        `Updated user ${user.userName} (${user._id}): ${JSON.stringify(existing)} → ${JSON.stringify(merged)}`
+      );
     }
 
     DR.logger.success(`Migration complete. Updated ${usersToUpdate.length} users.`);

@@ -19,6 +19,7 @@ import type { ApiKey } from './documents/common/ApiKey.js';
 import { ApiKeySchema } from './documents/common/ApiKey.js';
 import type { User, UserCTO } from './documents/common/User.js';
 import { UserCTOSchema, UserSchema } from './documents/common/User.js';
+import ProjectName from './embedded-types/common/ProjectName.js';
 import type { RefreshTokenHash } from './embedded-types/common/RefreshTokenHash.js';
 import { RefreshTokenHashSchema } from './embedded-types/common/RefreshTokenHash.js';
 import type { NonogramKatanaItem } from './documents/dashboard/NonogramKatanaItem.js';
@@ -180,6 +181,7 @@ export {
   ApiKeySchema,
   GOOGLE_CLIENT_ID,
   BaseDocumentSchema,
+  ProjectName,
   RefreshTokenHashSchema,
   BaseDocumentWithTypeSchema,
   BaseDocumentWithUpdatedAndCreatedDatesSchema,

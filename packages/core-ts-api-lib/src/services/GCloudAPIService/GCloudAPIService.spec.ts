@@ -1,3 +1,4 @@
+import { ProjectName } from '@aneuhold/core-ts-db-lib';
 import type { UUID } from 'crypto';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { AuthValidateUserInput } from '../../types/AuthValidateUser.js';
@@ -53,7 +54,8 @@ describe('Unit Tests', () => {
 
         const input: AuthValidateUserInput = {
           userName: 'testuser',
-          password: 'password123'
+          password: 'password123',
+          project: ProjectName.Dashboard
         };
         const result = await GCloudAPIService.authValidateUser(input);
 
