@@ -1,4 +1,4 @@
-import type { ApiKey, User } from '@aneuhold/core-ts-db-lib';
+import type { User } from '@aneuhold/core-ts-db-lib';
 import { ProjectName } from '@aneuhold/core-ts-db-lib';
 import type { DashboardConfig } from './project/dashboard/DashboardConfig.js';
 
@@ -25,7 +25,6 @@ export interface AuthValidateUserOutput {
    */
   userInfo?: {
     user: User;
-    apiKey: ApiKey;
   };
   /** JWT access token for authenticating API requests. */
   accessToken?: string;

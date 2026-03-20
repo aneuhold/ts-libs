@@ -277,8 +277,6 @@ export interface ProjectWorkoutPrimaryEndpointOptions {
  * Represents the input to the workout app primary endpoint.
  */
 export interface ProjectWorkoutPrimaryInput {
-  /** @deprecated Use JWT access token via Authorization header instead. */
-  apiKey?: UUID;
   options: ProjectWorkoutPrimaryEndpointOptions;
   socketId?: string;
 }

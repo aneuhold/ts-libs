@@ -1,5 +1,4 @@
 import BaseRepository from './repositories/BaseRepository.js';
-import ApiKeyRepository from './repositories/common/ApiKeyRepository.js';
 import UserRepository from './repositories/common/UserRepository.js';
 import DashboardBaseRepository from './repositories/dashboard/DashboardBaseRepository.js';
 import DashboardBaseWithUserIdRepository from './repositories/dashboard/DashboardBaseWithUserIdRepository.js';
@@ -24,7 +23,6 @@ import DocumentDb from './util/DocumentDb.js';
 
 // Export all the functions and classes from this library
 export {
-  ApiKeyRepository,
   BaseRepository,
   DashboardBaseRepository,
   DashboardBaseWithUserIdRepository,

@@ -3,7 +3,6 @@ import { UserSchema } from '@aneuhold/core-ts-db-lib';
 import { createHash } from 'crypto';
 import { describe, expect, it } from 'vitest';
 import { expectToThrow, getTestUserName } from '../../../test-util/testsUtil.js';
-import ApiKeyRepository from './ApiKeyRepository.js';
 import UserRepository from './UserRepository.js';
 
 const userRepo = UserRepository.getRepo();
@@ -13,22 +12,6 @@ describe('Create operations', () => {
     const newUser = UserSchema.parse({ userName: getTestUserName() });
     const insertResult = await userRepo.insertNew(newUser);
     expect(insertResult).toBeTruthy();
-  });
-
-  it('can create a new user and the new user gets an API key', async () => {
-    const newUser = UserSchema.parse({ userName: getTestUserName() });
-    const insertResult = await userRepo.insertNew(newUser);
-    expect(insertResult).toBeTruthy();
-    const apiKey = await ApiKeyRepository.getRepo().get({
-      userId: newUser._id
-    });
-    expect(apiKey).toBeTruthy();
-
-    await userRepo.delete(newUser._id);
-    const apiKeyThatShouldNotExist = await ApiKeyRepository.getRepo().get({
-      userId: newUser._id
-    });
-    expect(apiKeyThatShouldNotExist).toBeFalsy();
   });
 
   it('throws if the username is a duplicate username', async () => {
