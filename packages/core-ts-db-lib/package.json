@@ -2,7 +2,7 @@
   "name": "@aneuhold/core-ts-db-lib",
   "author": "Anton G. Neuhold Jr.",
   "license": "MIT",
-  "version": "5.0.2",
+  "version": "5.0.3",
   "description": "A core database library used for personal projects",
   "packageManager": "pnpm@10.25.0",
   "type": "module",
