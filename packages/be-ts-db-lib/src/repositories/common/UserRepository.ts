@@ -12,8 +12,6 @@ import WorkoutExerciseRepository from '../workout/WorkoutExerciseRepository.js';
 import WorkoutMesocycleRepository from '../workout/WorkoutMesocycleRepository.js';
 import WorkoutMicrocycleRepository from '../workout/WorkoutMicrocycleRepository.js';
 import WorkoutMuscleGroupRepository from '../workout/WorkoutMuscleGroupRepository.js';
-import ApiKeyRepository from './ApiKeyRepository.js';
-
 /**
  * The repository that contains {@link User} documents.
  */
@@ -27,7 +25,6 @@ export default class UserRepository extends BaseRepository<User> {
   }
 
   protected setupSubscribers(): void {
-    this.subscribeToChanges(ApiKeyRepository.getListenersForUserRepo());
     this.subscribeToChanges(DashboardUserConfigRepository.getListenersForUserRepo());
     this.subscribeToChanges(DashboardTaskRepository.getListenersForUserRepo());
     this.subscribeToChanges(DashboardNonogramKatanaItemRepository.getListenersForUserRepo());

@@ -1,5 +1,4 @@
 import { ProjectName } from '@aneuhold/core-ts-db-lib';
-import type { UUID } from 'crypto';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { AuthValidateUserInput } from '../../types/AuthValidateUser.js';
 import type { ProjectDashboardInput } from '../../types/project/dashboard/ProjectDashboard.js';
@@ -31,7 +30,7 @@ describe('Unit Tests', () => {
           text: () => Promise.resolve(JSON.stringify(mockResponse))
         });
 
-        const input: ProjectDashboardInput = { apiKey: '123' as unknown as UUID, options: {} };
+        const input: ProjectDashboardInput = { options: {} };
         await GCloudAPIService.projectDashboard(input);
 
         expect(mockFetch).toHaveBeenCalledWith(
@@ -86,7 +85,6 @@ describe('Unit Tests', () => {
         });
 
         const input: ProjectDashboardInput = {
-          apiKey: '123' as unknown as UUID,
           options: { get: { translations: true } }
         };
         const result = await GCloudAPIService.projectDashboard(input);
@@ -118,7 +116,6 @@ describe('Unit Tests', () => {
         });
 
         const input: ProjectDashboardInput = {
-          apiKey: '123' as unknown as UUID,
           options: {}
         };
         const result = await GCloudAPIService.projectDashboard(input);
@@ -138,7 +135,6 @@ describe('Unit Tests', () => {
         });
 
         const input: ProjectDashboardInput = {
-          apiKey: '123' as unknown as UUID,
           options: {}
         };
         const result = await GCloudAPIService.projectDashboard(input);
@@ -151,7 +147,6 @@ describe('Unit Tests', () => {
         mockFetch.mockRejectedValue(new Error('Network error'));
 
         const input: ProjectDashboardInput = {
-          apiKey: '123' as unknown as UUID,
           options: {}
         };
         await expect(GCloudAPIService.projectDashboard(input)).rejects.toThrow('Network error');

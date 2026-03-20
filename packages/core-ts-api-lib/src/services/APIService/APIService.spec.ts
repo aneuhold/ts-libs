@@ -1,5 +1,4 @@
 import { ProjectName } from '@aneuhold/core-ts-db-lib';
-import type { UUID } from 'crypto';
 import { afterEach, describe, expect, it, type MockInstance, vi } from 'vitest';
 import type { APIResponse } from '../../types/APIResponse.js';
 import type {
@@ -45,7 +44,6 @@ describe('Unit Tests', () => {
     describe('callDashboardAPI', () => {
       it('should call GCloudAPIService.projectDashboard with correct input', async () => {
         const input: ProjectDashboardInput = {
-          apiKey: '123' as unknown as UUID,
           options: {}
         };
         const mockResponse: APIResponse<ProjectDashboardOutput> = {

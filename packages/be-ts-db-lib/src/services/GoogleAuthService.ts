@@ -1,7 +1,6 @@
-import type { ApiKey, User } from '@aneuhold/core-ts-db-lib';
+import type { User } from '@aneuhold/core-ts-db-lib';
 import { GOOGLE_CLIENT_ID, ProjectName, UserSchema } from '@aneuhold/core-ts-db-lib';
 import { OAuth2Client } from 'google-auth-library';
-import ApiKeyRepository from '../repositories/common/ApiKeyRepository.js';
 import UserRepository from '../repositories/common/UserRepository.js';
 
 /**
@@ -18,13 +17,10 @@ export default class GoogleAuthService {
    *
    * @param googleCredentialToken - The Google ID token string from the client.
    */
-  static async verifyAndFindUser(
-    googleCredentialToken: string
-  ): Promise<{ user: User; apiKey: ApiKey } | null> {
+  static async verifyAndFindUser(googleCredentialToken: string): Promise<{ user: User } | null> {
     const { googleId, email } = await this.verifyToken(googleCredentialToken);
 
     const userRepo = UserRepository.getRepo();
-    const apiKeyRepo = ApiKeyRepository.getRepo();
 
     // 1. Look up by googleId
     let user = await userRepo.get({ auth: { googleId } });
@@ -43,12 +39,7 @@ export default class GoogleAuthService {
       return null;
     }
 
-    const apiKey = await apiKeyRepo.get({ userId: user._id });
-    if (!apiKey) {
-      throw new Error(`No API key found for user ${user._id}`);
-    }
-
-    return { user, apiKey };
+    return { user };
   }
 
   /**
@@ -56,19 +47,15 @@ export default class GoogleAuthService {
    *
    * @param googleCredentialToken - The Google ID token string from the client.
    */
-  static async verifyAndFindOrCreateUser(
-    googleCredentialToken: string
-  ): Promise<{ user: User; apiKey: ApiKey }> {
+  static async verifyAndFindOrCreateUser(googleCredentialToken: string): Promise<{ user: User }> {
     const result = await this.verifyAndFindUser(googleCredentialToken);
     if (result) {
       return result;
     }
 
-    // Create new user. The ApiKey subscriber on UserRepository automatically
-    // creates an API key on user insertion.
+    // Create new user.
     const { googleId, email } = await this.verifyToken(googleCredentialToken);
     const userRepo = UserRepository.getRepo();
-    const apiKeyRepo = ApiKeyRepository.getRepo();
 
     const newUser = UserSchema.parse({
       userName: email,
@@ -81,12 +68,7 @@ export default class GoogleAuthService {
       throw new Error('Failed to create user');
     }
 
-    const apiKey = await apiKeyRepo.get({ userId: insertedUser._id });
-    if (!apiKey) {
-      throw new Error(`No API key found for user ${insertedUser._id}`);
-    }
-
-    return { user: insertedUser, apiKey };
+    return { user: insertedUser };
   }
 
   /**

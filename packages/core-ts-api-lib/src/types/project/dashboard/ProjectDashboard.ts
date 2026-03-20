@@ -5,7 +5,6 @@ import type {
   NonogramKatanaUpgrade,
   UserCTO
 } from '@aneuhold/core-ts-db-lib';
-import type { UUID } from 'crypto';
 import type { Translations } from '../../Translations.js';
 
 /**
@@ -83,8 +82,6 @@ export interface ProjectDashboardOptions {
  * Represents the input to the project dashboard function.
  */
 export interface ProjectDashboardInput {
-  /** @deprecated Use JWT access token via Authorization header instead. */
-  apiKey?: UUID;
   options: ProjectDashboardOptions;
   socketId?: string;
 }

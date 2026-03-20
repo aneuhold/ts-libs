@@ -15,8 +15,6 @@ import {
   BaseDocumentWithTypeSchema,
   BaseDocumentWithUpdatedAndCreatedDatesSchema
 } from './documents/BaseDocument.js';
-import type { ApiKey } from './documents/common/ApiKey.js';
-import { ApiKeySchema } from './documents/common/ApiKey.js';
 import type { User, UserCTO } from './documents/common/User.js';
 import { UserCTOSchema, UserSchema } from './documents/common/User.js';
 import ProjectName from './embedded-types/common/ProjectName.js';
@@ -178,7 +176,6 @@ import { GOOGLE_CLIENT_ID } from './constants/googleClientId.js';
 
 // Export all browser-safe functions and classes from this library
 export {
-  ApiKeySchema,
   GOOGLE_CLIENT_ID,
   BaseDocumentSchema,
   ProjectName,
@@ -271,7 +268,6 @@ export {
 
 // Export TypeScript types where needed
 export type {
-  ApiKey,
   BaseDocument,
   RefreshTokenHash,
   WorkoutDeloadRecommendation,

@@ -1,4 +1,3 @@
-import type { UUID } from 'crypto';
 import type { ProjectDashboardOutput } from './project/dashboard/ProjectDashboard.js';
 import type { ProjectWorkoutPrimaryOutput } from './project/workout/ProjectWorkout.js';
 
@@ -14,8 +13,6 @@ import type { ProjectWorkoutPrimaryOutput } from './project/workout/ProjectWorko
  * ```
  */
 export type WebSocketHandshakeAuth = {
-  /** @deprecated Use accessToken instead. Kept for backward compatibility. */
-  apiKey?: UUID;
   /** JWT access token for authenticating the WebSocket connection. */
   accessToken?: string;
 };

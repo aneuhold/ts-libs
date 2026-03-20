@@ -1,4 +1,3 @@
-import ApiKeyValidator from '../validators/common/ApiKeyValidator.js';
 import UserValidator from '../validators/common/UserValidator.js';
 import DashboardNonogramKatanaItemValidator from '../validators/dashboard/NonogramKatanaItemValidator.js';
 import DashboardNonogramKatanaUpgradeValidator from '../validators/dashboard/NonogramKatanaUpgradeValidator.js';
@@ -21,7 +20,6 @@ export default class DbSchemaUpdater {
   static async updateSchemaForAllRepos(dryRun = false): Promise<void> {
     // Common validators
     await new UserValidator().validateRepositoryInDb(dryRun);
-    await new ApiKeyValidator().validateRepositoryInDb(dryRun);
 
     // Dashboard validators
     await new DashboardUserConfigValidator().validateRepositoryInDb(dryRun);
