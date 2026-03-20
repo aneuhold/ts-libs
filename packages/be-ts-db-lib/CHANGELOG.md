@@ -7,13 +7,15 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## 🔖 [4.2.21] (2026-03-20)
 
-### ✅ Added
-
 ### 🏗️ Changed
 
-### 🩹 Fixed
+- `GoogleAuthService.verifyAndFindUser` and `verifyAndFindOrCreateUser` no longer return `apiKey` in their result.
+- Updated dependencies on `@aneuhold/be-ts-lib` to `^3.1.8` and `@aneuhold/core-ts-db-lib` to `^5.0.3`.
 
 ### 🔥 Removed
+
+- Removed `ApiKeyRepository` class, its tests, and its subscriber registration in `UserRepository`.
+- Removed `ApiKeyValidator` class and its usage in `DbSchemaUpdater`.
 
 ## 🔖 [4.2.20] (2026-03-19)
 
@@ -369,6 +371,7 @@ Updated dependencies: now requires `@aneuhold/core-ts-db-lib@^3.0.0`, `@aneuhold
 - Updated workflow permissions to allow repository write access
 
 <!-- Link References -->
+
 [4.2.21]: https://github.com/aneuhold/ts-libs/compare/be-ts-db-lib-v4.2.20...be-ts-db-lib-v4.2.21
 [4.2.20]: https://github.com/aneuhold/ts-libs/compare/be-ts-db-lib-v4.2.19...be-ts-db-lib-v4.2.20
 [4.2.19]: https://github.com/aneuhold/ts-libs/compare/be-ts-db-lib-v4.2.18...be-ts-db-lib-v4.2.19

@@ -7,13 +7,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## 🔖 [5.0.3] (2026-03-20)
 
-### ✅ Added
-
-### 🏗️ Changed
-
-### 🩹 Fixed
-
 ### 🔥 Removed
+
+- Removed `ApiKey` document type, schema, and associated spec.
 
 ## 🔖 [5.0.2] (2026-03-19)
 
@@ -424,6 +420,7 @@ Updated dependency: now requires `@aneuhold/core-ts-lib@^2.3.11`.
 - Updated workflow permissions to allow repository write access
 
 <!-- Link References -->
+
 [5.0.3]: https://github.com/aneuhold/ts-libs/compare/core-ts-db-lib-v5.0.2...core-ts-db-lib-v5.0.3
 [5.0.2]: https://github.com/aneuhold/ts-libs/compare/core-ts-db-lib-v5.0.1...core-ts-db-lib-v5.0.2
 [5.0.1]: https://github.com/aneuhold/ts-libs/compare/core-ts-db-lib-v5.0.0...core-ts-db-lib-v5.0.1
