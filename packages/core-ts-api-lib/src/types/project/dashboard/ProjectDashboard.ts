@@ -5,6 +5,7 @@ import type {
   NonogramKatanaUpgrade,
   UserCTO
 } from '@aneuhold/core-ts-db-lib';
+import type { UUID } from 'crypto';
 import type { Translations } from '../../Translations.js';
 
 /**
@@ -72,9 +73,9 @@ export interface ProjectDashboardOptions {
   };
   delete?: {
     /**
-     * Tasks to be deleted.
+     * Task IDs to be deleted.
      */
-    tasks?: DashboardTask[];
+    tasks?: UUID[];
   };
 }
 
