@@ -53,4 +53,13 @@ export interface AdminOutputUserDocumentCounts {
   tasks: number;
   nonogramKatanaItems: number;
   nonogramKatanaUpgrades: number;
+  workoutExercises: number;
+  workoutEquipmentTypes: number;
+  workoutMuscleGroups: number;
+  workoutMesocycles: number;
+  workoutMicrocycles: number;
+  workoutSessions: number;
+  workoutSessionExercises: number;
+  workoutSets: number;
+  workoutExerciseCalibrations: number;
 }
