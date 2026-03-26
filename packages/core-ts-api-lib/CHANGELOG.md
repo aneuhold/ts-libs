@@ -9,11 +9,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### ✅ Added
 
+- Added `Admin` types (`AdminInput`, `AdminOutput`, `AdminOutputUserDetail`, `AdminOutputUserDocumentCounts`) for the super-admin API endpoint.
+- Added `APIService.callAdminAPI` method and `GCloudAPIService.admin` method for calling the admin endpoint.
+- Exported new Admin types from the browser entry point.
+
 ### 🏗️ Changed
 
-### 🩹 Fixed
-
-### 🔥 Removed
+- `ProjectDashboardOptions.delete.tasks` changed from `DashboardTask[]` to `UUID[]` (pass IDs instead of full documents).
+- Updated dependency on `@aneuhold/core-ts-db-lib` to `^5.0.4`.
 
 ## 🔖 [3.0.31] (2026-03-20)
 

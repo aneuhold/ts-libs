@@ -7,13 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## 🔖 [4.2.22] (2026-03-26)
 
-### ✅ Added
-
 ### 🏗️ Changed
 
-### 🩹 Fixed
-
-### 🔥 Removed
+- Refactored `MigrationService` to migrate `DashboardUserConfig` records instead of `User.projectAccess` fields; now backfills `enableAdminPage` and `enabledFeatures.adminPage` with safe defaults.
+- Updated dependencies on `@aneuhold/be-ts-lib` to `^3.1.9` and `@aneuhold/core-ts-db-lib` to `^5.0.4`.
 
 ## 🔖 [4.2.21] (2026-03-20)
 

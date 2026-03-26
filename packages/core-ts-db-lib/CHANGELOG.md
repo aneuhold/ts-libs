@@ -9,11 +9,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### ✅ Added
 
-### 🏗️ Changed
-
-### 🩹 Fixed
-
-### 🔥 Removed
+- Added `isSuperAdmin` boolean field to `User.auth` private details for granting super admin access to admin endpoints.
+- Added `enableAdminPage` boolean field to `DashboardUserConfig` (defaults to `false`).
+- Added `adminPage` feature flag to `DashboardUserConfig.enabledFeatures` (defaults to `false`).
 
 ## 🔖 [5.0.3] (2026-03-20)
 
