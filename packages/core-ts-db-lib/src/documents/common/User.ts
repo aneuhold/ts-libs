@@ -19,6 +19,8 @@ export const UserSchema = UserCTOSchema.extend({
     .object({
       password: z.string().nullish(),
       googleId: z.string().nullish(),
+      /** Whether this user is a super admin with access to admin endpoints. */
+      isSuperAdmin: z.boolean().nullish(),
       /** Active refresh token hashes. One per device/session. */
       refreshTokenHashes: z.array(RefreshTokenHashSchema).default([])
     })

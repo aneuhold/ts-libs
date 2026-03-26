@@ -1,4 +1,5 @@
 import { DateService, ErrorUtils } from '@aneuhold/core-ts-lib';
+import type { AdminInput, AdminOutput } from '../../types/Admin.js';
 import type { APIResponse } from '../../types/APIResponse.js';
 import type { AuthRefreshTokenOutput } from '../../types/AuthRefreshToken.js';
 import type {
@@ -120,6 +121,15 @@ export default class GCloudAPIService {
     input: ProjectDashboardInput
   ): Promise<APIResponse<ProjectDashboardOutput>> {
     return this.call<ProjectDashboardOutput>('project/dashboard', input);
+  }
+
+  /**
+   * Calls the admin endpoint. Requires super admin access.
+   *
+   * @param input - The input for the admin endpoint.
+   */
+  static async admin(input: AdminInput): Promise<APIResponse<AdminOutput>> {
+    return this.call<AdminOutput>('admin', input);
   }
 
   /**

@@ -28,6 +28,11 @@ export const DashboardUserConfigSchema = z.object({
    */
   enableDevMode: z.boolean().default(false),
   /**
+   * Whether or not to enable the admin page for the user. Only useful for
+   * super admins, as the admin API endpoints reject non-super-admin users.
+   */
+  enableAdminPage: z.boolean().default(false),
+  /**
    * The features that are enabled for the user.
    */
   enabledFeatures: z
