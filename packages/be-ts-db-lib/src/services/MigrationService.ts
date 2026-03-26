@@ -2,15 +2,20 @@
 // @ts-nocheck
 import { DR } from '@aneuhold/core-ts-lib';
 import UserRepository from '../repositories/common/UserRepository.js';
+import DashboardUserConfigRepository from '../repositories/dashboard/DashboardUserConfigRepository.js';
 
 /**
- * The default values for each project access field. New fields should be
- * added here and defaulted to `false` so existing users don't gain access
- * automatically.
+ * The default values for enabledFeatures. New feature flags should be
+ * added here and defaulted to `false`.
  */
-const PROJECT_ACCESS_DEFAULTS = {
-  dashboard: false,
-  workout: false
+const ENABLED_FEATURES_DEFAULTS = {
+  financePage: false,
+  automationPage: false,
+  entertainmentPage: false,
+  homePageLinks: false,
+  useConfettiForTasks: false,
+  catImageOnHomePage: false,
+  adminPage: false
 };
 
 /**
@@ -31,53 +36,87 @@ export default class MigrationService {
    * @param dryRun Whether or not to actually make the changes or just log them.
    */
   static async migrateDb(dryRun = false): Promise<void> {
-    DR.logger.info('Starting migration...');
+    DR.logger.info(`Starting migration... (dryRun=${dryRun})`);
 
+    await this.migrateUserConfigs(dryRun);
+
+    DR.logger.success('Migration complete.');
+  }
+
+  /**
+   * Migrates dashboard user configs that are missing enableAdminPage
+   * or the adminPage feature flag.
+   */
+  private static async migrateUserConfigs(dryRun: boolean): Promise<void> {
+    const configRepo = DashboardUserConfigRepository.getRepo();
+    const allConfigs = await configRepo.getAll();
+
+    // Build a userId -> userName lookup
     const userRepo = UserRepository.getRepo();
-    const users = await userRepo.getAll();
+    const allUsers = await userRepo.getAll();
+    const userNameMap = new Map(allUsers.map((u) => [u._id, u.userName]));
 
-    // Find users that are missing projectAccess entirely or are missing
-    // any of the expected fields.
-    const usersToUpdate = users.filter((user) => {
-      if (!user.projectAccess) return true;
-      return Object.keys(PROJECT_ACCESS_DEFAULTS).some(
-        (key) => user.projectAccess[key] === undefined
-      );
-    });
+    // Build all updates in memory first, tracking only changed fields
+    const updates: Array<{
+      configId: string;
+      userName: string;
+      changes: string[];
+      updateDoc: Record<string, unknown>;
+    }> = [];
+
+    for (const config of allConfigs) {
+      const changes: string[] = [];
+      const updateDoc: Record<string, unknown> = { _id: config._id };
+
+      if (config.enableAdminPage === undefined) {
+        changes.push('enableAdminPage: undefined → false');
+        updateDoc.enableAdminPage = false;
+      }
+
+      const existingFeatures = config.enabledFeatures ?? {};
+      if (!existingFeatures || existingFeatures.adminPage === undefined) {
+        changes.push('enabledFeatures.adminPage: undefined → false');
+        updateDoc.enabledFeatures = { ...ENABLED_FEATURES_DEFAULTS, ...existingFeatures };
+      }
+
+      if (changes.length === 0) {
+        continue;
+      }
+
+      const userName = userNameMap.get(config.userId) ?? 'unknown';
+      updates.push({ configId: config._id, userName, changes, updateDoc });
+    }
 
     DR.logger.info(
-      `Found ${usersToUpdate.length} of ${users.length} users with missing projectAccess fields.`
+      `Found ${updates.length} of ${allConfigs.length} user configs needing admin page fields.`
     );
 
-    if (usersToUpdate.length === 0) {
-      DR.logger.success('No migration needed.');
+    if (updates.length === 0) {
+      DR.logger.success('No user config migration needed.');
       return;
+    }
+
+    // Log exactly what will change
+    for (const update of updates) {
+      DR.logger.info(`  ${update.userName} (${update.configId}):`);
+      for (const change of update.changes) {
+        DR.logger.info(`    ${change}`);
+      }
     }
 
     if (dryRun) {
-      DR.logger.info('Dry run: Would update the following users:');
-      usersToUpdate.forEach((user) => {
-        const existing = user.projectAccess ?? {};
-        const merged = { ...PROJECT_ACCESS_DEFAULTS, ...existing };
-        DR.logger.info(
-          `  - ${user.userName} (${user._id}): ${JSON.stringify(existing)} → ${JSON.stringify(merged)}`
-        );
-      });
+      DR.logger.info(`Dry run complete. ${updates.length} configs would be updated.`);
       return;
     }
 
-    for (const user of usersToUpdate) {
-      const existing = user.projectAccess ?? {};
-      const merged = { ...PROJECT_ACCESS_DEFAULTS, ...existing };
-      await userRepo.update({
-        _id: user._id,
-        projectAccess: merged
-      });
-      DR.logger.info(
-        `Updated user ${user.userName} (${user._id}): ${JSON.stringify(existing)} → ${JSON.stringify(merged)}`
-      );
+    // Execute updates
+    for (const update of updates) {
+      await configRepo.update(update.updateDoc);
+      DR.logger.info(`Updated config for ${update.userName} (${update.configId})`);
     }
 
-    DR.logger.success(`Migration complete. Updated ${usersToUpdate.length} users.`);
+    DR.logger.success(
+      `User config migration complete. Updated ${updates.length} configs.`
+    );
   }
 }

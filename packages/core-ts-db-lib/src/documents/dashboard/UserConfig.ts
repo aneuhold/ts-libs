@@ -42,7 +42,8 @@ export const DashboardUserConfigSchema = z.object({
       entertainmentPage: z.boolean().default(false),
       homePageLinks: z.boolean().default(false),
       useConfettiForTasks: z.boolean().default(false),
-      catImageOnHomePage: z.boolean().default(false)
+      catImageOnHomePage: z.boolean().default(false),
+      adminPage: z.boolean().default(false)
     })
     .default({
       financePage: false,
@@ -50,7 +51,8 @@ export const DashboardUserConfigSchema = z.object({
       entertainmentPage: false,
       homePageLinks: false,
       useConfettiForTasks: false,
-      catImageOnHomePage: false
+      catImageOnHomePage: false,
+      adminPage: false
     }),
   /**
    * The number of days after which a task is automatically deleted. The
