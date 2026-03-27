@@ -1,4 +1,10 @@
 import APIService from './services/APIService/APIService.js';
+import type {
+  AdminInput,
+  AdminOutput,
+  AdminOutputUserDetail,
+  AdminOutputUserDocumentCounts
+} from './types/Admin.js';
 import type { APIResponse } from './types/APIResponse.js';
 import type { AuthCheckPasswordInput, AuthCheckPasswordOutput } from './types/AuthCheckPassword.js';
 import type { AuthValidateUserInput, AuthValidateUserOutput } from './types/AuthValidateUser.js';
@@ -27,6 +33,10 @@ export { APIService };
 
 // Export TypeScript types where needed
 export type {
+  AdminInput,
+  AdminOutput,
+  AdminOutputUserDetail,
+  AdminOutputUserDocumentCounts,
   APIResponse,
   AuthCheckPasswordInput,
   AuthCheckPasswordOutput,

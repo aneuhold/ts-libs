@@ -1,3 +1,4 @@
+import type { AdminInput, AdminOutput } from '../../types/Admin.js';
 import type { APIResponse } from '../../types/APIResponse.js';
 import type {
   AuthValidateUserInput,
@@ -78,6 +79,15 @@ export default class APIService {
     input: ProjectDashboardInput
   ): Promise<APIResponse<ProjectDashboardOutput>> {
     return GCloudAPIService.projectDashboard(input);
+  }
+
+  /**
+   * Calls the admin API and returns the result. Requires super admin access.
+   *
+   * @param input - The input for the admin API call.
+   */
+  static async callAdminAPI(input: AdminInput): Promise<APIResponse<AdminOutput>> {
+    return GCloudAPIService.admin(input);
   }
 
   /**

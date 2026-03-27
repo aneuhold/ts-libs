@@ -28,6 +28,11 @@ export const DashboardUserConfigSchema = z.object({
    */
   enableDevMode: z.boolean().default(false),
   /**
+   * Whether or not to enable the admin page for the user. Only useful for
+   * super admins, as the admin API endpoints reject non-super-admin users.
+   */
+  enableAdminPage: z.boolean().default(false),
+  /**
    * The features that are enabled for the user.
    */
   enabledFeatures: z
@@ -37,7 +42,8 @@ export const DashboardUserConfigSchema = z.object({
       entertainmentPage: z.boolean().default(false),
       homePageLinks: z.boolean().default(false),
       useConfettiForTasks: z.boolean().default(false),
-      catImageOnHomePage: z.boolean().default(false)
+      catImageOnHomePage: z.boolean().default(false),
+      adminPage: z.boolean().default(false)
     })
     .default({
       financePage: false,
@@ -45,7 +51,8 @@ export const DashboardUserConfigSchema = z.object({
       entertainmentPage: false,
       homePageLinks: false,
       useConfettiForTasks: false,
-      catImageOnHomePage: false
+      catImageOnHomePage: false,
+      adminPage: false
     }),
   /**
    * The number of days after which a task is automatically deleted. The
