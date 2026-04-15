@@ -18,6 +18,7 @@ import {
   WorkoutSet_docType
 } from '@aneuhold/core-ts-db-lib';
 import type { UUID } from 'crypto';
+import type { Document } from 'mongodb';
 import type { RepoListeners } from '../../services/RepoSubscriptionService.js';
 import WorkoutExerciseValidator from '../../validators/workout/ExerciseValidator.js';
 import WorkoutBaseWithUserIdRepository from './WorkoutBaseWithUserIdRepository.js';
@@ -58,9 +59,12 @@ export default class WorkoutExerciseRepository extends WorkoutBaseWithUserIdRepo
 
   /**
    * Builds {@link WorkoutExerciseCTO} objects for all exercises belonging to a user.
-   * Uses two parallel MongoDB aggregation pipelines:
+   * Uses three parallel MongoDB aggregation pipelines:
    * - Pipeline A: exercise + equipmentType + bestCalibration + bestSet
-   * - Pipeline B: lastSessionExercise + lastSessionSets (from most recent non-deload session)
+   * - Pipeline B (true latest): lastSessionExercise + lastSessionSets from the most
+   *   recent completed session, regardless of cycle type / deload status.
+   * - Pipeline C (accumulation): lastAccumulationSessionExercise +
+   *   lastAccumulationSessionSets from the most recent completed non-deload session.
    *
    * @param userId The user whose exercise CTOs to build.
    */
@@ -72,8 +76,8 @@ export default class WorkoutExerciseRepository extends WorkoutBaseWithUserIdRepo
       _bestSetArr: WorkoutSet[];
     }
 
-    /** Raw shape of Pipeline B results. */
-    interface PipelineBRow {
+    /** Raw shape of Pipeline B/C results. */
+    interface LastSessionRow {
       _id: string;
       lastSessionExercise: WorkoutSessionExercise;
       _lastSessionSetsArr: WorkoutSet[];
@@ -159,9 +163,36 @@ export default class WorkoutExerciseRepository extends WorkoutBaseWithUserIdRepo
       ])
       .toArray();
 
-    // Pipeline B: lastSessionExercise + lastFirstSet per exercise
-    const pipelineBPromise = collection
-      .aggregate<PipelineBRow>([
+    // Builds the pipeline that finds, per exercise, the most recent session
+    // exercise from a completed session — optionally restricted to non-deload
+    // sessions (where plannedRir is not null on at least one set).
+    const buildLastSessionPipeline = (accumulationOnly: boolean): Document[] => {
+      const accumulationFilter: Document[] = accumulationOnly
+        ? [
+            // Check for non-deload sets (plannedRir is not null)
+            {
+              $lookup: {
+                from: collName,
+                let: { seId: '$_se._id' },
+                pipeline: [
+                  {
+                    $match: {
+                      $expr: { $eq: ['$workoutSessionExerciseId', '$$seId'] },
+                      docType: WorkoutSet_docType,
+                      plannedRir: { $ne: null }
+                    }
+                  },
+                  { $limit: 1 }
+                ],
+                as: '_nonDeload'
+              }
+            },
+            // Keep only session exercises with at least one non-deload set
+            { $match: { '_nonDeload.0': { $exists: true } } }
+          ]
+        : [];
+
+      return [
         // Start with all completed sessions for this user
         { $match: { docType: WorkoutSession_docType, userId, complete: true } },
         // Most recent sessions first
@@ -184,26 +215,7 @@ export default class WorkoutExerciseRepository extends WorkoutBaseWithUserIdRepo
         },
         // One row per session exercise (unwind coalescence optimization)
         { $unwind: '$_se' },
-        // Check for non-deload sets (plannedRir is not null)
-        {
-          $lookup: {
-            from: collName,
-            let: { seId: '$_se._id' },
-            pipeline: [
-              {
-                $match: {
-                  $expr: { $eq: ['$workoutSessionExerciseId', '$$seId'] },
-                  docType: WorkoutSet_docType,
-                  plannedRir: { $ne: null }
-                }
-              },
-              { $limit: 1 }
-            ],
-            as: '_nonDeload'
-          }
-        },
-        // Keep only session exercises with at least one non-deload set
-        { $match: { '_nonDeload.0': { $exists: true } } },
+        ...accumulationFilter,
         // Per exercise, keep only the most recent session exercise ($first after sort)
         {
           $group: {
@@ -235,25 +247,27 @@ export default class WorkoutExerciseRepository extends WorkoutBaseWithUserIdRepo
             as: '_lastSessionSetsArr'
           }
         }
-      ])
+      ];
+    };
+
+    // Pipeline B: most recent session exercise per exercise (any cycle type)
+    const pipelineBPromise = collection
+      .aggregate<LastSessionRow>(buildLastSessionPipeline(false))
       .toArray();
 
-    const [rawExercises, rawLastSessions] = await Promise.all([pipelineAPromise, pipelineBPromise]);
+    // Pipeline C: most recent accumulation (non-deload) session exercise per exercise
+    const pipelineCPromise = collection
+      .aggregate<LastSessionRow>(buildLastSessionPipeline(true))
+      .toArray();
 
-    // Build lookup map from Pipeline B
-    const lastSessionMap = new Map<
-      string,
-      {
-        lastSessionExercise: WorkoutSessionExercise;
-        lastSessionSets: WorkoutSet[];
-      }
-    >();
-    for (const row of rawLastSessions) {
-      lastSessionMap.set(row._id, {
-        lastSessionExercise: row.lastSessionExercise,
-        lastSessionSets: row._lastSessionSetsArr
-      });
-    }
+    const [rawExercises, rawLastSessions, rawLastAccumulationSessions] = await Promise.all([
+      pipelineAPromise,
+      pipelineBPromise,
+      pipelineCPromise
+    ]);
+
+    const lastSessionMap = new Map(rawLastSessions.map((row) => [row._id, row]));
+    const lastAccumulationMap = new Map(rawLastAccumulationSessions.map((row) => [row._id, row]));
 
     // Assemble and validate CTOs
     return rawExercises.map((raw) => {
@@ -262,15 +276,18 @@ export default class WorkoutExerciseRepository extends WorkoutBaseWithUserIdRepo
         throw new Error(`Equipment type not found for exercise ${raw._id}`);
       }
 
-      const lastData = lastSessionMap.get(raw._id as string);
+      const lastRow = lastSessionMap.get(raw._id as string);
+      const lastAccumulationRow = lastAccumulationMap.get(raw._id as string);
 
       return WorkoutExerciseCTOSchema.parse({
         ...exerciseFields,
         equipmentType: _equipArr[0],
         bestCalibration: _bestCalArr[0] ?? null,
         bestSet: _bestSetArr[0] ?? null,
-        lastSessionExercise: lastData?.lastSessionExercise ?? null,
-        lastSessionSets: lastData?.lastSessionSets
+        lastSessionExercise: lastRow?.lastSessionExercise ?? null,
+        lastSessionSets: lastRow?._lastSessionSetsArr,
+        lastAccumulationSessionExercise: lastAccumulationRow?.lastSessionExercise ?? null,
+        lastAccumulationSessionSets: lastAccumulationRow?._lastSessionSetsArr
       });
     });
   }
