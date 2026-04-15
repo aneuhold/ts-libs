@@ -622,6 +622,8 @@ class WorkoutTestUtil {
     bestSet?: WorkoutSet | null;
     lastSessionExercise?: WorkoutSessionExercise | null;
     lastSessionSets?: WorkoutSet[];
+    lastAccumulationSessionExercise?: WorkoutSessionExercise | null;
+    lastAccumulationSessionSets?: WorkoutSet[];
   }): WorkoutExerciseCTO {
     const {
       exercise = this.STANDARD_EXERCISES.barbellSquat,
@@ -629,7 +631,9 @@ class WorkoutTestUtil {
       equipmentType = this.STANDARD_EQUIPMENT_TYPES.barbell,
       bestSet = null,
       lastSessionExercise = null,
-      lastSessionSets = []
+      lastSessionSets = [],
+      lastAccumulationSessionExercise = null,
+      lastAccumulationSessionSets = []
     } = options;
 
     return WorkoutExerciseCTOSchema.parse({
@@ -638,7 +642,9 @@ class WorkoutTestUtil {
       bestCalibration: calibration,
       bestSet,
       lastSessionExercise,
-      lastSessionSets
+      lastSessionSets,
+      lastAccumulationSessionExercise,
+      lastAccumulationSessionSets
     });
   }
 
