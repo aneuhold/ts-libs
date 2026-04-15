@@ -9,11 +9,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### ✅ Added
 
+- `WorkoutExerciseRepository.buildExerciseCTOs` now runs a third parallel aggregation pipeline to populate `lastSessionExercise`/`lastSessionSets` from the true latest completed session (any cycle type, including deloads and free-form).
+
 ### 🏗️ Changed
 
-### 🩹 Fixed
-
-### 🔥 Removed
+- Repository now populates `lastAccumulationSessionExercise`/`lastAccumulationSessionSets` alongside `lastSessionExercise`/`lastSessionSets` in each `WorkoutExerciseCTO`.
+- Updated dependencies on `@aneuhold/be-ts-lib` to `^3.1.10` and `@aneuhold/core-ts-db-lib` to `^5.0.5`.
 
 ## 🔖 [4.2.22] (2026-03-26)
 

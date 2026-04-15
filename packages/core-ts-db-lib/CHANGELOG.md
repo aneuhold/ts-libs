@@ -9,11 +9,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### ✅ Added
 
+- Added `lastSessionExercise` and `lastSessionSets` fields to `WorkoutExerciseCTO` representing the literal most recent completed session exercise (including deload and free-form sessions).
+
 ### 🏗️ Changed
 
-### 🩹 Fixed
-
-### 🔥 Removed
+- *Breaking Change:* Renamed `lastSessionExercise` → `lastAccumulationSessionExercise` and `lastSessionSets` → `lastAccumulationSessionSets` in `WorkoutExerciseCTO`; these fields now exclusively reflect the most recent non-deload accumulation session.
+- `WorkoutSetService` now uses `lastAccumulationSessionSets` for first-microcycle progression and autoregulation calculations.
 
 ## 🔖 [5.0.4] (2026-03-26)
 
