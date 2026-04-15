@@ -324,7 +324,7 @@ describe('WorkoutExerciseRepository', () => {
       expect(heavySets.map((s) => s._id)).toContain(cto.bestSet._id);
     });
 
-    it('should return lastSessionExercise from the most recent completed non-deload session', async () => {
+    it('should return lastSessionExercise / lastAccumulationSessionExercise from the most recent completed non-deload session', async () => {
       const user = await workoutTestUtil.insertUser('WorkoutExerciseRepository.buildCTOs');
       const mg = await workoutTestUtil.insertMuscleGroup(user._id, 'Back');
       const eq = await workoutTestUtil.insertEquipmentType(user._id, 'Cable');
@@ -361,9 +361,13 @@ describe('WorkoutExerciseRepository', () => {
       expect(cto.lastSessionExercise).not.toBeNull();
       if (!cto.lastSessionExercise) return;
       expect(cto.lastSessionExercise._id).toBe(recentSE._id);
+      // Since both sessions are non-deload, the accumulation variant should match.
+      expect(cto.lastAccumulationSessionExercise).not.toBeNull();
+      if (!cto.lastAccumulationSessionExercise) return;
+      expect(cto.lastAccumulationSessionExercise._id).toBe(recentSE._id);
     });
 
-    it('should exclude deload sessions from lastSessionExercise', async () => {
+    it('should exclude deload sessions from lastAccumulationSessionExercise but include them in lastSessionExercise', async () => {
       const user = await workoutTestUtil.insertUser('WorkoutExerciseRepository.buildCTOs');
       const mg = await workoutTestUtil.insertMuscleGroup(user._id, 'Shoulders');
       const eq = await workoutTestUtil.insertEquipmentType(user._id, 'Dumbbell');
@@ -386,21 +390,65 @@ describe('WorkoutExerciseRepository', () => {
       );
 
       // More recent deload session (all sets have plannedRir === null)
-      await workoutTestUtil.insertSessionHierarchy(user._id, exercise, {
-        startTime: new Date('2025-01-08'),
-        complete: true,
-        plannedRir: null
-      });
+      const { sessionExercise: deloadSE } = await workoutTestUtil.insertSessionHierarchy(
+        user._id,
+        exercise,
+        {
+          startTime: new Date('2025-01-08'),
+          complete: true,
+          plannedRir: null
+        }
+      );
 
       const ctos = await repo.buildExerciseCTOsForUser(user._id);
       const cto = ctos.find((c) => c._id === exercise._id);
 
       expect(cto).toBeDefined();
       if (!cto) return;
+      // lastSessionExercise should include the deload session since it's the literal latest
       expect(cto.lastSessionExercise).not.toBeNull();
       if (!cto.lastSessionExercise) return;
-      // Should pick the accumulation session, not the deload
-      expect(cto.lastSessionExercise._id).toBe(accumSE._id);
+      expect(cto.lastSessionExercise._id).toBe(deloadSE._id);
+      // lastAccumulationSessionExercise should pick the accumulation session, not the deload
+      expect(cto.lastAccumulationSessionExercise).not.toBeNull();
+      if (!cto.lastAccumulationSessionExercise) return;
+      expect(cto.lastAccumulationSessionExercise._id).toBe(accumSE._id);
+    });
+
+    it('should include free-form sessions (all sets plannedRir === null) in lastSessionExercise', async () => {
+      const user = await workoutTestUtil.insertUser('WorkoutExerciseRepository.buildCTOs');
+      const mg = await workoutTestUtil.insertMuscleGroup(user._id, 'Arms');
+      const eq = await workoutTestUtil.insertEquipmentType(user._id, 'Dumbbell');
+      const exercise = await workoutTestUtil.insertExercise({
+        userId: user._id,
+        equipmentTypeId: eq._id,
+        primaryMuscleGroupIds: [mg._id],
+        name: 'Concentration Curl'
+      });
+
+      // Only a free-form session exists (no accumulation history)
+      const { sessionExercise: freeformSE } = await workoutTestUtil.insertSessionHierarchy(
+        user._id,
+        exercise,
+        {
+          startTime: new Date('2025-02-01'),
+          complete: true,
+          plannedRir: null
+        }
+      );
+
+      const ctos = await repo.buildExerciseCTOsForUser(user._id);
+      const cto = ctos.find((c) => c._id === exercise._id);
+
+      expect(cto).toBeDefined();
+      if (!cto) return;
+      // True latest picks up the free-form session
+      expect(cto.lastSessionExercise).not.toBeNull();
+      if (!cto.lastSessionExercise) return;
+      expect(cto.lastSessionExercise._id).toBe(freeformSE._id);
+      // Accumulation variant is null since there's no non-deload history
+      expect(cto.lastAccumulationSessionExercise).toBeNull();
+      expect(cto.lastAccumulationSessionSets).toEqual([]);
     });
 
     it('should return all lastSessionSets in setOrder with correct count and order', async () => {
@@ -430,16 +478,20 @@ describe('WorkoutExerciseRepository', () => {
       expect(cto).toBeDefined();
       if (!cto) return;
 
-      // All 3 sets should be present
+      // All 3 sets should be present in both pairs (non-deload session)
       expect(cto.lastSessionSets).toHaveLength(3);
+      expect(cto.lastAccumulationSessionSets).toHaveLength(3);
 
       // IDs should match setOrder exactly (preserving order)
       const returnedIds = cto.lastSessionSets.map((s) => s._id);
       expect(returnedIds).toEqual(sessionExercise.setOrder);
+      const returnedAccumulationIds = cto.lastAccumulationSessionSets.map((s) => s._id);
+      expect(returnedAccumulationIds).toEqual(sessionExercise.setOrder);
 
       // Each returned set should match the inserted set at that position
       for (let i = 0; i < sets.length; i++) {
         expect(cto.lastSessionSets[i]._id).toBe(sets[i]._id);
+        expect(cto.lastAccumulationSessionSets[i]._id).toBe(sets[i]._id);
       }
     });
 
@@ -463,6 +515,8 @@ describe('WorkoutExerciseRepository', () => {
       expect(cto.bestSet).toBeNull();
       expect(cto.lastSessionExercise).toBeNull();
       expect(cto.lastSessionSets).toEqual([]);
+      expect(cto.lastAccumulationSessionExercise).toBeNull();
+      expect(cto.lastAccumulationSessionSets).toEqual([]);
     });
 
     it('should return multiple exercises correctly in one call', async () => {

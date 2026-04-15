@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## 🔖 [5.0.5] (2026-04-15)
+
+### ✅ Added
+
+- Added `lastSessionExercise` and `lastSessionSets` fields to `WorkoutExerciseCTO` representing the literal most recent completed session exercise (including deload and free-form sessions).
+
+### 🏗️ Changed
+
+- *Breaking Change:* Renamed `lastSessionExercise` → `lastAccumulationSessionExercise` and `lastSessionSets` → `lastAccumulationSessionSets` in `WorkoutExerciseCTO`; these fields now exclusively reflect the most recent non-deload accumulation session.
+- `WorkoutSetService` now uses `lastAccumulationSessionSets` for first-microcycle progression and autoregulation calculations.
+
 ## 🔖 [5.0.4] (2026-03-26)
 
 ### ✅ Added
@@ -428,6 +439,7 @@ Updated dependency: now requires `@aneuhold/core-ts-lib@^2.3.11`.
 - Updated workflow permissions to allow repository write access
 
 <!-- Link References -->
+[5.0.5]: https://github.com/aneuhold/ts-libs/compare/core-ts-db-lib-v5.0.4...core-ts-db-lib-v5.0.5
 [5.0.4]: https://github.com/aneuhold/ts-libs/compare/core-ts-db-lib-v5.0.3...core-ts-db-lib-v5.0.4
 [5.0.3]: https://github.com/aneuhold/ts-libs/compare/core-ts-db-lib-v5.0.2...core-ts-db-lib-v5.0.3
 [5.0.2]: https://github.com/aneuhold/ts-libs/compare/core-ts-db-lib-v5.0.1...core-ts-db-lib-v5.0.2

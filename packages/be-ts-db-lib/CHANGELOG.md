@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## 🔖 [4.2.23] (2026-04-15)
+
+### ✅ Added
+
+- `WorkoutExerciseRepository.buildExerciseCTOs` now runs a third parallel aggregation pipeline to populate `lastSessionExercise`/`lastSessionSets` from the true latest completed session (any cycle type, including deloads and free-form).
+
+### 🏗️ Changed
+
+- Repository now populates `lastAccumulationSessionExercise`/`lastAccumulationSessionSets` alongside `lastSessionExercise`/`lastSessionSets` in each `WorkoutExerciseCTO`.
+- Updated dependencies on `@aneuhold/be-ts-lib` to `^3.1.10` and `@aneuhold/core-ts-db-lib` to `^5.0.5`.
+
 ## 🔖 [4.2.22] (2026-03-26)
 
 ### 🏗️ Changed
@@ -378,6 +389,7 @@ Updated dependencies: now requires `@aneuhold/core-ts-db-lib@^3.0.0`, `@aneuhold
 - Updated workflow permissions to allow repository write access
 
 <!-- Link References -->
+[4.2.23]: https://github.com/aneuhold/ts-libs/compare/be-ts-db-lib-v4.2.22...be-ts-db-lib-v4.2.23
 [4.2.22]: https://github.com/aneuhold/ts-libs/compare/be-ts-db-lib-v4.2.21...be-ts-db-lib-v4.2.22
 [4.2.21]: https://github.com/aneuhold/ts-libs/compare/be-ts-db-lib-v4.2.20...be-ts-db-lib-v4.2.21
 [4.2.20]: https://github.com/aneuhold/ts-libs/compare/be-ts-db-lib-v4.2.19...be-ts-db-lib-v4.2.20

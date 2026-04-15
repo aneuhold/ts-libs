@@ -49,11 +49,11 @@ export default class WorkoutSetService {
 
     const sets: WorkoutSet[] = [];
 
-    // For the first microcycle, use the CTO's previous performance data.
-    // For subsequent microcycles, look up all previous sets from the context.
+    // For the first microcycle, use the CTO's previous accumulation performance
+    // data. For subsequent microcycles, look up all previous sets from the context.
     const previousSets =
       microcycleIndex === 0
-        ? exerciseCTO.lastSessionSets
+        ? exerciseCTO.lastAccumulationSessionSets
         : this.findPreviousSets(context, exerciseCTO._id, microcycleIndex);
 
     // Calculate progressed targets for the first set.

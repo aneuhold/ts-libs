@@ -41,24 +41,46 @@ export const WorkoutExerciseCTOSchema = z.object({
 
   /**
    * The most recent completed WorkoutSessionExercise for this exercise,
-   * from a non-deload accumulation session. Deload sessions (where all sets
-   * have plannedRir === null) are excluded since their halved weights/reps
-   * are not meaningful baselines for progression.
+   * regardless of cycle type or deload status. Includes free-form, deload,
+   * and accumulation sessions — whichever was performed most recently.
    *
-   * Null if the exercise has never been performed in an accumulation session.
+   * Null if the exercise has never been performed.
    *
    * Contains: sorenessScore, performanceScore, rsm, fatigue, setOrder, etc.
    */
   lastSessionExercise: WorkoutSessionExerciseSchema.nullable(),
 
   /**
-   * All WorkoutSets from the lastSessionExercise's setOrder. Surplus is
-   * averaged across all sets for a holistic performance signal during
-   * autoregulation (the first set alone can mask poor later-set performance).
+   * All WorkoutSets from the lastSessionExercise's setOrder. Represents the
+   * literal most recent prior performance — suitable for "what did I do
+   * last time" displays.
+   *
+   * Empty array if no previous performance exists.
+   */
+  lastSessionSets: z.array(WorkoutSetSchema).default([]),
+
+  /**
+   * The most recent completed WorkoutSessionExercise for this exercise,
+   * from a non-deload accumulation session. Deload sessions (where all sets
+   * have plannedRir === null) are excluded since their halved weights/reps
+   * are not meaningful baselines for progression.
+   *
+   * Null if the exercise has never been performed in an accumulation session.
+   *
+   * Used by autoregulation / progression logic that requires a meaningful
+   * non-deload baseline.
+   */
+  lastAccumulationSessionExercise: WorkoutSessionExerciseSchema.nullable(),
+
+  /**
+   * All WorkoutSets from the lastAccumulationSessionExercise's setOrder.
+   * Surplus is averaged across all sets for a holistic performance signal
+   * during autoregulation (the first set alone can mask poor later-set
+   * performance).
    *
    * Empty array if no previous accumulation performance exists.
    */
-  lastSessionSets: z.array(WorkoutSetSchema).default([])
+  lastAccumulationSessionSets: z.array(WorkoutSetSchema).default([])
 });
 
 /**

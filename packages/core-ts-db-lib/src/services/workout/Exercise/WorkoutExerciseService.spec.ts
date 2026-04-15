@@ -1123,7 +1123,7 @@ describe('Unit Tests', () => {
     });
 
     describe('Cross-Mesocycle Continuity', () => {
-      it('should use lastSessionSets actual weight when exercise was used previously with same rep range', () => {
+      it('should use lastAccumulationSessionSets actual weight when exercise was used previously with same rep range', () => {
         const equipment = workoutTestUtil.STANDARD_EQUIPMENT_TYPES.barbell;
         const exercise = workoutTestUtil.STANDARD_EXERCISES.barbellSquat; // Heavy, Load progression
         const calibration = workoutTestUtil.STANDARD_CALIBRATIONS.barbellSquat;
@@ -1169,7 +1169,7 @@ describe('Unit Tests', () => {
         expect(result.targetWeight).toBeGreaterThanOrEqual(225 * 1.02);
       });
 
-      it('should use lastSessionSets actual weight for rep progression exercises from previous mesocycle', () => {
+      it('should use lastAccumulationSessionSets actual weight for rep progression exercises from previous mesocycle', () => {
         const equipment = workoutTestUtil.STANDARD_EQUIPMENT_TYPES.barbell;
         const exercise = workoutTestUtil.STANDARD_EXERCISES.deadlift; // Medium, Rep progression
         const calibration = workoutTestUtil.STANDARD_CALIBRATIONS.deadlift;
