@@ -44,7 +44,7 @@ describe('WorkoutVolumePlanningService', () => {
       ];
 
       // Exercise A (bench press): 8 sets, high SFR (rsm=9, fatigue=3 -> SFR=3, soreness=0, performance=0 -> +2 recommendation)
-      // Exercise B (incline): 3 sets, moderate SFR (rsm=6, fatigue=4 -> SFR=1.5, soreness=1, performance=1 -> +0 recommendation)
+      // Exercise B (incline): 3 sets, moderate SFR (rsm=6, fatigue=4 -> SFR=1.5, soreness=1, performance=1 -> +1 recommendation)
       const { result } = calculateSetPlan({
         exerciseCTOs: [
           workoutTestUtil.createExerciseCTO({
@@ -110,7 +110,7 @@ describe('WorkoutVolumePlanningService', () => {
 
       // Exercise A (bench): 5 sets, highest SFR (rsm=9, fatigue=3 -> SFR=3, soreness=0, performance=1 -> +1 recommendation)
       // Exercise B (incline): 5 sets, second SFR (rsm=8, fatigue=4 -> SFR=2, soreness=0, performance=1 -> +1 recommendation)
-      // Exercise C (dumbbell): 5 sets, lower SFR (rsm=6, fatigue=6 -> SFR=1, soreness=1, performance=1 -> +0 recommendation)
+      // Exercise C (dumbbell): 5 sets, lower SFR (rsm=6, fatigue=6 -> SFR=1, soreness=1, performance=1 -> +1 recommendation)
       const { result } = calculateSetPlan({
         exerciseCTOs: [
           workoutTestUtil.createExerciseCTO({

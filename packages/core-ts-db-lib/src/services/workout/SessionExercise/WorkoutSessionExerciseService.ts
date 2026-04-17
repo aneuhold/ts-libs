@@ -132,11 +132,11 @@ export default class WorkoutSessionExerciseService {
    * - Returns `null` when insufficient data is available.
    * 
    * The table is:
-   * 
+   *
    * | Soreness Score ↓ \ Performance Score → | 0 | 1 | 2 | 3 |
      |---|---|---|---|---|
      | **0** | Add 1–3 sets | Add 0–2 sets | Do not add sets | Employ recovery sessions (see Fatigue Management) |
-     | **1** | Add 1–2 sets | Add 0–1 sets | Do not add sets | Employ recovery sessions (see Fatigue Management) |
+     | **1** | Add 1–2 sets | Add 1 set | Do not add sets | Employ recovery sessions (see Fatigue Management) |
      | **2** | Do not add sets | Do not add sets | Do not add sets | Employ recovery sessions (see Fatigue Management) |
      | **3** | Do not add sets | Do not add sets | Do not add sets | Employ recovery sessions (see Fatigue Management) |
    */
@@ -153,8 +153,8 @@ export default class WorkoutSessionExerciseService {
     const table: number[][] = [
       // Soreness 0: [Add 1-3, Add 0-2, Do not add, Recovery]
       [2, 1, 0, -1],
-      // Soreness 1: [Add 1-2, Add 0-1, Do not add, Recovery]
-      [1, 0, 0, -1],
+      // Soreness 1: [Add 1-2, Add 1, Do not add, Recovery]
+      [1, 1, 0, -1],
       // Soreness 2: [Do not add, Do not add, Do not add, Recovery]
       [0, 0, 0, -1],
       // Soreness 3: [Do not add, Do not add, Do not add, Recovery]
