@@ -7,13 +7,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## 🔖 [5.0.6] (2026-04-17)
 
-### ✅ Added
-
 ### 🏗️ Changed
 
-### 🩹 Fixed
-
-### 🔥 Removed
+- Updated set recommendation logic in `WorkoutSessionExerciseService`: soreness=1 + performance=1 now recommends +1 set (was +0).
 
 ## 🔖 [5.0.5] (2026-04-15)
 
