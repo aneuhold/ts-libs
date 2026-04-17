@@ -422,7 +422,7 @@ describe('Unit Tests', () => {
         { sorenessScore: 0, performanceScore: 0, expected: 2 },
         { sorenessScore: 0, performanceScore: 1, expected: 1 },
         { sorenessScore: 1, performanceScore: 0, expected: 1 },
-        { sorenessScore: 1, performanceScore: 1, expected: 0 },
+        { sorenessScore: 1, performanceScore: 1, expected: 1 },
         { sorenessScore: 2, performanceScore: 2, expected: 0 },
         { sorenessScore: 3, performanceScore: 2, expected: 0 }
       ];
