@@ -1,6 +1,6 @@
-import type { UUID } from 'crypto';
 import { z } from 'zod';
 import { RequiredUserIdSchema } from '../../schemas/required-refs/RequiredUserId.js';
+import { UUIDSchema } from '../../schemas/UUIDSchema.js';
 import {
   BaseDocumentWithTypeSchema,
   BaseDocumentWithUpdatedAndCreatedDatesSchema
@@ -44,7 +44,7 @@ export const WorkoutMesocycleSchema = z.object({
    * This locks which calibration was used for a mesocycle so historical 1RM
    * values remain accurate even if calibrations are changed later.
    */
-  calibratedExercises: z.array(z.uuidv7().transform((val) => val as UUID)).default([]),
+  calibratedExercises: z.array(UUIDSchema).default([]),
   /**
    * The type of this mesocycle. See {@link CycleType} for details.
    */

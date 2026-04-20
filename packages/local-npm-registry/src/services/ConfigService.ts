@@ -2,7 +2,7 @@ import { DR, FileSystemService } from '@aneuhold/core-ts-lib';
 import fs from 'fs-extra';
 import path from 'path';
 import type { LocalNpmConfig } from '../types/LocalNpmConfig.js';
-import { DEFAULT_CONFIG } from '../types/LocalNpmConfig.js';
+import { DEFAULT_CONFIG, isLocalNpmConfig } from '../types/LocalNpmConfig.js';
 
 const CONFIG_FILE_NAME = '.local-npm-registry.json';
 export const DATA_DIRECTORY_NAME = '.local-npm-registry';
@@ -30,7 +30,11 @@ export class ConfigService {
 
     if (configFilePath) {
       try {
-        config = (await fs.readJson(configFilePath)) as LocalNpmConfig;
+        const rawConfig: unknown = await fs.readJson(configFilePath);
+        if (!isLocalNpmConfig(rawConfig)) {
+          throw new Error('Config file does not contain a valid LocalNpmConfig object.');
+        }
+        config = rawConfig;
       } catch (error) {
         DR.logger.warn(
           `Warning: Failed to parse config file at ${configFilePath}: ${String(error)}`

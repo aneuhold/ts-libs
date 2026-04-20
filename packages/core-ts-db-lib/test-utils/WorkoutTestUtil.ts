@@ -367,15 +367,17 @@ class WorkoutTestUtil {
     })
   } as const;
 
-  public readonly STANDARD_EXERCISE_CTOS: WorkoutExerciseCTO[] = Object.entries(
-    this.STANDARD_EXERCISES
-  ).map(([key, exercise]) => {
-    const calibration = this.STANDARD_CALIBRATIONS[key as keyof typeof this.STANDARD_CALIBRATIONS];
-    const equipmentType = Object.values(this.STANDARD_EQUIPMENT_TYPES).find(
-      (et) => et._id === exercise.workoutEquipmentTypeId
-    );
-    return this.createExerciseCTO({ exercise, calibration, equipmentType });
-  });
+  public readonly STANDARD_EXERCISE_CTOS: WorkoutExerciseCTO[] = (() => {
+    const calibrations: { readonly [key: string]: WorkoutExerciseCalibration } =
+      this.STANDARD_CALIBRATIONS;
+    return Object.entries(this.STANDARD_EXERCISES).map(([key, exercise]) => {
+      const calibration = calibrations[key];
+      const equipmentType = Object.values(this.STANDARD_EQUIPMENT_TYPES).find(
+        (et) => et._id === exercise.workoutEquipmentTypeId
+      );
+      return this.createExerciseCTO({ exercise, calibration, equipmentType });
+    });
+  })();
 
   /**
    * Prints a formatted view of the mesocycle plan showing progression across

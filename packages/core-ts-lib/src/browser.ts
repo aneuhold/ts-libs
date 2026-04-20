@@ -8,9 +8,13 @@ import DateService from './services/DateService/DateService.js';
 import { DependencyRegistry, DR } from './services/DependencyRegistry.js';
 import StringService from './services/StringService.js';
 import type { DeepPartial } from './types/DeepPartial.js';
+import type { JsonWithVersionProperty } from './types/JsonWithVersionProperty.js';
+import { isJsonWithVersionProperty } from './types/JsonWithVersionProperty.js';
 import type { PackageJson } from './types/PackageJson.js';
+import { isPackageJson } from './types/PackageJson.js';
 import { VersionType } from './types/VersionType.js';
 import ErrorUtils from './utils/ErrorUtils.js';
+import JsonUtils from './utils/JsonUtils.js';
 import TestUtils from './utils/TestUtils.js';
 
 // Export all browser-safe functions and classes from this library
@@ -20,6 +24,9 @@ export {
   DependencyRegistry,
   DR,
   ErrorUtils,
+  isJsonWithVersionProperty,
+  isPackageJson,
+  JsonUtils,
   NoopLogger,
   NoopTracer,
   sleep,
@@ -29,4 +36,4 @@ export {
 };
 
 // Export TypeScript types where needed
-export type { DeepPartial, ILogger, ISpan, ITracer, PackageJson };
+export type { DeepPartial, ILogger, ISpan, ITracer, JsonWithVersionProperty, PackageJson };

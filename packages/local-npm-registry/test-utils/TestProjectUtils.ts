@@ -1,4 +1,4 @@
-import { type PackageJson } from '@aneuhold/core-ts-lib';
+import { isPackageJson, type PackageJson } from '@aneuhold/core-ts-lib';
 import { randomUUID } from 'crypto';
 import fs from 'fs-extra';
 import path from 'path';
@@ -279,7 +279,11 @@ export class TestProjectUtils {
    * @param projectPath - Path to the project directory
    */
   static async readPackageJson(projectPath: string): Promise<PackageJson> {
-    return (await fs.readJson(path.join(projectPath, 'package.json'))) as PackageJson;
+    const raw: unknown = await fs.readJson(path.join(projectPath, 'package.json'));
+    if (!isPackageJson(raw)) {
+      throw new Error(`package.json at ${projectPath} did not match PackageJson shape`);
+    }
+    return raw;
   }
 
   /**

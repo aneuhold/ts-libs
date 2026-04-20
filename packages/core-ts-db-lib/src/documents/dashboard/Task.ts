@@ -1,4 +1,3 @@
-import type { UUID } from 'crypto';
 import { z } from 'zod';
 import { DashboardTaskFilterSettingsSchema } from '../../embedded-types/dashboard/task/FilterSettings.js';
 import {
@@ -7,6 +6,7 @@ import {
 } from '../../embedded-types/dashboard/task/RecurrenceInfo.js';
 import { DashboardTaskSortSettingsSchema } from '../../embedded-types/dashboard/task/SortSettings.js';
 import { RequiredUserIdSchema } from '../../schemas/required-refs/RequiredUserId.js';
+import { UUIDSchema } from '../../schemas/UUIDSchema.js';
 import type { DocumentMap } from '../../services/DocumentService.js';
 import { BaseDocumentWithTypeSchema } from '../BaseDocument.js';
 
@@ -34,14 +34,11 @@ export const DashboardTaskSchema = z.object({
    * collaborator back it will return to normal. But the frontend needs to
    * double check for this when displaying things.
    */
-  sharedWith: z.array(z.uuidv7().transform((val) => val as UUID)).default([]),
+  sharedWith: z.array(UUIDSchema).default([]),
   /**
    * The user ID that this task is assigned to.
    */
-  assignedTo: z
-    .uuidv7()
-    .transform((val) => val as UUID)
-    .nullish(),
+  assignedTo: UUIDSchema.nullish(),
   /**
    * The recurrence info for this task if there is any.
    */
@@ -61,10 +58,7 @@ export const DashboardTaskSchema = z.object({
   /**
    * The ID of the parent task if there is one.
    */
-  parentTaskId: z
-    .uuidv7()
-    .transform((val) => val as UUID)
-    .nullish(),
+  parentTaskId: UUIDSchema.nullish(),
   /**
    * The description of the task. This is purposefully optional in case the
    * user wants to just use the title. This also helps the frontend
@@ -85,12 +79,7 @@ export const DashboardTaskSchema = z.object({
   /**
    * User-assigned tags for this task.
    */
-  tags: z
-    .partialRecord(
-      z.uuidv7().transform((id) => id as UUID),
-      z.array(z.string())
-    )
-    .default({}),
+  tags: z.partialRecord(UUIDSchema, z.array(z.string())).default({}),
   /**
    * System-assigned category for this task. This should be used to determine
    * where this task should be displayed.

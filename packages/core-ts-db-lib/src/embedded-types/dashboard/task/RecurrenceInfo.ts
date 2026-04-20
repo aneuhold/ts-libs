@@ -1,5 +1,5 @@
-import type { UUID } from 'crypto';
 import { z } from 'zod';
+import { UUIDSchema } from '../../../schemas/UUIDSchema.js';
 
 /**
  * Enum representing the different types of recurrence frequencies.
@@ -116,7 +116,7 @@ export const ParentRecurringTaskInfoSchema = z.object({
   /**
    * The ID of the parent recurring task.
    */
-  taskId: z.uuidv7().transform((val) => val as UUID),
+  taskId: UUIDSchema,
   startDate: z.date().nullish(),
   dueDate: z.date().nullish()
 });

@@ -15,3 +15,15 @@ export type VerdaccioDb = {
    */
   list: string[];
 };
+
+/**
+ * Type guard that checks whether an unknown value matches the {@link VerdaccioDb} shape.
+ *
+ * @param value The value to narrow.
+ */
+export const isVerdaccioDb = (value: unknown): value is VerdaccioDb =>
+  typeof value === 'object' &&
+  value !== null &&
+  'list' in value &&
+  Array.isArray(value.list) &&
+  value.list.every((item) => typeof item === 'string');

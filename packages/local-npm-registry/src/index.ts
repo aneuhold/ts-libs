@@ -21,7 +21,7 @@ program
   .allowExcessArguments(true)
   .action(async () => {
     try {
-      DR.logger.setVerboseLogging(program.getOptionValue('verbose') as boolean);
+      DR.logger.setVerboseLogging(Boolean(program.getOptionValue('verbose')));
 
       // Get the raw arguments from process.argv
       // Find where 'publish' appears and take everything after it
@@ -47,7 +47,7 @@ program
   .argument('<package-name>', 'The name of the package to subscribe to')
   .action(async (packageName: string) => {
     try {
-      DR.logger.setVerboseLogging(program.getOptionValue('verbose') as boolean);
+      DR.logger.setVerboseLogging(Boolean(program.getOptionValue('verbose')));
       await CommandService.subscribe(packageName);
     } catch (error) {
       DR.logger.error(`Failed to subscribe: ${String(error)}`);

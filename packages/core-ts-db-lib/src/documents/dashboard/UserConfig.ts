@@ -1,9 +1,9 @@
-import type { UUID } from 'crypto';
 import { z } from 'zod';
 import { DashboardTaskListGlobalFilterSettingsSchema } from '../../embedded-types/dashboard/task/FilterSettings.js';
 import { DashboardTaskListGlobalSortSettingsSchema } from '../../embedded-types/dashboard/task/SortSettings.js';
 import { DashboardTagSettingsSchema } from '../../embedded-types/dashboard/userConfig/Tags.js';
 import { RequiredUserIdSchema } from '../../schemas/required-refs/RequiredUserId.js';
+import { UUIDSchema } from '../../schemas/UUIDSchema.js';
 import { BaseDocumentWithTypeSchema } from '../BaseDocument.js';
 
 /**
@@ -22,7 +22,7 @@ export const DashboardUserConfigSchema = z.object({
    * The different users that the owner of this config is collaborating with
    * on the dashboard.
    */
-  collaborators: z.array(z.uuidv7().transform((val) => val as UUID)).default([]),
+  collaborators: z.array(UUIDSchema).default([]),
   /**
    * Whether or not to enable dev mode for the user.
    */

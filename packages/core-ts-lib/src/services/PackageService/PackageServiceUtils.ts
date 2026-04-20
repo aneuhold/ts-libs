@@ -2,9 +2,10 @@ import { exec } from 'child_process';
 import { access, readFile } from 'fs/promises';
 import path from 'path';
 import { promisify } from 'util';
-import type { PackageJson } from '../../types/PackageJson.js';
+import { isPackageJson } from '../../types/PackageJson.js';
 import { VersionType } from '../../types/VersionType.js';
 import ErrorUtils from '../../utils/ErrorUtils.js';
+import JsonUtils from '../../utils/JsonUtils.js';
 import ChangelogService from '../ChangelogService/index.js';
 import { DR } from '../DependencyRegistry.js';
 import DependencyService from '../DependencyService.js';
@@ -36,7 +37,10 @@ export default class PackageServiceUtils {
     }
 
     try {
-      const packageJsonData = JSON.parse(await readFile(packageJsonPath, 'utf-8')) as PackageJson;
+      const packageJsonData = JsonUtils.parseWithGuard(
+        await readFile(packageJsonPath, 'utf-8'),
+        isPackageJson
+      );
 
       return {
         packageName: packageJsonData.name,

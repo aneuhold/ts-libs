@@ -568,7 +568,7 @@ function setupSortAndFilterTest(numTasks = 5) {
   const taskMap = createTaskMapFromList(tasksList);
   const filterSettings = getFilterSettings(userId);
   const sortSettings = getSortSettings(userId);
-  const tagSettings = {} as DashboardTagSettings;
+  const tagSettings: DashboardTagSettings = {};
   const taskIds = Object.keys(taskMap);
   return {
     tasksList,

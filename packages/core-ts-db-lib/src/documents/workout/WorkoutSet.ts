@@ -1,6 +1,6 @@
-import type { UUID } from 'crypto';
 import { z } from 'zod';
 import { RequiredUserIdSchema } from '../../schemas/required-refs/RequiredUserId.js';
+import { UUIDSchema } from '../../schemas/UUIDSchema.js';
 import {
   BaseDocumentWithTypeSchema,
   BaseDocumentWithUpdatedAndCreatedDatesSchema
@@ -22,15 +22,15 @@ export const WorkoutSetSchema = z.object({
   /**
    * The ID of the workout exercise this set belongs to.
    */
-  workoutExerciseId: z.uuidv7().transform((val) => val as UUID),
+  workoutExerciseId: UUIDSchema,
   /**
    * The ID of the workout session this set was performed in.
    */
-  workoutSessionId: z.uuidv7().transform((val) => val as UUID),
+  workoutSessionId: UUIDSchema,
   /**
    * The ID of the workout session exercise this set belongs to.
    */
-  workoutSessionExerciseId: z.uuidv7().transform((val) => val as UUID),
+  workoutSessionExerciseId: UUIDSchema,
   /**
    * The planned number of reps for this set.
    */

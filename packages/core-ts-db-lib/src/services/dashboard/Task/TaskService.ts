@@ -5,6 +5,7 @@ import type { RecurrenceFrequency } from '../../../embedded-types/dashboard/task
 import type { DashboardTaskListSortSettings } from '../../../embedded-types/dashboard/task/SortSettings.js';
 import { DashboardTaskSortDirection } from '../../../embedded-types/dashboard/task/SortSettings.js';
 import type { DashboardTagSettings } from '../../../embedded-types/dashboard/userConfig/Tags.js';
+import DocumentService from '../../DocumentService.js';
 import type { DashboardTaskFilterResult } from './TaskFilterService.js';
 import DashboardTaskFilterService from './TaskFilterService.js';
 import DashboardTaskRecurrenceService from './TaskRecurrenceService.js';
@@ -120,7 +121,7 @@ export default class DashboardTaskService {
     if (!taskInfo) {
       filterResult = DashboardTaskFilterService.filter(
         taskMap,
-        Object.keys(taskMap) as UUID[],
+        Object.keys(taskMap).map((key) => DocumentService.toUUID(key)),
         filterSettings,
         category
       );

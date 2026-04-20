@@ -41,3 +41,11 @@ export const DEFAULT_CONFIG: Required<LocalNpmConfig> = {
   registryUrl: 'http://localhost:4873',
   verdaccioConfig: {}
 };
+
+/**
+ * Type guard that checks whether an unknown value matches the {@link LocalNpmConfig} shape.
+ *
+ * @param value The value to narrow.
+ */
+export const isLocalNpmConfig = (value: unknown): value is LocalNpmConfig =>
+  typeof value === 'object' && value !== null;

@@ -1,6 +1,6 @@
-import type { UUID } from 'crypto';
 import { z } from 'zod';
 import { RequiredUserIdSchema } from '../../schemas/required-refs/RequiredUserId.js';
+import { UUIDSchema } from '../../schemas/UUIDSchema.js';
 import {
   BaseDocumentWithTypeSchema,
   BaseDocumentWithUpdatedAndCreatedDatesSchema
@@ -24,7 +24,7 @@ export const WorkoutExerciseCalibrationSchema = z.object({
   /**
    * The ID of the exercise this calibration is for.
    */
-  workoutExerciseId: z.uuidv7().transform((val) => val as UUID),
+  workoutExerciseId: UUIDSchema,
   /**
    * Custom exercise properties at the time of calibration.
    *
@@ -54,10 +54,7 @@ export const WorkoutExerciseCalibrationSchema = z.object({
    *
    * When null, this calibration was manually entered by the user.
    */
-  associatedWorkoutSetId: z
-    .uuidv7()
-    .transform((val) => val as UUID)
-    .nullish()
+  associatedWorkoutSetId: UUIDSchema.nullish()
 });
 
 /**

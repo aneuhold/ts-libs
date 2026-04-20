@@ -1,8 +1,8 @@
-import type { UUID } from 'crypto';
 import { z } from 'zod';
 import { FatigueSchema } from '../../embedded-types/workout/Fatigue.js';
 import { RsmSchema } from '../../embedded-types/workout/Rsm.js';
 import { RequiredUserIdSchema } from '../../schemas/required-refs/RequiredUserId.js';
+import { UUIDSchema } from '../../schemas/UUIDSchema.js';
 import {
   BaseDocumentWithTypeSchema,
   BaseDocumentWithUpdatedAndCreatedDatesSchema
@@ -26,10 +26,7 @@ export const WorkoutSessionSchema = z.object({
    *
    * This is optional because users can track workouts outside of a microcycle.
    */
-  workoutMicrocycleId: z
-    .uuidv7()
-    .transform((val) => val as UUID)
-    .nullish(),
+  workoutMicrocycleId: UUIDSchema.nullish(),
   /**
    * The title of this workout session.
    */
@@ -54,7 +51,7 @@ export const WorkoutSessionSchema = z.object({
    * get metrics like "Last time you did this exercise when it was preceded by
    * these 4 other exercises, you did this".
    */
-  sessionExerciseOrder: z.array(z.uuidv7().transform((val) => val as UUID)).default([]),
+  sessionExerciseOrder: z.array(UUIDSchema).default([]),
   /**
    * The Raw Stimulus Magnitude for this session.
    *

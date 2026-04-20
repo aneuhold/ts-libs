@@ -1,10 +1,11 @@
 import { access, readFile, writeFile } from 'fs/promises';
 import path from 'path';
-import type { JsonWithVersionProperty } from '../types/JsonWithVersionProperty.js';
-import type { PackageJson } from '../types/PackageJson.js';
+import { isJsonWithVersionProperty } from '../types/JsonWithVersionProperty.js';
+import { isPackageJson } from '../types/PackageJson.js';
 import type { PackageJsonMap } from '../types/PackageJsonMap.js';
 import { VersionType } from '../types/VersionType.js';
 import ErrorUtils from '../utils/ErrorUtils.js';
+import JsonUtils from '../utils/JsonUtils.js';
 import { DR } from './DependencyRegistry.js';
 import FileSystemService from './FileSystemService/FileSystemService.js';
 
@@ -21,11 +22,10 @@ export default class DependencyService {
   static async updateChildPackageJsons(): Promise<void> {
     // Read the root package.json file
     const rootPackageJsonPath = path.join(process.cwd(), 'package.json');
-    let rootPackageJsonData: PackageJson;
+    let rootPackageJsonContent: string;
     try {
       await access(rootPackageJsonPath);
-      const rootPackageJsonContent = await readFile(rootPackageJsonPath, 'utf-8');
-      rootPackageJsonData = JSON.parse(rootPackageJsonContent) as PackageJson;
+      rootPackageJsonContent = await readFile(rootPackageJsonPath, 'utf-8');
     } catch (error) {
       const originalError = ErrorUtils.getErrorString(error);
       throw new Error(
@@ -33,6 +33,7 @@ export default class DependencyService {
         { cause: error }
       );
     }
+    const rootPackageJsonData = JsonUtils.parseWithGuard(rootPackageJsonContent, isPackageJson);
 
     const rootDependencies = {
       ...rootPackageJsonData.dependencies,
@@ -99,7 +100,10 @@ export default class DependencyService {
       }
 
       try {
-        const fileData = JSON.parse(await readFile(filePath, 'utf-8')) as JsonWithVersionProperty;
+        const fileData = JsonUtils.parseWithGuard(
+          await readFile(filePath, 'utf-8'),
+          isJsonWithVersionProperty
+        );
         const oldVersion = fileData.version;
         const newVersion = bump(oldVersion);
         fileData.version = newVersion;
@@ -142,7 +146,7 @@ export default class DependencyService {
         const fullPath = path.join(baseDir, relativePath);
         try {
           const fileContents = await readFile(fullPath, 'utf-8');
-          const packageJsonData = JSON.parse(fileContents) as PackageJson;
+          const packageJsonData = JsonUtils.parseWithGuard(fileContents, isPackageJson);
           if (packageJsonData.name) {
             childPackages[packageJsonData.name] = {
               packageJsonContents: packageJsonData,

@@ -2,9 +2,11 @@ import { exec, spawn } from 'child_process';
 import { access, readFile, writeFile } from 'fs/promises';
 import path from 'path';
 import { promisify } from 'util';
-import type { JsonWithVersionProperty } from '../../types/JsonWithVersionProperty.js';
+import { isJsonWithVersionProperty } from '../../types/JsonWithVersionProperty.js';
 import type { PackageJson } from '../../types/PackageJson.js';
+import { isPackageJson } from '../../types/PackageJson.js';
 import ErrorUtils from '../../utils/ErrorUtils.js';
+import JsonUtils from '../../utils/JsonUtils.js';
 import { DR } from '../DependencyRegistry.js';
 import DependencyService from '../DependencyService.js';
 import FileSystemService from '../FileSystemService/FileSystemService.js';
@@ -128,10 +130,14 @@ export default class JsrPackageService {
 
     try {
       const { packageName, version } = await PackageServiceUtils.getPackageInfo();
-      const packageJsonData = JSON.parse(await readFile(packageJsonPath, 'utf-8')) as PackageJson;
-      const jsrJsonData = JSON.parse(
-        await readFile(jsrJsonPath, 'utf-8')
-      ) as JsonWithVersionProperty;
+      const packageJsonData = JsonUtils.parseWithGuard(
+        await readFile(packageJsonPath, 'utf-8'),
+        isPackageJson
+      );
+      const jsrJsonData = JsonUtils.parseWithGuard(
+        await readFile(jsrJsonPath, 'utf-8'),
+        isJsonWithVersionProperty
+      );
 
       // Update JSR version
       jsrJsonData.version = version;

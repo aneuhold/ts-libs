@@ -1,4 +1,3 @@
-import type { UUID } from 'crypto';
 import z from 'zod';
 import DocumentService from '../services/DocumentService.js';
 
@@ -12,7 +11,7 @@ export const BaseDocumentSchema = z.object({
   _id: z
     .uuidv7()
     .default(() => DocumentService.generateID())
-    .transform((val) => val as UUID)
+    .transform((val) => DocumentService.toUUID(val))
 });
 
 /**
