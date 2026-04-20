@@ -232,7 +232,7 @@ describe('WorkoutSetRepository', () => {
       await expect(
         repo.update({
           actualWeight: 100
-        } as Partial<WorkoutSet>)
+        })
       ).rejects.toThrow('No _id defined for WorkoutSet update.');
     });
   });

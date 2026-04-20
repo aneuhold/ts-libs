@@ -207,7 +207,7 @@ describe('WorkoutSessionRepository', () => {
       await expect(
         repo.update({
           startTime: new Date()
-        } as Partial<WorkoutSession>)
+        })
       ).rejects.toThrow('No _id defined for WorkoutSession update.');
     });
 

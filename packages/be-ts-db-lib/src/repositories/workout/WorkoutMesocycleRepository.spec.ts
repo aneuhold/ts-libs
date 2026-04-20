@@ -162,7 +162,7 @@ describe('WorkoutMesocycleRepository', () => {
       await expect(
         repo.update({
           title: 'Updated Name'
-        } as Partial<WorkoutMesocycle>)
+        })
       ).rejects.toThrow('No _id defined for WorkoutMesocycle update.');
     });
   });

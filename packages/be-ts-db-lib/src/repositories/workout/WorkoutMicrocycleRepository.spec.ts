@@ -187,7 +187,7 @@ describe('WorkoutMicrocycleRepository', () => {
       await expect(
         repo.update({
           startDate: new Date()
-        } as Partial<WorkoutMicrocycle>)
+        })
       ).rejects.toThrow('No _id defined for WorkoutMicrocycle update.');
     });
 

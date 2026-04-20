@@ -260,7 +260,7 @@ describe('WorkoutSessionExerciseRepository', () => {
       await expect(
         repo.update({
           setOrder: []
-        } as Partial<WorkoutSessionExercise>)
+        })
       ).rejects.toThrow('No _id defined for WorkoutSessionExercise update.');
     });
   });

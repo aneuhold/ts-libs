@@ -303,7 +303,7 @@ export default class WorkoutMuscleGroupRepository extends WorkoutBaseWithUserIdR
 
     // Assemble CTOs
     return muscleGroups.map((mg) => {
-      const rows = historyMap.get(mg._id as string) ?? [];
+      const rows = historyMap.get(mg._id) ?? [];
       const mesocycleHistory = rows.map((row) => ({
         mesocycleId: row._id.mesocycleId,
         cycleType: row.cycleType,
