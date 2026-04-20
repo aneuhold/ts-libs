@@ -1,4 +1,4 @@
-import { PackageJson } from '@aneuhold/core-ts-lib';
+import { type PackageJson } from '@aneuhold/core-ts-lib';
 import { randomUUID } from 'crypto';
 import fs from 'fs-extra';
 import path from 'path';
