@@ -314,7 +314,7 @@ export default class DateService {
    * @param body the body to revive
    */
   static reviveDatesRecursive(body: unknown) {
-    if (body === null || typeof body !== 'object') {
+    if (!DateService.isPlainRecord(body)) {
       return;
     }
 
@@ -322,15 +322,18 @@ export default class DateService {
     if (keys.length === 0) {
       return;
     }
-    const bodyAsRecord = body as Record<string, unknown>;
-    for (const key of Object.keys(bodyAsRecord)) {
-      const value = bodyAsRecord[key];
+    for (const key of keys) {
+      const value = body[key];
       const revivedValue = this.dateReviver(key, value);
       if (revivedValue !== value) {
-        bodyAsRecord[key] = revivedValue;
+        body[key] = revivedValue;
       } else if (typeof value === 'object') {
         this.reviveDatesRecursive(value);
       }
     }
+  }
+
+  private static isPlainRecord(value: unknown): value is Record<string, unknown> {
+    return typeof value === 'object' && value !== null;
   }
 }

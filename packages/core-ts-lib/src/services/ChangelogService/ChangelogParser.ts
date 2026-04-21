@@ -1,8 +1,5 @@
-import type { ChangelogSection, ChangelogSectionType, ChangelogVersionEntry } from './types.js';
-import { REQUIRED_SECTION_TYPES } from './types.js';
-
-const isRequiredSectionType = (value: string): value is ChangelogSectionType =>
-  REQUIRED_SECTION_TYPES.some((required) => required === value);
+import type { ChangelogSection, ChangelogVersionEntry } from './types.js';
+import { isRequiredSectionType } from './types.js';
 
 /**
  * Service for parsing changelog content and extracting structured data.

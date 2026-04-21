@@ -10,8 +10,8 @@ import StringService from './services/StringService.js';
 import type { DeepPartial } from './types/DeepPartial.js';
 import type { JsonWithVersionProperty } from './types/JsonWithVersionProperty.js';
 import { isJsonWithVersionProperty } from './types/JsonWithVersionProperty.js';
-import type { PackageJson } from './types/PackageJson.js';
-import { isPackageJson } from './types/PackageJson.js';
+import type { PackageJson, PackageJsonWithoutVersion } from './types/PackageJson.js';
+import { isPackageJson, isPackageJsonWithoutVersion } from './types/PackageJson.js';
 import { VersionType } from './types/VersionType.js';
 import ErrorUtils from './utils/ErrorUtils.js';
 import JsonUtils from './utils/JsonUtils.js';
@@ -26,6 +26,7 @@ export {
   ErrorUtils,
   isJsonWithVersionProperty,
   isPackageJson,
+  isPackageJsonWithoutVersion,
   JsonUtils,
   NoopLogger,
   NoopTracer,
@@ -36,4 +37,12 @@ export {
 };
 
 // Export TypeScript types where needed
-export type { DeepPartial, ILogger, ISpan, ITracer, JsonWithVersionProperty, PackageJson };
+export type {
+  DeepPartial,
+  ILogger,
+  ISpan,
+  ITracer,
+  JsonWithVersionProperty,
+  PackageJson,
+  PackageJsonWithoutVersion
+};

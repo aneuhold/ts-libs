@@ -4,6 +4,15 @@ export const REQUIRED_SECTION_TYPES = ['✅ Added', '🏗️ Changed', '🩹 Fix
 export type ChangelogSectionType = (typeof REQUIRED_SECTION_TYPES)[number];
 
 /**
+ * Type guard that checks whether a string is one of the required
+ * {@link ChangelogSectionType} values.
+ *
+ * @param value The value to narrow.
+ */
+export const isRequiredSectionType = (value: string): value is ChangelogSectionType =>
+  REQUIRED_SECTION_TYPES.some((required) => required === value);
+
+/**
  * Repository information for generating version links.
  */
 export interface RepositoryInfo {

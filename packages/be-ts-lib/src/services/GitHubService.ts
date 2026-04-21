@@ -31,9 +31,16 @@ export default class GitHubService {
         repo: repoName,
         path: filePath
       });
-      return result.data as unknown as string;
+      // When `mediaType.format === 'raw'`, the Octokit runtime returns the raw
+      // file contents as a string even though the published types don't
+      // narrow to that case. Verify at runtime.
+      const data: unknown = result.data;
+      if (typeof data !== 'string') {
+        throw new Error(`Expected raw content from ${repoName}/${filePath} to be a string.`);
+      }
+      return data;
     } catch (error) {
-      DR.logger.error(`Failed to load ${filePath} from ${repoName}, error: ${error as string}`);
+      DR.logger.error(`Failed to load ${filePath} from ${repoName}, error: ${String(error)}`);
       throw error;
     }
   }
