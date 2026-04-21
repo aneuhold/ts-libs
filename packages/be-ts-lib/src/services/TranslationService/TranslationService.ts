@@ -1,4 +1,4 @@
-import type { Translation, Translations } from '@aneuhold/core-ts-api-lib';
+import type { Translations } from '@aneuhold/core-ts-api-lib';
 import { DR } from '@aneuhold/core-ts-lib';
 import 'dotenv/config';
 import { parse } from 'jsonc-parser';
@@ -50,22 +50,6 @@ export default class TranslationService {
     if (typeof value !== 'object' || value === null) {
       return false;
     }
-    return Object.values(value).every((entry) => TranslationService.isTranslation(entry));
-  }
-
-  /**
-   * Type guard that checks whether an unknown value matches the {@link Translation} shape.
-   *
-   * @param value The value to narrow.
-   */
-  private static isTranslation(value: unknown): value is Translation {
-    return (
-      typeof value === 'object' &&
-      value !== null &&
-      'value' in value &&
-      typeof value.value === 'string' &&
-      'description' in value &&
-      typeof value.description === 'string'
-    );
+    return Object.values(value).every((entry) => typeof entry === 'object');
   }
 }

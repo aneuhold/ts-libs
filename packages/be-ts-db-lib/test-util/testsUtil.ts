@@ -42,6 +42,7 @@ export async function cleanupDoc<TDocType extends BaseDocument>(
 ) {
   const deleteResult = await repo.delete(doc._id);
   expect(deleteResult.acknowledged).toBeTruthy();
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
   const findResult = await repo.get({ _id: doc._id } as Partial<TDocType>);
   expect(findResult).toBeNull();
 }

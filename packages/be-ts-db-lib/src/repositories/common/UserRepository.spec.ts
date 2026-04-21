@@ -45,7 +45,7 @@ describe('Update operations', () => {
   });
 
   it('throws if no id is defined', async () => {
-    const newUser = UserSchema.parse({ userName: getTestUserName() }) as Partial<User>;
+    const newUser: Partial<User> = UserSchema.parse({ userName: getTestUserName() });
     delete newUser._id;
     await expectToThrow(async () => {
       await userRepo.update(newUser);

@@ -66,9 +66,20 @@ describe('Unit Tests', () => {
           })
         );
 
-        const callArgs = mockFetch.mock.calls[0] as [string, RequestInit];
-        const headers = callArgs[1].headers as Headers;
-        expect(headers.get('Content-Type')).toBe('application/json');
+        const calls: unknown[][] = mockFetch.mock.calls;
+        if (calls.length === 0) {
+          throw new Error('Expected fetch to have been called at least once');
+        }
+        const requestInit = calls[0][1];
+        if (
+          typeof requestInit !== 'object' ||
+          requestInit === null ||
+          !('headers' in requestInit) ||
+          !(requestInit.headers instanceof Headers)
+        ) {
+          throw new Error('Expected fetch to have been called with Headers');
+        }
+        expect(requestInit.headers.get('Content-Type')).toBe('application/json');
         expect(result).toEqual(mockResponse);
       });
     });
@@ -119,9 +130,18 @@ describe('Unit Tests', () => {
           options: {}
         };
         const result = await GCloudAPIService.projectDashboard(input);
-        const data = result.data as unknown as { createdAt: Date; name: string };
+        const data: unknown = result.data;
+        const isParsed = (value: unknown): value is { createdAt: Date; name: string } =>
+          typeof value === 'object' &&
+          value !== null &&
+          'createdAt' in value &&
+          value.createdAt instanceof Date &&
+          'name' in value &&
+          typeof value.name === 'string';
+        if (!isParsed(data)) {
+          throw new Error('Expected projectDashboard response to match test fixture shape');
+        }
 
-        expect(data).toBeDefined();
         expect(data.createdAt).toBeInstanceOf(Date);
         expect(data.createdAt.toISOString()).toBe(dateStr);
         expect(data.name).toBe('Test Project');

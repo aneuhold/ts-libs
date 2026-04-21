@@ -1,9 +1,9 @@
 import {
   DashboardTaskSchema,
   DashboardUserConfigSchema,
+  DocumentService,
   UserSchema
 } from '@aneuhold/core-ts-db-lib';
-import type { UUID } from 'crypto';
 import crypto from 'crypto';
 import { afterAll, expect, it } from 'vitest';
 import { getTestUserName } from '../../test-util/testsUtil.js';
@@ -31,8 +31,8 @@ it.skip('can add a new test user', async () => {
 });
 
 it.skip('can setup the demo accounts', async () => {
-  const demoUser1Id = '01935b78-3b48-7000-8000-000000000001' as UUID;
-  const demoUser2Id = '01935b78-3b48-7000-8000-000000000002' as UUID;
+  const demoUser1Id = DocumentService.toUUID('01935b78-3b48-7000-8000-000000000001');
+  const demoUser2Id = DocumentService.toUUID('01935b78-3b48-7000-8000-000000000002');
   await DemoAccountsService.seedDashboardDemoAccounts(demoUser1Id, demoUser2Id);
   // Basic sanity check: ensure at least one shared task exists for each user
   const taskRepo = DashboardTaskRepository.getRepo();

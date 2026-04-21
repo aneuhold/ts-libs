@@ -59,27 +59,31 @@ export default class ConfigService {
     ConfigService.env = env;
     try {
       const jsonString = await GitHubService.getContentFromRepo('config', `${env}.jsonc`);
-      ConfigService.configObject = parse(jsonString) as Config;
+      const parsed: unknown = parse(jsonString);
+      if (!ConfigService.isConfig(parsed)) {
+        throw new Error(`Loaded ${env}.jsonc did not match the expected Config shape.`);
+      }
+      ConfigService.configObject = parsed;
     } catch (error) {
-      DR.logger.error(`Failed to load ${env}.json, error: ${error as string}`);
+      DR.logger.error(`Failed to load ${env}.json, error: ${String(error)}`);
       throw error;
     }
   }
 
   /**
-   * Inserts the provided configuration into the local environment.
+   * Type guard that checks whether an unknown value matches the {@link Config} shape.
+   * Only spot-checks a couple of keys — if those are present, we trust the rest.
    *
-   * This may not actually need to happen.
-   *
-   * @param config - The configuration object to insert into the environment.
+   * @param value The value to narrow.
    */
-  private static insertPropertiesIntoEnv(config: object) {
-    Object.entries(config).forEach(([key, value]) => {
-      if (typeof value === 'object') {
-        ConfigService.insertPropertiesIntoEnv(value as object);
-      } else {
-        process.env[key] = value as string;
-      }
-    });
+  private static isConfig(value: unknown): value is Config {
+    return (
+      typeof value === 'object' &&
+      value !== null &&
+      'mongoUrl' in value &&
+      typeof value.mongoUrl === 'string' &&
+      'jwtAccessSecret' in value &&
+      typeof value.jwtAccessSecret === 'string'
+    );
   }
 }
