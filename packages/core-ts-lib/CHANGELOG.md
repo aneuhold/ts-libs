@@ -9,11 +9,18 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### ✅ Added
 
+- Added `JsonUtils` class with a `parseWithGuard` static method for type-safe JSON parsing validated by a type guard.
+- Added `isJsonWithVersionProperty`, `isPackageJson`, and `isPackageJsonWithoutVersion` type guard functions.
+- Added `PackageJsonWithoutVersion` type — a `PackageJson` variant where `version` is optional.
+- Added `isRequiredSectionType` type guard in `ChangelogService/types`.
+- Exported `JsonUtils`, the new type guards, and `PackageJsonWithoutVersion` from the browser entry point.
+
 ### 🏗️ Changed
 
-### 🩹 Fixed
-
-### 🔥 Removed
+- `DeepPartial<T>` now uses `Record<PropertyKey, unknown>` instead of `object` for the recursive constraint, making narrowing more precise.
+- `ErrorUtils.throwErrorList` and `throwError` now accept `unknown` instead of `object` for the erroneous-object parameter.
+- `DependencyService` and `PackageService` internals now use `JsonUtils.parseWithGuard` instead of unsafe casts when reading JSON files.
+- `DateService.reviveDatesRecursive` refactored to use a private `isPlainRecord` helper instead of an inline cast.
 
 ## 🔖 [2.4.3] (2026-03-15)
 

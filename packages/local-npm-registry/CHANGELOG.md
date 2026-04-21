@@ -9,11 +9,16 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### ✅ Added
 
+- Added `isLocalNpmConfig` type guard for `LocalNpmConfig`.
+- Added `isVerdaccioDb` type guard for `VerdaccioDb`.
+- Added overloaded signatures to `PackageJsonService.getPackageInfo` distinguishing `PackageJson` (requireVersion=true) from `PackageJsonWithoutVersion` (requireVersion=false) return types.
+
 ### 🏗️ Changed
 
-### 🩹 Fixed
-
-### 🔥 Removed
+- All JSON file reads (`ConfigService`, `LocalPackageStoreService`, `PackageJsonService`, `VerdaccioService`) now use type guards instead of unsafe casts.
+- `VerdaccioService` now uses a module augmentation for `verdaccio.runServer` typing instead of an unsafe cast; `startVerdaccio` calls `runServer` directly.
+- `RegistryConfigService.generateRegistryConfig` now accepts `PackageJsonWithoutVersion` instead of `PackageJson`.
+- `RegistryConfigService.mergeYamlConfig` now uses a private `isYamlRecord` type guard instead of an inline cast.
 
 ## 🔖 [0.2.30] (2026-03-15)
 

@@ -7,13 +7,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## 🔖 [4.2.25] (2026-04-21)
 
-### ✅ Added
-
 ### 🏗️ Changed
 
-### 🩹 Fixed
-
-### 🔥 Removed
+- `BaseRepository` methods now carry `eslint-disable consistent-type-assertions` comments to document the intentional type assertions required by the MongoDB driver's generic types.
+- `WorkoutExerciseRepository` and `WorkoutMuscleGroupRepository` now use typed `Map` keys directly instead of casting `_id as string` when performing lookups.
+- Test files updated to remove unsafe casts, replacing them with type guards or cleaner assertion patterns.
 
 ## 🔖 [4.2.24] (2026-04-17)
 
