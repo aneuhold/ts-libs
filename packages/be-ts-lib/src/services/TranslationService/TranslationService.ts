@@ -43,13 +43,12 @@ export default class TranslationService {
 
   /**
    * Type guard that checks whether an unknown value matches the {@link Translations} shape.
+   * Only the outer container is validated; non-translation entries (e.g. a `$schema` key) are
+   * tolerated so the file can include metadata alongside translations.
    *
    * @param value The value to narrow.
    */
   private static isTranslations(value: unknown): value is Translations {
-    if (typeof value !== 'object' || value === null) {
-      return false;
-    }
-    return Object.values(value).every((entry) => typeof entry === 'object');
+    return typeof value === 'object' && value !== null && !Array.isArray(value);
   }
 }
