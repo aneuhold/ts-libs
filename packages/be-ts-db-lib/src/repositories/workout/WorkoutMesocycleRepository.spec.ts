@@ -153,9 +153,10 @@ describe('WorkoutMesocycleRepository', () => {
         // cycleType and required fields are missing
       };
 
-      await expect(repo.insertNew(invalidMesocycle as unknown as WorkoutMesocycle)).rejects.toThrow(
-        'Schema validation failed'
-      );
+      await expect(
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+        repo.insertNew(invalidMesocycle as unknown as WorkoutMesocycle)
+      ).rejects.toThrow('Schema validation failed');
     });
 
     it('should reject update without _id', async () => {

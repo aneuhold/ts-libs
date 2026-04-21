@@ -1,7 +1,10 @@
 import { DateService, ErrorUtils } from '@aneuhold/core-ts-lib';
 import type { AdminInput, AdminOutput } from '../../types/Admin.js';
 import type { APIResponse } from '../../types/APIResponse.js';
-import type { AuthRefreshTokenOutput } from '../../types/AuthRefreshToken.js';
+import type {
+  AuthRefreshTokenInput,
+  AuthRefreshTokenOutput
+} from '../../types/AuthRefreshToken.js';
 import type {
   AuthValidateUserInput,
   AuthValidateUserOutput
@@ -95,7 +98,7 @@ export default class GCloudAPIService {
   static async authValidateUser(
     input: AuthValidateUserInput
   ): Promise<APIResponse<AuthValidateUserOutput>> {
-    return this.call<AuthValidateUserOutput>('auth/validateUser', input);
+    return this.call<AuthValidateUserInput, AuthValidateUserOutput>('auth/validateUser', input);
   }
 
   /**
@@ -106,7 +109,7 @@ export default class GCloudAPIService {
     if (!this.#refreshTokenString) {
       return { success: true, errors: [], data: undefined };
     }
-    const { decoded } = await this.fetchAndDecode<undefined>('auth/logout', {
+    const { decoded } = await this.fetchAndDecode<AuthRefreshTokenInput, undefined>('auth/logout', {
       refreshTokenString: this.#refreshTokenString
     });
     return decoded;
@@ -120,7 +123,7 @@ export default class GCloudAPIService {
   static async projectDashboard(
     input: ProjectDashboardInput
   ): Promise<APIResponse<ProjectDashboardOutput>> {
-    return this.call<ProjectDashboardOutput>('project/dashboard', input);
+    return this.call<ProjectDashboardInput, ProjectDashboardOutput>('project/dashboard', input);
   }
 
   /**
@@ -129,7 +132,7 @@ export default class GCloudAPIService {
    * @param input - The input for the admin endpoint.
    */
   static async admin(input: AdminInput): Promise<APIResponse<AdminOutput>> {
-    return this.call<AdminOutput>('admin', input);
+    return this.call<AdminInput, AdminOutput>('admin', input);
   }
 
   /**
@@ -140,7 +143,10 @@ export default class GCloudAPIService {
   static async projectWorkout(
     input: ProjectWorkoutPrimaryInput
   ): Promise<APIResponse<ProjectWorkoutPrimaryOutput>> {
-    return this.call<ProjectWorkoutPrimaryOutput>('project/workout', input);
+    return this.call<ProjectWorkoutPrimaryInput, ProjectWorkoutPrimaryOutput>(
+      'project/workout',
+      input
+    );
   }
 
   /**
@@ -151,16 +157,16 @@ export default class GCloudAPIService {
    * @param urlPath - The path to the endpoint.
    * @param input - The input to the endpoint.
    */
-  private static async call<TOutput>(
+  private static async call<TInput, TOutput>(
     urlPath: string,
-    input: object
+    input: TInput
   ): Promise<APIResponse<TOutput>> {
-    const { response, decoded } = await this.fetchAndDecode<TOutput>(urlPath, input);
+    const { response, decoded } = await this.fetchAndDecode<TInput, TOutput>(urlPath, input);
 
     if (response.status === 401 && this.#refreshTokenString) {
       const refreshed = await this.tryRefreshTokens();
       if (refreshed) {
-        const retry = await this.fetchAndDecode<TOutput>(urlPath, input);
+        const retry = await this.fetchAndDecode<TInput, TOutput>(urlPath, input);
         return retry.decoded;
       }
     }
@@ -178,19 +184,21 @@ export default class GCloudAPIService {
       return false;
     }
 
-    const { decoded } = await this.fetchAndDecode<AuthRefreshTokenOutput>('auth/refresh', {
-      refreshTokenString: this.#refreshTokenString
-    });
+    const { decoded } = await this.fetchAndDecode<AuthRefreshTokenInput, AuthRefreshTokenOutput>(
+      'auth/refresh',
+      { refreshTokenString: this.#refreshTokenString }
+    );
 
-    if (!decoded.success) {
+    if (!decoded.success || !decoded.data) {
       return false;
     }
 
-    this.#accessToken = decoded.data.accessToken;
-    this.#refreshTokenString = decoded.data.refreshTokenString;
+    const { accessToken, refreshTokenString } = decoded.data;
+    this.#accessToken = accessToken;
+    this.#refreshTokenString = refreshTokenString;
 
     if (this.#onTokensRefreshed) {
-      this.#onTokensRefreshed(decoded.data.accessToken, decoded.data.refreshTokenString);
+      this.#onTokensRefreshed(accessToken, refreshTokenString);
     }
 
     return true;
@@ -202,9 +210,9 @@ export default class GCloudAPIService {
    * @param urlPath - The path to the endpoint.
    * @param input - The input to the endpoint.
    */
-  private static async fetchAndDecode<TOutput>(
+  private static async fetchAndDecode<TInput, TOutput>(
     urlPath: string,
-    input: object
+    input: TInput
   ): Promise<{ response: Response; decoded: APIResponse<TOutput> }> {
     const headers = new Headers({
       Connection: 'keep-alive',
@@ -233,13 +241,39 @@ export default class GCloudAPIService {
   private static async decodeResponse<TOutput>(response: Response): Promise<APIResponse<TOutput>> {
     try {
       const text = await response.text();
-      return JSON.parse(text, DateService.dateReviver) as APIResponse<TOutput>;
+      const parsed: unknown = JSON.parse(text, DateService.dateReviver);
+      if (!isAPIResponseShape<TOutput>(parsed)) {
+        return {
+          success: false,
+          errors: ['Response did not match the expected APIResponse shape']
+        };
+      }
+      return parsed;
     } catch (error) {
       return {
         success: false,
-        errors: ['Failed to parse response', ErrorUtils.getErrorString(error)],
-        data: {} as TOutput
+        errors: ['Failed to parse response', ErrorUtils.getErrorString(error)]
       };
     }
   }
+}
+
+/**
+ * Type guard that validates the structural shape of an {@link APIResponse}.
+ * The generic `data` payload is trusted (not validated) since its shape is
+ * only known at the call site.
+ *
+ * @param value - The parsed JSON value to inspect.
+ */
+function isAPIResponseShape<TOutput>(value: unknown): value is APIResponse<TOutput> {
+  if (typeof value !== 'object' || value === null) {
+    return false;
+  }
+  if (!('success' in value) || typeof value.success !== 'boolean') {
+    return false;
+  }
+  if (!('errors' in value) || !Array.isArray(value.errors)) {
+    return false;
+  }
+  return value.errors.every((err) => typeof err === 'string');
 }

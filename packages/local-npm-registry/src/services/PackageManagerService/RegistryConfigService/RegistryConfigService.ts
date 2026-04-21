@@ -1,4 +1,4 @@
-import { type PackageJson } from '@aneuhold/core-ts-lib';
+import { type PackageJsonWithoutVersion } from '@aneuhold/core-ts-lib';
 import fs from 'fs-extra';
 import yaml from 'js-yaml';
 import path from 'path';
@@ -260,7 +260,7 @@ export class RegistryConfigService {
   private static generateRegistryConfig(
     packageManager: PackageManager,
     registryUrl: string,
-    packageInfo?: PackageJson | null,
+    packageInfo?: PackageJsonWithoutVersion | null,
     npmrcConfigs?: Map<string, string>
   ): string {
     const packageManagerInfo = PACKAGE_MANAGER_INFO[packageManager];

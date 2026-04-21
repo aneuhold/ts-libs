@@ -156,6 +156,7 @@ describe('WorkoutExerciseCalibrationRepository', () => {
       };
 
       await expect(
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
         repo.insertNew(invalidCalibration as unknown as WorkoutExerciseCalibration)
       ).rejects.toThrow('Schema validation failed');
     });

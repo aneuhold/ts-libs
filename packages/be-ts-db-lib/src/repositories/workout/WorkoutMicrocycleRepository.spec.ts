@@ -179,6 +179,7 @@ describe('WorkoutMicrocycleRepository', () => {
       };
 
       await expect(
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
         repo.insertNew(invalidMicrocycle as unknown as WorkoutMicrocycle)
       ).rejects.toThrow('Schema validation failed');
     });

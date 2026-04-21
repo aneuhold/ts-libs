@@ -252,6 +252,7 @@ describe('WorkoutSessionExerciseRepository', () => {
       };
 
       await expect(
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
         repo.insertNew(invalidSessionExercise as unknown as WorkoutSessionExercise)
       ).rejects.toThrow('Schema validation failed');
     });

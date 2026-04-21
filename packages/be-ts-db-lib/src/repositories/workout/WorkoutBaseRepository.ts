@@ -28,6 +28,7 @@ export default abstract class WorkoutBaseRepository<
       CleanDocument.createdDate(doc);
       return doc;
     };
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
     const defaultFilter = { docType } as Partial<TBaseType>;
     super(WorkoutBaseRepository.COLLECTION_NAME, validator, defaultFilter, defaultUpdateCleaner);
   }

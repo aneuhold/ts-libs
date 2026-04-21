@@ -223,9 +223,10 @@ describe('WorkoutSetRepository', () => {
         // workoutSessionExerciseId is missing
       };
 
-      await expect(repo.insertNew(invalidSet as unknown as WorkoutSet)).rejects.toThrow(
-        'Schema validation failed'
-      );
+      await expect(
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+        repo.insertNew(invalidSet as unknown as WorkoutSet)
+      ).rejects.toThrow('Schema validation failed');
     });
 
     it('should reject update without _id', async () => {

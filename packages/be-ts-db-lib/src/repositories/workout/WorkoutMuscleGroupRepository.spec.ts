@@ -71,6 +71,7 @@ describe('WorkoutMuscleGroupRepository', () => {
       };
 
       await expect(
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
         repo.insertNew(invalidMuscleGroup as unknown as WorkoutMuscleGroup)
       ).rejects.toThrow('Schema validation failed');
     });
@@ -92,9 +93,10 @@ describe('WorkoutMuscleGroupRepository', () => {
         name: 123 // Invalid type
       };
 
-      await expect(repo.update(update as unknown as WorkoutMuscleGroup)).rejects.toThrow(
-        'Schema validation failed'
-      );
+      await expect(
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+        repo.update(update as unknown as WorkoutMuscleGroup)
+      ).rejects.toThrow('Schema validation failed');
     });
   });
 
