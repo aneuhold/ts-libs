@@ -7,13 +7,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## 🔖 [5.0.8] (2026-04-22)
 
-### ✅ Added
-
 ### 🏗️ Changed
 
-### 🩹 Fixed
-
-### 🔥 Removed
+- Updated `@aneuhold/local-npm-registry` devDependency to `^0.2.32`.
 
 ## 🔖 [5.0.7] (2026-04-21)
 
