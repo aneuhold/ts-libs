@@ -189,7 +189,7 @@ export default class GCloudAPIService {
       { refreshTokenString: this.#refreshTokenString }
     );
 
-    if (!decoded.success || !decoded.data) {
+    if (!decoded.success) {
       return false;
     }
 
@@ -245,14 +245,18 @@ export default class GCloudAPIService {
       if (!isAPIResponseShape<TOutput>(parsed)) {
         return {
           success: false,
-          errors: ['Response did not match the expected APIResponse shape']
+          errors: ['Response did not match the expected APIResponse shape'],
+          // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+          data: {} as TOutput
         };
       }
       return parsed;
     } catch (error) {
       return {
         success: false,
-        errors: ['Failed to parse response', ErrorUtils.getErrorString(error)]
+        errors: ['Failed to parse response', ErrorUtils.getErrorString(error)],
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+        data: {} as TOutput
       };
     }
   }
@@ -275,5 +279,8 @@ function isAPIResponseShape<TOutput>(value: unknown): value is APIResponse<TOutp
   if (!('errors' in value) || !Array.isArray(value.errors)) {
     return false;
   }
-  return value.errors.every((err) => typeof err === 'string');
+  if (!value.errors.every((err) => typeof err === 'string')) {
+    return false;
+  }
+  return 'data' in value;
 }

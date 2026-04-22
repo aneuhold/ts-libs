@@ -9,13 +9,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### ✅ Added
 
-- Added `UUIDSchema` — a shared Zod schema that validates a UUIDv7 string and narrows it to the branded `UUID` type without a type assertion.
-- Added `DocumentService.toUUID` static method that safely narrows a validated UUID string to the branded `UUID` type.
+- Added `UUIDSchema` — a shared Zod schema that validates a UUIDv7 string and narrows it to the branded `UUID` type.
+- Added `DocumentService.toUUID` static helper that narrows an already-validated UUID string to the branded `UUID` type.
 
 ### 🏗️ Changed
 
 - All Zod schemas across `documents/`, `embedded-types/`, and `schemas/` now use the shared `UUIDSchema` instead of inline `z.uuidv7().transform((val) => val as UUID)` patterns.
-- `DocumentService.deepCopy` type parameter no longer requires `T extends object`, accepting any `T`.
 - `DocumentService.generateID` now uses `toUUID()` internally instead of a type cast.
 - `TaskService` now uses `DocumentService.toUUID` when converting `Object.keys(taskMap)` to a `UUID[]` instead of a cast.
 

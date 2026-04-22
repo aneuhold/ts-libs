@@ -2,7 +2,7 @@ import { DR, FileSystemService } from '@aneuhold/core-ts-lib';
 import fs from 'fs-extra';
 import path from 'path';
 import type { LocalNpmConfig } from '../types/LocalNpmConfig.js';
-import { DEFAULT_CONFIG, isLocalNpmConfig } from '../types/LocalNpmConfig.js';
+import { DEFAULT_CONFIG } from '../types/LocalNpmConfig.js';
 
 const CONFIG_FILE_NAME = '.local-npm-registry.json';
 export const DATA_DIRECTORY_NAME = '.local-npm-registry';
@@ -30,11 +30,12 @@ export class ConfigService {
 
     if (configFilePath) {
       try {
-        const rawConfig: unknown = await fs.readJson(configFilePath);
-        if (!isLocalNpmConfig(rawConfig)) {
-          throw new Error('Config file does not contain a valid LocalNpmConfig object.');
-        }
-        config = rawConfig;
+        // `fs.readJson` returns `unknown`. The structural shape of
+        // `LocalNpmConfig` is just "an object with optional fields", so any
+        // guard would only check `typeof === 'object'` — which provides no
+        // real signal. Trust the file contents and merge with defaults.
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+        config = (await fs.readJson(configFilePath)) as LocalNpmConfig;
       } catch (error) {
         DR.logger.warn(
           `Warning: Failed to parse config file at ${configFilePath}: ${String(error)}`

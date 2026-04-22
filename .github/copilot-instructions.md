@@ -15,7 +15,7 @@
 - Use arrow functions and `const`/`let` (never `var`)
 - Use `async`/`await` instead of `.then()`
 - NEVER use `any` type
-- Almost never use `unknown`. The only way this should be used, is to override an external library type that is incorrect, which is exceedingly rare.
+- `unknown` is acceptable as a staging type before narrowing with a type guard, runtime schema (e.g. zod), or an explicit cast at system boundaries (`JSON.parse`, file reads, wire responses, library types that are incorrect). Prefer it over `any` when a cast is unavoidable.
 - NEVER use `!` non-null assertion operator. Check for null / undefined properly if it can be null.
 
 ### Documentation & Naming

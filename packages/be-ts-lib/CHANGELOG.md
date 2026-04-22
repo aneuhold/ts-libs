@@ -7,11 +7,16 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## 🔖 [3.1.12] (2026-04-21)
 
+### ✅ Added
+
+- Added `zod` as a direct dependency.
+- `ConfigDefinition` now exports a `ConfigSchema` alongside the `Config` type, with the type inferred from the schema.
+
 ### 🏗️ Changed
 
 - `GitHubService.getContentFromRepo` now validates the Octokit response is a string at runtime instead of using an unsafe cast.
-- `ConfigService.load` now validates the parsed JSONC config against an `isConfig` type guard instead of casting; removed the unused `insertPropertiesIntoEnv` private method.
-- `TranslationService.getTranslations` now validates the parsed JSONC against an `isTranslations` type guard instead of casting.
+- `ConfigService.useConfig` now validates the parsed JSONC config against `ConfigSchema` (Zod) instead of casting; removed the unused `insertPropertiesIntoEnv` private method.
+- `TranslationService.getTranslations` documents why it does not validate (arbitrary-key JSON) and uses an explicit cast rather than a structural guard that accepts any object.
 
 ## 🔖 [3.1.11] (2026-04-17)
 

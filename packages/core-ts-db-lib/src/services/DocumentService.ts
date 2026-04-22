@@ -40,7 +40,7 @@ export default class DocumentService {
    *
    * @param obj - The object to copy.
    */
-  static deepCopy<T>(obj: T): T {
+  static deepCopy<T extends Record<PropertyKey, unknown>>(obj: T): T {
     return structuredClone(obj);
   }
 
@@ -49,18 +49,19 @@ export default class DocumentService {
   }
 
   /**
-   * Narrows a validated UUID string to the branded {@link UUID} type without
-   * using a type assertion. Throws when the input is not in the expected
-   * `xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx` shape.
+   * Narrows a UUID string to the branded {@link UUID} type. Callers are
+   * expected to have validated the input — either via `z.uuidv7()` (the
+   * `UUIDSchema` transform) or by generating it with `uuidv7()`.
    *
-   * @param value A UUID string that has already been validated.
+   * A runtime-enforcing implementation (e.g. `split('-')` + template-literal
+   * reconstruction) would narrow without a cast but allocates on every call,
+   * and this runs on every ID read/write. Since upstream validation already
+   * covers this, trust the caller and cast.
+   *
+   * @param value A UUID string that has already been validated upstream.
    */
   static toUUID(value: string): UUID {
-    const parts = value.split('-');
-    if (parts.length !== 5) {
-      throw new Error(`Invalid UUID: ${value}`);
-    }
-    const [a, b, c, d, e] = parts;
-    return `${a}-${b}-${c}-${d}-${e}`;
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    return value as UUID;
   }
 }

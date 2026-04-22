@@ -30,25 +30,14 @@ export default class TranslationService {
   static async getTranslations(source: TranslationSource): Promise<Translations> {
     try {
       const jsonString = await GitHubService.getContentFromRepo('translations', `${source}.jsonc`);
-      const parsed: unknown = parse(jsonString);
-      if (!TranslationService.isTranslations(parsed)) {
-        throw new Error(`Loaded ${source}.jsonc did not match the expected Translations shape.`);
-      }
-      return parsed;
+      // The translations file has arbitrary string keys by design (including
+      // `$schema` metadata), so a structural type guard would accept any
+      // object anyway. Trust the source and cast.
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+      return parse(jsonString) as Translations;
     } catch (error) {
       DR.logger.error(`Failed to load ${source}.json, error: ${String(error)}`);
       throw error;
     }
-  }
-
-  /**
-   * Type guard that checks whether an unknown value matches the {@link Translations} shape.
-   * Only the outer container is validated; non-translation entries (e.g. a `$schema` key) are
-   * tolerated so the file can include metadata alongside translations.
-   *
-   * @param value The value to narrow.
-   */
-  private static isTranslations(value: unknown): value is Translations {
-    return typeof value === 'object' && value !== null && !Array.isArray(value);
   }
 }

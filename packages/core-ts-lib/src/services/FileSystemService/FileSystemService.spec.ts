@@ -5,16 +5,7 @@ import FileSystemService from './FileSystemService.js';
 
 const TEST_FOLDER_NAME = '__fileSystemService-tests__';
 
-type TestConfigFile = { name: string; encoded: string };
 type FileStructure = { [name: string]: string | FileStructure };
-
-const isTestConfigFile = (value: unknown): value is TestConfigFile =>
-  typeof value === 'object' &&
-  value !== null &&
-  'name' in value &&
-  typeof value.name === 'string' &&
-  'encoded' in value &&
-  typeof value.encoded === 'string';
 
 describe('FileSystemService', () => {
   afterAll(async () => {
@@ -154,13 +145,11 @@ describe('FileSystemService', () => {
       });
 
       const configContent = await readFile(path.join(testFolderPath, 'config.json'), 'utf8');
-      const parsedConfig: unknown = JSON.parse(configContent);
-      if (!isTestConfigFile(parsedConfig)) {
-        throw new Error('config.json did not match expected shape');
-      }
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+      const config = JSON.parse(configContent) as { name: string; encoded: string };
 
-      expect(parsedConfig.name).toBe('@new/package-name');
-      expect(parsedConfig.encoded).toBe(encodeURIComponent('@new/package-name'));
+      expect(config.name).toBe('@new/package-name');
+      expect(config.encoded).toBe(encodeURIComponent('@new/package-name'));
     });
 
     it('should respect dry run mode', async () => {

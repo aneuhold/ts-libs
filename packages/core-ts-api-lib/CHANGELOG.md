@@ -9,10 +9,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### 🏗️ Changed
 
-- *Breaking Change:* `APIResponse<T>.data` is now optional (`data?: T`). Failed responses can omit the field; callers must guard against `undefined`.
 - `GCloudAPIService.call` and `fetchAndDecode` are now typed with both `TInput` and `TOutput` type parameters for stricter input typing.
-- `GCloudAPIService.decodeResponse` now validates the response shape with an `isAPIResponseShape` type guard instead of an unsafe cast.
-- `GCloudAPIService.tryRefreshTokens` now checks that `decoded.data` is defined before accessing token fields, eliminating a potential runtime error.
+- `GCloudAPIService.decodeResponse` now validates the response shape with an `isAPIResponseShape` type guard instead of an unsafe cast. On failures it still returns an `APIResponse<T>` with `data` populated (as an empty object cast to `T`) so the response contract is preserved.
 
 ## 🔖 [3.0.34] (2026-04-17)
 

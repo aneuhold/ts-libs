@@ -3,6 +3,7 @@ import 'dotenv/config';
 import { parse } from 'jsonc-parser';
 import GitHubService from '../GitHubService.js';
 import type Config from './ConfigDefinition.js';
+import { ConfigSchema } from './ConfigDefinition.js';
 
 export type ConfigEnv = 'local' | 'dev' | 'prod';
 
@@ -59,31 +60,10 @@ export default class ConfigService {
     ConfigService.env = env;
     try {
       const jsonString = await GitHubService.getContentFromRepo('config', `${env}.jsonc`);
-      const parsed: unknown = parse(jsonString);
-      if (!ConfigService.isConfig(parsed)) {
-        throw new Error(`Loaded ${env}.jsonc did not match the expected Config shape.`);
-      }
-      ConfigService.configObject = parsed;
+      ConfigService.configObject = ConfigSchema.parse(parse(jsonString));
     } catch (error) {
       DR.logger.error(`Failed to load ${env}.json, error: ${String(error)}`);
       throw error;
     }
-  }
-
-  /**
-   * Type guard that checks whether an unknown value matches the {@link Config} shape.
-   * Only spot-checks a couple of keys — if those are present, we trust the rest.
-   *
-   * @param value The value to narrow.
-   */
-  private static isConfig(value: unknown): value is Config {
-    return (
-      typeof value === 'object' &&
-      value !== null &&
-      'mongoUrl' in value &&
-      typeof value.mongoUrl === 'string' &&
-      'jwtAccessSecret' in value &&
-      typeof value.jwtAccessSecret === 'string'
-    );
   }
 }

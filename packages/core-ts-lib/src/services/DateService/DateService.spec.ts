@@ -119,17 +119,11 @@ describe('DateService', () => {
         name: 'Test'
       };
 
-      const parsed: unknown = JSON.parse(JSON.stringify(mockResponse), DateService.dateReviver);
-      const isParsed = (value: unknown): value is { createdAt: Date; name: string } =>
-        typeof value === 'object' &&
-        value !== null &&
-        'createdAt' in value &&
-        value.createdAt instanceof Date &&
-        'name' in value &&
-        typeof value.name === 'string';
-      if (!isParsed(parsed)) {
-        throw new Error('Parsed response did not match expected shape');
-      }
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+      const parsed = JSON.parse(JSON.stringify(mockResponse), DateService.dateReviver) as {
+        createdAt: Date;
+        name: string;
+      };
 
       expect(parsed.createdAt).toBeInstanceOf(Date);
       expect(parsed.createdAt.toISOString()).toBe(dateStr);
@@ -142,17 +136,11 @@ describe('DateService', () => {
         anotherString: 'hello world'
       };
 
-      const parsed: unknown = JSON.parse(JSON.stringify(mockResponse), DateService.dateReviver);
-      const isParsed = (value: unknown): value is { someString: string; anotherString: string } =>
-        typeof value === 'object' &&
-        value !== null &&
-        'someString' in value &&
-        typeof value.someString === 'string' &&
-        'anotherString' in value &&
-        typeof value.anotherString === 'string';
-      if (!isParsed(parsed)) {
-        throw new Error('Parsed response did not match expected shape');
-      }
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+      const parsed = JSON.parse(JSON.stringify(mockResponse), DateService.dateReviver) as {
+        someString: string;
+        anotherString: string;
+      };
 
       expect(typeof parsed.someString).toBe('string');
       expect(parsed.someString).toBe('2023-10-27');
@@ -166,22 +154,12 @@ describe('DateService', () => {
         items: [1, 2, 3]
       };
 
-      const parsed: unknown = JSON.parse(JSON.stringify(mockResponse), DateService.dateReviver);
-      const isParsed = (
-        value: unknown
-      ): value is { count: number; active: boolean; items: number[] } =>
-        typeof value === 'object' &&
-        value !== null &&
-        'count' in value &&
-        typeof value.count === 'number' &&
-        'active' in value &&
-        typeof value.active === 'boolean' &&
-        'items' in value &&
-        Array.isArray(value.items) &&
-        value.items.every((item) => typeof item === 'number');
-      if (!isParsed(parsed)) {
-        throw new Error('Parsed response did not match expected shape');
-      }
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+      const parsed = JSON.parse(JSON.stringify(mockResponse), DateService.dateReviver) as {
+        count: number;
+        active: boolean;
+        items: number[];
+      };
 
       expect(parsed.count).toBe(42);
       expect(parsed.active).toBe(true);
