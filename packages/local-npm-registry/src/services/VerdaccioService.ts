@@ -17,13 +17,18 @@ import { MutexService } from './MutexService.js';
 import { NpmrcService } from './NpmrcService.js';
 import { PackageJsonService } from './PackageJsonService.js';
 
-// Type definition for the Verdaccio runServer function.
-// This is used to ensure we can call it with the correct parameters, also
-// because the Verdaccio types are incorrect unfortunately.
-// See: https://github.com/verdaccio/verdaccio/blob/master/packages/node-api/src/server.ts
-declare module 'verdaccio' {
-  function runServer(config: Partial<VerdaccioConfig>): Promise<http.Server>;
-}
+/**
+ * Locally-typed alias for the Verdaccio `runServer` export. The published
+ * Verdaccio types do not narrow the signature to what the runtime actually
+ * accepts, and JSR publishing forbids modifying global module types via
+ * `declare module`, so we cast through `unknown` at a single site instead.
+ *
+ * See: https://github.com/verdaccio/verdaccio/blob/master/packages/node-api/src/server.ts
+ */
+// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+const verdaccioRunServer = runServer as unknown as (
+  config: Partial<VerdaccioConfig>
+) => Promise<http.Server>;
 
 type StrictVerdaccioConfig = Partial<VerdaccioConfig> & {
   storage: string; // Ensure storage is always a string
@@ -224,7 +229,7 @@ export class VerdaccioService {
    */
   private static async startVerdaccio(config: LocalNpmConfig): Promise<void> {
     return new Promise((resolve, reject) => {
-      runServer(this.verdaccioConfig)
+      verdaccioRunServer(this.verdaccioConfig)
         .then((verdaccioServer: http.Server) => {
           VerdaccioService.verdaccioServer = verdaccioServer;
 
