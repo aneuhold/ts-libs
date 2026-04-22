@@ -62,6 +62,7 @@ export default class DbOperationMetaData {
    * @returns The cached document, or undefined if not found.
    */
   getCachedDoc<T>(docId: UUID): T | undefined {
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
     return this.docCache.get(docId) as T | undefined;
   }
 

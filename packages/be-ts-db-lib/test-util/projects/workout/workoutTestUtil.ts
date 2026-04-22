@@ -771,7 +771,8 @@ class WorkoutTestUtil {
       isRecoveryExercise = false
     } = options;
 
-    const setCountsPerMicro = setsPerMicrocycle ?? (Array(microcycleCount).fill(3) as number[]);
+    const setCountsPerMicro: number[] =
+      setsPerMicrocycle ?? Array.from({ length: microcycleCount }, () => 3);
 
     const mesocycle = this.createMesocycle({
       userId,

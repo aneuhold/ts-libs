@@ -198,16 +198,17 @@ describe('WorkoutSessionRepository', () => {
         // title and startTime are missing
       };
 
-      await expect(repo.insertNew(invalidSession as unknown as WorkoutSession)).rejects.toThrow(
-        'Schema validation failed'
-      );
+      await expect(
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+        repo.insertNew(invalidSession as unknown as WorkoutSession)
+      ).rejects.toThrow('Schema validation failed');
     });
 
     it('should reject update without _id', async () => {
       await expect(
         repo.update({
           startTime: new Date()
-        } as Partial<WorkoutSession>)
+        })
       ).rejects.toThrow('No _id defined for WorkoutSession update.');
     });
 

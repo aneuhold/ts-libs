@@ -1,4 +1,5 @@
 import {
+  DocumentService,
   ExerciseRepRange,
   WorkoutExerciseCalibrationService,
   WorkoutExerciseSchema,
@@ -144,9 +145,7 @@ describe('WorkoutExerciseRepository', () => {
         exerciseName: 'Invalid Exercise',
         workoutEquipmentTypeId: equipment._id,
         initialFatigueGuess: {},
-        primaryMuscleGroups: [
-          '00000000-0000-7000-8000-000000000000' as `${string}-${string}-${string}-${string}-${string}`
-        ],
+        primaryMuscleGroups: [DocumentService.generateID()],
         repRange: ExerciseRepRange.Medium
       });
 
@@ -182,9 +181,10 @@ describe('WorkoutExerciseRepository', () => {
         // exerciseName, workoutEquipmentTypeId, and repRange are missing
       };
 
-      await expect(repo.insertNew(invalidExercise as unknown as WorkoutExercise)).rejects.toThrow(
-        'Schema validation failed'
-      );
+      await expect(
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+        repo.insertNew(invalidExercise as unknown as WorkoutExercise)
+      ).rejects.toThrow('Schema validation failed');
     });
 
     it('should reject update without _id', async () => {

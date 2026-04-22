@@ -8,7 +8,7 @@ export default class ErrorUtils {
    * @param errorList - The list of error messages.
    * @param erroneousObject - The object related to the errors.
    */
-  static throwErrorList(errorList: string[], erroneousObject: object) {
+  static throwErrorList(errorList: string[], erroneousObject: unknown) {
     let errorString = '';
     for (let i = 0; i < errorList.length; i += 1) {
       errorString += `${errorList[i]}\n`;
@@ -22,7 +22,7 @@ export default class ErrorUtils {
    * @param errorMessage - The error message.
    * @param erroneousObject - The object related to the error.
    */
-  static throwError(errorMessage: string, erroneousObject: object) {
+  static throwError(errorMessage: string, erroneousObject: unknown) {
     ErrorUtils.throwErrorList([errorMessage], erroneousObject);
   }
 

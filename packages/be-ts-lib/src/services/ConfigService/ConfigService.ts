@@ -3,6 +3,7 @@ import 'dotenv/config';
 import { parse } from 'jsonc-parser';
 import GitHubService from '../GitHubService.js';
 import type Config from './ConfigDefinition.js';
+import { ConfigSchema } from './ConfigDefinition.js';
 
 export type ConfigEnv = 'local' | 'dev' | 'prod';
 
@@ -59,27 +60,10 @@ export default class ConfigService {
     ConfigService.env = env;
     try {
       const jsonString = await GitHubService.getContentFromRepo('config', `${env}.jsonc`);
-      ConfigService.configObject = parse(jsonString) as Config;
+      ConfigService.configObject = ConfigSchema.parse(parse(jsonString));
     } catch (error) {
-      DR.logger.error(`Failed to load ${env}.json, error: ${error as string}`);
+      DR.logger.error(`Failed to load ${env}.json, error: ${String(error)}`);
       throw error;
     }
-  }
-
-  /**
-   * Inserts the provided configuration into the local environment.
-   *
-   * This may not actually need to happen.
-   *
-   * @param config - The configuration object to insert into the environment.
-   */
-  private static insertPropertiesIntoEnv(config: object) {
-    Object.entries(config).forEach(([key, value]) => {
-      if (typeof value === 'object') {
-        ConfigService.insertPropertiesIntoEnv(value as object);
-      } else {
-        process.env[key] = value as string;
-      }
-    });
   }
 }

@@ -18,7 +18,7 @@ export default class RepositoryInfoService {
 
     try {
       const packageJsonContent = await readFile(packageJsonPath, 'utf-8');
-      const packageJson = JSON.parse(packageJsonContent) as unknown;
+      const packageJson: unknown = JSON.parse(packageJsonContent);
 
       // Type guard to check if packageJson has the expected structure
       if (

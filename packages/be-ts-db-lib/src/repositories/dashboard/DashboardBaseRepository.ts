@@ -23,6 +23,7 @@ export default abstract class DashboardBaseRepository<
       updateCleaner
         ? updateCleaner(CleanDocument.docType(updatedDoc))
         : CleanDocument.docType(updatedDoc);
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
     const defaultFilter = { docType } as Partial<TBaseType>;
     super(DashboardBaseRepository.COLLECTION_NAME, validator, defaultFilter, defaultUpdateCleaner);
   }

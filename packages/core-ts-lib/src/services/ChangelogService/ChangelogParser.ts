@@ -1,5 +1,5 @@
-import type { ChangelogSection, ChangelogSectionType, ChangelogVersionEntry } from './types.js';
-import { REQUIRED_SECTION_TYPES } from './types.js';
+import type { ChangelogSection, ChangelogVersionEntry } from './types.js';
+import { isRequiredSectionType } from './types.js';
 
 /**
  * Service for parsing changelog content and extracting structured data.
@@ -55,9 +55,9 @@ export default class ChangelogParser {
 
     for (const part of sectionParts) {
       const lines = part.split('\n');
-      const sectionType = lines[0].trim() as ChangelogSectionType;
+      const sectionType = lines[0].trim();
 
-      if (REQUIRED_SECTION_TYPES.includes(sectionType)) {
+      if (isRequiredSectionType(sectionType)) {
         // Get content after the section header
         let sectionContent = lines.slice(1).join('\n');
 

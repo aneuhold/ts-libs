@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## 🔖 [3.1.12] (2026-04-21)
+
+### ✅ Added
+
+- Added `zod` as a direct dependency.
+- `ConfigDefinition` now exports a `ConfigSchema` alongside the `Config` type, with the type inferred from the schema.
+
+### 🏗️ Changed
+
+- `GitHubService.getContentFromRepo` now validates the Octokit response is a string at runtime instead of using an unsafe cast.
+- `ConfigService.useConfig` now validates the parsed JSONC config against `ConfigSchema` (Zod) instead of casting; removed the unused `insertPropertiesIntoEnv` private method.
+- `TranslationService.getTranslations` documents why it does not validate (arbitrary-key JSON) and uses an explicit cast rather than a structural guard that accepts any object.
+
 ## 🔖 [3.1.11] (2026-04-17)
 
 ### 🏗️ Changed
@@ -301,6 +314,7 @@ No direct code changes; version bump for compatibility with new major versions o
 - Updated workflow permissions to allow repository write access
 
 <!-- Link References -->
+[3.1.12]: https://github.com/aneuhold/ts-libs/compare/be-ts-lib-v3.1.11...be-ts-lib-v3.1.12
 [3.1.11]: https://github.com/aneuhold/ts-libs/compare/be-ts-lib-v3.1.10...be-ts-lib-v3.1.11
 [3.1.10]: https://github.com/aneuhold/ts-libs/compare/be-ts-lib-v3.1.9...be-ts-lib-v3.1.10
 [3.1.9]: https://github.com/aneuhold/ts-libs/compare/be-ts-lib-v3.1.8...be-ts-lib-v3.1.9

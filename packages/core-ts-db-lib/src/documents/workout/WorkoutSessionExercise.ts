@@ -1,8 +1,8 @@
-import type { UUID } from 'crypto';
 import { z } from 'zod';
 import { FatigueSchema } from '../../embedded-types/workout/Fatigue.js';
 import { RsmSchema } from '../../embedded-types/workout/Rsm.js';
 import { RequiredUserIdSchema } from '../../schemas/required-refs/RequiredUserId.js';
+import { UUIDSchema } from '../../schemas/UUIDSchema.js';
 import {
   BaseDocumentWithTypeSchema,
   BaseDocumentWithUpdatedAndCreatedDatesSchema
@@ -24,15 +24,15 @@ export const WorkoutSessionExerciseSchema = z.object({
   /**
    * The ID of the workout session this exercise belongs to.
    */
-  workoutSessionId: z.uuidv7().transform((val) => val as UUID),
+  workoutSessionId: UUIDSchema,
   /**
    * The ID of the workout exercise being performed.
    */
-  workoutExerciseId: z.uuidv7().transform((val) => val as UUID),
+  workoutExerciseId: UUIDSchema,
   /**
    * The order of sets for this exercise, represented as an array of WorkoutSet IDs.
    */
-  setOrder: z.array(z.uuidv7().transform((val) => val as UUID)).default([]),
+  setOrder: z.array(UUIDSchema).default([]),
   /**
    * The Raw Stimulus Magnitude for this specific exercise within the session.
    *

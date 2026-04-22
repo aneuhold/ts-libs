@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## 🔖 [2.4.4] (2026-04-21)
+
+### ✅ Added
+
+- Added `JsonUtils` class with a `parseWithGuard` static method for type-safe JSON parsing validated by a type guard.
+- Added `isJsonWithVersionProperty`, `isPackageJson`, and `isPackageJsonWithoutVersion` type guard functions.
+- Added `PackageJsonWithoutVersion` type — a `PackageJson` variant where `version` is optional.
+- Added `isRequiredSectionType` type guard in `ChangelogService/types`.
+- Exported `JsonUtils`, the new type guards, and `PackageJsonWithoutVersion` from the browser entry point.
+
+### 🏗️ Changed
+
+- `DeepPartial<T>` now uses `Record<PropertyKey, unknown>` instead of `object` for the recursive constraint, making narrowing more precise.
+- `ErrorUtils.throwErrorList` and `throwError` now accept `unknown` instead of `object` for the erroneous-object parameter.
+- `DependencyService` and `PackageService` internals now use `JsonUtils.parseWithGuard` instead of unsafe casts when reading JSON files.
+- `DateService.reviveDatesRecursive` refactored to use a private `isPlainRecord` helper instead of an inline cast.
+
 ## 🔖 [2.4.3] (2026-03-15)
 
 ### ✅ Added
@@ -220,7 +237,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Updated workflow permissions to allow repository write access
 
 <!-- Link References -->
-
+[2.4.4]: https://github.com/aneuhold/ts-libs/compare/core-ts-lib-v2.4.3...core-ts-lib-v2.4.4
 [2.4.3]: https://github.com/aneuhold/ts-libs/compare/core-ts-lib-v2.4.2...core-ts-lib-v2.4.3
 [2.4.2]: https://github.com/aneuhold/ts-libs/compare/core-ts-lib-v2.4.1...core-ts-lib-v2.4.2
 [2.4.1]: https://github.com/aneuhold/ts-libs/compare/core-ts-lib-v2.4.0...core-ts-lib-v2.4.1

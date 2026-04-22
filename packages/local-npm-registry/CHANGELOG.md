@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## 🔖 [0.2.31] (2026-04-21)
+
+### ✅ Added
+
+- Added `isVerdaccioDb` type guard for `VerdaccioDb`.
+- Added overloaded signatures to `PackageJsonService.getPackageInfo` distinguishing `PackageJson` (requireVersion=true) from `PackageJsonWithoutVersion` (requireVersion=false) return types.
+
+### 🏗️ Changed
+
+- All JSON file reads (`LocalPackageStoreService`, `PackageJsonService`, `VerdaccioService`) now use type guards instead of unsafe casts. `ConfigService` reads use a documented cast since `LocalNpmConfig` has no required fields to validate.
+- `VerdaccioService` now uses a module augmentation for `verdaccio.runServer` typing instead of an unsafe cast; `startVerdaccio` calls `runServer` directly.
+- `RegistryConfigService.generateRegistryConfig` now accepts `PackageJsonWithoutVersion` instead of `PackageJson`.
+- `RegistryConfigService.mergeYamlConfig` now uses a private `isYamlRecord` type guard instead of an inline cast.
+
 ## 🔖 [0.2.30] (2026-03-15)
 
 ### 🏗️ Changed
@@ -188,7 +202,7 @@ No direct code changes; version bump for compatibility.
 - Updated workflow permissions to allow repository write access
 
 <!-- Link References -->
-
+[0.2.31]: https://github.com/aneuhold/ts-libs/compare/local-npm-registry-v0.2.30...local-npm-registry-v0.2.31
 [0.2.30]: https://github.com/aneuhold/ts-libs/compare/local-npm-registry-v0.2.29...local-npm-registry-v0.2.30
 [0.2.29]: https://github.com/aneuhold/ts-libs/compare/local-npm-registry-v0.2.28...local-npm-registry-v0.2.29
 [0.2.28]: https://github.com/aneuhold/ts-libs/compare/local-npm-registry-v0.2.27...local-npm-registry-v0.2.28

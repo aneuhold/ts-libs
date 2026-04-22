@@ -1,5 +1,5 @@
-import type { UUID } from 'crypto';
 import { z } from 'zod';
+import { UUIDSchema } from '../../../schemas/UUIDSchema.js';
 
 /**
  * Zod schema for {@link StandardFilterSetting}.
@@ -20,7 +20,7 @@ export const DashboardTaskListFilterSettingsSchema = z.object({
   /**
    * The ID of the user.
    */
-  userId: z.uuidv7().transform((val) => val as UUID),
+  userId: UUIDSchema,
   completed: StandardFilterSettingSchema.default({ show: true }),
   grandChildrenTasks: StandardFilterSettingSchema.default({ show: false }),
   startDate: z
@@ -46,7 +46,7 @@ export type DashboardTaskListFilterSettings = z.infer<typeof DashboardTaskListFi
  * Zod schema for {@link DashboardTaskFilterSettings}.
  */
 export const DashboardTaskFilterSettingsSchema = z.partialRecord(
-  z.uuidv7().transform((val) => val as UUID),
+  UUIDSchema,
   DashboardTaskListFilterSettingsSchema
 );
 

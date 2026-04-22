@@ -100,6 +100,7 @@ export default abstract class BaseRepository<TBaseType extends BaseDocument> {
   async insertNew(newDoc: TBaseType, meta?: DbOperationMetaData): Promise<TBaseType | null> {
     const collection = await this.getCollection();
     await this.validator.validateNewObject(newDoc, meta);
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
     const insertResult = await collection.insertOne(newDoc as OptionalUnlessRequiredId<TBaseType>);
     if (!insertResult.acknowledged) {
       return null;
@@ -119,6 +120,7 @@ export default abstract class BaseRepository<TBaseType extends BaseDocument> {
     const collection = await this.getCollection();
     await Promise.all(newDocs.map((doc) => this.validator.validateNewObject(doc, meta)));
     const insertResult = await collection.insertMany(
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
       newDocs as OptionalUnlessRequiredId<TBaseType>[]
     );
     if (!insertResult.acknowledged) {
@@ -136,7 +138,11 @@ export default abstract class BaseRepository<TBaseType extends BaseDocument> {
    */
   async get(filter: DeepPartial<TBaseType>): Promise<TBaseType | null> {
     const collection = await this.getCollection();
-    const result = await collection.findOne(this.getFilterWithDefault(filter as Filter<TBaseType>));
+    const result = await collection.findOne(
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+      this.getFilterWithDefault(filter as Filter<TBaseType>)
+    );
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
     return result as TBaseType | null;
   }
 
@@ -148,7 +154,7 @@ export default abstract class BaseRepository<TBaseType extends BaseDocument> {
   async getAll(): Promise<TBaseType[]> {
     const collection = await this.getCollection();
     const result = await collection.find(this.getFilterWithDefault()).toArray();
-    // Set to unknown first because of some weird type things.
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
     return result as unknown as TBaseType[];
   }
 
@@ -174,8 +180,12 @@ export default abstract class BaseRepository<TBaseType extends BaseDocument> {
   async getList(docIds: UUID[]): Promise<TBaseType[]> {
     const collection = await this.getCollection();
     const result = await collection
-      .find(this.getFilterWithDefault({ _id: { $in: docIds } } as Filter<TBaseType>))
+      .find(
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+        this.getFilterWithDefault({ _id: { $in: docIds } } as Filter<TBaseType>)
+      )
       .toArray();
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
     return result as TBaseType[];
   }
 
@@ -188,6 +198,7 @@ export default abstract class BaseRepository<TBaseType extends BaseDocument> {
   async getListWithFilter(filter: Filter<TBaseType>): Promise<TBaseType[]> {
     const collection = await this.getCollection();
     const result = await collection.find(this.getFilterWithDefault(filter)).toArray();
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
     return result as TBaseType[];
   }
 
@@ -201,6 +212,7 @@ export default abstract class BaseRepository<TBaseType extends BaseDocument> {
   async delete(docId: UUID, meta?: DbOperationMetaData): Promise<DeleteResult> {
     const collection = await this.getCollection();
     await Promise.all(this.subscribers.deleteOne.map((subscriber) => subscriber(docId, meta)));
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
     return collection.deleteOne({ _id: docId } as Filter<TBaseType>);
   }
 
@@ -213,9 +225,10 @@ export default abstract class BaseRepository<TBaseType extends BaseDocument> {
    */
   async deleteList(docIds: UUID[], meta?: DbOperationMetaData): Promise<DeleteResult> {
     const collection = await this.getCollection();
-    const deleteResult = collection.deleteMany({
-      _id: { $in: docIds }
-    } as Filter<TBaseType>);
+    const deleteResult = collection.deleteMany(
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+      { _id: { $in: docIds } } as Filter<TBaseType>
+    );
     await Promise.all(this.subscribers.deleteList.map((subscriber) => subscriber(docIds, meta)));
     return deleteResult;
   }
@@ -247,9 +260,8 @@ export default abstract class BaseRepository<TBaseType extends BaseDocument> {
 
     const cleanedDoc = this.cleanUpdateObject(updatedDoc);
 
-    const result = collection.updateOne({ _id: docId } as Filter<TBaseType>, {
-      $set: cleanedDoc
-    });
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    const result = collection.updateOne({ _id: docId } as Filter<TBaseType>, { $set: cleanedDoc });
     await Promise.all(this.subscribers.updateOne.map((subscriber) => subscriber(updatedDoc, meta)));
     return result;
   }
@@ -270,6 +282,7 @@ export default abstract class BaseRepository<TBaseType extends BaseDocument> {
     const collection = await this.getCollection();
     await Promise.all(updatedDocs.map((doc) => this.validator.validateUpdateObject(doc, meta)));
 
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
     const bulkOps = updatedDocs.map((doc) => {
       const docId = doc._id;
       const cleanedDoc = this.cleanUpdateObject(doc);

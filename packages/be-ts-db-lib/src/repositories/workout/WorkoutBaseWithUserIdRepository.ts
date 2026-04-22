@@ -36,9 +36,8 @@ export default abstract class WorkoutBaseWithUserIdRepository<
   }
 
   async getAllForUsers(userIds: UUID[]): Promise<TBaseType[]> {
-    const filter = {
-      userId: { $in: userIds }
-    } as Filter<TBaseType>;
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    const filter = { userId: { $in: userIds } } as Filter<TBaseType>;
     return this.getListWithFilter(filter);
   }
 

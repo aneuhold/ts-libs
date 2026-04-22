@@ -1,4 +1,4 @@
-import { type PackageJson } from '@aneuhold/core-ts-lib';
+import { type PackageJsonWithoutVersion } from '@aneuhold/core-ts-lib';
 import fs from 'fs-extra';
 import yaml from 'js-yaml';
 import path from 'path';
@@ -167,21 +167,23 @@ export class RegistryConfigService {
    * @param newConfig The new YAML content to merge
    */
   private static mergeYamlConfig(existingContent: string, newConfig: string): string {
-    const existingParsed = yaml.load(existingContent);
-    const newParsed = yaml.load(newConfig);
+    const existingParsed: unknown = yaml.load(existingContent);
+    const newParsed: unknown = yaml.load(newConfig);
 
-    const existingData =
-      typeof existingParsed === 'object' && existingParsed !== null
-        ? (existingParsed as Record<string, unknown>)
-        : {};
-
-    const newData =
-      typeof newParsed === 'object' && newParsed !== null
-        ? (newParsed as Record<string, unknown>)
-        : {};
+    const existingData = RegistryConfigService.isYamlRecord(existingParsed) ? existingParsed : {};
+    const newData = RegistryConfigService.isYamlRecord(newParsed) ? newParsed : {};
 
     const mergedData = { ...existingData, ...newData };
     return yaml.dump(mergedData, { lineWidth: -1 });
+  }
+
+  /**
+   * Type guard for a record produced by {@link yaml.load}.
+   *
+   * @param value The parsed YAML value.
+   */
+  private static isYamlRecord(value: unknown): value is Record<string, unknown> {
+    return typeof value === 'object' && value !== null;
   }
 
   /**
@@ -258,7 +260,7 @@ export class RegistryConfigService {
   private static generateRegistryConfig(
     packageManager: PackageManager,
     registryUrl: string,
-    packageInfo?: PackageJson | null,
+    packageInfo?: PackageJsonWithoutVersion | null,
     npmrcConfigs?: Map<string, string>
   ): string {
     const packageManagerInfo = PACKAGE_MANAGER_INFO[packageManager];

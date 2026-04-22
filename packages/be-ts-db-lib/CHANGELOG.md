@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## 🔖 [4.2.25] (2026-04-21)
+
+### 🏗️ Changed
+
+- `BaseRepository` methods now carry `eslint-disable consistent-type-assertions` comments to document the intentional type assertions required by the MongoDB driver's generic types.
+- `WorkoutExerciseRepository` and `WorkoutMuscleGroupRepository` now use typed `Map` keys directly instead of casting `_id as string` when performing lookups.
+- Test files updated to remove unsafe casts, replacing them with type guards or cleaner assertion patterns.
+
 ## 🔖 [4.2.24] (2026-04-17)
 
 ### 🏗️ Changed
@@ -395,6 +403,7 @@ Updated dependencies: now requires `@aneuhold/core-ts-db-lib@^3.0.0`, `@aneuhold
 - Updated workflow permissions to allow repository write access
 
 <!-- Link References -->
+[4.2.25]: https://github.com/aneuhold/ts-libs/compare/be-ts-db-lib-v4.2.24...be-ts-db-lib-v4.2.25
 [4.2.24]: https://github.com/aneuhold/ts-libs/compare/be-ts-db-lib-v4.2.23...be-ts-db-lib-v4.2.24
 [4.2.23]: https://github.com/aneuhold/ts-libs/compare/be-ts-db-lib-v4.2.22...be-ts-db-lib-v4.2.23
 [4.2.22]: https://github.com/aneuhold/ts-libs/compare/be-ts-db-lib-v4.2.21...be-ts-db-lib-v4.2.22

@@ -1,4 +1,4 @@
-import { DR, type PackageJson } from '@aneuhold/core-ts-lib';
+import { DR, isPackageJson } from '@aneuhold/core-ts-lib';
 import { randomUUID } from 'crypto';
 import fs from 'fs-extra';
 import path from 'path';
@@ -110,9 +110,12 @@ describe('Unit Tests', () => {
 
       // Override the package.json to specify pnpm as packageManager
       const packageJsonPath = path.join(packagePath, 'package.json');
-      const packageJson = (await fs.readJson(packageJsonPath)) as PackageJson;
-      packageJson.packageManager = 'pnpm@8.0.0';
-      await fs.writeJson(packageJsonPath, packageJson);
+      const rawPackageJson: unknown = await fs.readJson(packageJsonPath);
+      if (!isPackageJson(rawPackageJson)) {
+        throw new Error('Test package.json did not match PackageJson shape');
+      }
+      rawPackageJson.packageManager = 'pnpm@8.0.0';
+      await fs.writeJson(packageJsonPath, rawPackageJson);
 
       const packageManager = await PackageManagerService.detectPackageManager(packagePath);
 

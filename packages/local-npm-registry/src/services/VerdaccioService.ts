@@ -11,24 +11,21 @@ import path from 'path';
 import { runServer } from 'verdaccio';
 import { DEFAULT_CONFIG, type LocalNpmConfig } from '../types/LocalNpmConfig.js';
 import { PACKAGE_MANAGER_INFO, PackageManager } from '../types/PackageManager.js';
-import { VERDACCIO_DB_FILE_NAME, type VerdaccioDb } from '../types/VerdaccioDb.js';
+import { VERDACCIO_DB_FILE_NAME, isVerdaccioDb } from '../types/VerdaccioDb.js';
 import { ConfigService } from './ConfigService.js';
 import { MutexService } from './MutexService.js';
 import { NpmrcService } from './NpmrcService.js';
 import { PackageJsonService } from './PackageJsonService.js';
 
-/**
- * Type definition for the Verdaccio runServer function.
- * This is used to ensure we can call it with the correct parameters, also
- * because the Verdaccio types are incorrect unfortunately.
- *
- * See the source code {@link https://github.com/verdaccio/verdaccio/blob/master/packages/node-api/src/server.ts here}.
- */
-const verdaccioRunServer = runServer as unknown as (
-  config: VerdaccioConfig
-) => Promise<http.Server>;
+// Type definition for the Verdaccio runServer function.
+// This is used to ensure we can call it with the correct parameters, also
+// because the Verdaccio types are incorrect unfortunately.
+// See: https://github.com/verdaccio/verdaccio/blob/master/packages/node-api/src/server.ts
+declare module 'verdaccio' {
+  function runServer(config: Partial<VerdaccioConfig>): Promise<http.Server>;
+}
 
-type StrictVerdaccioConfig = VerdaccioConfig & {
+type StrictVerdaccioConfig = Partial<VerdaccioConfig> & {
   storage: string; // Ensure storage is always a string
 };
 
@@ -192,11 +189,12 @@ export class VerdaccioService {
 
       // Try to extract more meaningful error information from execa error
       if (error && typeof error === 'object') {
-        const execaError = error as { stderr?: string; stdout?: string };
-        if (execaError.stderr) {
-          errorMessage = `npm publish failed: ${execaError.stderr}`;
-        } else if (execaError.stdout) {
-          errorMessage = `npm publish failed: ${execaError.stdout}`;
+        const stderr = 'stderr' in error && typeof error.stderr === 'string' ? error.stderr : null;
+        const stdout = 'stdout' in error && typeof error.stdout === 'string' ? error.stdout : null;
+        if (stderr) {
+          errorMessage = `npm publish failed: ${stderr}`;
+        } else if (stdout) {
+          errorMessage = `npm publish failed: ${stdout}`;
         }
       }
 
@@ -226,7 +224,7 @@ export class VerdaccioService {
    */
   private static async startVerdaccio(config: LocalNpmConfig): Promise<void> {
     return new Promise((resolve, reject) => {
-      verdaccioRunServer(this.verdaccioConfig)
+      runServer(this.verdaccioConfig)
         .then((verdaccioServer: http.Server) => {
           VerdaccioService.verdaccioServer = verdaccioServer;
 
@@ -278,7 +276,11 @@ export class VerdaccioService {
       // Check if the database file exists
       if (await fs.pathExists(dbFilePath)) {
         // Read the current database
-        const dbContent = (await fs.readJson(dbFilePath)) as VerdaccioDb;
+        const dbContent: unknown = await fs.readJson(dbFilePath);
+        if (!isVerdaccioDb(dbContent)) {
+          DR.logger.warn(`Verdaccio database at ${dbFilePath} is not in the expected format`);
+          return;
+        }
 
         // Remove the specific package from the list
         if (dbContent.list.includes(packageName)) {
@@ -359,9 +361,9 @@ export class VerdaccioService {
       ...packages
     };
 
-    // Just a partial, because VerdaccioConfig seems to contain unnecessary
-    // required properties that we don't need to set.
-    const verdaccioConfig: Partial<StrictVerdaccioConfig> = {
+    // VerdaccioConfig contains unnecessary required properties that we do not
+    // need to set. StrictVerdaccioConfig only guarantees `storage` is present.
+    const verdaccioConfig: StrictVerdaccioConfig = {
       // Storage is managed manually by local-npm-registry.
       storage: verdaccioDirectory,
       uplinks: baseUplinks,
@@ -377,7 +379,7 @@ export class VerdaccioService {
       ...config.verdaccioConfig
     };
 
-    return verdaccioConfig as StrictVerdaccioConfig;
+    return verdaccioConfig;
   }
 
   /**

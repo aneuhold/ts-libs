@@ -5,6 +5,8 @@ import FileSystemService from './FileSystemService.js';
 
 const TEST_FOLDER_NAME = '__fileSystemService-tests__';
 
+type FileStructure = { [name: string]: string | FileStructure };
+
 describe('FileSystemService', () => {
   afterAll(async () => {
     await deleteTestFolder();
@@ -143,10 +145,8 @@ describe('FileSystemService', () => {
       });
 
       const configContent = await readFile(path.join(testFolderPath, 'config.json'), 'utf8');
-      const config = JSON.parse(configContent) as {
-        name: string;
-        encoded: string;
-      };
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+      const config = JSON.parse(configContent) as { name: string; encoded: string };
 
       expect(config.name).toBe('@new/package-name');
       expect(config.encoded).toBe(encodeURIComponent('@new/package-name'));
@@ -275,15 +275,14 @@ describe('FileSystemService', () => {
  * @param folderPath The path where the files and folders should be created
  * @param fileStructure An object representing the file structure to create
  */
-async function createTestFiles(folderPath: string, fileStructure: object) {
+async function createTestFiles(folderPath: string, fileStructure: FileStructure) {
   await FileSystemService.checkOrCreateFolder(folderPath);
 
   await Promise.all(
     Object.entries(fileStructure).map(async ([key, value]) => {
       if (typeof value === 'string') {
         await writeFile(path.join(folderPath, key), value);
-      } else if (typeof value === 'object') {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+      } else {
         await createTestFiles(path.join(folderPath, key), value);
       }
     })

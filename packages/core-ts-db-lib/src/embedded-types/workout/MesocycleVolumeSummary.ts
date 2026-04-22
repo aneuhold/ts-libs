@@ -1,5 +1,5 @@
-import type { UUID } from 'crypto';
 import { z } from 'zod';
+import { UUIDSchema } from '../../schemas/UUIDSchema.js';
 import { CycleType } from '../../documents/workout/WorkoutMesocycle.js';
 
 /**
@@ -11,7 +11,7 @@ import { CycleType } from '../../documents/workout/WorkoutMesocycle.js';
  */
 export const MesocycleVolumeSummarySchema = z.object({
   /** The mesocycle these stats are from. */
-  mesocycleId: z.uuidv7().transform((val) => val as UUID),
+  mesocycleId: UUIDSchema,
 
   /** The cycle type (MuscleGain, Cut, Resensitization, FreeForm). */
   cycleType: z.enum(CycleType),

@@ -1,7 +1,7 @@
-import type { UUID } from 'crypto';
 import { z } from 'zod';
 import { FatigueSchema } from '../../embedded-types/workout/Fatigue.js';
 import { RequiredUserIdSchema } from '../../schemas/required-refs/RequiredUserId.js';
+import { UUIDSchema } from '../../schemas/UUIDSchema.js';
 import {
   BaseDocumentWithTypeSchema,
   BaseDocumentWithUpdatedAndCreatedDatesSchema
@@ -89,7 +89,7 @@ export const WorkoutExerciseSchema = z.object({
   /**
    * The ID of the equipment type used for this exercise.
    */
-  workoutEquipmentTypeId: z.uuidv7().transform((val) => val as UUID),
+  workoutEquipmentTypeId: UUIDSchema,
   /**
    * Optional notes about the exercise.
    */
@@ -121,11 +121,11 @@ export const WorkoutExerciseSchema = z.object({
   /**
    * The IDs of the primary muscle groups targeted by this exercise.
    */
-  primaryMuscleGroups: z.array(z.uuidv7().transform((val) => val as UUID)).default([]),
+  primaryMuscleGroups: z.array(UUIDSchema).default([]),
   /**
    * The IDs of the secondary muscle groups targeted by this exercise.
    */
-  secondaryMuscleGroups: z.array(z.uuidv7().transform((val) => val as UUID)).default([]),
+  secondaryMuscleGroups: z.array(UUIDSchema).default([]),
   /**
    * An initial guess of the fatigue this exercise produces.
    *

@@ -66,7 +66,9 @@ describe('Unit Tests', () => {
           })
         );
 
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
         const callArgs = mockFetch.mock.calls[0] as [string, RequestInit];
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
         const headers = callArgs[1].headers as Headers;
         expect(headers.get('Content-Type')).toBe('application/json');
         expect(result).toEqual(mockResponse);
@@ -119,6 +121,7 @@ describe('Unit Tests', () => {
           options: {}
         };
         const result = await GCloudAPIService.projectDashboard(input);
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
         const data = result.data as unknown as { createdAt: Date; name: string };
 
         expect(data).toBeDefined();

@@ -1,4 +1,10 @@
-import { DR, type PackageJson } from '@aneuhold/core-ts-lib';
+import {
+  DR,
+  isPackageJson,
+  isPackageJsonWithoutVersion,
+  type PackageJson,
+  type PackageJsonWithoutVersion
+} from '@aneuhold/core-ts-lib';
 import fs from 'fs-extra';
 import path from 'path';
 
@@ -12,23 +18,30 @@ export class PackageJsonService {
    * @param dir - Directory to search for package.json
    * @param requireVersion - Whether to require the version field (default: true for packages being published)
    */
+  static async getPackageInfo(dir?: string, requireVersion?: true): Promise<PackageJson | null>;
+  static async getPackageInfo(
+    dir: string | undefined,
+    requireVersion: false
+  ): Promise<PackageJsonWithoutVersion | null>;
   static async getPackageInfo(
     dir: string = process.cwd(),
     requireVersion: boolean = true
-  ): Promise<PackageJson | null> {
+  ): Promise<PackageJsonWithoutVersion | null> {
     try {
       const packageJsonPath = path.join(dir, 'package.json');
-      const packageJson = (await fs.readJson(packageJsonPath)) as PackageJson;
+      const rawPackageJson: unknown = await fs.readJson(packageJsonPath);
 
-      if (!packageJson.name || (requireVersion && !packageJson.version)) {
-        if (requireVersion) {
+      if (requireVersion) {
+        if (!isPackageJson(rawPackageJson)) {
           throw new Error('package.json must contain name and version fields');
-        } else {
-          throw new Error('package.json must contain name field');
         }
+        return rawPackageJson;
       }
 
-      return packageJson;
+      if (!isPackageJsonWithoutVersion(rawPackageJson)) {
+        throw new Error('package.json must contain name field');
+      }
+      return rawPackageJson;
     } catch (error) {
       DR.logger.error(`Error reading package.json: ${String(error)}`);
       return null;
@@ -53,7 +66,11 @@ export class PackageJsonService {
 
       // Read the original file content to preserve formatting
       const originalContent = await fs.readFile(packageJsonPath, 'utf-8');
-      const packageJson = (await fs.readJson(packageJsonPath)) as PackageJson;
+      const rawPackageJson: unknown = await fs.readJson(packageJsonPath);
+      if (!isPackageJsonWithoutVersion(rawPackageJson)) {
+        throw new Error('package.json must contain a name field');
+      }
+      const packageJson = rawPackageJson;
 
       let updatedContent = originalContent;
       let hasUpdates = false;

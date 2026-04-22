@@ -68,6 +68,7 @@ describe('WorkoutEquipmentTypeRepository', () => {
       };
 
       await expect(
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
         repo.insertNew(invalidEquipment as unknown as WorkoutEquipmentType)
       ).rejects.toThrow('Schema validation failed');
     });
@@ -84,11 +85,14 @@ describe('WorkoutEquipmentTypeRepository', () => {
       const testUser = await workoutTestUtil.insertUser('WorkoutEquipmentTypeRepository');
       const equipment = await workoutTestUtil.insertEquipmentType(testUser._id, 'Test Equipment');
 
+      const invalidUpdate = {
+        _id: equipment._id,
+        title: 123
+      };
+
       await expect(
-        repo.update({
-          _id: equipment._id,
-          title: 123
-        } as unknown as WorkoutEquipmentType)
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+        repo.update(invalidUpdate as unknown as WorkoutEquipmentType)
       ).rejects.toThrow('Schema validation failed');
     });
   });

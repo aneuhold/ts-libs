@@ -3,5 +3,5 @@
  * only applies to the top level, this applies to all nested objects as well.
  */
 export type DeepPartial<T> = {
-  [P in keyof T]?: T[P] extends object ? DeepPartial<T[P]> : T[P];
+  [P in keyof T]?: T[P] extends Record<PropertyKey, unknown> ? DeepPartial<T[P]> : T[P];
 };

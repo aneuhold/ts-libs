@@ -2,7 +2,6 @@
   "compileOnSave": false,
   "compilerOptions": {
     "rootDir": ".",
-    "baseUrl": ".",
     "target": "ESNEXT",
     "module": "NodeNext",
     "resolveJsonModule": true,

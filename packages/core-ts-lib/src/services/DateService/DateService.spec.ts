@@ -119,6 +119,7 @@ describe('DateService', () => {
         name: 'Test'
       };
 
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
       const parsed = JSON.parse(JSON.stringify(mockResponse), DateService.dateReviver) as {
         createdAt: Date;
         name: string;
@@ -135,6 +136,7 @@ describe('DateService', () => {
         anotherString: 'hello world'
       };
 
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
       const parsed = JSON.parse(JSON.stringify(mockResponse), DateService.dateReviver) as {
         someString: string;
         anotherString: string;
@@ -152,6 +154,7 @@ describe('DateService', () => {
         items: [1, 2, 3]
       };
 
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
       const parsed = JSON.parse(JSON.stringify(mockResponse), DateService.dateReviver) as {
         count: number;
         active: boolean;

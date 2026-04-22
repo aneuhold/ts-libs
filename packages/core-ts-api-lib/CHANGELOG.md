@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## 🔖 [3.0.35] (2026-04-21)
+
+### 🏗️ Changed
+
+- `GCloudAPIService.call` and `fetchAndDecode` are now typed with both `TInput` and `TOutput` type parameters for stricter input typing.
+- `GCloudAPIService.decodeResponse` now validates the response shape with an `isAPIResponseShape` type guard instead of an unsafe cast. On failures it still returns an `APIResponse<T>` with `data` populated (as an empty object cast to `T`) so the response contract is preserved.
+
 ## 🔖 [3.0.34] (2026-04-17)
 
 ### 🏗️ Changed
@@ -397,6 +404,7 @@ No direct code changes; version bump for compatibility.
 - Updated workflow permissions to allow repository write access
 
 <!-- Link References -->
+[3.0.35]: https://github.com/aneuhold/ts-libs/compare/core-ts-api-lib-v3.0.34...core-ts-api-lib-v3.0.35
 [3.0.34]: https://github.com/aneuhold/ts-libs/compare/core-ts-api-lib-v3.0.33...core-ts-api-lib-v3.0.34
 [3.0.33]: https://github.com/aneuhold/ts-libs/compare/core-ts-api-lib-v3.0.32...core-ts-api-lib-v3.0.33
 [3.0.32]: https://github.com/aneuhold/ts-libs/compare/core-ts-api-lib-v3.0.31...core-ts-api-lib-v3.0.32

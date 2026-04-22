@@ -73,13 +73,11 @@ export class LocalPackageStoreService {
       if (!fileExists) {
         return { packages: {} };
       }
-      const store = (await fs.readJson(storeFilePath)) as LocalPackageStore;
-      // Ensure the store has the correct structure for backwards compatibility
-      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-      if (typeof store.packages !== 'object' || store.packages === null) {
-        store.packages = {};
+      const rawStore: unknown = await fs.readJson(storeFilePath);
+      if (!LocalPackageStoreService.isLocalPackageStore(rawStore)) {
+        return { packages: {} };
       }
-      return store;
+      return rawStore;
     } catch (error) {
       DR.logger.error(`Error reading local package store: ${String(error)}`);
       return { packages: {} }; // Return empty store on error
@@ -201,6 +199,22 @@ export class LocalPackageStoreService {
   static async clearStore(): Promise<void> {
     const emptyStore: LocalPackageStore = { packages: {} };
     await this.writeStore(emptyStore);
+  }
+
+  /**
+   * Type guard that checks whether an unknown value has the shape of a
+   * {@link LocalPackageStore}.
+   *
+   * @param value The value to narrow.
+   */
+  private static isLocalPackageStore(value: unknown): value is LocalPackageStore {
+    return (
+      typeof value === 'object' &&
+      value !== null &&
+      'packages' in value &&
+      typeof value.packages === 'object' &&
+      value.packages !== null
+    );
   }
 
   /**

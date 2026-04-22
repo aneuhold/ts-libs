@@ -276,8 +276,8 @@ export default class WorkoutExerciseRepository extends WorkoutBaseWithUserIdRepo
         throw new Error(`Equipment type not found for exercise ${raw._id}`);
       }
 
-      const lastRow = lastSessionMap.get(raw._id as string);
-      const lastAccumulationRow = lastAccumulationMap.get(raw._id as string);
+      const lastRow = lastSessionMap.get(raw._id);
+      const lastAccumulationRow = lastAccumulationMap.get(raw._id);
 
       return WorkoutExerciseCTOSchema.parse({
         ...exerciseFields,

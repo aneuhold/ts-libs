@@ -1,5 +1,5 @@
-import type { UUID } from 'crypto';
 import { z } from 'zod';
+import { UUIDSchema } from '../../../schemas/UUIDSchema.js';
 
 /**
  * The sortBy options for a task list.
@@ -61,7 +61,7 @@ export const DashboardTaskListSortSettingsSchema = z.object({
   /**
    * The ID of the user.
    */
-  userId: z.uuidv7().transform((val) => val as UUID),
+  userId: UUIDSchema,
   sortList: z.array(DashboardTaskSortSettingSchema).default([])
 });
 
@@ -74,7 +74,7 @@ export type DashboardTaskListSortSettings = z.infer<typeof DashboardTaskListSort
  * Zod schema for {@link DashboardTaskSortSettings}.
  */
 export const DashboardTaskSortSettingsSchema = z.partialRecord(
-  z.uuidv7().transform((val) => val as UUID),
+  UUIDSchema,
   DashboardTaskListSortSettingsSchema
 );
 

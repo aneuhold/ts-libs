@@ -30,6 +30,11 @@ export class ConfigService {
 
     if (configFilePath) {
       try {
+        // `fs.readJson` returns `unknown`. The structural shape of
+        // `LocalNpmConfig` is just "an object with optional fields", so any
+        // guard would only check `typeof === 'object'` — which provides no
+        // real signal. Trust the file contents and merge with defaults.
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
         config = (await fs.readJson(configFilePath)) as LocalNpmConfig;
       } catch (error) {
         DR.logger.warn(

@@ -2,7 +2,7 @@
   "name": "@aneuhold/core-ts-lib",
   "author": "Anton G. Neuhold Jr.",
   "license": "MIT",
-  "version": "2.4.3",
+  "version": "2.4.4",
   "description": "A core library for all of my TypeScript projects",
   "packageManager": "pnpm@10.25.0",
   "type": "module",
@@ -75,7 +75,7 @@
     "prettier": "^3.7.4",
     "rimraf": "^6.1.2",
     "tsx": "^4.21.0",
-    "typescript": "~5.9.3",
+    "typescript": "~6.0.3",
     "vitest": "^4.0.15"
   }
 }

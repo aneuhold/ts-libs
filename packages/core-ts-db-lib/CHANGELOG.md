@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## 🔖 [5.0.7] (2026-04-21)
+
+### ✅ Added
+
+- Added `UUIDSchema` — a shared Zod schema that validates a UUIDv7 string and narrows it to the branded `UUID` type.
+- Added `DocumentService.toUUID` static helper that narrows an already-validated UUID string to the branded `UUID` type.
+
+### 🏗️ Changed
+
+- All Zod schemas across `documents/`, `embedded-types/`, and `schemas/` now use the shared `UUIDSchema` instead of inline `z.uuidv7().transform((val) => val as UUID)` patterns.
+- `DocumentService.generateID` now uses `toUUID()` internally instead of a type cast.
+- `TaskService` now uses `DocumentService.toUUID` when converting `Object.keys(taskMap)` to a `UUID[]` instead of a cast.
+
 ## 🔖 [5.0.6] (2026-04-17)
 
 ### 🏗️ Changed
@@ -445,6 +458,7 @@ Updated dependency: now requires `@aneuhold/core-ts-lib@^2.3.11`.
 - Updated workflow permissions to allow repository write access
 
 <!-- Link References -->
+[5.0.7]: https://github.com/aneuhold/ts-libs/compare/core-ts-db-lib-v5.0.6...core-ts-db-lib-v5.0.7
 [5.0.6]: https://github.com/aneuhold/ts-libs/compare/core-ts-db-lib-v5.0.5...core-ts-db-lib-v5.0.6
 [5.0.5]: https://github.com/aneuhold/ts-libs/compare/core-ts-db-lib-v5.0.4...core-ts-db-lib-v5.0.5
 [5.0.4]: https://github.com/aneuhold/ts-libs/compare/core-ts-db-lib-v5.0.3...core-ts-db-lib-v5.0.4

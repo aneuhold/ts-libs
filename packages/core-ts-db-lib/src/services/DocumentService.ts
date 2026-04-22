@@ -36,15 +36,32 @@ export type DocumentOperations<T extends BaseDocument> = {
  */
 export default class DocumentService {
   /**
-   * Creates a deep copy of an object using EJSON serialization.
+   * Creates a deep copy of an object using structuredClone.
    *
    * @param obj - The object to copy.
    */
-  static deepCopy<T extends object>(obj: T): T {
+  static deepCopy<T extends Record<PropertyKey, unknown>>(obj: T): T {
     return structuredClone(obj);
   }
 
   static generateID(): UUID {
-    return uuidv7() as UUID;
+    return DocumentService.toUUID(uuidv7());
+  }
+
+  /**
+   * Narrows a UUID string to the branded {@link UUID} type. Callers are
+   * expected to have validated the input — either via `z.uuidv7()` (the
+   * `UUIDSchema` transform) or by generating it with `uuidv7()`.
+   *
+   * A runtime-enforcing implementation (e.g. `split('-')` + template-literal
+   * reconstruction) would narrow without a cast but allocates on every call,
+   * and this runs on every ID read/write. Since upstream validation already
+   * covers this, trust the caller and cast.
+   *
+   * @param value A UUID string that has already been validated upstream.
+   */
+  static toUUID(value: string): UUID {
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    return value as UUID;
   }
 }

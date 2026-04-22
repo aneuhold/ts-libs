@@ -2,7 +2,7 @@
   "name": "@aneuhold/be-ts-lib",
   "author": "Anton G. Neuhold Jr.",
   "license": "MIT",
-  "version": "3.1.11",
+  "version": "3.1.12",
   "description": "A backend TypeScript library used for common functionality in personal backend projects.",
   "packageManager": "pnpm@10.25.0",
   "type": "module",
@@ -16,7 +16,7 @@
     "check": "tsc --noEmit",
     "test": "vitest run",
     "preparePkg": "tb pkg prepare",
-    "jsr:validate": "tb pkg validateJsr",
+    "jsr:validate": "tb pkg validateJsr --allow-slow-types",
     "npm:validate": "tb pkg validateNpm",
     "versionPropagation:validate": "tsx ../../scripts/validatePackageVersions.ts",
     "checkAll": "pnpm build && pnpm lint && pnpm test && pnpm jsr:validate",
@@ -54,16 +54,17 @@
     "TypeScript"
   ],
   "dependencies": {
-    "@aneuhold/core-ts-api-lib": "^3.0.34",
-    "@aneuhold/core-ts-lib": "^2.4.3",
+    "@aneuhold/core-ts-api-lib": "^3.0.35",
+    "@aneuhold/core-ts-lib": "^2.4.4",
     "dotenv": "^17.2.3",
     "jsonc-parser": "^3.3.1",
     "node-fetch": "^3.3.2",
-    "octokit": "^5.0.5"
+    "octokit": "^5.0.5",
+    "zod": "^4.1.13"
   },
   "devDependencies": {
-    "@aneuhold/local-npm-registry": "^0.2.30",
-    "@aneuhold/main-scripts": "^2.8.3",
+    "@aneuhold/local-npm-registry": "^0.2.31",
+    "@aneuhold/main-scripts": "^2.9.3",
     "@types/node": "^25.0.2",
     "@types/node-fetch": "^2.6.13",
     "eslint": "^9.39.2",
@@ -71,7 +72,7 @@
     "prettier": "^3.7.4",
     "rimraf": "^6.1.2",
     "tsx": "^4.21.0",
-    "typescript": "^5.9.3",
+    "typescript": "^6.0.3",
     "vitest": "^4.0.15"
   }
 }

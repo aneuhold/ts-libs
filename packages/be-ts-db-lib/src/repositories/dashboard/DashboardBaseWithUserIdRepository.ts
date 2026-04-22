@@ -28,9 +28,8 @@ export default abstract class DashboardBaseWithUserIdRepository<
    * @param userId The ID of the user to get items for.
    */
   async getAllForUser(userId: UUID): Promise<TBaseType[]> {
-    const filter = {
-      userId
-    } as Filter<TBaseType>;
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    const filter = { userId } as Filter<TBaseType>;
     return this.getListWithFilter(filter);
   }
 
@@ -40,9 +39,8 @@ export default abstract class DashboardBaseWithUserIdRepository<
    * @param userIds - The user IDs to get items for.
    */
   async getAllForUsers(userIds: UUID[]): Promise<TBaseType[]> {
-    const filter = {
-      userId: { $in: userIds }
-    } as Filter<TBaseType>;
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    const filter = { userId: { $in: userIds } } as Filter<TBaseType>;
     return this.getListWithFilter(filter);
   }
 

@@ -1,6 +1,6 @@
-import type { UUID } from 'crypto';
 import { z } from 'zod';
 import { RequiredUserIdSchema } from '../../schemas/required-refs/RequiredUserId.js';
+import { UUIDSchema } from '../../schemas/UUIDSchema.js';
 import {
   BaseDocumentWithTypeSchema,
   BaseDocumentWithUpdatedAndCreatedDatesSchema
@@ -24,10 +24,7 @@ export const WorkoutMicrocycleSchema = z.object({
    *
    * This is optional because users can track workouts outside of a mesocycle.
    */
-  workoutMesocycleId: z
-    .uuidv7()
-    .transform((val) => val as UUID)
-    .nullish(),
+  workoutMesocycleId: UUIDSchema.nullish(),
   /**
    * The start date of this microcycle.
    */
@@ -43,7 +40,7 @@ export const WorkoutMicrocycleSchema = z.object({
    * This makes it easier to reason about the order of sessions before dates
    * are assigned.
    */
-  sessionOrder: z.array(z.uuidv7().transform((val) => val as UUID)).default([]),
+  sessionOrder: z.array(UUIDSchema).default([]),
   /**
    * The date this microcycle was marked as completed by the user.
    *
