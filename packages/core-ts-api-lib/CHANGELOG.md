@@ -9,11 +9,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### ✅ Added
 
-### 🏗️ Changed
-
-### 🩹 Fixed
-
-### 🔥 Removed
+- Added `AuthDeleteAccountInput` and `AuthDeleteAccountOutput` types for the `auth/deleteAccount` endpoint.
+- Added `APIService.deleteAccount()` static method to permanently delete the authenticated user and all associated data.
+- Added `GCloudAPIService.authDeleteAccount()` static method calling the `auth/deleteAccount` endpoint.
+- Exported `AuthDeleteAccountInput` and `AuthDeleteAccountOutput` from the browser entry point.
 
 ## 🔖 [3.0.36] (2026-04-22)
 
