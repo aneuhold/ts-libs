@@ -41,6 +41,14 @@ export default class APIService {
   }
 
   /**
+   * Permanently deletes the currently-authenticated user along with every
+   * per-user document tied to them.
+   */
+  static async deleteAccount(): Promise<APIResponse<undefined>> {
+    return GCloudAPIService.authDeleteAccount();
+  }
+
+  /**
    * Sets the JWT access token to attach to all API requests.
    *
    * @param token - The access token.

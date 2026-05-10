@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## 🔖 [3.0.37] (2026-05-10)
+
+### ✅ Added
+
+- Added `AuthDeleteAccountInput` and `AuthDeleteAccountOutput` types for the `auth/deleteAccount` endpoint.
+- Added `APIService.deleteAccount()` static method to permanently delete the authenticated user and all associated data.
+- Added `GCloudAPIService.authDeleteAccount()` static method calling the `auth/deleteAccount` endpoint.
+- Exported `AuthDeleteAccountInput` and `AuthDeleteAccountOutput` from the browser entry point.
+
 ## 🔖 [3.0.36] (2026-04-22)
 
 ### 🏗️ Changed
@@ -410,6 +419,7 @@ No direct code changes; version bump for compatibility.
 - Updated workflow permissions to allow repository write access
 
 <!-- Link References -->
+[3.0.37]: https://github.com/aneuhold/ts-libs/compare/core-ts-api-lib-v3.0.36...core-ts-api-lib-v3.0.37
 [3.0.36]: https://github.com/aneuhold/ts-libs/compare/core-ts-api-lib-v3.0.35...core-ts-api-lib-v3.0.36
 [3.0.35]: https://github.com/aneuhold/ts-libs/compare/core-ts-api-lib-v3.0.34...core-ts-api-lib-v3.0.35
 [3.0.34]: https://github.com/aneuhold/ts-libs/compare/core-ts-api-lib-v3.0.33...core-ts-api-lib-v3.0.34

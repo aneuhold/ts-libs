@@ -7,6 +7,7 @@ import type {
 } from './types/Admin.js';
 import type { APIResponse } from './types/APIResponse.js';
 import type { AuthCheckPasswordInput, AuthCheckPasswordOutput } from './types/AuthCheckPassword.js';
+import type { AuthDeleteAccountInput, AuthDeleteAccountOutput } from './types/AuthDeleteAccount.js';
 import type { AuthValidateUserInput, AuthValidateUserOutput } from './types/AuthValidateUser.js';
 import type { DashboardConfig } from './types/project/dashboard/DashboardConfig.js';
 import type {
@@ -40,6 +41,8 @@ export type {
   APIResponse,
   AuthCheckPasswordInput,
   AuthCheckPasswordOutput,
+  AuthDeleteAccountInput,
+  AuthDeleteAccountOutput,
   AuthValidateUserInput,
   AuthValidateUserOutput,
   DashboardConfig,

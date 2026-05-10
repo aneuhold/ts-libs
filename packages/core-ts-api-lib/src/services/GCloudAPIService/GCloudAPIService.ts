@@ -1,6 +1,7 @@
 import { DateService, ErrorUtils } from '@aneuhold/core-ts-lib';
 import type { AdminInput, AdminOutput } from '../../types/Admin.js';
 import type { APIResponse } from '../../types/APIResponse.js';
+import type { AuthDeleteAccountInput } from '../../types/AuthDeleteAccount.js';
 import type {
   AuthRefreshTokenInput,
   AuthRefreshTokenOutput
@@ -113,6 +114,14 @@ export default class GCloudAPIService {
       refreshTokenString: this.#refreshTokenString
     });
     return decoded;
+  }
+
+  /**
+   * Calls the auth deleteAccount endpoint to permanently delete the
+   * currently-authenticated user and every per-user document tied to them.
+   */
+  static async authDeleteAccount(): Promise<APIResponse<undefined>> {
+    return this.call<AuthDeleteAccountInput, undefined>('auth/deleteAccount', undefined);
   }
 
   /**
