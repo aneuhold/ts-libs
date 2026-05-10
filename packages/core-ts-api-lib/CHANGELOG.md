@@ -7,13 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## 🔖 [3.0.38] (2026-05-10)
 
-### ✅ Added
-
 ### 🏗️ Changed
 
-### 🩹 Fixed
-
-### 🔥 Removed
+- Changed `AuthDeleteAccountOutput` from `undefined` to `Record<string, never>` to better represent an empty object response.
+- Updated `GCloudAPIService.authDeleteAccount()` and `APIService.deleteAccount()` return types to `APIResponse<AuthDeleteAccountOutput>`.
 
 ## 🔖 [3.0.37] (2026-05-10)
 
