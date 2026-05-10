@@ -7,7 +7,6 @@
 export type AuthDeleteAccountInput = undefined;
 
 /**
- * Output type for the auth deleteAccount endpoint. The endpoint returns no
- * payload on success.
+ * Output type for the auth deleteAccount endpoint.
  */
-export type AuthDeleteAccountOutput = undefined;
+export type AuthDeleteAccountOutput = Record<string, never>;

@@ -1,5 +1,6 @@
 import type { AdminInput, AdminOutput } from '../../types/Admin.js';
 import type { APIResponse } from '../../types/APIResponse.js';
+import type { AuthDeleteAccountOutput } from '../../types/AuthDeleteAccount.js';
 import type {
   AuthValidateUserInput,
   AuthValidateUserOutput
@@ -44,7 +45,7 @@ export default class APIService {
    * Permanently deletes the currently-authenticated user along with every
    * per-user document tied to them.
    */
-  static async deleteAccount(): Promise<APIResponse<undefined>> {
+  static async deleteAccount(): Promise<APIResponse<AuthDeleteAccountOutput>> {
     return GCloudAPIService.authDeleteAccount();
   }
 

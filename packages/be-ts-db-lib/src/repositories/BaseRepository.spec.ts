@@ -24,8 +24,9 @@ it('can create a new document and delete it', async () => {
 
 it.skip('can add a new test user', async () => {
   const userRepository = UserRepository.getRepo();
-  const newUser = UserSchema.parse({ userName: 'workoutIntegrationTestUser' });
+  const newUser = UserSchema.parse({ userName: 'testUserForDeletion' });
   newUser.auth.password = crypto.randomUUID();
+  console.log(`New test user password: ${newUser.auth.password}`);
   const createResult = await userRepository.insertNew(newUser);
   expect(createResult).toBeTruthy();
 });
