@@ -9,11 +9,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### ✅ Added
 
-### 🏗️ Changed
+- Added `get:userWorkoutHistory` script to print a user's full workout history (mesocycles, microcycles, sessions, exercises, and sets) in a hierarchical text format.
+- Added `get:userWorkoutVolumeLandmarks` script to print estimated MEV/MAV/MRV volume landmarks per muscle group for a user.
 
 ### 🩹 Fixed
 
-### 🔥 Removed
+- Fixed a bug in `WorkoutMuscleGroupRepository` where sets were counted against both primary and secondary muscle groups when building volume landmark CTOs; sets are now attributed only to primary muscle groups.
 
 ## 🔖 [4.2.28] (2026-05-10)
 
