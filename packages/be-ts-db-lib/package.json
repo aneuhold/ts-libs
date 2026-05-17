@@ -27,7 +27,8 @@
     "upgrade:core": "pnpm update '@aneuhold/main-scripts' --latest",
     "upgrade:all": "pnpm update '!@aneuhold/*' --latest",
     "migrate": "tsx ./scripts/migrate.ts",
-    "migrate:dry": "tsx ./scripts/migrateDry.ts"
+    "migrate:dry": "tsx ./scripts/migrateDry.ts",
+    "get:userWorkoutHistory": "tsx ./scripts/getUserWorkoutHistory.ts"
   },
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
