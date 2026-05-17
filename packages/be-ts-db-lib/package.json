@@ -2,7 +2,7 @@
   "name": "@aneuhold/be-ts-db-lib",
   "author": "Anton G. Neuhold Jr.",
   "license": "MIT",
-  "version": "4.2.28",
+  "version": "4.2.29",
   "description": "A backend database library meant to actually interact with various databases in personal projects",
   "packageManager": "pnpm@10.25.0",
   "type": "module",
@@ -27,7 +27,9 @@
     "upgrade:core": "pnpm update '@aneuhold/main-scripts' --latest",
     "upgrade:all": "pnpm update '!@aneuhold/*' --latest",
     "migrate": "tsx ./scripts/migrate.ts",
-    "migrate:dry": "tsx ./scripts/migrateDry.ts"
+    "migrate:dry": "tsx ./scripts/migrateDry.ts",
+    "get:userWorkoutHistory": "tsx ./scripts/getUserWorkoutHistory.ts",
+    "get:userWorkoutVolumeLandmarks": "tsx ./scripts/getUserWorkoutVolumeLandmarks.ts"
   },
   "main": "lib/index.js",
   "types": "lib/index.d.ts",

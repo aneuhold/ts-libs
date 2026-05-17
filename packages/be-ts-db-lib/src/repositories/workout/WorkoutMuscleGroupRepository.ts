@@ -172,15 +172,12 @@ export default class WorkoutMuscleGroupRepository extends WorkoutBaseWithUserIdR
         },
         // One row per exercise
         { $unwind: '$_exercise' },
-        // Combine primary + secondary muscle group IDs
+        // Only count sets against the exercise's PRIMARY muscle groups. Secondary
+        // contributions inflated landmarks and got redistributed onto primary-grouped
+        // exercises by the planner, compounding upward across mesocycles.
         {
           $addFields: {
-            _muscleGroups: {
-              $concatArrays: [
-                { $ifNull: ['$_exercise.primaryMuscleGroups', []] },
-                { $ifNull: ['$_exercise.secondaryMuscleGroups', []] }
-              ]
-            }
+            _muscleGroups: { $ifNull: ['$_exercise.primaryMuscleGroups', []] }
           }
         },
         // One row per (mesocycle, microcycle, session exercise, muscle group)
