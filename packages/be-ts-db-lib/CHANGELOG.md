@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## 🔖 [4.2.29] (2026-05-17)
+
+### ✅ Added
+
+### 🏗️ Changed
+
+### 🩹 Fixed
+
+### 🔥 Removed
+
 ## 🔖 [4.2.28] (2026-05-10)
 
 ### 🏗️ Changed
@@ -421,6 +431,7 @@ Updated dependencies: now requires `@aneuhold/core-ts-db-lib@^3.0.0`, `@aneuhold
 - Updated workflow permissions to allow repository write access
 
 <!-- Link References -->
+[4.2.29]: https://github.com/aneuhold/ts-libs/compare/be-ts-db-lib-v4.2.28...be-ts-db-lib-v4.2.29
 [4.2.28]: https://github.com/aneuhold/ts-libs/compare/be-ts-db-lib-v4.2.27...be-ts-db-lib-v4.2.28
 [4.2.27]: https://github.com/aneuhold/ts-libs/compare/be-ts-db-lib-v4.2.26...be-ts-db-lib-v4.2.27
 [4.2.26]: https://github.com/aneuhold/ts-libs/compare/be-ts-db-lib-v4.2.25...be-ts-db-lib-v4.2.26
