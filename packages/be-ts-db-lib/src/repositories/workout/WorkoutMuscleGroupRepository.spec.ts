@@ -216,7 +216,7 @@ describe('WorkoutMuscleGroupRepository', () => {
       expect(cto.mesocycleHistory[0].recoverySessionCount).toBe(3);
     });
 
-    it('should include secondary muscle group associations', async () => {
+    it('should not count secondary muscle group contributions in volume history', async () => {
       const user = await workoutTestUtil.insertUser('WorkoutMuscleGroupRepository.buildCTOs');
       const primaryMg = await workoutTestUtil.insertMuscleGroup(user._id, 'Chest');
       const secondaryMg = await workoutTestUtil.insertMuscleGroup(user._id, 'Triceps');
@@ -235,13 +235,66 @@ describe('WorkoutMuscleGroupRepository', () => {
       });
 
       const ctos = await repo.buildMuscleGroupVolumeCTOsForUser(user._id);
+      const primaryCto = ctos.find((c) => c._id === primaryMg._id);
       const secondaryCto = ctos.find((c) => c._id === secondaryMg._id);
 
-      // Secondary muscle group should also have volume history
+      // Primary muscle group records the sets it directly stimulated.
+      expect(primaryCto).toBeDefined();
+      if (!primaryCto) return;
+      expect(primaryCto.mesocycleHistory).toHaveLength(1);
+      expect(primaryCto.mesocycleHistory[0].startingSetCount).toBe(4);
+      expect(primaryCto.mesocycleHistory[0].peakSetCount).toBe(4);
+
+      // Secondary muscle group has no exercise targeting it primarily,
+      // so it produces no history row.
       expect(secondaryCto).toBeDefined();
       if (!secondaryCto) return;
-      expect(secondaryCto.mesocycleHistory).toHaveLength(1);
-      expect(secondaryCto.mesocycleHistory[0].startingSetCount).toBe(4);
+      expect(secondaryCto.mesocycleHistory).toHaveLength(0);
+    });
+
+    it('should attribute sets only to the primary muscle group when an exercise has primary + secondary', async () => {
+      const user = await workoutTestUtil.insertUser('WorkoutMuscleGroupRepository.buildCTOs');
+      const hamstringsMg = await workoutTestUtil.insertMuscleGroup(user._id, 'Hamstrings');
+      const quadsMg = await workoutTestUtil.insertMuscleGroup(user._id, 'Quads');
+      const eq = await workoutTestUtil.insertEquipmentType(user._id);
+
+      // RDL — primary Hamstrings
+      const rdl = await workoutTestUtil.insertExercise({
+        userId: user._id,
+        equipmentTypeId: eq._id,
+        primaryMuscleGroupIds: [hamstringsMg._id],
+        name: 'RDL'
+      });
+      // Squat — primary Quads, secondary Hamstrings (mirrors the real-world bug)
+      const squat = await workoutTestUtil.insertExercise({
+        userId: user._id,
+        equipmentTypeId: eq._id,
+        primaryMuscleGroupIds: [quadsMg._id],
+        secondaryMuscleGroupIds: [hamstringsMg._id],
+        name: 'Squat'
+      });
+
+      await workoutTestUtil.insertCompletedMesocycle(user._id, [rdl, squat], {
+        microcycleCount: 2,
+        setsPerMicrocycle: [2, 2]
+      });
+
+      const ctos = await repo.buildMuscleGroupVolumeCTOsForUser(user._id);
+      const hamstringsCto = ctos.find((c) => c._id === hamstringsMg._id);
+      const quadsCto = ctos.find((c) => c._id === quadsMg._id);
+
+      // Hamstrings should reflect only RDL's primary sets (2), not 2 + 2 from
+      // Squat's secondary contribution.
+      expect(hamstringsCto).toBeDefined();
+      if (!hamstringsCto) return;
+      expect(hamstringsCto.mesocycleHistory).toHaveLength(1);
+      expect(hamstringsCto.mesocycleHistory[0].startingSetCount).toBe(2);
+
+      // Quads should reflect only Squat's primary sets.
+      expect(quadsCto).toBeDefined();
+      if (!quadsCto) return;
+      expect(quadsCto.mesocycleHistory).toHaveLength(1);
+      expect(quadsCto.mesocycleHistory[0].startingSetCount).toBe(2);
     });
 
     it('should return null averages when RSM/soreness/performance are not recorded', async () => {

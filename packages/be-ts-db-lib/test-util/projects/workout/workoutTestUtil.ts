@@ -733,16 +733,17 @@ class WorkoutTestUtil {
 
   /**
    * Creates a completed mesocycle with the specified number of microcycles,
-   * each containing one session with one session exercise and sets. All
+   * each containing one session. The session has one session exercise per
+   * provided exercise, all sharing the same `setsPerMicrocycle` schedule. All
    * documents are created in memory, registered as pending, then batch-inserted
    * in parallel using {@link DbOperationMetaData}.
    *
    * @param userId - Owner of all created documents.
-   * @param exercise - The exercise performed in every session.
+   * @param exercise - The exercise (or exercises) performed in every session.
    * @param options - Mesocycle configuration.
    * @param options.completedDate - Date the mesocycle was completed.
    * @param options.microcycleCount - Number of microcycles to create.
-   * @param options.setsPerMicrocycle - Array of set counts per microcycle.
+   * @param options.setsPerMicrocycle - Array of set counts per microcycle (per exercise).
    * @param options.sorenessScore - Soreness score for each session exercise.
    * @param options.performanceScore - Performance score for each session exercise.
    * @param options.rsm - RSM breakdown for each session exercise.
@@ -750,7 +751,7 @@ class WorkoutTestUtil {
    */
   async insertCompletedMesocycle(
     userId: UUID,
-    exercise: WorkoutExercise,
+    exercise: WorkoutExercise | WorkoutExercise[],
     options: {
       completedDate?: Date;
       microcycleCount?: number;
@@ -771,12 +772,14 @@ class WorkoutTestUtil {
       isRecoveryExercise = false
     } = options;
 
+    const exercises = Array.isArray(exercise) ? exercise : [exercise];
+
     const setCountsPerMicro: number[] =
       setsPerMicrocycle ?? Array.from({ length: microcycleCount }, () => 3);
 
     const mesocycle = this.createMesocycle({
       userId,
-      calibratedExerciseIds: [exercise._id],
+      calibratedExerciseIds: exercises.map((e) => e._id),
       completedDate,
       plannedMicrocycleCount: microcycleCount
     });
@@ -807,34 +810,36 @@ class WorkoutTestUtil {
       });
       sessions.push(session);
 
-      const se = this.createSessionExercise({
-        userId,
-        sessionId: session._id,
-        exerciseId: exercise._id,
-        isRecoveryExercise,
-        sorenessScore,
-        performanceScore,
-        rsm
-      });
+      for (const ex of exercises) {
+        const se = this.createSessionExercise({
+          userId,
+          sessionId: session._id,
+          exerciseId: ex._id,
+          isRecoveryExercise,
+          sorenessScore,
+          performanceScore,
+          rsm
+        });
 
-      const sets: WorkoutSet[] = [];
-      for (let j = 0; j < setCountsPerMicro[i]; j++) {
-        sets.push(
-          this.createSet({
-            userId,
-            exerciseId: exercise._id,
-            sessionId: session._id,
-            sessionExerciseId: se._id,
-            plannedRir: 2,
-            actualWeight: 80,
-            actualReps: 8
-          })
-        );
+        const sets: WorkoutSet[] = [];
+        for (let j = 0; j < setCountsPerMicro[i]; j++) {
+          sets.push(
+            this.createSet({
+              userId,
+              exerciseId: ex._id,
+              sessionId: session._id,
+              sessionExerciseId: se._id,
+              plannedRir: 2,
+              actualWeight: 80,
+              actualReps: 8
+            })
+          );
+        }
+
+        se.setOrder = sets.map((s) => s._id);
+        sessionExercises.push(se);
+        allSets.push(...sets);
       }
-
-      se.setOrder = sets.map((s) => s._id);
-      sessionExercises.push(se);
-      allSets.push(...sets);
     }
 
     const meta = new DbOperationMetaData();
