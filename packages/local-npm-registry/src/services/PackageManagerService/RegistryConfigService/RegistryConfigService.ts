@@ -19,7 +19,7 @@ export class RegistryConfigService {
   /**
    * Comment header added to generated registry configuration files.
    */
-  private static readonly GENERATED_COMMENT = '# Created by local-npm-registry';
+  static readonly #GENERATED_COMMENT = '# Created by local-npm-registry';
   /**
    * Creates registry configuration files for the specified package manager to use local registry.
    *
@@ -65,7 +65,7 @@ export class RegistryConfigService {
     const npmrcConfigs = await NpmrcService.getAllNpmrcConfigs(projectPath);
 
     // Create registry configuration using the package manager's format
-    const registryConfig = this.generateRegistryConfig(
+    const registryConfig = this.#generateRegistryConfig(
       packageManager,
       registryUrl,
       packageInfo,
@@ -81,7 +81,7 @@ export class RegistryConfigService {
 
     if (originalContent) {
       // Merge with original content to preserve other settings
-      finalConfigContent = this.mergeConfigContent(
+      finalConfigContent = this.#mergeConfigContent(
         originalContent,
         registryConfig,
         packageManagerInfo.configFile
@@ -92,7 +92,7 @@ export class RegistryConfigService {
     }
 
     // Always prepend the comment header to the final content
-    finalConfigContent = `${this.GENERATED_COMMENT}\n${finalConfigContent}`;
+    finalConfigContent = `${this.#GENERATED_COMMENT}\n${finalConfigContent}`;
 
     await fs.writeFile(configPath, finalConfigContent);
 
@@ -109,7 +109,7 @@ export class RegistryConfigService {
   static async restoreRegistryConfig(backup: PackageManagerConfigBackup): Promise<void> {
     for (const config of Object.values(backup)) {
       const tmpConfigPath = `${config.path}.tmp`;
-      const isCurrentConfigGenerated = await this.isConfigGenerated(config.path);
+      const isCurrentConfigGenerated = await this.#isConfigGenerated(config.path);
 
       // Check if .tmp file exists
       if (await fs.pathExists(tmpConfigPath)) {
@@ -149,15 +149,15 @@ export class RegistryConfigService {
    * @param newConfig The new configuration content to merge
    * @param configFile The configuration file name to determine merge strategy
    */
-  private static mergeConfigContent(
+  static #mergeConfigContent(
     existingContent: string,
     newConfig: string,
     configFile: string
   ): string {
     if (configFile === '.yarnrc.yml') {
-      return this.mergeYamlConfig(existingContent, newConfig);
+      return this.#mergeYamlConfig(existingContent, newConfig);
     }
-    return this.mergeKeyValueConfig(existingContent, newConfig);
+    return this.#mergeKeyValueConfig(existingContent, newConfig);
   }
 
   /**
@@ -166,12 +166,12 @@ export class RegistryConfigService {
    * @param existingContent The existing YAML content
    * @param newConfig The new YAML content to merge
    */
-  private static mergeYamlConfig(existingContent: string, newConfig: string): string {
+  static #mergeYamlConfig(existingContent: string, newConfig: string): string {
     const existingParsed: unknown = yaml.load(existingContent);
     const newParsed: unknown = yaml.load(newConfig);
 
-    const existingData = RegistryConfigService.isYamlRecord(existingParsed) ? existingParsed : {};
-    const newData = RegistryConfigService.isYamlRecord(newParsed) ? newParsed : {};
+    const existingData = RegistryConfigService.#isYamlRecord(existingParsed) ? existingParsed : {};
+    const newData = RegistryConfigService.#isYamlRecord(newParsed) ? newParsed : {};
 
     const mergedData = { ...existingData, ...newData };
     return yaml.dump(mergedData, { lineWidth: -1 });
@@ -182,7 +182,7 @@ export class RegistryConfigService {
    *
    * @param value The parsed YAML value.
    */
-  private static isYamlRecord(value: unknown): value is Record<string, unknown> {
+  static #isYamlRecord(value: unknown): value is Record<string, unknown> {
     return typeof value === 'object' && value !== null;
   }
 
@@ -192,14 +192,14 @@ export class RegistryConfigService {
    * @param existingContent The existing key-value content
    * @param newConfig The new key-value content to merge
    */
-  private static mergeKeyValueConfig(existingContent: string, newConfig: string): string {
+  static #mergeKeyValueConfig(existingContent: string, newConfig: string): string {
     const configMap = new Map<string, string>();
 
     // Parse existing content into map
-    this.parseKeyValueLines(existingContent, configMap);
+    this.#parseKeyValueLines(existingContent, configMap);
 
     // Parse and merge new content, which may override existing keys
-    this.parseKeyValueLines(newConfig, configMap);
+    this.#parseKeyValueLines(newConfig, configMap);
 
     // Convert back to string format
     return Array.from(configMap.values()).join('\n');
@@ -212,7 +212,7 @@ export class RegistryConfigService {
    * @param configMap The map to store key-value pairs
    * @param preserveLines Whether to store full lines (true) or just values (false)
    */
-  private static parseKeyValueLines(
+  static #parseKeyValueLines(
     content: string,
     configMap: Map<string, string>,
     preserveLines = true
@@ -257,7 +257,7 @@ export class RegistryConfigService {
    * @param packageInfo The package information (optional, for organization-specific config)
    * @param npmrcConfigs The existing npmrc configurations to extract organizations from
    */
-  private static generateRegistryConfig(
+  static #generateRegistryConfig(
     packageManager: PackageManager,
     registryUrl: string,
     packageInfo?: PackageJsonWithoutVersion | null,
@@ -306,7 +306,7 @@ export class RegistryConfigService {
    *
    * @param configPath The path to the configuration file
    */
-  private static async isConfigGenerated(configPath: string): Promise<boolean> {
+  static async #isConfigGenerated(configPath: string): Promise<boolean> {
     try {
       if (!(await fs.pathExists(configPath))) {
         return false;
@@ -314,7 +314,7 @@ export class RegistryConfigService {
 
       const content = await fs.readFile(configPath, 'utf8');
       const firstLine = content.split('\n')[0]?.trim();
-      return firstLine === this.GENERATED_COMMENT;
+      return firstLine === this.#GENERATED_COMMENT;
     } catch {
       return false;
     }

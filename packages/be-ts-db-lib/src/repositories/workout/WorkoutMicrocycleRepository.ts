@@ -11,7 +11,7 @@ import WorkoutSessionRepository from './WorkoutSessionRepository.js';
  * The repository that contains {@link WorkoutMicrocycle} documents.
  */
 export default class WorkoutMicrocycleRepository extends WorkoutBaseWithUserIdRepository<WorkoutMicrocycle> {
-  private static singletonInstance?: WorkoutMicrocycleRepository;
+  static #singletonInstance?: WorkoutMicrocycleRepository;
 
   private constructor() {
     super(WorkoutMicrocycle_docType, new WorkoutMicrocycleValidator());
@@ -78,9 +78,9 @@ export default class WorkoutMicrocycleRepository extends WorkoutBaseWithUserIdRe
   }
 
   public static getRepo(): WorkoutMicrocycleRepository {
-    if (!WorkoutMicrocycleRepository.singletonInstance) {
-      WorkoutMicrocycleRepository.singletonInstance = new WorkoutMicrocycleRepository();
+    if (!WorkoutMicrocycleRepository.#singletonInstance) {
+      WorkoutMicrocycleRepository.#singletonInstance = new WorkoutMicrocycleRepository();
     }
-    return WorkoutMicrocycleRepository.singletonInstance;
+    return WorkoutMicrocycleRepository.#singletonInstance;
   }
 }

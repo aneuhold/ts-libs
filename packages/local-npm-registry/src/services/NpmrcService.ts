@@ -8,7 +8,7 @@ export class NpmrcService {
   /**
    * Cache to store merged npmrc configurations by starting directory.
    */
-  private static npmrcCache = new Map<string, Map<string, string>>();
+  static #npmrcCache = new Map<string, Map<string, string>>();
 
   /**
    * Retrieves and merges all .npmrc files from the current directory up the tree.
@@ -19,7 +19,7 @@ export class NpmrcService {
    */
   static async getAllNpmrcConfigs(startDir: string = process.cwd()): Promise<Map<string, string>> {
     // Return cached result if available for this directory
-    const cached = this.npmrcCache.get(startDir);
+    const cached = this.#npmrcCache.get(startDir);
     if (cached) {
       return cached;
     }
@@ -35,14 +35,14 @@ export class NpmrcService {
         const npmrcPath = npmrcPaths[i];
         try {
           const content = await fs.readFile(npmrcPath, 'utf8');
-          this.parseNpmrcContent(content, configMap);
+          this.#parseNpmrcContent(content, configMap);
         } catch (error) {
           DR.logger.warn(`Failed to read .npmrc file at ${npmrcPath}: ${String(error)}`);
         }
       }
 
       // Cache the result for this directory
-      this.npmrcCache.set(startDir, configMap);
+      this.#npmrcCache.set(startDir, configMap);
       return configMap;
     } catch (error) {
       DR.logger.error(`Error retrieving .npmrc configurations: ${String(error)}`);
@@ -54,7 +54,7 @@ export class NpmrcService {
    * Clears the npmrc cache. Should be called if .npmrc files are modified.
    */
   static clearNpmrcCache(): void {
-    this.npmrcCache.clear();
+    this.#npmrcCache.clear();
   }
 
   /**
@@ -64,9 +64,9 @@ export class NpmrcService {
    * @param content - The .npmrc file content to parse
    * @param configMap - The map to store key-value pairs
    */
-  private static parseNpmrcContent(content: string, configMap: Map<string, string>): void {
+  static #parseNpmrcContent(content: string, configMap: Map<string, string>): void {
     // Use the enhanced parseKeyValueLines with preserveLines=false to get key-value pairs directly
-    this.parseKeyValueLines(content, configMap, false);
+    this.#parseKeyValueLines(content, configMap, false);
   }
 
   /**
@@ -76,7 +76,7 @@ export class NpmrcService {
    * @param configMap The map to store key-value pairs
    * @param preserveLines Whether to store full lines (true) or just values (false)
    */
-  private static parseKeyValueLines(
+  static #parseKeyValueLines(
     content: string,
     configMap: Map<string, string>,
     preserveLines = true

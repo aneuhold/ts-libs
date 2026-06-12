@@ -5,13 +5,13 @@
  * browser.
  */
 export default class DateService {
-  private static dateFormatter = new Intl.DateTimeFormat('en-US', {
+  static #dateFormatter = new Intl.DateTimeFormat('en-US', {
     year: 'numeric',
     month: 'short',
     day: 'numeric'
   });
 
-  private static dateTimeFormatter = new Intl.DateTimeFormat('en-US', {
+  static #dateTimeFormatter = new Intl.DateTimeFormat('en-US', {
     year: 'numeric',
     month: 'short',
     day: 'numeric',
@@ -51,7 +51,7 @@ export default class DateService {
    * @returns The formatted date string.
    */
   static getDateString(date: Date): string {
-    return this.dateFormatter.format(date);
+    return this.#dateFormatter.format(date);
   }
 
   /**
@@ -61,7 +61,7 @@ export default class DateService {
    * @returns The formatted date and time string.
    */
   static getDateTimeString(date: Date): string {
-    return this.dateTimeFormatter.format(date);
+    return this.#dateTimeFormatter.format(date);
   }
 
   /**
@@ -314,7 +314,7 @@ export default class DateService {
    * @param body the body to revive
    */
   static reviveDatesRecursive(body: unknown) {
-    if (!DateService.isPlainRecord(body)) {
+    if (!DateService.#isPlainRecord(body)) {
       return;
     }
 
@@ -333,7 +333,7 @@ export default class DateService {
     }
   }
 
-  private static isPlainRecord(value: unknown): value is Record<string, unknown> {
+  static #isPlainRecord(value: unknown): value is Record<string, unknown> {
     return typeof value === 'object' && value !== null;
   }
 }

@@ -17,7 +17,7 @@ export default class UserValidator extends IValidator<User> {
   protected async validateNewObjectBusinessLogic(newUser: User): Promise<void> {
     // Check if the username already exists
     const userRepo = UserRepository.getRepo();
-    await this.checkIfUserNameExists(userRepo, newUser.userName);
+    await this.#checkIfUserNameExists(userRepo, newUser.userName);
   }
 
   /**
@@ -45,7 +45,7 @@ export default class UserValidator extends IValidator<User> {
     // Check if the username is being updated and, if it is, if it already
     // exists
     if (userToUpdate.userName && userInDb.userName !== userToUpdate.userName) {
-      await this.checkIfUserNameExists(userRepo, userToUpdate.userName);
+      await this.#checkIfUserNameExists(userRepo, userToUpdate.userName);
     }
   }
 
@@ -80,7 +80,7 @@ export default class UserValidator extends IValidator<User> {
    * @param userName - The username to check
    * @throws {Error} An error if the username already exists
    */
-  private async checkIfUserNameExists(userRepo: UserRepository, userName: string) {
+  async #checkIfUserNameExists(userRepo: UserRepository, userName: string) {
     const userNameSearchResult = await userRepo.get({
       userName
     });

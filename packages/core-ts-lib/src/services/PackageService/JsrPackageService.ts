@@ -50,9 +50,9 @@ export default class JsrPackageService {
         await PackageServiceUtils.replacePackageName(originalPackageName, packageName);
       }
 
-      await this.replaceMonorepoImportsWithNpmSpecifiers();
-      const { version } = await JsrPackageService.updateJsrFromPackageJson();
-      const successfulDryRun = await JsrPackageService.publishDryRun(
+      await this.#replaceMonorepoImportsWithNpmSpecifiers();
+      const { version } = await JsrPackageService.#updateJsrFromPackageJson();
+      const successfulDryRun = await JsrPackageService.#publishDryRun(
         packageName,
         version,
         allowSlowTypes
@@ -94,9 +94,9 @@ export default class JsrPackageService {
         await PackageServiceUtils.replacePackageName(originalPackageName, packageName);
       }
 
-      await this.replaceMonorepoImportsWithNpmSpecifiers();
-      await JsrPackageService.updateJsrFromPackageJson();
-      const result = await JsrPackageService.publishToJsr();
+      await this.#replaceMonorepoImportsWithNpmSpecifiers();
+      await JsrPackageService.#updateJsrFromPackageJson();
+      const result = await JsrPackageService.#publishToJsr();
 
       await PackageServiceUtils.resetGitChanges();
 
@@ -114,7 +114,7 @@ export default class JsrPackageService {
    *
    * @returns An object containing the package name and version from jsr.json and package.json
    */
-  private static async updateJsrFromPackageJson(): Promise<{
+  static async #updateJsrFromPackageJson(): Promise<{
     packageName: string;
     version: string;
   }> {
@@ -143,7 +143,7 @@ export default class JsrPackageService {
       jsrJsonData.version = version;
 
       // Resolve wildcard dependencies in package.json for JSR compatibility
-      await this.resolveWildcardDependenciesInPackageJson(packageJsonData, packageJsonPath);
+      await this.#resolveWildcardDependenciesInPackageJson(packageJsonData, packageJsonPath);
 
       await writeFile(jsrJsonPath, JSON.stringify(jsrJsonData, null, 2));
       DR.logger.info('Updated jsr.json from package.json to version ' + version);
@@ -169,13 +169,13 @@ export default class JsrPackageService {
    * @param currentVersion The current version from package.json
    * @param allowSlowTypes Whether to allow slow types during publishing
    */
-  private static async publishDryRun(
+  static async #publishDryRun(
     packageName: string,
     currentVersion: string,
     allowSlowTypes = false
   ): Promise<boolean> {
     // Check for existing versions on JSR first
-    await JsrPackageService.checkVersionConflicts(packageName, currentVersion);
+    await JsrPackageService.#checkVersionConflicts(packageName, currentVersion);
 
     DR.logger.info('Running `jsr publish --dry-run`');
     try {
@@ -198,7 +198,7 @@ export default class JsrPackageService {
    *
    * @returns true if the publish was successful, false otherwise.
    */
-  private static async publishToJsr(): Promise<boolean> {
+  static async #publishToJsr(): Promise<boolean> {
     DR.logger.info('Running `jsr publish`');
     return new Promise((resolve) => {
       const child = spawn('jsr publish', ['--allow-dirty', '--allow-slow-types'], {
@@ -224,10 +224,7 @@ export default class JsrPackageService {
    * @param packageName The package name from jsr.json
    * @param currentVersion The current version from package.json
    */
-  private static async checkVersionConflicts(
-    packageName: string,
-    currentVersion: string
-  ): Promise<void> {
+  static async #checkVersionConflicts(packageName: string, currentVersion: string): Promise<void> {
     DR.logger.info(`Checking JSR for existing versions of ${packageName}...`);
 
     try {
@@ -271,7 +268,7 @@ export default class JsrPackageService {
    *      at file:///src/services/GitHubService.ts:1:20
    * ```
    */
-  private static async replaceMonorepoImportsWithNpmSpecifiers(): Promise<void> {
+  static async #replaceMonorepoImportsWithNpmSpecifiers(): Promise<void> {
     const rootDir = process.cwd();
     const srcDir = path.join(rootDir, 'src');
 
@@ -383,7 +380,7 @@ export default class JsrPackageService {
    * @param packageJsonData The package.json data to modify
    * @param packageJsonPath The path to the package.json file
    */
-  private static async resolveWildcardDependenciesInPackageJson(
+  static async #resolveWildcardDependenciesInPackageJson(
     packageJsonData: PackageJson,
     packageJsonPath: string
   ): Promise<void> {

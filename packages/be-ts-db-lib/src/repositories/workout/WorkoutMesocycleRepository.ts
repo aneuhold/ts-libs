@@ -9,7 +9,7 @@ import WorkoutMicrocycleRepository from './WorkoutMicrocycleRepository.js';
  * The repository that contains {@link WorkoutMesocycle} documents.
  */
 export default class WorkoutMesocycleRepository extends WorkoutBaseWithUserIdRepository<WorkoutMesocycle> {
-  private static singletonInstance?: WorkoutMesocycleRepository;
+  static #singletonInstance?: WorkoutMesocycleRepository;
 
   private constructor() {
     super(WorkoutMesocycle_docType, new WorkoutMesocycleValidator());
@@ -32,9 +32,9 @@ export default class WorkoutMesocycleRepository extends WorkoutBaseWithUserIdRep
   }
 
   public static getRepo(): WorkoutMesocycleRepository {
-    if (!WorkoutMesocycleRepository.singletonInstance) {
-      WorkoutMesocycleRepository.singletonInstance = new WorkoutMesocycleRepository();
+    if (!WorkoutMesocycleRepository.#singletonInstance) {
+      WorkoutMesocycleRepository.#singletonInstance = new WorkoutMesocycleRepository();
     }
-    return WorkoutMesocycleRepository.singletonInstance;
+    return WorkoutMesocycleRepository.#singletonInstance;
   }
 }

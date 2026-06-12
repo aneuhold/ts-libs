@@ -178,7 +178,7 @@ export default class WorkoutMesocyclePlanContext {
    */
   public setPlannedSessionExerciseCTOs(plannedSessionExerciseCTOs: WorkoutExerciseCTO[][]): void {
     this.plannedSessionExerciseCTOs = plannedSessionExerciseCTOs;
-    this.buildSessionCTOMaps(plannedSessionExerciseCTOs);
+    this.#buildSessionCTOMaps(plannedSessionExerciseCTOs);
   }
 
   /**
@@ -190,7 +190,7 @@ export default class WorkoutMesocyclePlanContext {
    * each session in order. This allows set progression to be distributed evenly across a muscle group
    * for the entire microcycle, even when exercises are split across sessions.
    */
-  private buildSessionCTOMaps(sessionsToCTOs: WorkoutExerciseCTO[][]): void {
+  #buildSessionCTOMaps(sessionsToCTOs: WorkoutExerciseCTO[][]): void {
     const muscleGroupToCTOsMap = new Map<UUID, WorkoutExerciseCTO[]>();
     const exerciseIdToSessionIndex = new Map<UUID, number>();
 

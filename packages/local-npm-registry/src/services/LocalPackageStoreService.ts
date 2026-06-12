@@ -68,13 +68,13 @@ export class LocalPackageStoreService {
    */
   static async getStore(): Promise<LocalPackageStore> {
     try {
-      const storeFilePath = await this.getStoreFilePath();
+      const storeFilePath = await this.#getStoreFilePath();
       const fileExists = await fs.pathExists(storeFilePath);
       if (!fileExists) {
         return { packages: {} };
       }
       const rawStore: unknown = await fs.readJson(storeFilePath);
-      if (!LocalPackageStoreService.isLocalPackageStore(rawStore)) {
+      if (!LocalPackageStoreService.#isLocalPackageStore(rawStore)) {
         return { packages: {} };
       }
       return rawStore;
@@ -93,7 +93,7 @@ export class LocalPackageStoreService {
   static async updatePackageEntry(packageName: string, entry: PackageEntry): Promise<void> {
     const store = await this.getStore();
     store.packages[packageName] = entry;
-    await this.writeStore(store);
+    await this.#writeStore(store);
   }
 
   /**
@@ -115,7 +115,7 @@ export class LocalPackageStoreService {
     const store = await this.getStore();
     // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
     delete store.packages[packageName];
-    await this.writeStore(store);
+    await this.#writeStore(store);
   }
 
   /**
@@ -137,7 +137,7 @@ export class LocalPackageStoreService {
         subscriberPath: projectPath,
         originalSpecifier
       });
-      await this.writeStore(store);
+      await this.#writeStore(store);
     }
   }
 
@@ -152,7 +152,7 @@ export class LocalPackageStoreService {
     const entry = store.packages[packageName];
     if (entry) {
       entry.subscribers = entry.subscribers.filter((sub) => sub.subscriberPath !== projectPath);
-      await this.writeStore(store);
+      await this.#writeStore(store);
     }
   }
 
@@ -187,7 +187,7 @@ export class LocalPackageStoreService {
     }
 
     if (matchedPackages.length > 0) {
-      await this.writeStore(store);
+      await this.#writeStore(store);
     }
 
     return matchedPackages;
@@ -198,7 +198,7 @@ export class LocalPackageStoreService {
    */
   static async clearStore(): Promise<void> {
     const emptyStore: LocalPackageStore = { packages: {} };
-    await this.writeStore(emptyStore);
+    await this.#writeStore(emptyStore);
   }
 
   /**
@@ -207,7 +207,7 @@ export class LocalPackageStoreService {
    *
    * @param value The value to narrow.
    */
-  private static isLocalPackageStore(value: unknown): value is LocalPackageStore {
+  static #isLocalPackageStore(value: unknown): value is LocalPackageStore {
     return (
       typeof value === 'object' &&
       value !== null &&
@@ -220,7 +220,7 @@ export class LocalPackageStoreService {
   /**
    * Gets the store file path from configuration.
    */
-  private static async getStoreFilePath(): Promise<string> {
+  static async #getStoreFilePath(): Promise<string> {
     const storeDirectory = await ConfigService.getDataDirectoryPath();
 
     // Ensure the directory exists
@@ -234,9 +234,9 @@ export class LocalPackageStoreService {
    *
    * @param store - The store object to write.
    */
-  private static async writeStore(store: LocalPackageStore): Promise<void> {
+  static async #writeStore(store: LocalPackageStore): Promise<void> {
     try {
-      const storeFilePath = await this.getStoreFilePath();
+      const storeFilePath = await this.#getStoreFilePath();
       await fs.writeJson(storeFilePath, store, { spaces: 2 });
     } catch (error) {
       DR.logger.error(`Error writing local package store: ${String(error)}`);

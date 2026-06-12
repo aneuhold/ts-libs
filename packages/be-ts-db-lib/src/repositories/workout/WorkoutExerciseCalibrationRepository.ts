@@ -10,7 +10,7 @@ import WorkoutBaseWithUserIdRepository from './WorkoutBaseWithUserIdRepository.j
  * The repository that contains {@link WorkoutExerciseCalibration} documents.
  */
 export default class WorkoutExerciseCalibrationRepository extends WorkoutBaseWithUserIdRepository<WorkoutExerciseCalibration> {
-  private static singletonInstance?: WorkoutExerciseCalibrationRepository;
+  static #singletonInstance?: WorkoutExerciseCalibrationRepository;
 
   private constructor() {
     super(WorkoutExerciseCalibration_docType, new WorkoutExerciseCalibrationValidator());
@@ -75,10 +75,10 @@ export default class WorkoutExerciseCalibrationRepository extends WorkoutBaseWit
   }
 
   public static getRepo(): WorkoutExerciseCalibrationRepository {
-    if (!WorkoutExerciseCalibrationRepository.singletonInstance) {
-      WorkoutExerciseCalibrationRepository.singletonInstance =
+    if (!WorkoutExerciseCalibrationRepository.#singletonInstance) {
+      WorkoutExerciseCalibrationRepository.#singletonInstance =
         new WorkoutExerciseCalibrationRepository();
     }
-    return WorkoutExerciseCalibrationRepository.singletonInstance;
+    return WorkoutExerciseCalibrationRepository.#singletonInstance;
   }
 }

@@ -2,7 +2,7 @@
  * Utility class used for testing purposes.
  */
 export default class TestUtils {
-  private static consoleLoggers = {
+  static #consoleLoggers = {
     error: console.error,
     log: console.log,
     info: console.info,
@@ -25,9 +25,9 @@ export default class TestUtils {
    * (error, log, info, etc.).
    */
   public static restoreConsole() {
-    console.error = TestUtils.consoleLoggers.error;
-    console.log = TestUtils.consoleLoggers.log;
-    console.info = TestUtils.consoleLoggers.info;
-    console.warn = TestUtils.consoleLoggers.warn;
+    console.error = TestUtils.#consoleLoggers.error;
+    console.log = TestUtils.#consoleLoggers.log;
+    console.info = TestUtils.#consoleLoggers.info;
+    console.warn = TestUtils.#consoleLoggers.warn;
   }
 }

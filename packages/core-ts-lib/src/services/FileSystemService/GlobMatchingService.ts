@@ -60,7 +60,7 @@ export default class GlobMatchingService {
     const pathSegments = normalizedPath.split('/');
     const patternSegments = normalizedPattern.split('/');
 
-    return this.matchSegments(pathSegments, patternSegments);
+    return this.#matchSegments(pathSegments, patternSegments);
   }
 
   /**
@@ -72,7 +72,7 @@ export default class GlobMatchingService {
    * @param pathSegments Array of path segments
    * @param patternSegments Array of pattern segments
    */
-  private static matchSegments(pathSegments: string[], patternSegments: string[]): boolean {
+  static #matchSegments(pathSegments: string[], patternSegments: string[]): boolean {
     let pathIndex = 0;
     let patternIndex = 0;
 
@@ -95,13 +95,13 @@ export default class GlobMatchingService {
         // Try matching from current position onwards
         for (let i = pathIndex; i <= pathSegments.length; i++) {
           const remainingPath = pathSegments.slice(i);
-          if (this.matchSegments(remainingPath, remainingPattern)) {
+          if (this.#matchSegments(remainingPath, remainingPattern)) {
             return true;
           }
         }
 
         return false;
-      } else if (this.matchSingleSegment(pathSegment, patternSegment)) {
+      } else if (this.#matchSingleSegment(pathSegment, patternSegment)) {
         // Regular segment match
         pathIndex++;
         patternIndex++;
@@ -133,7 +133,7 @@ export default class GlobMatchingService {
    * @param pathSegment Single path segment
    * @param patternSegment Single pattern segment
    */
-  private static matchSingleSegment(pathSegment: string, patternSegment: string): boolean {
+  static #matchSingleSegment(pathSegment: string, patternSegment: string): boolean {
     if (patternSegment === '*') {
       return true;
     }

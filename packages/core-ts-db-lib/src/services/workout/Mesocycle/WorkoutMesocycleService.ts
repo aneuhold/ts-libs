@@ -24,22 +24,22 @@ import {
  */
 export default class WorkoutMesocycleService {
   /** Minimum microcycle index (0-based) before deload detection is active. */
-  private static readonly MIN_MICROCYCLE_INDEX_FOR_DELOAD = 2;
+  static readonly #MIN_MICROCYCLE_INDEX_FOR_DELOAD = 2;
 
   /** Recovery ratio above which a deload is Recommended. */
-  private static readonly RECOVERY_RATIO_RECOMMENDED = 0.5;
+  static readonly #RECOVERY_RATIO_RECOMMENDED = 0.5;
 
   /** Recovery ratio at or above which a deload is Suggested. */
-  private static readonly RECOVERY_RATIO_SUGGESTED = 0.4;
+  static readonly #RECOVERY_RATIO_SUGGESTED = 0.4;
 
   /** Set surplus at or below which a performance drop is counted. */
-  private static readonly PERFORMANCE_DROP_SURPLUS_THRESHOLD = -3;
+  static readonly #PERFORMANCE_DROP_SURPLUS_THRESHOLD = -3;
 
   /** Number of consecutive performance drops needed to trigger the rule. */
-  private static readonly CONSECUTIVE_DROPS_REQUIRED = 2;
+  static readonly #CONSECUTIVE_DROPS_REQUIRED = 2;
 
   /** Number of exercises with consecutive drops needed for Recommended severity. */
-  private static readonly EXERCISES_WITH_DROPS_FOR_RECOMMENDED = 2;
+  static readonly #EXERCISES_WITH_DROPS_FOR_RECOMMENDED = 2;
 
   /**
    * Generates or updates the workout plan for a mesocycle.
@@ -96,7 +96,7 @@ export default class WorkoutMesocycleService {
     }
 
     // Clean up incomplete microcycles before creating context
-    const cleanupResult = this.cleanUpIncompleteMicrocycles(
+    const cleanupResult = this.#cleanUpIncompleteMicrocycles(
       mesocycle,
       existingMicrocycles,
       existingSessions,
@@ -395,7 +395,7 @@ export default class WorkoutMesocycleService {
     );
 
     // Guard: don't trigger before enough microcycles have been completed
-    if (currentMicrocycleIndex < this.MIN_MICROCYCLE_INDEX_FOR_DELOAD) {
+    if (currentMicrocycleIndex < this.#MIN_MICROCYCLE_INDEX_FOR_DELOAD) {
       return noDeload;
     }
 
@@ -423,7 +423,7 @@ export default class WorkoutMesocycleService {
     let performanceSeverity = WorkoutDeloadSeverity.None;
 
     // --- Rule 1: Recovery Session Threshold ---
-    const recoveryResult = this.evaluateRecoverySessionThreshold(
+    const recoveryResult = this.#evaluateRecoverySessionThreshold(
       recentSessionExercises,
       context.exerciseMap
     );
@@ -433,7 +433,7 @@ export default class WorkoutMesocycleService {
     }
 
     // --- Rule 2: Consecutive Performance Drops ---
-    const performanceResult = this.evaluateConsecutivePerformanceDrops(
+    const performanceResult = this.#evaluateConsecutivePerformanceDrops(
       recentSessionExercises,
       context.setMap
     );
@@ -471,7 +471,7 @@ export default class WorkoutMesocycleService {
    * @param recentSessionExercises Session exercises from the last 2 microcycles.
    * @param exerciseMap Map of exercise ID to exercise (from context).
    */
-  private static evaluateRecoverySessionThreshold(
+  static #evaluateRecoverySessionThreshold(
     recentSessionExercises: WorkoutSessionExercise[],
     exerciseMap: ReadonlyMap<UUID, WorkoutExercise>
   ): WorkoutDeloadSeverity {
@@ -501,10 +501,10 @@ export default class WorkoutMesocycleService {
 
     const ratio = recoveryMuscleGroups.size / trainedMuscleGroupIds.size;
 
-    if (ratio > this.RECOVERY_RATIO_RECOMMENDED) {
+    if (ratio > this.#RECOVERY_RATIO_RECOMMENDED) {
       return WorkoutDeloadSeverity.Recommended;
     }
-    if (ratio >= this.RECOVERY_RATIO_SUGGESTED) {
+    if (ratio >= this.#RECOVERY_RATIO_SUGGESTED) {
       return WorkoutDeloadSeverity.Suggested;
     }
     return WorkoutDeloadSeverity.None;
@@ -518,7 +518,7 @@ export default class WorkoutMesocycleService {
    * @param recentSessionExercises Session exercises from the last 2 microcycles.
    * @param setMap Map of set ID to set (from context).
    */
-  private static evaluateConsecutivePerformanceDrops(
+  static #evaluateConsecutivePerformanceDrops(
     recentSessionExercises: WorkoutSessionExercise[],
     setMap: ReadonlyMap<UUID, WorkoutSet>
   ): WorkoutDeloadSeverity {
@@ -561,13 +561,13 @@ export default class WorkoutMesocycleService {
           continue;
         }
 
-        if (surplus <= this.PERFORMANCE_DROP_SURPLUS_THRESHOLD) {
+        if (surplus <= this.#PERFORMANCE_DROP_SURPLUS_THRESHOLD) {
           consecutiveDrops++;
         } else {
           consecutiveDrops = 0;
         }
 
-        if (consecutiveDrops >= this.CONSECUTIVE_DROPS_REQUIRED) {
+        if (consecutiveDrops >= this.#CONSECUTIVE_DROPS_REQUIRED) {
           hasConsecutiveDrops = true;
           break;
         }
@@ -582,7 +582,7 @@ export default class WorkoutMesocycleService {
       return WorkoutDeloadSeverity.None;
     }
 
-    if (exercisesWithDropsCount >= this.EXERCISES_WITH_DROPS_FOR_RECOMMENDED) {
+    if (exercisesWithDropsCount >= this.#EXERCISES_WITH_DROPS_FOR_RECOMMENDED) {
       return WorkoutDeloadSeverity.Recommended;
     }
     return WorkoutDeloadSeverity.Suggested;
@@ -595,7 +595,7 @@ export default class WorkoutMesocycleService {
    * hasn't started (first session incomplete), and returns IDs of all documents that should
    * be deleted (microcycles from that point forward and all their associated data).
    */
-  private static cleanUpIncompleteMicrocycles(
+  static #cleanUpIncompleteMicrocycles(
     mesocycle: WorkoutMesocycle,
     existingMicrocycles: WorkoutMicrocycle[],
     existingSessions: WorkoutSession[],

@@ -87,7 +87,7 @@ export class PackageJsonService {
       // Helper function to update dependencies in specific sections
       const updateDependencySection = (sectionName: string): void => {
         const sectionRegex = new RegExp(
-          `(["']${sectionName}["']\\s*:\\s*{[^}]*["']${this.escapeRegex(packageName)}["']\\s*:\\s*["'])([^"']+)(["'])`,
+          `(["']${sectionName}["']\\s*:\\s*{[^}]*["']${this.#escapeRegex(packageName)}["']\\s*:\\s*["'])([^"']+)(["'])`,
           'g'
         );
         if (sectionRegex.test(updatedContent)) {
@@ -172,7 +172,7 @@ export class PackageJsonService {
    *
    * @param str - String to escape
    */
-  private static escapeRegex(str: string): string {
+  static #escapeRegex(str: string): string {
     return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   }
 }

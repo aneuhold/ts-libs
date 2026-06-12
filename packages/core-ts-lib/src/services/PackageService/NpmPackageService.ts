@@ -37,7 +37,7 @@ export default class NpmPackageService {
         await PackageServiceUtils.replacePackageName(originalPackageName, packageName);
       }
 
-      const successfulDryRun = await NpmPackageService.publishDryRun();
+      const successfulDryRun = await NpmPackageService.#publishDryRun();
       if (!successfulDryRun) {
         if (isAlternativeName) {
           await PackageServiceUtils.resetGitChanges();
@@ -45,7 +45,7 @@ export default class NpmPackageService {
         process.exit(1);
       }
 
-      await NpmPackageService.checkVersionConflicts(packageName, currentVersion);
+      await NpmPackageService.#checkVersionConflicts(packageName, currentVersion);
 
       if (isAlternativeName) {
         await PackageServiceUtils.resetGitChanges();
@@ -81,7 +81,7 @@ export default class NpmPackageService {
         await PackageServiceUtils.replacePackageName(originalPackageName, packageName);
       }
 
-      const result = await NpmPackageService.publishToNpm();
+      const result = await NpmPackageService.#publishToNpm();
 
       if (isAlternativeName) {
         await PackageServiceUtils.resetGitChanges();
@@ -100,7 +100,7 @@ export default class NpmPackageService {
    *
    * @returns true if the dry run was successful, false otherwise.
    */
-  private static async publishDryRun(): Promise<boolean> {
+  static async #publishDryRun(): Promise<boolean> {
     DR.logger.info('Running `npm publish --access public --dry-run`');
     try {
       await execAsync('npm publish --access public --dry-run');
@@ -119,10 +119,7 @@ export default class NpmPackageService {
    * @param packageName The package name from package.json
    * @param currentVersion The current version from package.json
    */
-  private static async checkVersionConflicts(
-    packageName: string,
-    currentVersion: string
-  ): Promise<void> {
+  static async #checkVersionConflicts(packageName: string, currentVersion: string): Promise<void> {
     DR.logger.info(`Checking npm registry for existing versions of ${packageName}...`);
 
     try {
@@ -158,7 +155,7 @@ export default class NpmPackageService {
    *
    * @returns true if the publish was successful, false otherwise.
    */
-  private static async publishToNpm(): Promise<boolean> {
+  static async #publishToNpm(): Promise<boolean> {
     DR.logger.info('Running `npm publish --access public`');
     return new Promise((resolve) => {
       const child = spawn('npm publish', ['--access', 'public'], {

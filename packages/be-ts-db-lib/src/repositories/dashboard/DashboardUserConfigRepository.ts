@@ -12,7 +12,7 @@ import DashboardBaseWithUserIdRepository from './DashboardBaseWithUserIdReposito
  * The repository that contains {@link DashboardUserConfig} documents.
  */
 export default class DashboardUserConfigRepository extends DashboardBaseWithUserIdRepository<DashboardUserConfig> {
-  private static singletonInstance?: DashboardUserConfigRepository;
+  static #singletonInstance?: DashboardUserConfigRepository;
 
   /**
    * Private constructor to enforce singleton pattern.
@@ -61,10 +61,10 @@ export default class DashboardUserConfigRepository extends DashboardBaseWithUser
    * @returns The singleton instance.
    */
   public static getRepo(): DashboardUserConfigRepository {
-    if (!DashboardUserConfigRepository.singletonInstance) {
-      DashboardUserConfigRepository.singletonInstance = new DashboardUserConfigRepository();
+    if (!DashboardUserConfigRepository.#singletonInstance) {
+      DashboardUserConfigRepository.#singletonInstance = new DashboardUserConfigRepository();
     }
-    return DashboardUserConfigRepository.singletonInstance;
+    return DashboardUserConfigRepository.#singletonInstance;
   }
 
   /**
@@ -81,7 +81,7 @@ export default class DashboardUserConfigRepository extends DashboardBaseWithUser
   ): Promise<DashboardUserConfig | null> {
     const result = await super.insertNew(newDoc, meta);
     if (newDoc.collaborators.length > 0) {
-      await this.updateCollaboratorsIfNeeded([
+      await this.#updateCollaboratorsIfNeeded([
         {
           originalDoc: DashboardUserConfigSchema.parse({ userId: newDoc.userId }),
           updatedDoc: newDoc
@@ -106,7 +106,7 @@ export default class DashboardUserConfigRepository extends DashboardBaseWithUser
   ): Promise<DashboardUserConfig[]> {
     const result = await super.insertMany(newDocs, meta);
     // Simulate having no collaborators originally.
-    await this.updateCollaboratorsIfNeeded(
+    await this.#updateCollaboratorsIfNeeded(
       newDocs.map((doc) => ({
         originalDoc: DashboardUserConfigSchema.parse({ userId: doc.userId }),
         updatedDoc: doc
@@ -131,7 +131,7 @@ export default class DashboardUserConfigRepository extends DashboardBaseWithUser
     const originalDoc = await super.get({ _id: updatedDoc._id });
     const result = await super.update(updatedDoc, meta);
     if (originalDoc) {
-      await this.updateCollaboratorsIfNeeded([{ originalDoc, updatedDoc }]);
+      await this.#updateCollaboratorsIfNeeded([{ originalDoc, updatedDoc }]);
     }
     return result;
   }
@@ -156,7 +156,7 @@ export default class DashboardUserConfigRepository extends DashboardBaseWithUser
     });
     const originalDocs = await super.getList(docIds);
     const result = await super.updateMany(updatedDocs, meta);
-    await this.updateCollaboratorsIfNeeded(
+    await this.#updateCollaboratorsIfNeeded(
       originalDocs.map((originalDoc, index) => ({
         originalDoc,
         updatedDoc: updatedDocs[index]
@@ -189,7 +189,7 @@ export default class DashboardUserConfigRepository extends DashboardBaseWithUser
    *
    * @param docSets The array of document sets containing original and updated documents.
    */
-  private async updateCollaboratorsIfNeeded(
+  async #updateCollaboratorsIfNeeded(
     docSets: Array<{
       originalDoc: DashboardUserConfig;
       updatedDoc: Partial<DashboardUserConfig>;

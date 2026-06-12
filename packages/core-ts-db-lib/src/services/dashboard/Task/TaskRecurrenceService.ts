@@ -123,20 +123,20 @@ export default class DashboardTaskRecurrenceService {
 
     if (task.parentRecurringTaskInfo) {
       if (task.recurrenceInfo.recurrenceBasis === RecurrenceBasis.startDate) {
-        diff = this.getDiffForDateUpdate(
+        diff = this.#getDiffForDateUpdate(
           task.parentRecurringTaskInfo.startDate,
           task.recurrenceInfo.frequency
         );
       } else {
-        diff = this.getDiffForDateUpdate(
+        diff = this.#getDiffForDateUpdate(
           task.parentRecurringTaskInfo.dueDate,
           task.recurrenceInfo.frequency
         );
       }
     } else if (task.recurrenceInfo.recurrenceBasis === RecurrenceBasis.startDate) {
-      diff = this.getDiffForDateUpdate(task.startDate, task.recurrenceInfo.frequency);
+      diff = this.#getDiffForDateUpdate(task.startDate, task.recurrenceInfo.frequency);
     } else {
-      diff = this.getDiffForDateUpdate(task.dueDate, task.recurrenceInfo.frequency);
+      diff = this.#getDiffForDateUpdate(task.dueDate, task.recurrenceInfo.frequency);
     }
 
     if (task.startDate) {
@@ -154,10 +154,7 @@ export default class DashboardTaskRecurrenceService {
    * @param frequency - The frequency to use.
    * @returns The difference in time in milliseconds.
    */
-  private static getDiffForDateUpdate(
-    basisDate: Date | null | undefined,
-    frequency: RecurrenceFrequency
-  ) {
+  static #getDiffForDateUpdate(basisDate: Date | null | undefined, frequency: RecurrenceFrequency) {
     if (!basisDate) {
       return 0;
     }

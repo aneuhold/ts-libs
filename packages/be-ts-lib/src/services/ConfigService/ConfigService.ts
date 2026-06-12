@@ -23,7 +23,7 @@ export default class ConfigService {
    */
   static env: ConfigEnv | null = null;
 
-  private static configObject: Config | null = null;
+  static #configObject: Config | null = null;
 
   /**
    * Returns the configuration object that has been loaded in for the current
@@ -33,12 +33,12 @@ export default class ConfigService {
    * @returns The configuration object for the current environment.
    */
   static get config(): Config {
-    if (!ConfigService.configObject) {
+    if (!ConfigService.#configObject) {
       throw new Error(
         'ConfigService has not been initialized yet. Use ConfigService.useConfig() to initialize it.'
       );
     }
-    return ConfigService.configObject;
+    return ConfigService.#configObject;
   }
 
   /**
@@ -47,7 +47,7 @@ export default class ConfigService {
    * @returns True if the {@link ConfigService} has been initialized, false otherwise.
    */
   static get isInitialized(): boolean {
-    return !!ConfigService.configObject;
+    return !!ConfigService.#configObject;
   }
 
   /**
@@ -60,7 +60,7 @@ export default class ConfigService {
     ConfigService.env = env;
     try {
       const jsonString = await GitHubService.getContentFromRepo('config', `${env}.jsonc`);
-      ConfigService.configObject = ConfigSchema.parse(parse(jsonString));
+      ConfigService.#configObject = ConfigSchema.parse(parse(jsonString));
     } catch (error) {
       DR.logger.error(`Failed to load ${env}.json, error: ${String(error)}`);
       throw error;

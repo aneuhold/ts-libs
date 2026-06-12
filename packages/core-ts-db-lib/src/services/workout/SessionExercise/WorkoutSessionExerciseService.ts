@@ -64,7 +64,7 @@ export default class WorkoutSessionExerciseService {
         continue;
       }
 
-      const surplus = this.calculateSetSurplus(
+      const surplus = this.#calculateSetSurplus(
         set.actualReps,
         set.plannedReps,
         set.rir,
@@ -109,7 +109,7 @@ export default class WorkoutSessionExerciseService {
       ) {
         continue;
       }
-      totalSurplus += this.calculateSetSurplus(
+      totalSurplus += this.#calculateSetSurplus(
         set.actualReps,
         set.plannedReps,
         set.rir,
@@ -217,7 +217,7 @@ export default class WorkoutSessionExerciseService {
    *
    * Formula: `(actualReps - plannedReps) + (rir - plannedRir)`
    */
-  private static calculateSetSurplus(
+  static #calculateSetSurplus(
     actualReps: number,
     plannedReps: number,
     rir: number,

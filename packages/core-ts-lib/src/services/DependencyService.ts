@@ -179,7 +179,7 @@ export default class DependencyService {
     version: string,
     workspaceRoot?: string
   ): Promise<void> {
-    await this.processPackageDependents(packageName, version, 'update', workspaceRoot);
+    await this.#processPackageDependents(packageName, version, 'update', workspaceRoot);
   }
 
   /**
@@ -195,7 +195,7 @@ export default class DependencyService {
     version: string,
     workspaceRoot?: string
   ): Promise<void> {
-    await this.processPackageDependents(packageName, version, 'validate', workspaceRoot);
+    await this.#processPackageDependents(packageName, version, 'validate', workspaceRoot);
   }
 
   /**
@@ -206,7 +206,7 @@ export default class DependencyService {
    * @param mode Whether to update the dependents or just validate them
    * @param workspaceRoot Optional workspace root path
    */
-  private static async processPackageDependents(
+  static async #processPackageDependents(
     packageName: string,
     version: string,
     mode: 'update' | 'validate',

@@ -9,7 +9,7 @@ import UserRepository from '../repositories/common/UserRepository.js';
  * Google ID.
  */
 export default class GoogleAuthService {
-  private static readonly client = new OAuth2Client(GOOGLE_CLIENT_ID);
+  static readonly #client = new OAuth2Client(GOOGLE_CLIENT_ID);
 
   /**
    * Verifies a Google ID token and finds the associated user. Returns
@@ -18,7 +18,7 @@ export default class GoogleAuthService {
    * @param googleCredentialToken - The Google ID token string from the client.
    */
   static async verifyAndFindUser(googleCredentialToken: string): Promise<{ user: User } | null> {
-    const { googleId, email } = await this.verifyToken(googleCredentialToken);
+    const { googleId, email } = await this.#verifyToken(googleCredentialToken);
 
     const userRepo = UserRepository.getRepo();
 
@@ -54,7 +54,7 @@ export default class GoogleAuthService {
     }
 
     // Create new user.
-    const { googleId, email } = await this.verifyToken(googleCredentialToken);
+    const { googleId, email } = await this.#verifyToken(googleCredentialToken);
     const userRepo = UserRepository.getRepo();
 
     const newUser = UserSchema.parse({
@@ -76,10 +76,10 @@ export default class GoogleAuthService {
    *
    * @param googleCredentialToken - The Google ID token string from the client.
    */
-  private static async verifyToken(
+  static async #verifyToken(
     googleCredentialToken: string
   ): Promise<{ googleId: string; email: string }> {
-    const ticket = await this.client.verifyIdToken({
+    const ticket = await this.#client.verifyIdToken({
       idToken: googleCredentialToken,
       audience: GOOGLE_CLIENT_ID
     });

@@ -21,7 +21,7 @@ import WorkoutBaseWithUserIdRepository from './WorkoutBaseWithUserIdRepository.j
  * The repository that contains {@link WorkoutMuscleGroup} documents.
  */
 export default class WorkoutMuscleGroupRepository extends WorkoutBaseWithUserIdRepository<WorkoutMuscleGroup> {
-  private static singletonInstance?: WorkoutMuscleGroupRepository;
+  static #singletonInstance?: WorkoutMuscleGroupRepository;
 
   /**
    * Private constructor to enforce singleton pattern.
@@ -48,10 +48,10 @@ export default class WorkoutMuscleGroupRepository extends WorkoutBaseWithUserIdR
    * Gets the singleton instance of the {@link WorkoutMuscleGroupRepository}.
    */
   public static getRepo(): WorkoutMuscleGroupRepository {
-    if (!WorkoutMuscleGroupRepository.singletonInstance) {
-      WorkoutMuscleGroupRepository.singletonInstance = new WorkoutMuscleGroupRepository();
+    if (!WorkoutMuscleGroupRepository.#singletonInstance) {
+      WorkoutMuscleGroupRepository.#singletonInstance = new WorkoutMuscleGroupRepository();
     }
-    return WorkoutMuscleGroupRepository.singletonInstance;
+    return WorkoutMuscleGroupRepository.#singletonInstance;
   }
 
   /**

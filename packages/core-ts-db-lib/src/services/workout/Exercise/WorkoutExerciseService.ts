@@ -80,11 +80,11 @@ export default class WorkoutExerciseService {
     // forecasts by copying planned values into actuals (surplus = 0) so the
     // plan progresses smoothly from the planned baseline.
     const completedSets = previousSets
-      .map((set) => this.toCompletedSet(set))
+      .map((set) => this.#toCompletedSet(set))
       .filter((set): set is CompletedWorkoutSet => set !== null);
 
     if (completedSets.length > 0) {
-      return this.calculateAutoRegulatedTargets({
+      return this.#calculateAutoRegulatedTargets({
         exercise,
         equipment,
         previousSets: completedSets,
@@ -93,7 +93,7 @@ export default class WorkoutExerciseService {
     }
 
     // Calibration-based formula (no previous set available)
-    return this.calculateCalibrationBasedTargets({
+    return this.#calculateCalibrationBasedTargets({
       exercise,
       calibration,
       equipment,
@@ -109,7 +109,7 @@ export default class WorkoutExerciseService {
    * Previously only the first set's surplus was used, which masked poor performance
    * on later sets (e.g., first set hits target but second set falls far short).
    */
-  private static calculateAutoRegulatedTargets(params: {
+  static #calculateAutoRegulatedTargets(params: {
     exercise: WorkoutExercise;
     equipment: WorkoutEquipmentType;
     previousSets: CompletedWorkoutSet[];
@@ -126,10 +126,10 @@ export default class WorkoutExerciseService {
     const surplus = WorkoutSessionExerciseService.calculateAverageSurplus(previousSets) ?? 0;
 
     if (exercise.preferredProgressionType === ExerciseProgressionType.Rep) {
-      return this.calculateAutoRegulatedRepTargets(previousFirstSet, surplus, repRange, equipment);
+      return this.#calculateAutoRegulatedRepTargets(previousFirstSet, surplus, repRange, equipment);
     }
 
-    return this.calculateAutoRegulatedLoadTargets(previousFirstSet, surplus, repRange, equipment);
+    return this.#calculateAutoRegulatedLoadTargets(previousFirstSet, surplus, repRange, equipment);
   }
 
   /**
@@ -144,7 +144,7 @@ export default class WorkoutExerciseService {
    * | -3 | Regress: actualReps (use actual as new baseline) |
    * | < -3 | Severe regress: actualReps + reduce weight (weight is too heavy for rep range) |
    */
-  private static calculateAutoRegulatedRepTargets(
+  static #calculateAutoRegulatedRepTargets(
     previousSet: CompletedWorkoutSet,
     surplus: number,
     repRange: { min: number; max: number },
@@ -182,7 +182,7 @@ export default class WorkoutExerciseService {
     // Handle rep range ceiling: if target exceeds max, reset and bump weight
     if (targetReps > repRange.max) {
       targetReps = Math.floor((repRange.min + repRange.max) / 2);
-      const nextWeight = this.findNextTwoPercentWeight(targetWeight, equipment);
+      const nextWeight = this.#findNextTwoPercentWeight(targetWeight, equipment);
       if (nextWeight !== null) {
         targetWeight = nextWeight;
       }
@@ -211,7 +211,7 @@ export default class WorkoutExerciseService {
    * | -1 to -2 | Hold weight (no increase) |
    * | <= -3 | Reduce weight by minimum equipment increment |
    */
-  private static calculateAutoRegulatedLoadTargets(
+  static #calculateAutoRegulatedLoadTargets(
     previousSet: CompletedWorkoutSet,
     surplus: number,
     repRange: { min: number; max: number },
@@ -233,7 +233,7 @@ export default class WorkoutExerciseService {
       }
     } else if (surplus >= 0) {
       // Normal: increase by 2%
-      const nextWeight = this.findNextTwoPercentWeight(targetWeight, equipment);
+      const nextWeight = this.#findNextTwoPercentWeight(targetWeight, equipment);
       if (nextWeight !== null) {
         targetWeight = nextWeight;
       }
@@ -263,7 +263,7 @@ export default class WorkoutExerciseService {
    *
    * Returns null if the set lacks the minimum planned data needed.
    */
-  private static toCompletedSet(set?: WorkoutSet): CompletedWorkoutSet | null {
+  static #toCompletedSet(set?: WorkoutSet): CompletedWorkoutSet | null {
     if (!set) {
       return null;
     }
@@ -287,7 +287,7 @@ export default class WorkoutExerciseService {
    * set exists (first microcycle of the first mesocycle, or brand-new exercise).
    * All subsequent microcycle progression is handled by autoregulation/forecasting.
    */
-  private static calculateCalibrationBasedTargets(params: {
+  static #calculateCalibrationBasedTargets(params: {
     exercise: WorkoutExercise;
     calibration: WorkoutExerciseCalibration;
     equipment: WorkoutEquipmentType;
@@ -330,7 +330,7 @@ export default class WorkoutExerciseService {
     return { targetWeight, targetReps };
   }
 
-  private static findNextTwoPercentWeight(
+  static #findNextTwoPercentWeight(
     currentWeight: number,
     equipment: WorkoutEquipmentType
   ): number | null {

@@ -54,7 +54,7 @@ export default class WorkoutSetService {
     const previousSets =
       microcycleIndex === 0
         ? exerciseCTO.lastAccumulationSessionSets
-        : this.findPreviousSets(context, exerciseCTO._id, microcycleIndex);
+        : this.#findPreviousSets(context, exerciseCTO._id, microcycleIndex);
 
     // Calculate progressed targets for the first set.
     // Autoregulation/forecasting handles progression from the previous sets' data.
@@ -70,7 +70,7 @@ export default class WorkoutSetService {
       });
 
     for (let setIndex = 0; setIndex < setCount; setIndex++) {
-      const { plannedReps, plannedWeight } = this.generateSetRepsAndWeight(
+      const { plannedReps, plannedWeight } = this.#generateSetRepsAndWeight(
         sets[setIndex - 1]?.plannedReps || firstSetReps,
         sets[setIndex - 1]?.plannedWeight || firstSetWeight,
         setIndex,
@@ -126,7 +126,7 @@ export default class WorkoutSetService {
    *
    * @throws {Error} If the session/exercise structure doesn't match the plan.
    */
-  private static findPreviousSets(
+  static #findPreviousSets(
     context: WorkoutMesocyclePlanContext,
     exerciseId: UUID,
     microcycleIndex: number
@@ -204,7 +204,7 @@ export default class WorkoutSetService {
    * This needs to be checked with the source material to see if it needs to be adjusted based
    * on actual reps performed in previous sets.
    */
-  private static generateSetRepsAndWeight(
+  static #generateSetRepsAndWeight(
     firstSetOrPreviousSetReps: number,
     firstSetOrPreviousSetWeight: number,
     setIndex: number,

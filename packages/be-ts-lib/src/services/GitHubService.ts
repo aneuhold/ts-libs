@@ -8,7 +8,7 @@ export type ConfigEnv = 'local' | 'dev' | 'prod';
  * A class which can be used to interact with GitHub.
  */
 export default class GitHubService {
-  private static gitHub: Octokit | null = null;
+  static #gitHub: Octokit | null = null;
 
   /**
    * Retrieves the content of a file from a specified GitHub repository.
@@ -19,11 +19,11 @@ export default class GitHubService {
    * @throws {Error} Will throw an error if the content cannot be retrieved.
    */
   static async getContentFromRepo(repoName: string, filePath: string): Promise<string> {
-    if (!GitHubService.gitHub) {
-      GitHubService.gitHub = GitHubService.getGitHubClient();
+    if (!GitHubService.#gitHub) {
+      GitHubService.#gitHub = GitHubService.#getGitHubClient();
     }
     try {
-      const result = await GitHubService.gitHub.rest.repos.getContent({
+      const result = await GitHubService.#gitHub.rest.repos.getContent({
         mediaType: {
           format: 'raw'
         },
@@ -51,7 +51,7 @@ export default class GitHubService {
    *
    * @returns A new GitHub client.
    */
-  private static getGitHubClient(): Octokit {
+  static #getGitHubClient(): Octokit {
     const authToken = process.env['CONFIG_GITHUB_TOKEN'];
     if (!authToken) {
       throw new Error('No CONFIG_GITHUB_TOKEN key found in environment variables.');

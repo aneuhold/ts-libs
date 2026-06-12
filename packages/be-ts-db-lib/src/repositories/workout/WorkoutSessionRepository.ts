@@ -11,7 +11,7 @@ import WorkoutSessionExerciseRepository from './WorkoutSessionExerciseRepository
  * The repository that contains {@link WorkoutSession} documents.
  */
 export default class WorkoutSessionRepository extends WorkoutBaseWithUserIdRepository<WorkoutSession> {
-  private static singletonInstance?: WorkoutSessionRepository;
+  static #singletonInstance?: WorkoutSessionRepository;
 
   private constructor() {
     super(WorkoutSession_docType, new WorkoutSessionValidator());
@@ -78,9 +78,9 @@ export default class WorkoutSessionRepository extends WorkoutBaseWithUserIdRepos
   }
 
   public static getRepo(): WorkoutSessionRepository {
-    if (!WorkoutSessionRepository.singletonInstance) {
-      WorkoutSessionRepository.singletonInstance = new WorkoutSessionRepository();
+    if (!WorkoutSessionRepository.#singletonInstance) {
+      WorkoutSessionRepository.#singletonInstance = new WorkoutSessionRepository();
     }
-    return WorkoutSessionRepository.singletonInstance;
+    return WorkoutSessionRepository.#singletonInstance;
   }
 }

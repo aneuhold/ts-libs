@@ -15,14 +15,14 @@ export class PackageManagerService {
   /**
    * Cache to store detected package managers for projects.
    */
-  private static configCache = new Map<
+  static #configCache = new Map<
     string,
     {
       packageManager: PackageManager;
       timestamp: number;
     }
   >();
-  private static readonly CACHE_TTL = 60000; // 1 minute
+  static readonly #CACHE_TTL = 60000; // 1 minute
 
   /**
    * Determines the package manager to use based on lock files and packageManager field in package.json.
@@ -32,18 +32,18 @@ export class PackageManagerService {
    */
   static async detectPackageManager(projectPath: string): Promise<PackageManager> {
     const cacheKey = projectPath;
-    const cached = this.configCache.get(cacheKey);
+    const cached = this.#configCache.get(cacheKey);
 
     // Check if cache is still valid
-    if (cached && Date.now() - cached.timestamp < this.CACHE_TTL) {
+    if (cached && Date.now() - cached.timestamp < this.#CACHE_TTL) {
       return cached.packageManager;
     }
 
     // Cache miss or expired, detect package manager
-    const packageManager = await this.detectPackageManagerUncached(projectPath);
+    const packageManager = await this.#detectPackageManagerUncached(projectPath);
 
     // Cache the result
-    this.configCache.set(projectPath, {
+    this.#configCache.set(projectPath, {
       packageManager,
       timestamp: Date.now()
     });
@@ -58,9 +58,9 @@ export class PackageManagerService {
    */
   static clearCache(projectPath?: string): void {
     if (projectPath) {
-      this.configCache.delete(projectPath);
+      this.#configCache.delete(projectPath);
     } else {
-      this.configCache.clear();
+      this.#configCache.clear();
     }
   }
 
@@ -139,7 +139,7 @@ export class PackageManagerService {
    *
    * @param projectPath - Path to the project directory to check
    */
-  private static async detectPackageManagerUncached(projectPath: string): Promise<PackageManager> {
+  static async #detectPackageManagerUncached(projectPath: string): Promise<PackageManager> {
     // First, try to determine from package.json packageManager field
     const packageInfo = await PackageJsonService.getPackageInfo(projectPath, false);
     if (packageInfo && packageInfo.packageManager) {

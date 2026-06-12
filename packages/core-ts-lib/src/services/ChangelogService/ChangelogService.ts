@@ -81,7 +81,7 @@ export default class ChangelogService {
     if (changelogExists) {
       // If it exists, validate against Git tags and update if necessary
       const existingContent = await ChangelogFileService.readChangelog(packagePath);
-      await this.validateAndUpdateExistingChangelog(
+      await this.#validateAndUpdateExistingChangelog(
         version,
         packageName,
         existingContent,
@@ -110,7 +110,7 @@ export default class ChangelogService {
    * @param existingContent The current changelog content
    * @param workingDir The working directory
    */
-  private static async validateAndUpdateExistingChangelog(
+  static async #validateAndUpdateExistingChangelog(
     currentVersion: string,
     packageName: string,
     existingContent: string,
@@ -123,7 +123,7 @@ export default class ChangelogService {
       DR.logger.info(
         `Changelog exists but has no version entries - adding entry for ${currentVersion}`
       );
-      await this.addVersionEntry(currentVersion, existingContent, packageName, workingDir);
+      await this.#addVersionEntry(currentVersion, existingContent, packageName, workingDir);
       return;
     }
 
@@ -177,7 +177,7 @@ export default class ChangelogService {
       DR.logger.info(
         `Most recent changelog entry has a tag - adding new entry for version ${currentVersion}`
       );
-      await this.addVersionEntry(currentVersion, existingContent, packageName, workingDir);
+      await this.#addVersionEntry(currentVersion, existingContent, packageName, workingDir);
     } else {
       // Most recent entry doesn't have a tag
       if (mostRecentEntry.version === currentVersion) {
@@ -191,7 +191,7 @@ export default class ChangelogService {
       DR.logger.info(
         `Updating most recent changelog entry from ${mostRecentEntry.version} to ${currentVersion}`
       );
-      await this.updateMostRecentVersionEntry(
+      await this.#updateMostRecentVersionEntry(
         currentVersion,
         existingContent,
         packageName,
@@ -208,7 +208,7 @@ export default class ChangelogService {
    * @param packageName The package name
    * @param workingDir The working directory
    */
-  private static async updateMostRecentVersionEntry(
+  static async #updateMostRecentVersionEntry(
     newVersion: string,
     existingContent: string,
     packageName: string,
@@ -248,7 +248,7 @@ export default class ChangelogService {
    * @param packageName The package name for generating version links
    * @param packagePath The package directory path
    */
-  private static async addVersionEntry(
+  static async #addVersionEntry(
     version: string,
     existingContent: string,
     packageName: string,

@@ -14,7 +14,7 @@ export default class ConsoleLogger implements ILogger {
   /**
    * Private flag indicating if this instance should only log when verbose mode is enabled.
    */
-  private logOnlyIfVerbose = false;
+  #logOnlyIfVerbose = false;
 
   /**
    * Creates an instance of ConsoleLogger.
@@ -24,7 +24,7 @@ export default class ConsoleLogger implements ILogger {
    */
   constructor(logOnlyIfVerbose?: boolean) {
     if (logOnlyIfVerbose) {
-      this.logOnlyIfVerbose = logOnlyIfVerbose;
+      this.#logOnlyIfVerbose = logOnlyIfVerbose;
     }
   }
 
@@ -56,7 +56,7 @@ export default class ConsoleLogger implements ILogger {
    * @param skipNewline - If true, the message will be logged without a newline.
    */
   info(msg: string, skipNewline?: boolean): void {
-    if (this.shouldLog()) {
+    if (this.#shouldLog()) {
       const printMessage = `ℹ️  ${msg}`;
       if (
         skipNewline &&
@@ -89,7 +89,7 @@ export default class ConsoleLogger implements ILogger {
    * @param msg - The message to log.
    */
   success(msg: string): void {
-    if (this.shouldLog()) {
+    if (this.#shouldLog()) {
       console.log(`✅ ${msg}`);
     }
   }
@@ -111,7 +111,7 @@ export default class ConsoleLogger implements ILogger {
    * @param msg - The message to log.
    */
   warn(msg: string): void {
-    if (this.shouldLog()) {
+    if (this.#shouldLog()) {
       console.warn(`🟡 ${msg}`);
     }
   }
@@ -133,7 +133,7 @@ export default class ConsoleLogger implements ILogger {
    * @param msg - The message to log.
    */
   error(msg: string): void {
-    if (this.shouldLog()) {
+    if (this.#shouldLog()) {
       console.error(`💀 ${msg}`);
     }
   }
@@ -169,9 +169,9 @@ export default class ConsoleLogger implements ILogger {
    *
    * @returns True if the message should be logged, false otherwise.
    */
-  private shouldLog(): boolean {
+  #shouldLog(): boolean {
     // Log if verbose logging is not required for this instance,
     // OR if verbose logging IS required AND it's globally enabled.
-    return !this.logOnlyIfVerbose || ConsoleLogger.verboseLoggingEnabled;
+    return !this.#logOnlyIfVerbose || ConsoleLogger.verboseLoggingEnabled;
   }
 }

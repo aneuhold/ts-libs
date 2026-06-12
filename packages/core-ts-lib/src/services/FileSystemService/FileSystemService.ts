@@ -102,7 +102,7 @@ export default class FileSystemService {
         const targetFile = path.join(targetFolderPath, sourceFilePath);
 
         // Check if the file should be ignored based on extensions
-        if (ignoreExtensions && FileSystemService.shouldIgnoreFile(sourceFile, ignoreExtensions)) {
+        if (ignoreExtensions && FileSystemService.#shouldIgnoreFile(sourceFile, ignoreExtensions)) {
           return;
         }
 
@@ -210,7 +210,7 @@ export default class FileSystemService {
     fileName: string,
     stopAt?: string
   ): Promise<string | null> {
-    const results = await this.traverseDirectoryTree(
+    const results = await this.#traverseDirectoryTree(
       startDir,
       fileName,
       stopAt,
@@ -233,7 +233,7 @@ export default class FileSystemService {
     fileName: string,
     stopAt?: string
   ): Promise<string[]> {
-    return this.traverseDirectoryTree(
+    return this.#traverseDirectoryTree(
       startDir,
       fileName,
       stopAt,
@@ -259,7 +259,7 @@ export default class FileSystemService {
       const repoRoot = gitRoot.trim();
 
       // Determine git diff command - prefer origin/main, fallback to HEAD~1
-      const gitCommand = await this.getGitDiffCommand(repoRoot);
+      const gitCommand = await this.#getGitDiffCommand(repoRoot);
 
       // Get changed files
       const { stdout } = await execAsync(gitCommand, { cwd: repoRoot });
@@ -376,7 +376,7 @@ export default class FileSystemService {
    * @param repoRoot The git repository root directory
    * @returns The git diff command to use
    */
-  private static async getGitDiffCommand(repoRoot: string): Promise<string> {
+  static async #getGitDiffCommand(repoRoot: string): Promise<string> {
     try {
       await execAsync('git show-ref --verify --quiet refs/remotes/origin/main', {
         cwd: repoRoot
@@ -397,7 +397,7 @@ export default class FileSystemService {
    * @param stopAt - Optional directory path to stop searching at (defaults to root)
    * @param findFirst - If true, stops after finding the first file
    */
-  private static async traverseDirectoryTree(
+  static async #traverseDirectoryTree(
     startDir: string,
     fileName: string,
     stopAt?: string,
@@ -447,7 +447,7 @@ export default class FileSystemService {
    * @param filePath the path to the file to check
    * @param ignoreExtensions array of extensions to ignore
    */
-  private static shouldIgnoreFile(filePath: string, ignoreExtensions: string[]): boolean {
+  static #shouldIgnoreFile(filePath: string, ignoreExtensions: string[]): boolean {
     const fileName = path.basename(filePath);
 
     return ignoreExtensions.some((extension) => {

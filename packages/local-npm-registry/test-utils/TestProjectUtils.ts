@@ -28,27 +28,27 @@ import { PACKAGE_MANAGER_INFO, PackageManager } from '../src/types/PackageManage
  * ```
  */
 export class TestProjectUtils {
-  private static globalTempDir: string;
-  private static originalCwd: string;
-  private static testInstanceDir: string;
-  private static testConfigFilePath: string | null = null;
+  static #globalTempDir: string;
+  static #originalCwd: string;
+  static #testInstanceDir: string;
+  static #testConfigFilePath: string | null = null;
 
   /**
    * Sets up the global tmp directory (called once before all test files)
    */
   static async setupGlobalTempDir(): Promise<void> {
-    if (!TestProjectUtils.originalCwd) {
-      TestProjectUtils.originalCwd = process.cwd();
+    if (!TestProjectUtils.#originalCwd) {
+      TestProjectUtils.#originalCwd = process.cwd();
     }
 
     // Create tmp directory with random GUID in the local-npm-registry package folder
     const packageRoot = path.dirname(__dirname);
     const tmpDirName = `tmp-${randomUUID()}`;
-    TestProjectUtils.globalTempDir = path.join(packageRoot, tmpDirName);
+    TestProjectUtils.#globalTempDir = path.join(packageRoot, tmpDirName);
 
     // Clean and recreate the tmp directory
-    await fs.remove(TestProjectUtils.globalTempDir);
-    await fs.ensureDir(TestProjectUtils.globalTempDir);
+    await fs.remove(TestProjectUtils.#globalTempDir);
+    await fs.ensureDir(TestProjectUtils.#globalTempDir);
 
     // Create test configuration file in the tmp directory
     await TestProjectUtils.setupTestConfig();
@@ -59,7 +59,7 @@ export class TestProjectUtils {
    * for the store location to prevent pollution of the global store file.
    */
   static async setupTestConfig(): Promise<void> {
-    if (!TestProjectUtils.globalTempDir) {
+    if (!TestProjectUtils.#globalTempDir) {
       throw new Error('Global temp directory must be set up first');
     }
 
@@ -67,12 +67,12 @@ export class TestProjectUtils {
     ConfigService.clearCache();
 
     // Create test configuration file in the tmp directory
-    TestProjectUtils.testConfigFilePath = await ConfigService.createDefaultConfig(
-      TestProjectUtils.globalTempDir
+    TestProjectUtils.#testConfigFilePath = await ConfigService.createDefaultConfig(
+      TestProjectUtils.#globalTempDir
     );
 
     // Change working directory to the tmp directory so the config is found
-    process.chdir(TestProjectUtils.globalTempDir);
+    process.chdir(TestProjectUtils.#globalTempDir);
   }
 
   /**
@@ -82,11 +82,11 @@ export class TestProjectUtils {
     // Clean up test configuration first
     await TestProjectUtils.cleanupTestConfig();
 
-    if (TestProjectUtils.globalTempDir) {
-      await fs.remove(TestProjectUtils.globalTempDir);
+    if (TestProjectUtils.#globalTempDir) {
+      await fs.remove(TestProjectUtils.#globalTempDir);
     }
-    if (TestProjectUtils.originalCwd) {
-      process.chdir(TestProjectUtils.originalCwd);
+    if (TestProjectUtils.#originalCwd) {
+      process.chdir(TestProjectUtils.#originalCwd);
     }
   }
 
@@ -98,18 +98,18 @@ export class TestProjectUtils {
     ConfigService.clearCache();
 
     // Restore original working directory
-    if (TestProjectUtils.originalCwd) {
-      process.chdir(TestProjectUtils.originalCwd);
+    if (TestProjectUtils.#originalCwd) {
+      process.chdir(TestProjectUtils.#originalCwd);
     }
 
     // Clean up the test config file
-    if (TestProjectUtils.testConfigFilePath) {
+    if (TestProjectUtils.#testConfigFilePath) {
       try {
-        await fs.remove(TestProjectUtils.testConfigFilePath);
+        await fs.remove(TestProjectUtils.#testConfigFilePath);
       } catch {
         // Ignore errors during cleanup
       }
-      TestProjectUtils.testConfigFilePath = null;
+      TestProjectUtils.#testConfigFilePath = null;
     }
   }
 
@@ -117,7 +117,7 @@ export class TestProjectUtils {
    * Creates a unique test instance directory for each test
    */
   static async setupTestInstance(): Promise<string> {
-    if (!TestProjectUtils.globalTempDir) {
+    if (!TestProjectUtils.#globalTempDir) {
       throw new Error('Global temp directory not initialized. Call setupGlobalTempDir() first.');
     }
 
@@ -126,10 +126,10 @@ export class TestProjectUtils {
 
     // Create a unique directory for this test instance using a GUID
     const testId = randomUUID();
-    TestProjectUtils.testInstanceDir = path.join(TestProjectUtils.globalTempDir, testId);
-    await fs.ensureDir(TestProjectUtils.testInstanceDir);
+    TestProjectUtils.#testInstanceDir = path.join(TestProjectUtils.#globalTempDir, testId);
+    await fs.ensureDir(TestProjectUtils.#testInstanceDir);
 
-    return TestProjectUtils.testInstanceDir;
+    return TestProjectUtils.#testInstanceDir;
   }
 
   /**
@@ -140,13 +140,13 @@ export class TestProjectUtils {
     ConfigService.clearCache();
 
     // Restore original working directory
-    if (TestProjectUtils.originalCwd) {
-      process.chdir(TestProjectUtils.originalCwd);
+    if (TestProjectUtils.#originalCwd) {
+      process.chdir(TestProjectUtils.#originalCwd);
     }
 
     // Remove the test instance directory
-    if (TestProjectUtils.testInstanceDir) {
-      await fs.remove(TestProjectUtils.testInstanceDir);
+    if (TestProjectUtils.#testInstanceDir) {
+      await fs.remove(TestProjectUtils.#testInstanceDir);
     }
   }
 
@@ -164,12 +164,12 @@ export class TestProjectUtils {
     packageManager: PackageManager = PackageManager.Npm,
     dependencies: Record<string, string> = {}
   ): Promise<string> {
-    if (!TestProjectUtils.testInstanceDir) {
+    if (!TestProjectUtils.#testInstanceDir) {
       throw new Error('Test instance directory not initialized. Call setupTestInstance() first.');
     }
 
     const packageDir = path.join(
-      TestProjectUtils.testInstanceDir,
+      TestProjectUtils.#testInstanceDir,
       name.replace('@', '').replace('/', '-')
     );
     await fs.ensureDir(packageDir);
@@ -299,10 +299,10 @@ export class TestProjectUtils {
    * Gets the current test instance directory
    */
   static getTestInstanceDir(): string {
-    if (!TestProjectUtils.testInstanceDir) {
+    if (!TestProjectUtils.#testInstanceDir) {
       throw new Error('Test instance directory not initialized. Call setupTestInstance() first.');
     }
-    return TestProjectUtils.testInstanceDir;
+    return TestProjectUtils.#testInstanceDir;
   }
 
   /**

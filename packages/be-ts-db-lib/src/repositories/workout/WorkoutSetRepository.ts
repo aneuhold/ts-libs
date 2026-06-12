@@ -10,7 +10,7 @@ import WorkoutBaseWithUserIdRepository from './WorkoutBaseWithUserIdRepository.j
  * The repository that contains {@link WorkoutSet} documents.
  */
 export default class WorkoutSetRepository extends WorkoutBaseWithUserIdRepository<WorkoutSet> {
-  private static singletonInstance?: WorkoutSetRepository;
+  static #singletonInstance?: WorkoutSetRepository;
 
   private constructor() {
     super(WorkoutSet_docType, new WorkoutSetValidator());
@@ -81,9 +81,9 @@ export default class WorkoutSetRepository extends WorkoutBaseWithUserIdRepositor
   }
 
   public static getRepo(): WorkoutSetRepository {
-    if (!WorkoutSetRepository.singletonInstance) {
-      WorkoutSetRepository.singletonInstance = new WorkoutSetRepository();
+    if (!WorkoutSetRepository.#singletonInstance) {
+      WorkoutSetRepository.#singletonInstance = new WorkoutSetRepository();
     }
-    return WorkoutSetRepository.singletonInstance;
+    return WorkoutSetRepository.#singletonInstance;
   }
 }

@@ -59,7 +59,7 @@ export default class DashboardTaskService {
     parentTaskIds.forEach((taskId) => {
       const task = taskIdToTaskDict[taskId];
       if (task) {
-        const childrenTaskIds = this.getChildrenTaskIds(
+        const childrenTaskIds = this.#getChildrenTaskIds(
           taskIdToTaskDict,
           parentToTaskIdsDict,
           taskId
@@ -184,7 +184,7 @@ export default class DashboardTaskService {
    * @param taskId - The ID of the task to get children for.
    * @returns An array of strings representing the children task IDs.
    */
-  private static getChildrenTaskIds(
+  static #getChildrenTaskIds(
     taskIdToTaskDict: Record<UUID, DashboardTask>,
     parentToTaskIdsDict: Record<UUID, UUID[]>,
     taskId: UUID
@@ -196,7 +196,7 @@ export default class DashboardTaskService {
     childrenIds.forEach((childId) => {
       const childTask = taskIdToTaskDict[childId];
       if (childTask) {
-        const grandchildrenIds = this.getChildrenTaskIds(
+        const grandchildrenIds = this.#getChildrenTaskIds(
           taskIdToTaskDict,
           parentToTaskIdsDict,
           childId

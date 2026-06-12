@@ -13,7 +13,7 @@ import DashboardUserConfigRepository from './DashboardUserConfigRepository.js';
  * The repository that contains {@link DashboardTask} documents.
  */
 export default class DashboardTaskRepository extends DashboardBaseWithUserIdRepository<DashboardTask> {
-  private static singletonInstance?: DashboardTaskRepository;
+  static #singletonInstance?: DashboardTaskRepository;
 
   /**
    * Private constructor to enforce singleton pattern.
@@ -53,10 +53,10 @@ export default class DashboardTaskRepository extends DashboardBaseWithUserIdRepo
    * @returns The singleton instance of the repository.
    */
   public static getRepo(): DashboardTaskRepository {
-    if (!DashboardTaskRepository.singletonInstance) {
-      DashboardTaskRepository.singletonInstance = new DashboardTaskRepository();
+    if (!DashboardTaskRepository.#singletonInstance) {
+      DashboardTaskRepository.#singletonInstance = new DashboardTaskRepository();
     }
-    return DashboardTaskRepository.singletonInstance;
+    return DashboardTaskRepository.#singletonInstance;
   }
 
   override async insertNew(
@@ -117,7 +117,7 @@ export default class DashboardTaskRepository extends DashboardBaseWithUserIdRepo
    * @returns The result of the delete operation.
    */
   override async delete(docId: UUID, meta?: DbOperationMetaData): Promise<DeleteResult> {
-    const docIdsToDelete = await this.getAllTaskIDsToDelete([docId]);
+    const docIdsToDelete = await this.#getAllTaskIDsToDelete([docId]);
 
     // Fetch and cache all tasks before deletion to report sharedWith users
     if (meta && docIdsToDelete.length > 0) {
@@ -138,7 +138,7 @@ export default class DashboardTaskRepository extends DashboardBaseWithUserIdRepo
    * @returns The result of the delete operation.
    */
   override async deleteList(docIds: UUID[], meta?: DbOperationMetaData): Promise<DeleteResult> {
-    const docIdsToDelete = await this.getAllTaskIDsToDelete(docIds);
+    const docIdsToDelete = await this.#getAllTaskIDsToDelete(docIds);
 
     // Fetch and cache all tasks before deletion to report sharedWith users
     if (meta && docIdsToDelete.length > 0) {
@@ -191,7 +191,7 @@ export default class DashboardTaskRepository extends DashboardBaseWithUserIdRepo
    * @param taskIds The IDs of the tasks to delete.
    * @returns The list of task IDs to delete.
    */
-  private async getAllTaskIDsToDelete(taskIds: UUID[]): Promise<UUID[]> {
+  async #getAllTaskIDsToDelete(taskIds: UUID[]): Promise<UUID[]> {
     if (taskIds.length === 0) {
       return taskIds;
     }

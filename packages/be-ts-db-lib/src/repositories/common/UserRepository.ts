@@ -16,12 +16,12 @@ import WorkoutMuscleGroupRepository from '../workout/WorkoutMuscleGroupRepositor
  * The repository that contains {@link User} documents.
  */
 export default class UserRepository extends BaseRepository<User> {
-  private static COLLECTION_NAME = 'users';
+  static #COLLECTION_NAME = 'users';
 
-  private static singletonInstance: UserRepository | undefined;
+  static #singletonInstance: UserRepository | undefined;
 
   private constructor() {
-    super(UserRepository.COLLECTION_NAME, new UserValidator());
+    super(UserRepository.#COLLECTION_NAME, new UserValidator());
   }
 
   protected setupSubscribers(): void {
@@ -41,10 +41,10 @@ export default class UserRepository extends BaseRepository<User> {
    * Gets the singleton instance of the {@link UserRepository}.
    */
   static getRepo(): UserRepository {
-    if (!UserRepository.singletonInstance) {
-      UserRepository.singletonInstance = new UserRepository();
+    if (!UserRepository.#singletonInstance) {
+      UserRepository.#singletonInstance = new UserRepository();
     }
-    return UserRepository.singletonInstance;
+    return UserRepository.#singletonInstance;
   }
 
   async getUserCTOByUsername(userName: string): Promise<UserCTO | null> {

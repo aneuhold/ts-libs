@@ -49,29 +49,29 @@ export default class WorkoutVolumePlanningService {
    */
   static USE_VOLUME_LANDMARK_PROGRESSION = false;
 
-  private static readonly MAX_SETS_PER_EXERCISE = 8;
-  private static readonly MAX_SETS_PER_MUSCLE_GROUP_PER_SESSION = 10;
+  static readonly #MAX_SETS_PER_EXERCISE = 8;
+  static readonly #MAX_SETS_PER_MUSCLE_GROUP_PER_SESSION = 10;
 
   /** Minimum average RSM required for a mesocycle to count toward MEV estimation. */
-  private static readonly MEV_RSM_THRESHOLD = 4;
+  static readonly #MEV_RSM_THRESHOLD = 4;
 
   /** Default estimated MEV when no qualifying mesocycle history exists. Per-exercise value. */
-  private static readonly DEFAULT_MEV_PER_EXERCISE = 2;
+  static readonly #DEFAULT_MEV_PER_EXERCISE = 2;
 
   /** Minimum average performance score (or recovery presence) to count a mesocycle toward MRV estimation. */
-  private static readonly MRV_PERFORMANCE_THRESHOLD = 2.5;
+  static readonly #MRV_PERFORMANCE_THRESHOLD = 2.5;
 
   /** Extra sets added above the historical peak when no stressed mesocycles exist, to estimate MRV. */
-  private static readonly MRV_HEADROOM = 2;
+  static readonly #MRV_HEADROOM = 2;
 
   /** Default estimated MRV when no mesocycle history exists at all. Per-exercise value. */
-  private static readonly DEFAULT_MRV_PER_EXERCISE = 8;
+  static readonly #DEFAULT_MRV_PER_EXERCISE = 8;
 
   /** Maximum sets that can be added to a single exercise in one progression step. */
-  private static readonly MAX_SET_ADDITION_PER_EXERCISE = 2;
+  static readonly #MAX_SET_ADDITION_PER_EXERCISE = 2;
 
   /** Maximum total sets to distribute across a muscle group in one progression step. */
-  private static readonly MAX_TOTAL_SET_ADDITIONS = 3;
+  static readonly #MAX_TOTAL_SET_ADDITIONS = 3;
 
   /**
    * Calculates the set plan for an entire microcycle.
@@ -91,7 +91,7 @@ export default class WorkoutVolumePlanningService {
     const recoveryExerciseIds = new Set<UUID>();
 
     context.muscleGroupToExerciseCTOsMap.values().forEach((muscleGroupExerciseCTOs) => {
-      const result = this.calculateSetCountForEachExerciseInMuscleGroup(
+      const result = this.#calculateSetCountForEachExerciseInMuscleGroup(
         context,
         microcycleIndex,
         muscleGroupExerciseCTOs,
@@ -123,7 +123,7 @@ export default class WorkoutVolumePlanningService {
     // Estimated MEV
     let estimatedMev: number;
     const effectiveMesocycles = mesocycleHistory.filter(
-      (m) => m.avgRsm !== null && m.avgRsm >= this.MEV_RSM_THRESHOLD
+      (m) => m.avgRsm !== null && m.avgRsm >= this.#MEV_RSM_THRESHOLD
     );
     if (effectiveMesocycles.length > 0) {
       estimatedMev =
@@ -133,7 +133,7 @@ export default class WorkoutVolumePlanningService {
     } else if (mesocycleHistory.length > 0) {
       estimatedMev = Math.min(...mesocycleHistory.map((m) => m.startingSetCount));
     } else {
-      estimatedMev = this.DEFAULT_MEV_PER_EXERCISE;
+      estimatedMev = this.#DEFAULT_MEV_PER_EXERCISE;
     }
 
     // Estimated MRV
@@ -141,7 +141,7 @@ export default class WorkoutVolumePlanningService {
     const stressedMesocycles = mesocycleHistory.filter(
       (m) =>
         (m.avgPerformanceScore !== null &&
-          m.avgPerformanceScore >= this.MRV_PERFORMANCE_THRESHOLD) ||
+          m.avgPerformanceScore >= this.#MRV_PERFORMANCE_THRESHOLD) ||
         m.recoverySessionCount > 0
     );
     if (stressedMesocycles.length > 0) {
@@ -149,9 +149,9 @@ export default class WorkoutVolumePlanningService {
         stressedMesocycles.reduce((sum, m) => sum + m.peakSetCount, 0) / stressedMesocycles.length;
       estimatedMrv = Math.round(estimatedMrv);
     } else if (mesocycleHistory.length > 0) {
-      estimatedMrv = Math.max(...mesocycleHistory.map((m) => m.peakSetCount)) + this.MRV_HEADROOM;
+      estimatedMrv = Math.max(...mesocycleHistory.map((m) => m.peakSetCount)) + this.#MRV_HEADROOM;
     } else {
-      estimatedMrv = this.DEFAULT_MRV_PER_EXERCISE;
+      estimatedMrv = this.#DEFAULT_MRV_PER_EXERCISE;
     }
 
     // Ensure MRV > MEV
@@ -177,7 +177,7 @@ export default class WorkoutVolumePlanningService {
    *
    * Falls back to baseline when no previous microcycle data exists.
    */
-  private static calculateSetCountForEachExerciseInMuscleGroup(
+  static #calculateSetCountForEachExerciseInMuscleGroup(
     context: WorkoutMesocyclePlanContext,
     microcycleIndex: number,
     muscleGroupExerciseCTOs: WorkoutExerciseCTO[],
@@ -194,14 +194,14 @@ export default class WorkoutVolumePlanningService {
       ? context.muscleGroupToVolumeLandmarkMap.get(primaryMuscleGroupId)
       : undefined;
 
-    const { startVolume, endVolume } = this.getVolumeTargetsForMuscleGroup(
+    const { startVolume, endVolume } = this.#getVolumeTargetsForMuscleGroup(
       volumeLandmark,
       muscleGroupExerciseCTOs.length,
       progressionInterval
     );
 
     // 2. Calculate baseline set counts for all exercises in the muscle group
-    const baselineCounts = this.calculateBaselineSetCounts(
+    const baselineCounts = this.#calculateBaselineSetCounts(
       microcycleIndex,
       context.accumulationMicrocycleCount,
       muscleGroupExerciseCTOs.length,
@@ -215,7 +215,7 @@ export default class WorkoutVolumePlanningService {
     muscleGroupExerciseCTOs.forEach((cto, index) => {
       exerciseIdToSetCount.set(
         cto._id,
-        Math.min(baselineCounts[index], this.MAX_SETS_PER_EXERCISE)
+        Math.min(baselineCounts[index], this.#MAX_SETS_PER_EXERCISE)
       );
 
       if (!context.exerciseIdToSessionIndex) return;
@@ -229,7 +229,7 @@ export default class WorkoutVolumePlanningService {
 
     // 4. Resolve historical data — returns null if no usable history exists
     const exerciseIds = new Set(muscleGroupExerciseCTOs.map((cto) => cto._id));
-    const historicalData = this.resolveHistoricalExerciseData(
+    const historicalData = this.#resolveHistoricalExerciseData(
       context,
       microcycleIndex,
       exerciseIds
@@ -237,7 +237,7 @@ export default class WorkoutVolumePlanningService {
     if (!historicalData) return { exerciseIdToSetCount, recoveryExerciseIds };
 
     // 5. Apply historical set counts (overrides baselines)
-    this.applyHistoricalSetCounts(
+    this.#applyHistoricalSetCounts(
       muscleGroupExerciseCTOs,
       historicalData.exerciseIdToPrevSessionExercise,
       historicalData.exercisesThatWerePreviouslyInRecovery,
@@ -252,7 +252,7 @@ export default class WorkoutVolumePlanningService {
     }
 
     // 6. Evaluate SFR recommendations (per-exercise SFR + recovery detection)
-    const { totalSetsToAdd, candidates } = this.evaluateSfrRecommendations(
+    const { totalSetsToAdd, candidates } = this.#evaluateSfrRecommendations(
       context,
       muscleGroupExerciseCTOs,
       historicalData.exerciseIdToPrevSessionExercise,
@@ -267,7 +267,7 @@ export default class WorkoutVolumePlanningService {
     }
 
     // 7. Distribute added sets to candidates by SFR quality
-    this.distributeSetsToExercises(
+    this.#distributeSetsToExercises(
       candidates,
       totalSetsToAdd,
       exerciseIdToSetCount,
@@ -286,7 +286,7 @@ export default class WorkoutVolumePlanningService {
    * @param exerciseCount Number of exercises in the muscle group.
    * @param progressionInterval Cycle-type progression interval (1=MuscleGain, 2=Cut, 0=Resensitization).
    */
-  private static getVolumeTargetsForMuscleGroup(
+  static #getVolumeTargetsForMuscleGroup(
     volumeLandmark: WorkoutVolumeLandmarkEstimate | undefined,
     exerciseCount: number,
     progressionInterval: number
@@ -296,7 +296,7 @@ export default class WorkoutVolumePlanningService {
       const flatVolume =
         volumeLandmark && volumeLandmark.mesocycleCount > 0
           ? volumeLandmark.estimatedMev
-          : this.DEFAULT_MEV_PER_EXERCISE * exerciseCount;
+          : this.#DEFAULT_MEV_PER_EXERCISE * exerciseCount;
       return { startVolume: flatVolume, endVolume: flatVolume };
     }
 
@@ -315,8 +315,8 @@ export default class WorkoutVolumePlanningService {
     }
 
     // No history: use per-exercise defaults
-    const startVolume = this.DEFAULT_MEV_PER_EXERCISE * exerciseCount;
-    const mrvTotal = this.DEFAULT_MRV_PER_EXERCISE * exerciseCount;
+    const startVolume = this.#DEFAULT_MEV_PER_EXERCISE * exerciseCount;
+    const mrvTotal = this.#DEFAULT_MRV_PER_EXERCISE * exerciseCount;
 
     // Cut: target MAV (midpoint), not MRV
     const endVolume =
@@ -342,7 +342,7 @@ export default class WorkoutVolumePlanningService {
    * @param isDeloadMicrocycle Whether this is a deload microcycle.
    * @param progressionInterval Microcycles between each set addition (0 = no progression).
    */
-  private static calculateBaselineSetCounts(
+  static #calculateBaselineSetCounts(
     microcycleIndex: number,
     accumulationMicrocycleCount: number,
     exerciseCount: number,
@@ -352,7 +352,7 @@ export default class WorkoutVolumePlanningService {
     progressionInterval: number
   ): number[] {
     if (isDeloadMicrocycle) {
-      const lastAccumulationCounts = this.calculateBaselineSetCounts(
+      const lastAccumulationCounts = this.#calculateBaselineSetCounts(
         microcycleIndex - 1,
         accumulationMicrocycleCount,
         exerciseCount,
@@ -383,7 +383,7 @@ export default class WorkoutVolumePlanningService {
       totalSets = startVolume + progressionSets;
     }
 
-    return this.distributeEvenly(totalSets, exerciseCount);
+    return this.#distributeEvenly(totalSets, exerciseCount);
   }
 
   /**
@@ -392,7 +392,7 @@ export default class WorkoutVolumePlanningService {
    * @param total The total to distribute.
    * @param slots The number of slots to distribute across.
    */
-  private static distributeEvenly(total: number, slots: number): number[] {
+  static #distributeEvenly(total: number, slots: number): number[] {
     const base = Math.floor(total / slots);
     const remainder = total % slots;
     return Array.from({ length: slots }, (_, i) => (i < remainder ? base + 1 : base));
@@ -409,7 +409,7 @@ export default class WorkoutVolumePlanningService {
    * @param microcycleIndex The current microcycle index.
    * @param exerciseIds The exercise IDs to search for.
    */
-  private static resolveHistoricalExerciseData(
+  static #resolveHistoricalExerciseData(
     context: WorkoutMesocyclePlanContext,
     microcycleIndex: number,
     exerciseIds: Set<UUID>
@@ -478,7 +478,7 @@ export default class WorkoutVolumePlanningService {
    * @param isDeloadMicrocycle Whether this is a deload microcycle.
    * @param volumeLandmark Volume landmark estimate for the primary muscle group, if available.
    */
-  private static applyHistoricalSetCounts(
+  static #applyHistoricalSetCounts(
     muscleGroupExerciseCTOs: WorkoutExerciseCTO[],
     exerciseIdToPrevSessionExercise: Map<UUID, WorkoutSessionExercise>,
     exercisesThatWerePreviouslyInRecovery: Set<UUID>,
@@ -494,7 +494,7 @@ export default class WorkoutVolumePlanningService {
     );
     const mavDistribution =
       hasExerciseReturningFromRecovery && volumeLandmark
-        ? this.distributeEvenly(volumeLandmark.estimatedMav, muscleGroupExerciseCTOs.length)
+        ? this.#distributeEvenly(volumeLandmark.estimatedMav, muscleGroupExerciseCTOs.length)
         : undefined;
 
     muscleGroupExerciseCTOs.forEach((cto, index) => {
@@ -504,10 +504,10 @@ export default class WorkoutVolumePlanningService {
       let setCount: number;
       if (exercisesThatWerePreviouslyInRecovery.has(cto._id) && mavDistribution) {
         // Returning from recovery — resume at conservatively distributed MAV
-        setCount = Math.min(mavDistribution[index], this.MAX_SETS_PER_EXERCISE);
+        setCount = Math.min(mavDistribution[index], this.#MAX_SETS_PER_EXERCISE);
       } else {
         // Carry forward last microcycle's set count
-        setCount = Math.min(previousSessionExercise.setOrder.length, this.MAX_SETS_PER_EXERCISE);
+        setCount = Math.min(previousSessionExercise.setOrder.length, this.#MAX_SETS_PER_EXERCISE);
       }
 
       if (isDeloadMicrocycle) {
@@ -530,7 +530,7 @@ export default class WorkoutVolumePlanningService {
    * @param recoveryExerciseIds Set of exercise IDs flagged for recovery (mutated).
    * @param sessionIndexToExerciseIds Map from session index to exercise IDs in that session.
    */
-  private static evaluateSfrRecommendations(
+  static #evaluateSfrRecommendations(
     context: WorkoutMesocyclePlanContext,
     muscleGroupExerciseCTOs: WorkoutExerciseCTO[],
     exerciseIdToPrevSessionExercise: Map<UUID, WorkoutSessionExercise>,
@@ -570,8 +570,8 @@ export default class WorkoutVolumePlanningService {
 
         // Only exercises below per-exercise cap and in uncapped sessions are candidates
         if (
-          previousSessionExercise.setOrder.length < this.MAX_SETS_PER_EXERCISE &&
-          !this.sessionIsCapped(
+          previousSessionExercise.setOrder.length < this.#MAX_SETS_PER_EXERCISE &&
+          !this.#sessionIsCapped(
             cto._id,
             context.exerciseIdToSessionIndex,
             sessionIndexToExerciseIds,
@@ -604,7 +604,7 @@ export default class WorkoutVolumePlanningService {
    * @param exerciseIdToSessionIndex Map from exercise ID to its session index.
    * @param sessionIndexToExerciseIds Map from session index to exercise IDs in that session.
    */
-  private static distributeSetsToExercises(
+  static #distributeSetsToExercises(
     candidates: SetAdditionCandidate[],
     totalSetsToAdd: number,
     exerciseIdToSetCount: Map<UUID, number>,
@@ -620,13 +620,13 @@ export default class WorkoutVolumePlanningService {
 
     // Cap total additions at MAX_TOTAL_SET_ADDITIONS regardless of raw recommendation
     let setsRemaining =
-      totalSetsToAdd >= this.MAX_TOTAL_SET_ADDITIONS
-        ? this.MAX_TOTAL_SET_ADDITIONS
+      totalSetsToAdd >= this.#MAX_TOTAL_SET_ADDITIONS
+        ? this.#MAX_TOTAL_SET_ADDITIONS
         : totalSetsToAdd;
 
     // Distribute sets one candidate at a time until budget is exhausted
     for (const candidate of candidates) {
-      const added = this.addSetsToExercise(
+      const added = this.#addSetsToExercise(
         candidate.exerciseId,
         setsRemaining,
         exerciseIdToSetCount,
@@ -647,7 +647,7 @@ export default class WorkoutVolumePlanningService {
    * @param sessionIndexToExerciseIds Map from session index to exercise IDs in that session.
    * @param exerciseIdToPrevSessionExercise Map from exercise ID to its previous session exercise.
    */
-  private static sessionIsCapped(
+  static #sessionIsCapped(
     exerciseId: UUID,
     exerciseIdToSessionIndex: Map<UUID, number> | undefined,
     sessionIndexToExerciseIds: Map<number, UUID[]>,
@@ -667,7 +667,7 @@ export default class WorkoutVolumePlanningService {
     exerciseIdsInSession.forEach((id) => {
       totalSetsInSession += exerciseIdToPrevSessionExercise.get(id)?.setOrder.length || 0;
     });
-    return totalSetsInSession >= this.MAX_SETS_PER_MUSCLE_GROUP_PER_SESSION;
+    return totalSetsInSession >= this.#MAX_SETS_PER_MUSCLE_GROUP_PER_SESSION;
   }
 
   /**
@@ -678,7 +678,7 @@ export default class WorkoutVolumePlanningService {
    * @param exerciseIdToSessionIndex Map from exercise ID to its session index.
    * @param sessionIndexToExerciseIds Map from session index to exercise IDs in that session.
    */
-  private static getSessionSetTotal(
+  static #getSessionSetTotal(
     exerciseId: UUID,
     exerciseIdToSetCount: Map<UUID, number>,
     exerciseIdToSessionIndex: Map<UUID, number> | undefined,
@@ -709,7 +709,7 @@ export default class WorkoutVolumePlanningService {
    * @param sessionIndexToExerciseIds Map from session index to exercise IDs in that session.
    * @returns The number of sets actually added.
    */
-  private static addSetsToExercise(
+  static #addSetsToExercise(
     exerciseId: UUID,
     setsToAdd: number,
     exerciseIdToSetCount: Map<UUID, number>,
@@ -717,7 +717,7 @@ export default class WorkoutVolumePlanningService {
     sessionIndexToExerciseIds: Map<number, UUID[]>
   ): number {
     const currentSets = exerciseIdToSetCount.get(exerciseId) || 0;
-    const sessionTotal = this.getSessionSetTotal(
+    const sessionTotal = this.#getSessionSetTotal(
       exerciseId,
       exerciseIdToSetCount,
       exerciseIdToSessionIndex,
@@ -725,13 +725,13 @@ export default class WorkoutVolumePlanningService {
     );
 
     // Respect all caps: per-exercise max, per-session max, and per-addition max
-    const maxDueToExerciseLimit = this.MAX_SETS_PER_EXERCISE - currentSets;
-    const maxDueToSessionLimit = this.MAX_SETS_PER_MUSCLE_GROUP_PER_SESSION - sessionTotal;
+    const maxDueToExerciseLimit = this.#MAX_SETS_PER_EXERCISE - currentSets;
+    const maxDueToSessionLimit = this.#MAX_SETS_PER_MUSCLE_GROUP_PER_SESSION - sessionTotal;
     const maxAddable = Math.min(
       setsToAdd,
       maxDueToExerciseLimit,
       maxDueToSessionLimit,
-      this.MAX_SET_ADDITION_PER_EXERCISE
+      this.#MAX_SET_ADDITION_PER_EXERCISE
     );
 
     if (maxAddable > 0) {

@@ -38,15 +38,15 @@ type StrictVerdaccioConfig = Partial<VerdaccioConfig> & {
  * Service to manage the local Verdaccio registry.
  */
 export class VerdaccioService {
-  private static verdaccioServer: http.Server | null = null;
-  private static isStarting = false;
-  private static _verdaccioConfig: StrictVerdaccioConfig | null = null;
+  static #verdaccioServer: http.Server | null = null;
+  static #isStarting = false;
+  static #_verdaccioConfig: StrictVerdaccioConfig | null = null;
 
   static get verdaccioConfig(): StrictVerdaccioConfig {
-    if (!this._verdaccioConfig) {
+    if (!this.#_verdaccioConfig) {
       throw new Error('Verdaccio configuration not initialized');
     }
-    return this._verdaccioConfig;
+    return this.#_verdaccioConfig;
   }
 
   /**
@@ -54,19 +54,19 @@ export class VerdaccioService {
    * This must be called before any npm publish commands can work.
    */
   static async start(): Promise<void> {
-    await this.loadVerdaccioConfig();
+    await this.#loadVerdaccioConfig();
 
-    if (this.isStarting) {
+    if (this.#isStarting) {
       DR.logger.info('Verdaccio is already starting...');
       return;
     }
 
-    if (this.verdaccioServer) {
+    if (this.#verdaccioServer) {
       DR.logger.info('Verdaccio is already running');
       return;
     }
 
-    this.isStarting = true;
+    this.#isStarting = true;
 
     try {
       // Acquire mutex lock before starting Verdaccio
@@ -78,12 +78,12 @@ export class VerdaccioService {
       DR.logger.info(`Starting Verdaccio on port ${port}...`);
 
       // Start Verdaccio server
-      await this.startVerdaccio(config);
+      await this.#startVerdaccio(config);
 
       DR.logger.info(`Verdaccio started successfully on http://localhost:${port}`);
     } catch (error) {
       DR.logger.error(`Failed to start Verdaccio: ${String(error)}`);
-      this.verdaccioServer = null;
+      this.#verdaccioServer = null;
 
       // Release mutex lock if we acquired it but failed to start
       try {
@@ -96,7 +96,7 @@ export class VerdaccioService {
 
       throw error;
     } finally {
-      this.isStarting = false;
+      this.#isStarting = false;
     }
   }
 
@@ -104,13 +104,13 @@ export class VerdaccioService {
    * Stops the Verdaccio registry server.
    */
   static async stop(): Promise<void> {
-    if (!this.verdaccioServer) {
+    if (!this.#verdaccioServer) {
       DR.logger.info('Verdaccio server is not running');
       return;
     }
 
     return new Promise((resolve, reject) => {
-      const server = this.verdaccioServer;
+      const server = this.#verdaccioServer;
       if (server) {
         server.close((error) => {
           if (error) {
@@ -118,7 +118,7 @@ export class VerdaccioService {
             reject(error);
           } else {
             DR.logger.info('Verdaccio server stopped successfully');
-            this.verdaccioServer = null;
+            this.#verdaccioServer = null;
 
             // Release mutex lock after stopping Verdaccio
             MutexService.releaseLock()
@@ -156,7 +156,7 @@ export class VerdaccioService {
     const registryUrl = config.registryUrl || DEFAULT_CONFIG.registryUrl;
 
     try {
-      if (!VerdaccioService.verdaccioServer) {
+      if (!VerdaccioService.#verdaccioServer) {
         throw new Error('Verdaccio server is not running. Call start() first.');
       }
 
@@ -168,12 +168,12 @@ export class VerdaccioService {
       }
 
       // Clear any previously published package with the same name
-      await VerdaccioService.clearPublishedPackagesLocally(packageJson.name);
+      await VerdaccioService.#clearPublishedPackagesLocally(packageJson.name);
 
       DR.logger.info(`Publishing package from ${packagePath} to ${registryUrl}...`);
 
       // Build npm publish arguments with direct registry and auth config
-      const publishArgs = this.buildPublishArgs(
+      const publishArgs = this.#buildPublishArgs(
         packageJson.name,
         registryUrl,
         additionalPublishArgs
@@ -216,9 +216,9 @@ export class VerdaccioService {
    */
   static async unpublishPackage(packageName: string): Promise<void> {
     // Ensure the config is created
-    await this.loadVerdaccioConfig();
+    await this.#loadVerdaccioConfig();
 
-    await this.clearPublishedPackagesLocally(packageName);
+    await this.#clearPublishedPackagesLocally(packageName);
   }
 
   /**
@@ -227,11 +227,11 @@ export class VerdaccioService {
    *
    * @param config - The local npm configuration
    */
-  private static async startVerdaccio(config: LocalNpmConfig): Promise<void> {
+  static async #startVerdaccio(config: LocalNpmConfig): Promise<void> {
     return new Promise((resolve, reject) => {
       verdaccioRunServer(this.verdaccioConfig)
         .then((verdaccioServer: http.Server) => {
-          VerdaccioService.verdaccioServer = verdaccioServer;
+          VerdaccioService.#verdaccioServer = verdaccioServer;
 
           DR.logger.info('Verdaccio server created, starting to listen...');
 
@@ -272,7 +272,7 @@ export class VerdaccioService {
    *
    * @param packageName - The name of the package to clear from local storage
    */
-  private static async clearPublishedPackagesLocally(packageName: string): Promise<void> {
+  static async #clearPublishedPackagesLocally(packageName: string): Promise<void> {
     try {
       const dbFilePath = path.join(this.verdaccioConfig.storage, VERDACCIO_DB_FILE_NAME);
 
@@ -319,10 +319,10 @@ export class VerdaccioService {
     }
   }
 
-  private static async loadVerdaccioConfig(): Promise<void> {
+  static async #loadVerdaccioConfig(): Promise<void> {
     const config = await ConfigService.loadConfig();
-    if (!this._verdaccioConfig) {
-      this._verdaccioConfig = await this.createVerdaccioConfig(config);
+    if (!this.#_verdaccioConfig) {
+      this.#_verdaccioConfig = await this.#createVerdaccioConfig(config);
     }
   }
 
@@ -331,9 +331,7 @@ export class VerdaccioService {
    *
    * @param config - The local npm configuration
    */
-  private static async createVerdaccioConfig(
-    config: LocalNpmConfig
-  ): Promise<StrictVerdaccioConfig> {
+  static async #createVerdaccioConfig(config: LocalNpmConfig): Promise<StrictVerdaccioConfig> {
     const dataDirectoryPath = await ConfigService.getDataDirectoryPath();
     const verdaccioDirectory = path.join(dataDirectoryPath, 'verdaccio');
     const isVerbose = DR.logger.isVerboseLoggingEnabled();
@@ -342,7 +340,7 @@ export class VerdaccioService {
     const npmrcConfigs = await NpmrcService.getAllNpmrcConfigs();
 
     // Parse npmrc configurations to extract organization registries and auth tokens
-    const { uplinks, packages } = this.parseNpmrcForVerdaccio(npmrcConfigs);
+    const { uplinks, packages } = this.#parseNpmrcForVerdaccio(npmrcConfigs);
 
     // Base uplinks and packages configuration
     const baseUplinks: UpLinksConfList = {
@@ -393,7 +391,7 @@ export class VerdaccioService {
    *
    * @param npmrcConfigs - Map of npmrc key-value pairs
    */
-  private static parseNpmrcForVerdaccio(npmrcConfigs: Map<string, string>): {
+  static #parseNpmrcForVerdaccio(npmrcConfigs: Map<string, string>): {
     uplinks: UpLinksConfList;
     packages: VerdaccioPackageList;
   } {
@@ -410,7 +408,7 @@ export class VerdaccioService {
         const registryUrl = value;
 
         // Create a safe uplink name from the registry URL
-        const uplinkName = this.createUplinkName(registryUrl);
+        const uplinkName = this.#createUplinkName(registryUrl);
         registryToUplink.set(registryUrl, uplinkName);
 
         // Create uplink configuration
@@ -458,7 +456,7 @@ export class VerdaccioService {
    *
    * @param registryUrl - The registry URL
    */
-  private static createUplinkName(registryUrl: string): string {
+  static #createUplinkName(registryUrl: string): string {
     // Remove protocol and common endings to create a clean name
     let name = registryUrl
       .replace(/^https?:\/\//, '')
@@ -481,7 +479,7 @@ export class VerdaccioService {
    * @param registryUrl - The registry URL to publish to
    * @param additionalArgs - Additional arguments to pass to the npm publish command
    */
-  private static buildPublishArgs(
+  static #buildPublishArgs(
     packageName: string,
     registryUrl: string,
     additionalArgs: string[] = []

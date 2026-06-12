@@ -74,7 +74,7 @@ export default class WorkoutExerciseCalibrationService {
    * @param targetReps The target number of reps.
    */
   static getTargetWeightFrom1RM(effective1RM: number, targetReps: number): number {
-    const targetPercentage = this.getTargetPercentage(targetReps);
+    const targetPercentage = this.#getTargetPercentage(targetReps);
     return (targetPercentage / 100) * effective1RM;
   }
 
@@ -132,7 +132,7 @@ export default class WorkoutExerciseCalibrationService {
    *
    * @param targetReps The target number of reps.
    */
-  private static getTargetPercentage(targetReps: number): number {
+  static #getTargetPercentage(targetReps: number): number {
     return 85 - (targetReps - 5) * 2.2;
   }
 }

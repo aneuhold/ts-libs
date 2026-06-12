@@ -16,7 +16,7 @@ export default class GitTagService {
   static getPackageTags(packageName: string, workingDir: string): string[] {
     try {
       // Convert package name to tag prefix (remove scope if present)
-      const tagPrefix = this.getTagPrefix(packageName);
+      const tagPrefix = this.#getTagPrefix(packageName);
       const tagPattern = `${tagPrefix}-v*`;
 
       // Get all tags matching the pattern
@@ -44,7 +44,7 @@ export default class GitTagService {
    * @returns The expected Git tag name
    */
   static getTagName(packageName: string, version: string): string {
-    const tagPrefix = this.getTagPrefix(packageName);
+    const tagPrefix = this.#getTagPrefix(packageName);
     return `${tagPrefix}-v${version}`;
   }
 
@@ -54,7 +54,7 @@ export default class GitTagService {
    * @param packageName The package name
    * @returns The tag prefix
    */
-  private static getTagPrefix(packageName: string): string {
+  static #getTagPrefix(packageName: string): string {
     return packageName.replace(/^@[\w-]+\//, '');
   }
 }

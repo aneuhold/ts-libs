@@ -102,7 +102,7 @@ export default class GCloudAPIService {
   static async authValidateUser(
     input: AuthValidateUserInput
   ): Promise<APIResponse<AuthValidateUserOutput>> {
-    return this.call<AuthValidateUserInput, AuthValidateUserOutput>('auth/validateUser', input);
+    return this.#call<AuthValidateUserInput, AuthValidateUserOutput>('auth/validateUser', input);
   }
 
   /**
@@ -113,9 +113,12 @@ export default class GCloudAPIService {
     if (!this.#refreshTokenString) {
       return { success: true, errors: [], data: undefined };
     }
-    const { decoded } = await this.fetchAndDecode<AuthRefreshTokenInput, undefined>('auth/logout', {
-      refreshTokenString: this.#refreshTokenString
-    });
+    const { decoded } = await this.#fetchAndDecode<AuthRefreshTokenInput, undefined>(
+      'auth/logout',
+      {
+        refreshTokenString: this.#refreshTokenString
+      }
+    );
     return decoded;
   }
 
@@ -124,7 +127,7 @@ export default class GCloudAPIService {
    * currently-authenticated user and every per-user document tied to them.
    */
   static async authDeleteAccount(): Promise<APIResponse<AuthDeleteAccountOutput>> {
-    return this.call<AuthDeleteAccountInput, AuthDeleteAccountOutput>(
+    return this.#call<AuthDeleteAccountInput, AuthDeleteAccountOutput>(
       'auth/deleteAccount',
       undefined
     );
@@ -138,7 +141,7 @@ export default class GCloudAPIService {
   static async projectDashboard(
     input: ProjectDashboardInput
   ): Promise<APIResponse<ProjectDashboardOutput>> {
-    return this.call<ProjectDashboardInput, ProjectDashboardOutput>('project/dashboard', input);
+    return this.#call<ProjectDashboardInput, ProjectDashboardOutput>('project/dashboard', input);
   }
 
   /**
@@ -147,7 +150,7 @@ export default class GCloudAPIService {
    * @param input - The input for the admin endpoint.
    */
   static async admin(input: AdminInput): Promise<APIResponse<AdminOutput>> {
-    return this.call<AdminInput, AdminOutput>('admin', input);
+    return this.#call<AdminInput, AdminOutput>('admin', input);
   }
 
   /**
@@ -158,7 +161,7 @@ export default class GCloudAPIService {
   static async projectWorkout(
     input: ProjectWorkoutPrimaryInput
   ): Promise<APIResponse<ProjectWorkoutPrimaryOutput>> {
-    return this.call<ProjectWorkoutPrimaryInput, ProjectWorkoutPrimaryOutput>(
+    return this.#call<ProjectWorkoutPrimaryInput, ProjectWorkoutPrimaryOutput>(
       'project/workout',
       input
     );
@@ -172,16 +175,16 @@ export default class GCloudAPIService {
    * @param urlPath - The path to the endpoint.
    * @param input - The input to the endpoint.
    */
-  private static async call<TInput, TOutput>(
+  static async #call<TInput, TOutput>(
     urlPath: string,
     input: TInput
   ): Promise<APIResponse<TOutput>> {
-    const { response, decoded } = await this.fetchAndDecode<TInput, TOutput>(urlPath, input);
+    const { response, decoded } = await this.#fetchAndDecode<TInput, TOutput>(urlPath, input);
 
     if (response.status === 401 && this.#refreshTokenString) {
-      const refreshed = await this.tryRefreshTokens();
+      const refreshed = await this.#tryRefreshTokens();
       if (refreshed) {
-        const retry = await this.fetchAndDecode<TInput, TOutput>(urlPath, input);
+        const retry = await this.#fetchAndDecode<TInput, TOutput>(urlPath, input);
         return retry.decoded;
       }
     }
@@ -194,12 +197,12 @@ export default class GCloudAPIService {
    * On success, updates the stored tokens and notifies via the
    * {@link #onTokensRefreshed} callback.
    */
-  private static async tryRefreshTokens(): Promise<boolean> {
+  static async #tryRefreshTokens(): Promise<boolean> {
     if (!this.#refreshTokenString) {
       return false;
     }
 
-    const { decoded } = await this.fetchAndDecode<AuthRefreshTokenInput, AuthRefreshTokenOutput>(
+    const { decoded } = await this.#fetchAndDecode<AuthRefreshTokenInput, AuthRefreshTokenOutput>(
       'auth/refresh',
       { refreshTokenString: this.#refreshTokenString }
     );
@@ -225,7 +228,7 @@ export default class GCloudAPIService {
    * @param urlPath - The path to the endpoint.
    * @param input - The input to the endpoint.
    */
-  private static async fetchAndDecode<TInput, TOutput>(
+  static async #fetchAndDecode<TInput, TOutput>(
     urlPath: string,
     input: TInput
   ): Promise<{ response: Response; decoded: APIResponse<TOutput> }> {
@@ -244,7 +247,7 @@ export default class GCloudAPIService {
       headers,
       body: JSON.stringify(input)
     });
-    const decoded = await this.decodeResponse<TOutput>(response);
+    const decoded = await this.#decodeResponse<TOutput>(response);
     return { response, decoded };
   }
 
@@ -253,7 +256,7 @@ export default class GCloudAPIService {
    *
    * @param response - The fetch response to decode.
    */
-  private static async decodeResponse<TOutput>(response: Response): Promise<APIResponse<TOutput>> {
+  static async #decodeResponse<TOutput>(response: Response): Promise<APIResponse<TOutput>> {
     try {
       const text = await response.text();
       const parsed: unknown = JSON.parse(text, DateService.dateReviver);

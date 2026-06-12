@@ -113,7 +113,7 @@ export default class WorkoutSessionService {
     for (const session of sessions) {
       if (session.complete) continue;
 
-      if (this.sessionHasLoggedSets(session, sessionExerciseMap, setMap)) {
+      if (this.#sessionHasLoggedSets(session, sessionExerciseMap, setMap)) {
         if (!inProgressSession) inProgressSession = session;
       } else {
         if (!nextUpSession) nextUpSession = session;
@@ -205,7 +205,7 @@ export default class WorkoutSessionService {
    * Returns true if any set in the session has actualReps != null.
    * Traverses session -> sessionExercises -> sets via order arrays and map lookups.
    */
-  private static sessionHasLoggedSets(
+  static #sessionHasLoggedSets(
     session: WorkoutSession,
     sessionExerciseMap: Map<UUID, WorkoutSessionExercise>,
     setMap: Map<UUID, WorkoutSet>

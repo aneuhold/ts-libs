@@ -11,7 +11,7 @@ import WorkoutSetRepository from './WorkoutSetRepository.js';
  * The repository that contains {@link WorkoutSessionExercise} documents.
  */
 export default class WorkoutSessionExerciseRepository extends WorkoutBaseWithUserIdRepository<WorkoutSessionExercise> {
-  private static singletonInstance?: WorkoutSessionExerciseRepository;
+  static #singletonInstance?: WorkoutSessionExerciseRepository;
 
   private constructor() {
     super(WorkoutSessionExercise_docType, new WorkoutSessionExerciseValidator());
@@ -78,9 +78,9 @@ export default class WorkoutSessionExerciseRepository extends WorkoutBaseWithUse
   }
 
   public static getRepo(): WorkoutSessionExerciseRepository {
-    if (!WorkoutSessionExerciseRepository.singletonInstance) {
-      WorkoutSessionExerciseRepository.singletonInstance = new WorkoutSessionExerciseRepository();
+    if (!WorkoutSessionExerciseRepository.#singletonInstance) {
+      WorkoutSessionExerciseRepository.#singletonInstance = new WorkoutSessionExerciseRepository();
     }
-    return WorkoutSessionExerciseRepository.singletonInstance;
+    return WorkoutSessionExerciseRepository.#singletonInstance;
   }
 }

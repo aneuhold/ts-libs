@@ -29,7 +29,7 @@ export default class ChangelogParser {
       const sectionContent = lines.slice(1).join('\n');
 
       // Parse sections within the version entry
-      const parsedSections = this.parseVersionSections(sectionContent);
+      const parsedSections = this.#parseVersionSections(sectionContent);
 
       versionEntries.push({
         version,
@@ -47,7 +47,7 @@ export default class ChangelogParser {
    * @param content The content of a version entry
    * @returns Array of parsed sections
    */
-  private static parseVersionSections(content: string): ChangelogSection[] {
+  static #parseVersionSections(content: string): ChangelogSection[] {
     const sections: ChangelogSection[] = [];
 
     // Split by ### to get individual sections

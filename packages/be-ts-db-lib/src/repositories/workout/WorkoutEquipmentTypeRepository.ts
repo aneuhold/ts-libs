@@ -8,7 +8,7 @@ import WorkoutBaseWithUserIdRepository from './WorkoutBaseWithUserIdRepository.j
  * The repository that contains {@link WorkoutEquipmentType} documents.
  */
 export default class WorkoutEquipmentTypeRepository extends WorkoutBaseWithUserIdRepository<WorkoutEquipmentType> {
-  private static singletonInstance?: WorkoutEquipmentTypeRepository;
+  static #singletonInstance?: WorkoutEquipmentTypeRepository;
 
   private constructor() {
     super(WorkoutEquipmentType_docType, new WorkoutEquipmentTypeValidator());
@@ -32,9 +32,9 @@ export default class WorkoutEquipmentTypeRepository extends WorkoutBaseWithUserI
    * Gets the singleton instance of the {@link WorkoutEquipmentTypeRepository}.
    */
   public static getRepo(): WorkoutEquipmentTypeRepository {
-    if (!WorkoutEquipmentTypeRepository.singletonInstance) {
-      WorkoutEquipmentTypeRepository.singletonInstance = new WorkoutEquipmentTypeRepository();
+    if (!WorkoutEquipmentTypeRepository.#singletonInstance) {
+      WorkoutEquipmentTypeRepository.#singletonInstance = new WorkoutEquipmentTypeRepository();
     }
-    return WorkoutEquipmentTypeRepository.singletonInstance;
+    return WorkoutEquipmentTypeRepository.#singletonInstance;
   }
 }
