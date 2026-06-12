@@ -3,11 +3,11 @@ import { randomUUID } from 'crypto';
 import fs from 'fs-extra';
 import path from 'path';
 import { expect } from 'vitest';
-import { ConfigService } from '../src/services/ConfigService.js';
+import { ConfigService } from '../src/services/Config.service.js';
 import {
   LocalPackageStoreService,
   type PackageEntry
-} from '../src/services/LocalPackageStoreService.js';
+} from '../src/services/LocalPackageStore.service.js';
 import { PACKAGE_MANAGER_INFO, PackageManager } from '../src/types/PackageManager.js';
 
 /**

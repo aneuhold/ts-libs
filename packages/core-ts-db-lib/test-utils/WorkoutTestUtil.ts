@@ -27,10 +27,10 @@ import { WorkoutSetSchema } from '../src/documents/workout/WorkoutSet.js';
 import type { Fatigue } from '../src/embedded-types/workout/Fatigue.js';
 import { MesocycleVolumeSummarySchema } from '../src/embedded-types/workout/MesocycleVolumeSummary.js';
 import type { RSM } from '../src/embedded-types/workout/Rsm.js';
-import DocumentService from '../src/services/DocumentService.js';
+import DocumentService from '../src/services/Document.service.js';
 import WorkoutMesocyclePlanContext from '../src/services/workout/Mesocycle/WorkoutMesocyclePlanContext.js';
-import WorkoutMesocycleService from '../src/services/workout/Mesocycle/WorkoutMesocycleService.js';
-import WorkoutMicrocycleService from '../src/services/workout/Microcycle/WorkoutMicrocycleService.js';
+import WorkoutMesocycleService from '../src/services/workout/Mesocycle/WorkoutMesocycle.service.js';
+import WorkoutMicrocycleService from '../src/services/workout/Microcycle/WorkoutMicrocycle.service.js';
 
 /**
  * A utility class for creating standardized test data for workout-related tests.

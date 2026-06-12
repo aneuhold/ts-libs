@@ -1,6 +1,6 @@
 import type { NonogramKatanaItem, User } from '@aneuhold/core-ts-db-lib';
 import { NonogramKatanaItem_docType } from '@aneuhold/core-ts-db-lib';
-import type { RepoListeners } from '../../services/RepoSubscriptionService.js';
+import type { RepoListeners } from '../../services/RepoSubscription.service.js';
 import DashboardNonogramKatanaItemValidator from '../../validators/dashboard/NonogramKatanaItemValidator.js';
 import DashboardBaseWithUserIdRepository from './DashboardBaseWithUserIdRepository.js';
 

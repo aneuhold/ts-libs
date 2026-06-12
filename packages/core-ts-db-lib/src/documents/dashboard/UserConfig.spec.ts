@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import DocumentService from '../../services/DocumentService.js';
+import DocumentService from '../../services/Document.service.js';
 import { DashboardUserConfigSchema } from './UserConfig.js';
 
 describe('Unit Tests', () => {

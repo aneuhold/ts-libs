@@ -1,6 +1,6 @@
 #!/usr/bin/env tsx
 
-import DependencyService from '../packages/core-ts-lib/src/services/DependencyService.js';
+import DependencyService from '../packages/core-ts-lib/src/services/Dependency.service.js';
 import PackageServiceUtils from '../packages/core-ts-lib/src/services/PackageService/PackageServiceUtils.js';
 
 const propagateVersion = async (): Promise<void> => {

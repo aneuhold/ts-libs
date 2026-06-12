@@ -1,5 +1,5 @@
 import z from 'zod';
-import DocumentService from '../services/DocumentService.js';
+import DocumentService from '../services/Document.service.js';
 
 /**
  * Base schema for all documents. Provides the common `_id` field required by

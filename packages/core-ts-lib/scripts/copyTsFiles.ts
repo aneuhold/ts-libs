@@ -1,4 +1,4 @@
-import FileSystemService from '../src/services/FileSystemService/FileSystemService.js';
+import FileSystemService from '../src/services/FileSystemService/FileSystem.service.js';
 
 /**
  * Copies the original TypeScript files to the lib folder. This can make it

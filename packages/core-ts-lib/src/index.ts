@@ -1,10 +1,10 @@
 import ChangelogService from './services/ChangelogService/index.js';
-import DependencyService from './services/DependencyService.js';
+import DependencyService from './services/Dependency.service.js';
 import FileSystemService, {
   type ReplaceInFilesOptions
-} from './services/FileSystemService/FileSystemService.js';
-import GlobMatchingService from './services/FileSystemService/GlobMatchingService.js';
-import PackageService from './services/PackageService/PackageService.js';
+} from './services/FileSystemService/FileSystem.service.js';
+import GlobMatchingService from './services/FileSystemService/GlobMatching.service.js';
+import PackageService from './services/PackageService/Package.service.js';
 
 // Export all browser-safe exports from browser.ts
 export * from './browser.js';

@@ -2,7 +2,7 @@ import type { DashboardTask, User } from '@aneuhold/core-ts-db-lib';
 import { DashboardTask_docType, DashboardTaskService } from '@aneuhold/core-ts-db-lib';
 import type { UUID } from 'crypto';
 import type { BulkWriteResult, DeleteResult, UpdateResult } from 'mongodb';
-import type { RepoListeners } from '../../services/RepoSubscriptionService.js';
+import type { RepoListeners } from '../../services/RepoSubscription.service.js';
 import type DbOperationMetaData from '../../util/DbOperationMetaData.js';
 import CleanDocument from '../../util/DocumentCleaner.js';
 import DashboardTaskValidator from '../../validators/dashboard/TaskValidator.js';

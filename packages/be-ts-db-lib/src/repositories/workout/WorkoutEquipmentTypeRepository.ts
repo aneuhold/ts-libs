@@ -1,6 +1,6 @@
 import type { User, WorkoutEquipmentType } from '@aneuhold/core-ts-db-lib';
 import { WorkoutEquipmentType_docType } from '@aneuhold/core-ts-db-lib';
-import type { RepoListeners } from '../../services/RepoSubscriptionService.js';
+import type { RepoListeners } from '../../services/RepoSubscription.service.js';
 import WorkoutEquipmentTypeValidator from '../../validators/workout/EquipmentTypeValidator.js';
 import WorkoutBaseWithUserIdRepository from './WorkoutBaseWithUserIdRepository.js';
 

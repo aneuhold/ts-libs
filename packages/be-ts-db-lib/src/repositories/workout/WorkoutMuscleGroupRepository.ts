@@ -13,7 +13,7 @@ import {
   WorkoutSessionExercise_docType
 } from '@aneuhold/core-ts-db-lib';
 import type { UUID } from 'crypto';
-import type { RepoListeners } from '../../services/RepoSubscriptionService.js';
+import type { RepoListeners } from '../../services/RepoSubscription.service.js';
 import WorkoutMuscleGroupValidator from '../../validators/workout/MuscleGroupValidator.js';
 import WorkoutBaseWithUserIdRepository from './WorkoutBaseWithUserIdRepository.js';
 

@@ -8,9 +8,9 @@ import ErrorUtils from '../../utils/ErrorUtils.js';
 import JsonUtils from '../../utils/JsonUtils.js';
 import ChangelogService from '../ChangelogService/index.js';
 import { DR } from '../DependencyRegistry.js';
-import DependencyService from '../DependencyService.js';
-import FileSystemService from '../FileSystemService/FileSystemService.js';
-import StringService from '../StringService.js';
+import DependencyService from '../Dependency.service.js';
+import FileSystemService from '../FileSystemService/FileSystem.service.js';
+import StringService from '../String.service.js';
 
 const execAsync = promisify(exec);
 

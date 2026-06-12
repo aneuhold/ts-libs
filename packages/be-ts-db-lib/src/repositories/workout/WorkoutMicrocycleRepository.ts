@@ -1,7 +1,7 @@
 import type { User, WorkoutMesocycle, WorkoutMicrocycle } from '@aneuhold/core-ts-db-lib';
 import { WorkoutMicrocycle_docType } from '@aneuhold/core-ts-db-lib';
 import type { UUID } from 'crypto';
-import type { RepoListeners } from '../../services/RepoSubscriptionService.js';
+import type { RepoListeners } from '../../services/RepoSubscription.service.js';
 import type DbOperationMetaData from '../../util/DbOperationMetaData.js';
 import WorkoutMicrocycleValidator from '../../validators/workout/MicrocycleValidator.js';
 import WorkoutBaseWithUserIdRepository from './WorkoutBaseWithUserIdRepository.js';

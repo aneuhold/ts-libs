@@ -1,6 +1,6 @@
-import { LocalPackageStoreService } from '../src/services/LocalPackageStoreService.js';
-import { MutexService } from '../src/services/MutexService.js';
-import { VerdaccioService } from '../src/services/VerdaccioService.js';
+import { LocalPackageStoreService } from '../src/services/LocalPackageStore.service.js';
+import { MutexService } from '../src/services/Mutex.service.js';
+import { VerdaccioService } from '../src/services/Verdaccio.service.js';
 
 /**
  * Global setup function that runs once before all test suites.

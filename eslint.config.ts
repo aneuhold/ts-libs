@@ -6,6 +6,6 @@ export default [
     // other override settings. e.g. for `files: ['**/*.test.*']`
   },
   {
-    ignores: ['**/lib']
+    ignores: ['**/lib', '**/eslint.config.ts']
   }
 ];

@@ -1,6 +1,6 @@
 import type { User, WorkoutMesocycle } from '@aneuhold/core-ts-db-lib';
 import { WorkoutMesocycle_docType } from '@aneuhold/core-ts-db-lib';
-import type { RepoListeners } from '../../services/RepoSubscriptionService.js';
+import type { RepoListeners } from '../../services/RepoSubscription.service.js';
 import WorkoutMesocycleValidator from '../../validators/workout/MesocycleValidator.js';
 import WorkoutBaseWithUserIdRepository from './WorkoutBaseWithUserIdRepository.js';
 import WorkoutMicrocycleRepository from './WorkoutMicrocycleRepository.js';

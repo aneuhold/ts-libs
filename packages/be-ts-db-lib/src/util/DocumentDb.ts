@@ -10,7 +10,7 @@ export default class DocumentDb {
 
   static #mongoClient: MongoClient | undefined;
 
-  private static db: Db | undefined;
+  static #db: Db | undefined;
 
   /**
    * Gets or creates the MongoDB client instance.
@@ -44,10 +44,10 @@ export default class DocumentDb {
     collectionName: string
   ): Promise<Collection<TDocType>> {
     const client = await this.#getClient();
-    if (!DocumentDb.db) {
-      DocumentDb.db = client.db(DocumentDb.#DB_NAME);
+    if (!DocumentDb.#db) {
+      DocumentDb.#db = client.db(DocumentDb.#DB_NAME);
     }
-    return DocumentDb.db.collection<TDocType>(collectionName);
+    return DocumentDb.#db.collection<TDocType>(collectionName);
   }
 
   /**

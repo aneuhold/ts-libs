@@ -3,5 +3,5 @@
   "compilerOptions": {
     "types": ["node"]
   },
-  "include": ["scripts/**/*.ts", "eslint.config.ts"]
+  "include": ["scripts/**/*.ts"]
 }

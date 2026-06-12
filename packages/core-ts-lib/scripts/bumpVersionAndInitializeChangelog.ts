@@ -1,4 +1,4 @@
-import PackageService from '../src/services/PackageService/PackageService.js';
+import PackageService from '../src/services/PackageService/Package.service.js';
 import { VersionType } from '../src/types/VersionType.js';
 
 /**

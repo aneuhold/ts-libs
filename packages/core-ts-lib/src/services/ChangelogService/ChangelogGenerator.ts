@@ -1,5 +1,5 @@
 import ChangelogParser from './ChangelogParser.js';
-import GitTagService from './GitTagService.js';
+import GitTagService from './GitTag.service.js';
 import type { ChangelogVersionEntry, RepositoryInfo } from './types.js';
 
 /**

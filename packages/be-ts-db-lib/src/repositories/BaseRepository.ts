@@ -10,8 +10,8 @@ import type {
   OptionalUnlessRequiredId,
   UpdateResult
 } from 'mongodb';
-import type { RepoListeners, RepoSubscribers } from '../services/RepoSubscriptionService.js';
-import RepoSubscriptionService from '../services/RepoSubscriptionService.js';
+import type { RepoListeners, RepoSubscribers } from '../services/RepoSubscription.service.js';
+import RepoSubscriptionService from '../services/RepoSubscription.service.js';
 import type DbOperationMetaData from '../util/DbOperationMetaData.js';
 import DocumentCleaner from '../util/DocumentCleaner.js';
 import DocumentDb from '../util/DocumentDb.js';
