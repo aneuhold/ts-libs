@@ -7,13 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## 🔖 [4.2.30] (2026-06-12)
 
-### ✅ Added
-
 ### 🏗️ Changed
 
-### 🩹 Fixed
-
-### 🔥 Removed
+- Renamed service files to use the `.service.ts` naming convention (e.g. `GoogleAuthService.ts` → `GoogleAuth.service.ts`, `MigrationService.ts` → `Migration.service.ts`, `RepoSubscriptionService.ts` → `RepoSubscription.service.ts`, `DemoAccountsService.ts` → `DemoAccounts.service.ts`).
+- Converted `private static` methods and properties to native `#` private class fields across `BaseRepository`, `UserRepository`, `DashboardBaseRepository`, `WorkoutBaseRepository`, and all dashboard and workout repository singletons.
 
 ## 🔖 [4.2.29] (2026-05-17)
 

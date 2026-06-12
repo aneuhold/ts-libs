@@ -7,13 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## 🔖 [3.1.16] (2026-06-12)
 
-### ✅ Added
-
 ### 🏗️ Changed
 
-### 🩹 Fixed
-
-### 🔥 Removed
+- Renamed service files to use the `.service.ts` naming convention (`ConfigService.ts` → `Config.service.ts`, `GitHubService.ts` → `GitHub.service.ts`, `TranslationService.ts` → `Translation.service.ts`).
+- Converted `private static` methods and properties to native `#` private class fields in `ConfigService` and `GitHubService`.
 
 ## 🔖 [3.1.15] (2026-05-10)
 

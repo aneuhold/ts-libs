@@ -7,13 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## 🔖 [0.2.33] (2026-06-12)
 
-### ✅ Added
-
 ### 🏗️ Changed
 
-### 🩹 Fixed
-
-### 🔥 Removed
+- Renamed service files to use the `.service.ts` naming convention (e.g. `LocalPackageStoreService.ts` → `LocalPackageStore.service.ts`, `VerdaccioService.ts` → `Verdaccio.service.ts`, `PackageManagerService.ts` → `PackageManager.service.ts`, etc.).
+- Converted `private static` methods to native `#` private class fields in `UnsubscribeCommand`.
 
 ## 🔖 [0.2.32] (2026-04-21)
 

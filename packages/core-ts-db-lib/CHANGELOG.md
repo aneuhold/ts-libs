@@ -7,13 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## 🔖 [5.0.9] (2026-06-12)
 
-### ✅ Added
-
 ### 🏗️ Changed
 
-### 🩹 Fixed
-
-### 🔥 Removed
+- Renamed service files to use the `.service.ts` naming convention (`DocumentService.ts` → `Document.service.ts`, `TaskService.ts` → `Task.service.ts`, all workout service files renamed similarly).
+- Converted `private static` methods to native `#` private class fields in `DashboardTaskService`.
 
 ## 🔖 [5.0.8] (2026-04-22)
 

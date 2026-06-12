@@ -7,13 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## 🔖 [3.0.39] (2026-06-12)
 
-### ✅ Added
-
 ### 🏗️ Changed
 
-### 🩹 Fixed
-
-### 🔥 Removed
+- Renamed service files to use the `.service.ts` naming convention (`APIService.ts` → `API.service.ts`, `GCloudAPIService.ts` → `GCloudAPI.service.ts`).
+- Converted `private static` methods to native `#` private class fields in `GCloudAPIService`.
 
 ## 🔖 [3.0.38] (2026-05-10)
 

@@ -7,13 +7,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## 🔖 [2.4.5] (2026-06-12)
 
-### ✅ Added
-
 ### 🏗️ Changed
 
-### 🩹 Fixed
-
-### 🔥 Removed
+- Renamed all service files to use the `.service.ts` naming convention (e.g. `ArrayService.ts` → `Array.service.ts`, `DateService.ts` → `Date.service.ts`, `FileSystemService.ts` → `FileSystem.service.ts`, etc.).
+- Converted `private static` methods and properties to native `#` private class fields in `ChangelogService`, `ChangelogParser`, and `GitTagService`.
+- Migrated root eslint config from `eslint.config.js` to `eslint.config.ts`.
 
 ## 🔖 [2.4.4] (2026-04-21)
 
