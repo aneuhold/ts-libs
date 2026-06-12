@@ -1,9 +1,9 @@
 import { randomUUID } from 'crypto';
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TestProjectUtils } from '../../test-utils/TestProjectUtils.js';
-import { LocalPackageStoreService } from '../services/LocalPackageStoreService.js';
-import { MutexService } from '../services/MutexService.js';
-import { VerdaccioService } from '../services/VerdaccioService.js';
+import { LocalPackageStoreService } from '../services/LocalPackageStore.service.js';
+import { MutexService } from '../services/Mutex.service.js';
+import { VerdaccioService } from '../services/Verdaccio.service.js';
 import { PublishCommand } from './PublishCommand.js';
 import { SubscribeCommand } from './SubscribeCommand.js';
 

@@ -9,8 +9,8 @@ import ConsoleLogger from '../utils/ConsoleLogger.js';
  */
 export class DependencyRegistry {
   // Initialize with concrete defaults
-  private static loggerInstance: ILogger = new ConsoleLogger();
-  private static tracerInstance: ITracer = new NoopTracer();
+  static #loggerInstance: ILogger = new ConsoleLogger();
+  static #tracerInstance: ITracer = new NoopTracer();
 
   /**
    * Registers a logger implementation, overwriting the existing one.
@@ -19,7 +19,7 @@ export class DependencyRegistry {
    * @param instance - The ILogger instance to register.
    */
   public static registerLogger(instance: ILogger): void {
-    this.loggerInstance = instance;
+    this.#loggerInstance = instance;
   }
 
   /**
@@ -29,7 +29,7 @@ export class DependencyRegistry {
    * @returns The registered ILogger instance.
    */
   public static get logger(): ILogger {
-    return this.loggerInstance;
+    return this.#loggerInstance;
   }
 
   /**
@@ -39,7 +39,7 @@ export class DependencyRegistry {
    * @param instance - The ITracer instance to register.
    */
   public static registerTracer(instance: ITracer): void {
-    this.tracerInstance = instance;
+    this.#tracerInstance = instance;
   }
 
   /**
@@ -49,7 +49,7 @@ export class DependencyRegistry {
    * @returns The registered ITracer instance.
    */
   public static get tracer(): ITracer {
-    return this.tracerInstance;
+    return this.#tracerInstance;
   }
 }
 

@@ -8,10 +8,10 @@ import type { UUID } from 'crypto';
  * use that term for different concepts.
  */
 export default class DbOperationMetaData {
-  private readonly docTypesTouched = new Set<string>();
-  private readonly affectedUserIds = new Set<UUID>();
-  private readonly docCache = new Map<UUID, unknown>();
-  private readonly pendingDocsToCreate = new Map<UUID, BaseDocument>();
+  readonly #docTypesTouched = new Set<string>();
+  readonly #affectedUserIds = new Set<UUID>();
+  readonly #docCache = new Map<UUID, unknown>();
+  readonly #pendingDocsToCreate = new Map<UUID, BaseDocument>();
 
   /**
    * Records that a doc type was touched by an operation during this request.
@@ -19,7 +19,7 @@ export default class DbOperationMetaData {
    * @param docType - The doc type that was touched.
    */
   recordDocTypeTouched(docType: string): void {
-    this.docTypesTouched.add(docType);
+    this.#docTypesTouched.add(docType);
   }
 
   /**
@@ -28,21 +28,21 @@ export default class DbOperationMetaData {
    * @param userIds - The user IDs to record as affected.
    */
   addAffectedUserIds(userIds: UUID[]): void {
-    userIds.forEach((userId) => this.affectedUserIds.add(userId));
+    userIds.forEach((userId) => this.#affectedUserIds.add(userId));
   }
 
   /**
    * Gets all doc types that were touched during this request.
    */
   getDocTypesTouched(): Set<string> {
-    return this.docTypesTouched;
+    return this.#docTypesTouched;
   }
 
   /**
    * Gets all user IDs recorded as affected during this request.
    */
   getAffectedUserIds(): Set<UUID> {
-    return this.affectedUserIds;
+    return this.#affectedUserIds;
   }
 
   /**
@@ -52,7 +52,7 @@ export default class DbOperationMetaData {
    * @param doc - The document to cache.
    */
   cacheDoc<T>(docId: UUID, doc: T): void {
-    this.docCache.set(docId, doc);
+    this.#docCache.set(docId, doc);
   }
 
   /**
@@ -63,7 +63,7 @@ export default class DbOperationMetaData {
    */
   getCachedDoc<T>(docId: UUID): T | undefined {
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-    return this.docCache.get(docId) as T | undefined;
+    return this.#docCache.get(docId) as T | undefined;
   }
 
   /**
@@ -72,7 +72,7 @@ export default class DbOperationMetaData {
    * @param doc - The document to register.
    */
   registerPendingDoc<T extends BaseDocument>(doc: T): void {
-    this.pendingDocsToCreate.set(doc._id, doc);
+    this.#pendingDocsToCreate.set(doc._id, doc);
   }
 
   /**
@@ -93,6 +93,6 @@ export default class DbOperationMetaData {
    * @returns True if the document is pending creation, false otherwise.
    */
   hasPendingDoc(docId: UUID): boolean {
-    return this.pendingDocsToCreate.has(docId);
+    return this.#pendingDocsToCreate.has(docId);
   }
 }

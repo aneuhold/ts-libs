@@ -12,7 +12,7 @@ import BaseRepository from '../BaseRepository.js';
 export default abstract class DashboardBaseRepository<
   TBaseType extends BaseDocumentWithType
 > extends BaseRepository<TBaseType> {
-  private static COLLECTION_NAME = 'dashboard';
+  static #COLLECTION_NAME = 'dashboard';
 
   constructor(
     protected docType: string,
@@ -25,7 +25,7 @@ export default abstract class DashboardBaseRepository<
         : CleanDocument.docType(updatedDoc);
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
     const defaultFilter = { docType } as Partial<TBaseType>;
-    super(DashboardBaseRepository.COLLECTION_NAME, validator, defaultFilter, defaultUpdateCleaner);
+    super(DashboardBaseRepository.#COLLECTION_NAME, validator, defaultFilter, defaultUpdateCleaner);
   }
 
   override async insertNew(

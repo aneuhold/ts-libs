@@ -1,1 +1,1 @@
-export { default as DemoAccountsService } from './DemoAccountsService.js';
+export { default as DemoAccountsService } from './DemoAccounts.service.js';

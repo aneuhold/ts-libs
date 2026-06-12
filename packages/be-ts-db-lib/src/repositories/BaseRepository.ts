@@ -10,8 +10,8 @@ import type {
   OptionalUnlessRequiredId,
   UpdateResult
 } from 'mongodb';
-import type { RepoListeners, RepoSubscribers } from '../services/RepoSubscriptionService.js';
-import RepoSubscriptionService from '../services/RepoSubscriptionService.js';
+import type { RepoListeners, RepoSubscribers } from '../services/RepoSubscription.service.js';
+import RepoSubscriptionService from '../services/RepoSubscription.service.js';
 import type DbOperationMetaData from '../util/DbOperationMetaData.js';
 import DocumentCleaner from '../util/DocumentCleaner.js';
 import DocumentDb from '../util/DocumentDb.js';
@@ -28,7 +28,7 @@ import type IValidator from '../validators/BaseValidator.js';
 export default abstract class BaseRepository<TBaseType extends BaseDocument> {
   protected collectionName: string;
 
-  private collection?: Collection<TBaseType>;
+  #collection?: Collection<TBaseType>;
 
   protected subscribers: RepoSubscribers<TBaseType> =
     RepoSubscriptionService.getDefaultSubscribers<TBaseType>();
@@ -56,11 +56,11 @@ export default abstract class BaseRepository<TBaseType extends BaseDocument> {
    * @returns The collection.
    */
   protected async getCollection(): Promise<Collection<TBaseType>> {
-    if (!this.collection) {
-      this.collection = await DocumentDb.getCollection(this.collectionName);
+    if (!this.#collection) {
+      this.#collection = await DocumentDb.getCollection(this.collectionName);
       this.setupSubscribers();
     }
-    return this.collection;
+    return this.#collection;
   }
 
   protected abstract setupSubscribers(): void;
@@ -258,7 +258,7 @@ export default abstract class BaseRepository<TBaseType extends BaseDocument> {
 
     const docId = updatedDoc._id;
 
-    const cleanedDoc = this.cleanUpdateObject(updatedDoc);
+    const cleanedDoc = this.#cleanUpdateObject(updatedDoc);
 
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
     const result = collection.updateOne({ _id: docId } as Filter<TBaseType>, { $set: cleanedDoc });
@@ -285,7 +285,7 @@ export default abstract class BaseRepository<TBaseType extends BaseDocument> {
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
     const bulkOps = updatedDocs.map((doc) => {
       const docId = doc._id;
-      const cleanedDoc = this.cleanUpdateObject(doc);
+      const cleanedDoc = this.#cleanUpdateObject(doc);
       return {
         updateOne: {
           filter: { _id: docId },
@@ -376,7 +376,7 @@ export default abstract class BaseRepository<TBaseType extends BaseDocument> {
    * @param updatedDoc - The document to clean.
    * @returns The cleaned document.
    */
-  private cleanUpdateObject(updatedDoc: Partial<TBaseType>): Partial<TBaseType> {
+  #cleanUpdateObject(updatedDoc: Partial<TBaseType>): Partial<TBaseType> {
     return this.defaultUpdateCleaner
       ? this.defaultUpdateCleaner(DocumentCleaner.id(updatedDoc))
       : DocumentCleaner.id(updatedDoc);

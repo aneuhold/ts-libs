@@ -1,7 +1,7 @@
 import type { User, WorkoutMesocycle, WorkoutMicrocycle } from '@aneuhold/core-ts-db-lib';
 import { WorkoutMicrocycle_docType } from '@aneuhold/core-ts-db-lib';
 import type { UUID } from 'crypto';
-import type { RepoListeners } from '../../services/RepoSubscriptionService.js';
+import type { RepoListeners } from '../../services/RepoSubscription.service.js';
 import type DbOperationMetaData from '../../util/DbOperationMetaData.js';
 import WorkoutMicrocycleValidator from '../../validators/workout/MicrocycleValidator.js';
 import WorkoutBaseWithUserIdRepository from './WorkoutBaseWithUserIdRepository.js';
@@ -11,7 +11,7 @@ import WorkoutSessionRepository from './WorkoutSessionRepository.js';
  * The repository that contains {@link WorkoutMicrocycle} documents.
  */
 export default class WorkoutMicrocycleRepository extends WorkoutBaseWithUserIdRepository<WorkoutMicrocycle> {
-  private static singletonInstance?: WorkoutMicrocycleRepository;
+  static #singletonInstance?: WorkoutMicrocycleRepository;
 
   private constructor() {
     super(WorkoutMicrocycle_docType, new WorkoutMicrocycleValidator());
@@ -78,9 +78,9 @@ export default class WorkoutMicrocycleRepository extends WorkoutBaseWithUserIdRe
   }
 
   public static getRepo(): WorkoutMicrocycleRepository {
-    if (!WorkoutMicrocycleRepository.singletonInstance) {
-      WorkoutMicrocycleRepository.singletonInstance = new WorkoutMicrocycleRepository();
+    if (!WorkoutMicrocycleRepository.#singletonInstance) {
+      WorkoutMicrocycleRepository.#singletonInstance = new WorkoutMicrocycleRepository();
     }
-    return WorkoutMicrocycleRepository.singletonInstance;
+    return WorkoutMicrocycleRepository.#singletonInstance;
   }
 }

@@ -8,9 +8,9 @@ import ErrorUtils from '../../utils/ErrorUtils.js';
 import JsonUtils from '../../utils/JsonUtils.js';
 import ChangelogService from '../ChangelogService/index.js';
 import { DR } from '../DependencyRegistry.js';
-import DependencyService from '../DependencyService.js';
-import FileSystemService from '../FileSystemService/FileSystemService.js';
-import StringService from '../StringService.js';
+import DependencyService from '../Dependency.service.js';
+import FileSystemService from '../FileSystemService/FileSystem.service.js';
+import StringService from '../String.service.js';
 
 const execAsync = promisify(exec);
 
@@ -187,7 +187,7 @@ export default class PackageServiceUtils {
     DR.logger.info(`Changes detected compared to main branch - proceeding with version check`);
 
     // Check if version bump is needed by comparing with npm registry
-    const needsBump = await PackageServiceUtils.checkIfVersionBumpNeeded(
+    const needsBump = await PackageServiceUtils.#checkIfVersionBumpNeeded(
       packageName,
       currentVersion,
       versionType
@@ -221,7 +221,7 @@ export default class PackageServiceUtils {
    * @param versionType The type of version bump requested
    * @returns true if a version bump is needed, false otherwise
    */
-  private static async checkIfVersionBumpNeeded(
+  static async #checkIfVersionBumpNeeded(
     packageName: string,
     currentVersion: string,
     versionType: VersionType

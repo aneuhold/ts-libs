@@ -1,7 +1,7 @@
 import type { User, WorkoutExercise, WorkoutExerciseCalibration } from '@aneuhold/core-ts-db-lib';
 import { WorkoutExerciseCalibration_docType } from '@aneuhold/core-ts-db-lib';
 import type { UUID } from 'crypto';
-import type { RepoListeners } from '../../services/RepoSubscriptionService.js';
+import type { RepoListeners } from '../../services/RepoSubscription.service.js';
 import type DbOperationMetaData from '../../util/DbOperationMetaData.js';
 import WorkoutExerciseCalibrationValidator from '../../validators/workout/ExerciseCalibrationValidator.js';
 import WorkoutBaseWithUserIdRepository from './WorkoutBaseWithUserIdRepository.js';
@@ -10,7 +10,7 @@ import WorkoutBaseWithUserIdRepository from './WorkoutBaseWithUserIdRepository.j
  * The repository that contains {@link WorkoutExerciseCalibration} documents.
  */
 export default class WorkoutExerciseCalibrationRepository extends WorkoutBaseWithUserIdRepository<WorkoutExerciseCalibration> {
-  private static singletonInstance?: WorkoutExerciseCalibrationRepository;
+  static #singletonInstance?: WorkoutExerciseCalibrationRepository;
 
   private constructor() {
     super(WorkoutExerciseCalibration_docType, new WorkoutExerciseCalibrationValidator());
@@ -75,10 +75,10 @@ export default class WorkoutExerciseCalibrationRepository extends WorkoutBaseWit
   }
 
   public static getRepo(): WorkoutExerciseCalibrationRepository {
-    if (!WorkoutExerciseCalibrationRepository.singletonInstance) {
-      WorkoutExerciseCalibrationRepository.singletonInstance =
+    if (!WorkoutExerciseCalibrationRepository.#singletonInstance) {
+      WorkoutExerciseCalibrationRepository.#singletonInstance =
         new WorkoutExerciseCalibrationRepository();
     }
-    return WorkoutExerciseCalibrationRepository.singletonInstance;
+    return WorkoutExerciseCalibrationRepository.#singletonInstance;
   }
 }

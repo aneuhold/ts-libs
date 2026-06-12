@@ -1,6 +1,6 @@
 import type { NonogramKatanaItem, User } from '@aneuhold/core-ts-db-lib';
 import { NonogramKatanaItem_docType } from '@aneuhold/core-ts-db-lib';
-import type { RepoListeners } from '../../services/RepoSubscriptionService.js';
+import type { RepoListeners } from '../../services/RepoSubscription.service.js';
 import DashboardNonogramKatanaItemValidator from '../../validators/dashboard/NonogramKatanaItemValidator.js';
 import DashboardBaseWithUserIdRepository from './DashboardBaseWithUserIdRepository.js';
 
@@ -8,7 +8,7 @@ import DashboardBaseWithUserIdRepository from './DashboardBaseWithUserIdReposito
  * The repository that contains {@link NonogramKatanaItem} documents.
  */
 export default class DashboardNonogramKatanaItemRepository extends DashboardBaseWithUserIdRepository<NonogramKatanaItem> {
-  private static singletonInstance?: DashboardNonogramKatanaItemRepository;
+  static #singletonInstance?: DashboardNonogramKatanaItemRepository;
 
   private constructor() {
     super(NonogramKatanaItem_docType, new DashboardNonogramKatanaItemValidator());
@@ -32,10 +32,10 @@ export default class DashboardNonogramKatanaItemRepository extends DashboardBase
    * Gets the singleton instance of the {@link DashboardNonogramKatanaItemRepository}.
    */
   public static getRepo(): DashboardNonogramKatanaItemRepository {
-    if (!DashboardNonogramKatanaItemRepository.singletonInstance) {
-      DashboardNonogramKatanaItemRepository.singletonInstance =
+    if (!DashboardNonogramKatanaItemRepository.#singletonInstance) {
+      DashboardNonogramKatanaItemRepository.#singletonInstance =
         new DashboardNonogramKatanaItemRepository();
     }
-    return DashboardNonogramKatanaItemRepository.singletonInstance;
+    return DashboardNonogramKatanaItemRepository.#singletonInstance;
   }
 }

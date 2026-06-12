@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## 🔖 [3.0.39] (2026-06-12)
+
+### 🏗️ Changed
+
+- Renamed service files to use the `.service.ts` naming convention (`APIService.ts` → `API.service.ts`, `GCloudAPIService.ts` → `GCloudAPI.service.ts`).
+- Converted `private static` methods to native `#` private class fields in `GCloudAPIService`.
+
 ## 🔖 [3.0.38] (2026-05-10)
 
 ### 🏗️ Changed
@@ -426,6 +433,7 @@ No direct code changes; version bump for compatibility.
 - Updated workflow permissions to allow repository write access
 
 <!-- Link References -->
+[3.0.39]: https://github.com/aneuhold/ts-libs/compare/core-ts-api-lib-v3.0.38...core-ts-api-lib-v3.0.39
 [3.0.38]: https://github.com/aneuhold/ts-libs/compare/core-ts-api-lib-v3.0.37...core-ts-api-lib-v3.0.38
 [3.0.37]: https://github.com/aneuhold/ts-libs/compare/core-ts-api-lib-v3.0.36...core-ts-api-lib-v3.0.37
 [3.0.36]: https://github.com/aneuhold/ts-libs/compare/core-ts-api-lib-v3.0.35...core-ts-api-lib-v3.0.36

@@ -1,7 +1,7 @@
 import { DR } from '@aneuhold/core-ts-lib';
-import { LocalPackageStoreService } from '../services/LocalPackageStoreService.js';
-import { PackageJsonService } from '../services/PackageJsonService.js';
-import { PackageManagerService } from '../services/PackageManagerService/PackageManagerService.js';
+import { LocalPackageStoreService } from '../services/LocalPackageStore.service.js';
+import { PackageJsonService } from '../services/PackageJson.service.js';
+import { PackageManagerService } from '../services/PackageManagerService/PackageManager.service.js';
 
 /**
  * Implements the 'local-npm unsubscribe [<package-name>]' command.
@@ -17,10 +17,10 @@ export class UnsubscribeCommand {
 
     if (packageName) {
       // Unsubscribe from specific package
-      await this.unsubscribeFromSpecificPackage(packageName, currentProjectPath);
+      await this.#unsubscribeFromSpecificPackage(packageName, currentProjectPath);
     } else {
       // Unsubscribe from all packages
-      await this.unsubscribeFromAllPackages(currentProjectPath);
+      await this.#unsubscribeFromAllPackages(currentProjectPath);
     }
   }
 
@@ -30,7 +30,7 @@ export class UnsubscribeCommand {
    * @param packageName - Name of the package to unsubscribe from
    * @param currentProjectPath - Path to the current project
    */
-  private static async unsubscribeFromSpecificPackage(
+  static async #unsubscribeFromSpecificPackage(
     packageName: string,
     currentProjectPath: string
   ): Promise<void> {
@@ -70,7 +70,7 @@ export class UnsubscribeCommand {
    *
    * @param currentProjectPath - Path to the current project
    */
-  private static async unsubscribeFromAllPackages(currentProjectPath: string): Promise<void> {
+  static async #unsubscribeFromAllPackages(currentProjectPath: string): Promise<void> {
     const subscribedPackages =
       await LocalPackageStoreService.getSubscribedPackages(currentProjectPath);
 

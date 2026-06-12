@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import NonogramKatanaItemName from '../../embedded-types/dashboard/nonogramKatanaItem/ItemName.js';
-import DocumentService from '../../services/DocumentService.js';
+import DocumentService from '../../services/Document.service.js';
 import { NonogramKatanaItemSchema } from './NonogramKatanaItem.js';
 
 describe('Unit Tests', () => {

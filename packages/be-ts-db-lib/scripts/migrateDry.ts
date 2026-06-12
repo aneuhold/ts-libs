@@ -1,4 +1,4 @@
-import MigrationService from '../src/services/MigrationService.js';
+import MigrationService from '../src/services/Migration.service.js';
 
 // Set the .env file to pull from
 import dotenv from 'dotenv';

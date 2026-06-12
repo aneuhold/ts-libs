@@ -1,4 +1,4 @@
-import APIService from './services/APIService/APIService.js';
+import APIService from './services/APIService/API.service.js';
 import type {
   AdminInput,
   AdminOutput,

@@ -1,4 +1,4 @@
-import PackageService from '../src/services/PackageService/PackageService.js';
+import PackageService from '../src/services/PackageService/Package.service.js';
 
 /**
  * Publishes to JSR. This is a separate script here, but it will be integrated

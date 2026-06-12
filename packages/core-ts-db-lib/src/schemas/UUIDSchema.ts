@@ -1,5 +1,5 @@
 import z from 'zod';
-import DocumentService from '../services/DocumentService.js';
+import DocumentService from '../services/Document.service.js';
 
 /**
  * Shared zod schema for UUIDv7 values that narrows the resulting string to the

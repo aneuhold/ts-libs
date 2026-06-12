@@ -1,7 +1,7 @@
 #!/usr/bin/env tsx
 
 import { join } from 'path';
-import ChangelogService from '../packages/core-ts-lib/src/services/ChangelogService/ChangelogService.js';
+import ChangelogService from '../packages/core-ts-lib/src/services/ChangelogService/Changelog.service.js';
 
 /**
  * TypeScript script to extract changelog content for a specific package and version.

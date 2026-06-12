@@ -19,7 +19,7 @@ import {
 } from '@aneuhold/core-ts-db-lib';
 import type { UUID } from 'crypto';
 import type { Document } from 'mongodb';
-import type { RepoListeners } from '../../services/RepoSubscriptionService.js';
+import type { RepoListeners } from '../../services/RepoSubscription.service.js';
 import WorkoutExerciseValidator from '../../validators/workout/ExerciseValidator.js';
 import WorkoutBaseWithUserIdRepository from './WorkoutBaseWithUserIdRepository.js';
 import WorkoutExerciseCalibrationRepository from './WorkoutExerciseCalibrationRepository.js';
@@ -28,7 +28,7 @@ import WorkoutExerciseCalibrationRepository from './WorkoutExerciseCalibrationRe
  * The repository that contains {@link WorkoutExercise} documents.
  */
 export default class WorkoutExerciseRepository extends WorkoutBaseWithUserIdRepository<WorkoutExercise> {
-  private static singletonInstance?: WorkoutExerciseRepository;
+  static #singletonInstance?: WorkoutExerciseRepository;
 
   private constructor() {
     super(WorkoutExercise_docType, new WorkoutExerciseValidator());
@@ -51,10 +51,10 @@ export default class WorkoutExerciseRepository extends WorkoutBaseWithUserIdRepo
   }
 
   public static getRepo(): WorkoutExerciseRepository {
-    if (!WorkoutExerciseRepository.singletonInstance) {
-      WorkoutExerciseRepository.singletonInstance = new WorkoutExerciseRepository();
+    if (!WorkoutExerciseRepository.#singletonInstance) {
+      WorkoutExerciseRepository.#singletonInstance = new WorkoutExerciseRepository();
     }
-    return WorkoutExerciseRepository.singletonInstance;
+    return WorkoutExerciseRepository.#singletonInstance;
   }
 
   /**

@@ -1,8 +1,8 @@
 import { DR } from '@aneuhold/core-ts-lib';
-import { CommandUtilService } from '../services/CommandUtilService.js';
-import { LocalPackageStoreService } from '../services/LocalPackageStoreService.js';
-import { PackageJsonService } from '../services/PackageJsonService.js';
-import { VerdaccioService } from '../services/VerdaccioService.js';
+import { CommandUtilService } from '../services/CommandUtil.service.js';
+import { LocalPackageStoreService } from '../services/LocalPackageStore.service.js';
+import { PackageJsonService } from '../services/PackageJson.service.js';
+import { VerdaccioService } from '../services/Verdaccio.service.js';
 
 /**
  * Implements the 'local-npm publish' command.

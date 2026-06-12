@@ -155,23 +155,23 @@ import type { RSM } from './embedded-types/workout/Rsm.js';
 import { RsmSchema } from './embedded-types/workout/Rsm.js';
 import type { RequiredUserId } from './schemas/required-refs/RequiredUserId.js';
 import { RequiredUserIdSchema } from './schemas/required-refs/RequiredUserId.js';
-import type { DocumentMap } from './services/DocumentService.js';
-import DocumentService from './services/DocumentService.js';
-import type { DashboardTaskFilterAndSortResult } from './services/dashboard/Task/TaskService.js';
-import DashboardTaskService from './services/dashboard/Task/TaskService.js';
-import WorkoutEquipmentTypeService from './services/workout/EquipmentType/WorkoutEquipmentTypeService.js';
-import WorkoutExerciseService from './services/workout/Exercise/WorkoutExerciseService.js';
-import WorkoutExerciseCalibrationService from './services/workout/ExerciseCalibration/WorkoutExerciseCalibrationService.js';
+import type { DocumentMap } from './services/Document.service.js';
+import DocumentService from './services/Document.service.js';
+import type { DashboardTaskFilterAndSortResult } from './services/dashboard/Task/Task.service.js';
+import DashboardTaskService from './services/dashboard/Task/Task.service.js';
+import WorkoutEquipmentTypeService from './services/workout/EquipmentType/WorkoutEquipmentType.service.js';
+import WorkoutExerciseService from './services/workout/Exercise/WorkoutExercise.service.js';
+import WorkoutExerciseCalibrationService from './services/workout/ExerciseCalibration/WorkoutExerciseCalibration.service.js';
 import WorkoutMesocyclePlanContext from './services/workout/Mesocycle/WorkoutMesocyclePlanContext.js';
-import WorkoutMesocycleService from './services/workout/Mesocycle/WorkoutMesocycleService.js';
-import WorkoutMicrocycleService from './services/workout/Microcycle/WorkoutMicrocycleService.js';
+import WorkoutMesocycleService from './services/workout/Mesocycle/WorkoutMesocycle.service.js';
+import WorkoutMicrocycleService from './services/workout/Microcycle/WorkoutMicrocycle.service.js';
 import WorkoutSessionService, {
   WorkoutSessionLockReason
-} from './services/workout/Session/WorkoutSessionService.js';
-import WorkoutSessionExerciseService from './services/workout/SessionExercise/WorkoutSessionExerciseService.js';
-import WorkoutSetService from './services/workout/Set/WorkoutSetService.js';
-import WorkoutSFRService from './services/workout/util/SFR/WorkoutSFRService.js';
-import WorkoutVolumePlanningService from './services/workout/util/VolumePlanning/WorkoutVolumePlanningService.js';
+} from './services/workout/Session/WorkoutSession.service.js';
+import WorkoutSessionExerciseService from './services/workout/SessionExercise/WorkoutSessionExercise.service.js';
+import WorkoutSetService from './services/workout/Set/WorkoutSet.service.js';
+import WorkoutSFRService from './services/workout/util/SFR/WorkoutSFR.service.js';
+import WorkoutVolumePlanningService from './services/workout/util/VolumePlanning/WorkoutVolumePlanning.service.js';
 import { GOOGLE_CLIENT_ID } from './constants/googleClientId.js';
 
 // Export all browser-safe functions and classes from this library

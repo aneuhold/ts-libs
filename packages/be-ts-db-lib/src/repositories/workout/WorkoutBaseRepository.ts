@@ -15,7 +15,7 @@ import BaseRepository from '../BaseRepository.js';
 export default abstract class WorkoutBaseRepository<
   TBaseType extends BaseDocumentWithType & BaseDocumentWithUpdatedAndCreatedDates
 > extends BaseRepository<TBaseType> {
-  private static COLLECTION_NAME = 'workout';
+  static #COLLECTION_NAME = 'workout';
 
   constructor(
     protected docType: string,
@@ -30,7 +30,7 @@ export default abstract class WorkoutBaseRepository<
     };
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
     const defaultFilter = { docType } as Partial<TBaseType>;
-    super(WorkoutBaseRepository.COLLECTION_NAME, validator, defaultFilter, defaultUpdateCleaner);
+    super(WorkoutBaseRepository.#COLLECTION_NAME, validator, defaultFilter, defaultUpdateCleaner);
   }
 
   override async insertNew(

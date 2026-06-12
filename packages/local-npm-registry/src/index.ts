@@ -2,9 +2,9 @@
 
 import { DR } from '@aneuhold/core-ts-lib';
 import { program } from 'commander';
-import { CommandService } from './services/CommandService.js';
-import { ConfigService } from './services/ConfigService.js';
-import { LocalPackageStoreService } from './services/LocalPackageStoreService.js';
+import { CommandService } from './services/Command.service.js';
+import { ConfigService } from './services/Config.service.js';
+import { LocalPackageStoreService } from './services/LocalPackageStore.service.js';
 
 program
   .name('local-npm')

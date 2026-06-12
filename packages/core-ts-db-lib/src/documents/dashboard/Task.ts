@@ -7,7 +7,7 @@ import {
 import { DashboardTaskSortSettingsSchema } from '../../embedded-types/dashboard/task/SortSettings.js';
 import { RequiredUserIdSchema } from '../../schemas/required-refs/RequiredUserId.js';
 import { UUIDSchema } from '../../schemas/UUIDSchema.js';
-import type { DocumentMap } from '../../services/DocumentService.js';
+import type { DocumentMap } from '../../services/Document.service.js';
 import { BaseDocumentWithTypeSchema } from '../BaseDocument.js';
 
 /**
