@@ -28,6 +28,7 @@ describe('Unit Tests', () => {
         expect(result.data.enabledFeatures.financePage).toBe(false);
         expect(result.data.enabledFeatures.automationPage).toBe(false);
         expect(result.data.enabledFeatures.entertainmentPage).toBe(false);
+        expect(result.data.enabledFeatures.homelabPage).toBe(false);
         expect(result.data.enabledFeatures.homePageLinks).toBe(false);
         expect(result.data.enabledFeatures.useConfettiForTasks).toBe(false);
         expect(result.data.enabledFeatures.catImageOnHomePage).toBe(false);
