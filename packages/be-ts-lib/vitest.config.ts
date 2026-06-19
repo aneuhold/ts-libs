@@ -1,8 +1,11 @@
-import { defineProject } from 'vitest/config';
+import { defineProject, mergeConfig } from 'vitest/config';
+import { sharedProjectConfig } from '../../vitest.shared.js';
 
-export default defineProject({
-  test: {
-    exclude: ['lib/**/*', 'node_modules/**/*'],
-    setupFiles: ['./vitest.setup.ts']
-  }
-});
+export default mergeConfig(
+  sharedProjectConfig,
+  defineProject({
+    test: {
+      setupFiles: ['./vitest.setup.ts']
+    }
+  })
+);
