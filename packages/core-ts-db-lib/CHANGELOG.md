@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - Added `homelabPage` to the dashboard user config `enabledFeatures`, defaulting to `false`.
 
+### 🏗️ Changed
+
+- Updated `@aneuhold/core-ts-lib` to `^2.4.6`.
+
 ## 🔖 [5.0.9] (2026-06-12)
 
 ### 🏗️ Changed

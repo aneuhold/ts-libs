@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### 🏗️ Changed
 
-- Updated `@aneuhold/core-ts-db-lib` to `^5.0.10`.
+- Updated `@aneuhold/core-ts-db-lib` to `^5.0.10` and `@aneuhold/core-ts-lib` to `^2.4.6`.
 
 ## 🔖 [3.0.39] (2026-06-12)
 
