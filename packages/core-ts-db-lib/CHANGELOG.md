@@ -9,11 +9,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### ✅ Added
 
-### 🏗️ Changed
-
-### 🩹 Fixed
-
-### 🔥 Removed
+- Added `homelabPage` to the dashboard user config `enabledFeatures`, defaulting to `false`.
 
 ## 🔖 [5.0.9] (2026-06-12)
 
