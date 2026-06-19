@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## 🔖 [5.0.10] (2026-06-19)
+
+### ✅ Added
+
+- Added `homelabPage` to the dashboard user config `enabledFeatures`, defaulting to `false`.
+
+### 🏗️ Changed
+
+- Updated `@aneuhold/core-ts-lib` to `^2.4.6`.
+
 ## 🔖 [5.0.9] (2026-06-12)
 
 ### 🏗️ Changed
@@ -471,6 +481,7 @@ Updated dependency: now requires `@aneuhold/core-ts-lib@^2.3.11`.
 - Updated workflow permissions to allow repository write access
 
 <!-- Link References -->
+[5.0.10]: https://github.com/aneuhold/ts-libs/compare/core-ts-db-lib-v5.0.9...core-ts-db-lib-v5.0.10
 [5.0.9]: https://github.com/aneuhold/ts-libs/compare/core-ts-db-lib-v5.0.8...core-ts-db-lib-v5.0.9
 [5.0.8]: https://github.com/aneuhold/ts-libs/compare/core-ts-db-lib-v5.0.7...core-ts-db-lib-v5.0.8
 [5.0.7]: https://github.com/aneuhold/ts-libs/compare/core-ts-db-lib-v5.0.6...core-ts-db-lib-v5.0.7

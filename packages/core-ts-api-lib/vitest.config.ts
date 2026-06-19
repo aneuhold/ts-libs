@@ -1,7 +1,4 @@
-import { defineProject } from 'vitest/config';
+import { mergeConfig } from 'vitest/config';
+import { sharedProjectConfig } from '../../vitest.shared.js';
 
-export default defineProject({
-  test: {
-    exclude: ['lib/**/*', 'node_modules/**/*']
-  }
-});
+export default mergeConfig(sharedProjectConfig, {});
