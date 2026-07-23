@@ -9,11 +9,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### ✅ Added
 
-### 🏗️ Changed
+- Added `APIService.setOnAuthExpired()` and `GCloudAPIService.setOnAuthExpired()` to register a callback that fires when a session cannot be recovered from a 401, so consumers can clear stored tokens and prompt re-login.
+- Added the `OnAuthExpiredCallback` and `OnTokensRefreshedCallback` types to `AuthRefreshToken.ts`.
 
 ### 🩹 Fixed
 
-### 🔥 Removed
+- Fixed 401 handling in `GCloudAPIService` so a request with no refresh token, a failed token refresh, or a post-refresh retry that is still a 401 all report expired auth instead of silently returning the unauthorized response.
 
 ## 🔖 [3.0.40] (2026-06-19)
 
