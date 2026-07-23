@@ -7,7 +7,9 @@ import type {
 } from '../../types/AuthDeleteAccount.js';
 import type {
   AuthRefreshTokenInput,
-  AuthRefreshTokenOutput
+  AuthRefreshTokenOutput,
+  OnAuthExpiredCallback,
+  OnTokensRefreshedCallback
 } from '../../types/AuthRefreshToken.js';
 import type {
   AuthValidateUserInput,
@@ -21,12 +23,6 @@ import type {
   ProjectWorkoutPrimaryInput,
   ProjectWorkoutPrimaryOutput
 } from '../../types/project/workout/ProjectWorkout.js';
-
-/**
- * Callback invoked after tokens are successfully refreshed. The frontend
- * should use this to persist the new tokens (e.g. to localStorage).
- */
-type OnTokensRefreshedCallback = (accessToken: string, refreshTokenString: string) => void;
 
 /**
  * A service for interacting with the Google Cloud API service for personal projects.
@@ -45,6 +41,8 @@ export default class GCloudAPIService {
   static #refreshTokenString: string | undefined;
 
   static #onTokensRefreshed: OnTokensRefreshedCallback | null = null;
+
+  static #onAuthExpired: OnAuthExpiredCallback | null = null;
 
   /**
    * Gets the current URL of the Google Cloud API.
@@ -92,6 +90,17 @@ export default class GCloudAPIService {
    */
   static setOnTokensRefreshed(callback: OnTokensRefreshedCallback | null): void {
     this.#onTokensRefreshed = callback;
+  }
+
+  /**
+   * Registers a callback that is invoked when the session cannot be recovered
+   * on a 401 (no refresh token, refresh failed, or the post-refresh retry is
+   * still 401). Use this to clear stored tokens and prompt re-login.
+   *
+   * @param callback - The callback invoked when auth has expired.
+   */
+  static setOnAuthExpired(callback: OnAuthExpiredCallback | null): void {
+    this.#onAuthExpired = callback;
   }
 
   /**
@@ -170,7 +179,8 @@ export default class GCloudAPIService {
   /**
    * Makes a call to the API. On a 401 response, automatically attempts to
    * refresh the access token using the stored refresh token. If refresh
-   * succeeds, the original request is retried once.
+   * succeeds, the original request is retried once. When the session cannot be
+   * recovered, the {@link #onAuthExpired} callback fires.
    *
    * @param urlPath - The path to the endpoint.
    * @param input - The input to the endpoint.
@@ -179,14 +189,19 @@ export default class GCloudAPIService {
     urlPath: string,
     input: TInput
   ): Promise<APIResponse<TOutput>> {
-    const { response, decoded } = await this.#fetchAndDecode<TInput, TOutput>(urlPath, input);
+    let { response, decoded } = await this.#fetchAndDecode<TInput, TOutput>(urlPath, input);
 
-    if (response.status === 401 && this.#refreshTokenString) {
-      const refreshed = await this.#tryRefreshTokens();
-      if (refreshed) {
-        const retry = await this.#fetchAndDecode<TInput, TOutput>(urlPath, input);
-        return retry.decoded;
-      }
+    // On a 401, try once to recover by refreshing the tokens and retrying.
+    // #tryRefreshTokens returns false when there is no refresh token to use.
+    if (response.status === 401 && (await this.#tryRefreshTokens())) {
+      // Fancy destructure into pre-existing variables
+      ({ response, decoded } = await this.#fetchAndDecode<TInput, TOutput>(urlPath, input));
+    }
+
+    // Still a 401 after any recovery attempt means the session cannot be
+    // recovered, so notify the frontend to prompt re-login.
+    if (response.status === 401) {
+      this.#onAuthExpired?.();
     }
 
     return decoded;

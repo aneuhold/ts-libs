@@ -80,6 +80,17 @@ export default class APIService {
   }
 
   /**
+   * Registers a callback that is invoked when the session cannot be recovered
+   * on a 401 (no refresh token, refresh failed, or the retry is still 401). Use
+   * this to clear stored tokens and prompt the user to log in again.
+   *
+   * @param callback - The callback invoked when auth has expired.
+   */
+  static setOnAuthExpired(callback: (() => void) | null): void {
+    GCloudAPIService.setOnAuthExpired(callback);
+  }
+
+  /**
    * Calls the dashboard API and returns the result.
    *
    * @param input - The input for the dashboard API call.

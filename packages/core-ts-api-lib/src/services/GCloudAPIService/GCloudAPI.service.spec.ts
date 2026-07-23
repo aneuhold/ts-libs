@@ -155,5 +155,117 @@ describe('Unit Tests', () => {
         await expect(GCloudAPIService.projectDashboard(input)).rejects.toThrow('Network error');
       });
     });
+
+    describe('onAuthExpired', () => {
+      const onAuthExpired = vi.fn();
+      const input: ProjectDashboardInput = { options: {} };
+      const unauthorizedBody = { success: false, errors: ['Unauthorized'], data: {} };
+
+      beforeEach(() => {
+        GCloudAPIService.setOnAuthExpired(onAuthExpired);
+      });
+
+      afterEach(() => {
+        GCloudAPIService.setOnAuthExpired(null);
+        // Reset static token state so it does not leak into other tests.
+        GCloudAPIService.setRefreshTokenString('');
+      });
+
+      it('fires the callback and returns the decoded 401 when there is no refresh token', async () => {
+        mockFetch.mockResolvedValue({
+          status: 401,
+          text: () => Promise.resolve(JSON.stringify(unauthorizedBody))
+        });
+
+        const result = await GCloudAPIService.projectDashboard(input);
+
+        expect(mockFetch).toHaveBeenCalledTimes(1);
+        expect(onAuthExpired).toHaveBeenCalledTimes(1);
+        expect(result).toEqual(unauthorizedBody);
+      });
+
+      it('fires the callback and returns the original 401 when the refresh fails', async () => {
+        GCloudAPIService.setRefreshTokenString('refresh-token');
+        mockFetch
+          .mockResolvedValueOnce({
+            status: 401,
+            text: () => Promise.resolve(JSON.stringify(unauthorizedBody))
+          })
+          .mockResolvedValueOnce({
+            status: 401,
+            text: () =>
+              Promise.resolve(
+                JSON.stringify({ success: false, errors: ['Invalid refresh token'], data: {} })
+              )
+          });
+
+        const result = await GCloudAPIService.projectDashboard(input);
+
+        expect(mockFetch).toHaveBeenCalledTimes(2);
+        expect(onAuthExpired).toHaveBeenCalledTimes(1);
+        expect(result).toEqual(unauthorizedBody);
+      });
+
+      it('does not fire the callback when the refresh succeeds and the retry is 200', async () => {
+        GCloudAPIService.setRefreshTokenString('refresh-token');
+        const retryBody = { success: true, errors: [], data: { projects: [] } };
+        mockFetch
+          .mockResolvedValueOnce({
+            status: 401,
+            text: () => Promise.resolve(JSON.stringify(unauthorizedBody))
+          })
+          .mockResolvedValueOnce({
+            status: 200,
+            text: () =>
+              Promise.resolve(
+                JSON.stringify({
+                  success: true,
+                  errors: [],
+                  data: { accessToken: 'new-access', refreshTokenString: 'new-refresh' }
+                })
+              )
+          })
+          .mockResolvedValueOnce({
+            status: 200,
+            text: () => Promise.resolve(JSON.stringify(retryBody))
+          });
+
+        const result = await GCloudAPIService.projectDashboard(input);
+
+        expect(mockFetch).toHaveBeenCalledTimes(3);
+        expect(onAuthExpired).not.toHaveBeenCalled();
+        expect(result).toEqual(retryBody);
+      });
+
+      it('fires the callback when the refresh succeeds but the retry is still 401', async () => {
+        GCloudAPIService.setRefreshTokenString('refresh-token');
+        mockFetch
+          .mockResolvedValueOnce({
+            status: 401,
+            text: () => Promise.resolve(JSON.stringify(unauthorizedBody))
+          })
+          .mockResolvedValueOnce({
+            status: 200,
+            text: () =>
+              Promise.resolve(
+                JSON.stringify({
+                  success: true,
+                  errors: [],
+                  data: { accessToken: 'new-access', refreshTokenString: 'new-refresh' }
+                })
+              )
+          })
+          .mockResolvedValueOnce({
+            status: 401,
+            text: () => Promise.resolve(JSON.stringify(unauthorizedBody))
+          });
+
+        const result = await GCloudAPIService.projectDashboard(input);
+
+        expect(mockFetch).toHaveBeenCalledTimes(3);
+        expect(onAuthExpired).toHaveBeenCalledTimes(1);
+        expect(result).toEqual(unauthorizedBody);
+      });
+    });
   });
 });

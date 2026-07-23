@@ -72,5 +72,16 @@ describe('Unit Tests', () => {
         expect(spy).toHaveBeenCalledWith(url);
       });
     });
+
+    describe('setOnAuthExpired', () => {
+      it('should call GCloudAPIService.setOnAuthExpired with the callback', () => {
+        const spy = vi.spyOn(GCloudAPIService, 'setOnAuthExpired');
+        const callback = vi.fn();
+
+        APIService.setOnAuthExpired(callback);
+
+        expect(spy).toHaveBeenCalledWith(callback);
+      });
+    });
   });
 });
