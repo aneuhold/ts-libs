@@ -2,6 +2,10 @@ import type { AdminInput, AdminOutput } from '../../types/Admin.js';
 import type { APIResponse } from '../../types/APIResponse.js';
 import type { AuthDeleteAccountOutput } from '../../types/AuthDeleteAccount.js';
 import type {
+  OnAuthExpiredCallback,
+  OnTokensRefreshedCallback
+} from '../../types/AuthRefreshToken.js';
+import type {
   AuthValidateUserInput,
   AuthValidateUserOutput
 } from '../../types/AuthValidateUser.js';
@@ -73,20 +77,19 @@ export default class APIService {
    *
    * @param callback - The callback receiving the new accessToken and refreshTokenString.
    */
-  static setOnTokensRefreshed(
-    callback: ((accessToken: string, refreshTokenString: string) => void) | null
-  ): void {
+  static setOnTokensRefreshed(callback: OnTokensRefreshedCallback | null): void {
     GCloudAPIService.setOnTokensRefreshed(callback);
   }
 
   /**
    * Registers a callback that is invoked when the session cannot be recovered
-   * on a 401 (no refresh token, refresh failed, or the retry is still 401). Use
-   * this to clear stored tokens and prompt the user to log in again.
+   * on a 401 (no refresh token, refresh failed, or the retry is still 401). The
+   * stored tokens are cleared before the callback fires, so use this to clear
+   * the consumer's own copy of them and prompt the user to log in again.
    *
    * @param callback - The callback invoked when auth has expired.
    */
-  static setOnAuthExpired(callback: (() => void) | null): void {
+  static setOnAuthExpired(callback: OnAuthExpiredCallback | null): void {
     GCloudAPIService.setOnAuthExpired(callback);
   }
 

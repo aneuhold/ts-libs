@@ -19,6 +19,9 @@ describe('Unit Tests', () => {
     afterEach(() => {
       vi.unstubAllGlobals();
       vi.clearAllMocks();
+      // Token state is static, so clear it between tests to keep them isolated.
+      GCloudAPIService.setAccessToken('');
+      GCloudAPIService.setRefreshTokenString('');
     });
 
     describe('setUrl', () => {
@@ -167,8 +170,6 @@ describe('Unit Tests', () => {
 
       afterEach(() => {
         GCloudAPIService.setOnAuthExpired(null);
-        // Reset static token state so it does not leak into other tests.
-        GCloudAPIService.setRefreshTokenString('');
       });
 
       it('fires the callback and returns the decoded 401 when there is no refresh token', async () => {
@@ -265,6 +266,47 @@ describe('Unit Tests', () => {
         expect(mockFetch).toHaveBeenCalledTimes(3);
         expect(onAuthExpired).toHaveBeenCalledTimes(1);
         expect(result).toEqual(unauthorizedBody);
+      });
+
+      it('shares one refresh across concurrent 401s instead of expiring the session', async () => {
+        GCloudAPIService.setRefreshTokenString('refresh-token');
+        const retryBody = { success: true, errors: [], data: { projects: [] } };
+        mockFetch
+          .mockResolvedValueOnce({
+            status: 401,
+            text: () => Promise.resolve(JSON.stringify(unauthorizedBody))
+          })
+          .mockResolvedValueOnce({
+            status: 401,
+            text: () => Promise.resolve(JSON.stringify(unauthorizedBody))
+          })
+          .mockResolvedValueOnce({
+            status: 200,
+            text: () =>
+              Promise.resolve(
+                JSON.stringify({
+                  success: true,
+                  errors: [],
+                  data: { accessToken: 'new-access', refreshTokenString: 'new-refresh' }
+                })
+              )
+          })
+          .mockResolvedValue({
+            status: 200,
+            text: () => Promise.resolve(JSON.stringify(retryBody))
+          });
+
+        const results = await Promise.all([
+          GCloudAPIService.projectDashboard(input),
+          GCloudAPIService.projectDashboard(input)
+        ]);
+
+        // Two 401s, one shared refresh, then two retries. A sixth call means a
+        // second refresh went out with the already-rotated token, which fails
+        // and expires a session that is actually fine.
+        expect(mockFetch).toHaveBeenCalledTimes(5);
+        expect(onAuthExpired).not.toHaveBeenCalled();
+        expect(results).toEqual([retryBody, retryBody]);
       });
     });
   });

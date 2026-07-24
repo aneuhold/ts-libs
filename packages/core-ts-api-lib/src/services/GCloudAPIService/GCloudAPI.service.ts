@@ -44,6 +44,8 @@ export default class GCloudAPIService {
 
   static #onAuthExpired: OnAuthExpiredCallback | null = null;
 
+  static #refreshPromise: Promise<boolean> | null = null;
+
   /**
    * Gets the current URL of the Google Cloud API.
    *
@@ -95,7 +97,8 @@ export default class GCloudAPIService {
   /**
    * Registers a callback that is invoked when the session cannot be recovered
    * on a 401 (no refresh token, refresh failed, or the post-refresh retry is
-   * still 401). Use this to clear stored tokens and prompt re-login.
+   * still 401). The stored tokens are cleared before the callback fires, so use
+   * this to clear the consumer's own copy of them and prompt re-login.
    *
    * @param callback - The callback invoked when auth has expired.
    */
@@ -180,7 +183,8 @@ export default class GCloudAPIService {
    * Makes a call to the API. On a 401 response, automatically attempts to
    * refresh the access token using the stored refresh token. If refresh
    * succeeds, the original request is retried once. When the session cannot be
-   * recovered, the {@link #onAuthExpired} callback fires.
+   * recovered, the stored tokens are cleared and the {@link #onAuthExpired}
+   * callback fires.
    *
    * @param urlPath - The path to the endpoint.
    * @param input - The input to the endpoint.
@@ -199,8 +203,11 @@ export default class GCloudAPIService {
     }
 
     // Still a 401 after any recovery attempt means the session cannot be
-    // recovered, so notify the frontend to prompt re-login.
+    // recovered, so drop the dead tokens and notify the frontend to prompt
+    // re-login.
     if (response.status === 401) {
+      this.#accessToken = undefined;
+      this.#refreshTokenString = undefined;
       this.#onAuthExpired?.();
     }
 
@@ -208,11 +215,29 @@ export default class GCloudAPIService {
   }
 
   /**
-   * Attempts to refresh the access token using the stored refresh token.
-   * On success, updates the stored tokens and notifies via the
-   * {@link #onTokensRefreshed} callback.
+   * Attempts to refresh the access token, sharing one in-flight refresh across
+   * concurrent callers. Refresh tokens rotate server-side, so parallel
+   * refreshes sent with the same token would invalidate each other and drop the
+   * session.
    */
   static async #tryRefreshTokens(): Promise<boolean> {
+    // Set the refreshPromise only if it is currently null, otherwise we continue.
+    this.#refreshPromise ??= this.#performTokenRefresh();
+    try {
+      return await this.#refreshPromise;
+    } finally {
+      // Cleared once settled so the next 401 starts a fresh attempt rather than
+      // reusing a stale result.
+      this.#refreshPromise = null;
+    }
+  }
+
+  /**
+   * Exchanges the stored refresh token for a new token pair. On success,
+   * updates the stored tokens and notifies via the {@link #onTokensRefreshed}
+   * callback.
+   */
+  static async #performTokenRefresh(): Promise<boolean> {
     if (!this.#refreshTokenString) {
       return false;
     }
