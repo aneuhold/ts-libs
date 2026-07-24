@@ -15,3 +15,14 @@ export interface AuthRefreshTokenOutput {
   /** New raw refresh token string (rotation — old one is deleted). */
   refreshTokenString: string;
 }
+
+/**
+ * Callback invoked after tokens are successfully refreshed.
+ */
+export type OnTokensRefreshedCallback = (accessToken: string, refreshTokenString: string) => void;
+
+/**
+ * Callback invoked when a session can no longer be recovered because the access
+ * token is expired and the refresh token is missing or invalid.
+ */
+export type OnAuthExpiredCallback = () => void;

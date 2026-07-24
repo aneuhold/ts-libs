@@ -19,6 +19,9 @@ describe('Unit Tests', () => {
     afterEach(() => {
       vi.unstubAllGlobals();
       vi.clearAllMocks();
+      // Token state is static, so clear it between tests to keep them isolated.
+      GCloudAPIService.setAccessToken('');
+      GCloudAPIService.setRefreshTokenString('');
     });
 
     describe('setUrl', () => {
@@ -153,6 +156,157 @@ describe('Unit Tests', () => {
           options: {}
         };
         await expect(GCloudAPIService.projectDashboard(input)).rejects.toThrow('Network error');
+      });
+    });
+
+    describe('onAuthExpired', () => {
+      const onAuthExpired = vi.fn();
+      const input: ProjectDashboardInput = { options: {} };
+      const unauthorizedBody = { success: false, errors: ['Unauthorized'], data: {} };
+
+      beforeEach(() => {
+        GCloudAPIService.setOnAuthExpired(onAuthExpired);
+      });
+
+      afterEach(() => {
+        GCloudAPIService.setOnAuthExpired(null);
+      });
+
+      it('fires the callback and returns the decoded 401 when there is no refresh token', async () => {
+        mockFetch.mockResolvedValue({
+          status: 401,
+          text: () => Promise.resolve(JSON.stringify(unauthorizedBody))
+        });
+
+        const result = await GCloudAPIService.projectDashboard(input);
+
+        expect(mockFetch).toHaveBeenCalledTimes(1);
+        expect(onAuthExpired).toHaveBeenCalledTimes(1);
+        expect(result).toEqual(unauthorizedBody);
+      });
+
+      it('fires the callback and returns the original 401 when the refresh fails', async () => {
+        GCloudAPIService.setRefreshTokenString('refresh-token');
+        mockFetch
+          .mockResolvedValueOnce({
+            status: 401,
+            text: () => Promise.resolve(JSON.stringify(unauthorizedBody))
+          })
+          .mockResolvedValueOnce({
+            status: 401,
+            text: () =>
+              Promise.resolve(
+                JSON.stringify({ success: false, errors: ['Invalid refresh token'], data: {} })
+              )
+          });
+
+        const result = await GCloudAPIService.projectDashboard(input);
+
+        expect(mockFetch).toHaveBeenCalledTimes(2);
+        expect(onAuthExpired).toHaveBeenCalledTimes(1);
+        expect(result).toEqual(unauthorizedBody);
+      });
+
+      it('does not fire the callback when the refresh succeeds and the retry is 200', async () => {
+        GCloudAPIService.setRefreshTokenString('refresh-token');
+        const retryBody = { success: true, errors: [], data: { projects: [] } };
+        mockFetch
+          .mockResolvedValueOnce({
+            status: 401,
+            text: () => Promise.resolve(JSON.stringify(unauthorizedBody))
+          })
+          .mockResolvedValueOnce({
+            status: 200,
+            text: () =>
+              Promise.resolve(
+                JSON.stringify({
+                  success: true,
+                  errors: [],
+                  data: { accessToken: 'new-access', refreshTokenString: 'new-refresh' }
+                })
+              )
+          })
+          .mockResolvedValueOnce({
+            status: 200,
+            text: () => Promise.resolve(JSON.stringify(retryBody))
+          });
+
+        const result = await GCloudAPIService.projectDashboard(input);
+
+        expect(mockFetch).toHaveBeenCalledTimes(3);
+        expect(onAuthExpired).not.toHaveBeenCalled();
+        expect(result).toEqual(retryBody);
+      });
+
+      it('fires the callback when the refresh succeeds but the retry is still 401', async () => {
+        GCloudAPIService.setRefreshTokenString('refresh-token');
+        mockFetch
+          .mockResolvedValueOnce({
+            status: 401,
+            text: () => Promise.resolve(JSON.stringify(unauthorizedBody))
+          })
+          .mockResolvedValueOnce({
+            status: 200,
+            text: () =>
+              Promise.resolve(
+                JSON.stringify({
+                  success: true,
+                  errors: [],
+                  data: { accessToken: 'new-access', refreshTokenString: 'new-refresh' }
+                })
+              )
+          })
+          .mockResolvedValueOnce({
+            status: 401,
+            text: () => Promise.resolve(JSON.stringify(unauthorizedBody))
+          });
+
+        const result = await GCloudAPIService.projectDashboard(input);
+
+        expect(mockFetch).toHaveBeenCalledTimes(3);
+        expect(onAuthExpired).toHaveBeenCalledTimes(1);
+        expect(result).toEqual(unauthorizedBody);
+      });
+
+      it('shares one refresh across concurrent 401s instead of expiring the session', async () => {
+        GCloudAPIService.setRefreshTokenString('refresh-token');
+        const retryBody = { success: true, errors: [], data: { projects: [] } };
+        mockFetch
+          .mockResolvedValueOnce({
+            status: 401,
+            text: () => Promise.resolve(JSON.stringify(unauthorizedBody))
+          })
+          .mockResolvedValueOnce({
+            status: 401,
+            text: () => Promise.resolve(JSON.stringify(unauthorizedBody))
+          })
+          .mockResolvedValueOnce({
+            status: 200,
+            text: () =>
+              Promise.resolve(
+                JSON.stringify({
+                  success: true,
+                  errors: [],
+                  data: { accessToken: 'new-access', refreshTokenString: 'new-refresh' }
+                })
+              )
+          })
+          .mockResolvedValue({
+            status: 200,
+            text: () => Promise.resolve(JSON.stringify(retryBody))
+          });
+
+        const results = await Promise.all([
+          GCloudAPIService.projectDashboard(input),
+          GCloudAPIService.projectDashboard(input)
+        ]);
+
+        // Two 401s, one shared refresh, then two retries. A sixth call means a
+        // second refresh went out with the already-rotated token, which fails
+        // and expires a session that is actually fine.
+        expect(mockFetch).toHaveBeenCalledTimes(5);
+        expect(onAuthExpired).not.toHaveBeenCalled();
+        expect(results).toEqual([retryBody, retryBody]);
       });
     });
   });

@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## 🔖 [3.0.41] (2026-07-23)
+
+### ✅ Added
+
+- Added `APIService.setOnAuthExpired()` and `GCloudAPIService.setOnAuthExpired()` to register a callback that fires when a session cannot be recovered from a 401, so consumers can clear stored tokens and prompt re-login.
+- Added the `OnAuthExpiredCallback` and `OnTokensRefreshedCallback` types to `AuthRefreshToken.ts`.
+
+### 🩹 Fixed
+
+- Fixed 401 handling in `GCloudAPIService` so a request with no refresh token, a failed token refresh, or a post-refresh retry that is still a 401 all report expired auth instead of silently returning the unauthorized response.
+
 ## 🔖 [3.0.40] (2026-06-19)
 
 ### 🏗️ Changed
@@ -439,6 +450,7 @@ No direct code changes; version bump for compatibility.
 - Updated workflow permissions to allow repository write access
 
 <!-- Link References -->
+[3.0.41]: https://github.com/aneuhold/ts-libs/compare/core-ts-api-lib-v3.0.40...core-ts-api-lib-v3.0.41
 [3.0.40]: https://github.com/aneuhold/ts-libs/compare/core-ts-api-lib-v3.0.39...core-ts-api-lib-v3.0.40
 [3.0.39]: https://github.com/aneuhold/ts-libs/compare/core-ts-api-lib-v3.0.38...core-ts-api-lib-v3.0.39
 [3.0.38]: https://github.com/aneuhold/ts-libs/compare/core-ts-api-lib-v3.0.37...core-ts-api-lib-v3.0.38
