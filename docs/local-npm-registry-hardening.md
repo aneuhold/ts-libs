@@ -3,60 +3,19 @@
 Working document. The driving problems, plus the correctness gaps found while tracing them.
 
 > Assumption: the "leftover `.nvmrc`" issue means leftover `.npmrc` (and `.npmrc.tmp`). Nothing in the
-> package touches `.nvmrc`, and `.npmrc` is the file the tool writes into consuming projects.
+> package touches `.nvmrc`.
 
 ## Problem 1: leftover `.npmrc` files in consumers
 
-### How the current flow works
+[Registry redirection](#registry-redirection) goes to the install command rather than to the
+filesystem, so no consumer receives a generated `.npmrc`, there is no `.npmrc.tmp` sentinel, and there
+is no create/restore pair for two concurrent operations to interleave. Two related causes remain.
 
-[`runInstallWithRegistry`](../packages/local-npm-registry/src/services/PackageManagerService/PackageManager.service.ts#L111)
-wraps every subscriber install:
-
-1. [`createRegistryConfig`](../packages/local-npm-registry/src/services/PackageManagerService/RegistryConfigService/RegistryConfig.service.ts#L30)
-   reads the consumer's `.npmrc`, copies it to `.npmrc.tmp`, then overwrites `.npmrc` with a generated
-   file prefixed by `# Created by local-npm-registry`.
-2. Install runs.
-3. `finally` calls
-   [`restoreRegistryConfig`](../packages/local-npm-registry/src/services/PackageManagerService/RegistryConfigService/RegistryConfig.service.ts#L109),
-   which prefers `.npmrc.tmp`, falls back to "delete if the header is present", and finally falls back
-   to rewriting `backup.content`.
-
-The `.npmrc.tmp` file doubles as both the backup and the "someone else is already inside a
-create/restore pair" flag. That overload is the source of the leaks.
-
-### Root cause 1: interleaved create/restore rewrites the generated file back
-
-Any two operations that touch the same consumer at once interleave badly. A consumer subscribed to two
-libraries that both have a watcher running hits this constantly, and so does a nodemon restart that
-overlaps the previous run. For a consumer whose original `.npmrc` content is `O` and generated content
-is `G`:
-
-| Step | Process | Effect |
-| --- | --- | --- |
-| 1 | A create | reads `O`, [`backupA.content = O`](../packages/local-npm-registry/src/services/PackageManagerService/RegistryConfigService/RegistryConfig.service.ts#L47), writes `.npmrc.tmp = O`, writes `.npmrc = G` |
-| 2 | B create | reads `G`, **`backupB.content = G`**, `.tmp` already exists so it is left alone, writes `.npmrc = G` |
-| 3 | A restore | `.tmp` exists, so [remove `.npmrc` and move `.tmp`](../packages/local-npm-registry/src/services/PackageManagerService/RegistryConfigService/RegistryConfig.service.ts#L115) to `.npmrc = O`. No `.tmp` remains |
-| 4 | B restore | no `.tmp`; current `.npmrc` is `O` so [`#isConfigGenerated`](../packages/local-npm-registry/src/services/PackageManagerService/RegistryConfigService/RegistryConfig.service.ts#L309) is false; falls through to [`fs.writeFile(config.path, config.content)`](../packages/local-npm-registry/src/services/PackageManagerService/RegistryConfigService/RegistryConfig.service.ts#L138) and **writes `G` back** |
-
-The leftover is written by
-[the restore path itself](../packages/local-npm-registry/src/services/PackageManagerService/RegistryConfigService/RegistryConfig.service.ts#L138).
-Two consequences:
-
-- The consumer keeps a `.npmrc` pointing at `http://localhost:4873` indefinitely.
-- Step 4's install ran part of the time against `O`, so it may also have failed to resolve the
-  timestamped version. Flaky installs and leftovers share one cause.
-
-A variant with no original `.npmrc` poisons `.npmrc.tmp` instead: the
-[`if (existingContent)` guard](../packages/local-npm-registry/src/services/PackageManagerService/RegistryConfigService/RegistryConfig.service.ts#L56)
-means A creates no `.tmp`, then B writes `.npmrc.tmp = G`, and whichever restore runs first promotes
-`G` to `.npmrc`.
-
-### Root cause 2: nothing survives a killed process
+### Nothing survives a killed process
 
 `nodemon --exec "pnpm build && local-npm publish"` sends `SIGTERM` to the running publish on the next
 file save. There are no signal handlers anywhere in the package, so `finally` never runs. Left behind:
 
-- Generated `.npmrc` and `.npmrc.tmp` in every subscriber that was mid-install.
 - The publishing library's own `package.json` still holding the timestamped version, because
   `publishAndUpdateSubscribers`
   [restores it only at the end](../packages/local-npm-registry/src/services/CommandUtil.service.ts#L121).
@@ -68,20 +27,20 @@ file save. There are no signal handlers anywhere in the package, so `finally` ne
 
 "Rapid updates" is exactly the case that produces this: the watcher kills the previous run mid-install.
 
-### Root cause 3: a leftover generated `.npmrc` makes Verdaccio proxy itself
+### A leftover generated `.npmrc` makes Verdaccio proxy itself
 
 [`#parseNpmrcForVerdaccio`](../packages/local-npm-registry/src/services/Verdaccio.service.ts#L393)
-turns every `@org:registry=URL` line found up the directory tree into a Verdaccio uplink. A leftover
-generated file contains `@org:registry=http://localhost:4873`, so Verdaccio gets an uplink pointing at
-itself, which means hangs and timeouts that look unrelated to the leftover file. Guard against this by
-skipping any registry URL equal to the local registry URL when
+turns every `@org:registry=URL` line found up the directory tree into a Verdaccio uplink. A file left
+behind by an older version of the tool contains `@org:registry=http://localhost:4873`, so Verdaccio
+gets an uplink pointing at itself, which means hangs and timeouts that look unrelated to the leftover
+file. Guard against this by skipping any registry URL equal to the local registry URL when
 [building uplinks](../packages/local-npm-registry/src/services/Verdaccio.service.ts#L414).
 
-### Fix 1 (recommended): stop writing registry config into consumer repos
+### Registry redirection
 
-Pass registry redirection to the install command instead of to the filesystem, mirroring what
-[`#buildPublishArgs`](../packages/local-npm-registry/src/services/Verdaccio.service.ts#L481) already
-does for publish:
+Every install gets the redirection on its own command line, mirroring what
+[`#buildPublishArgs`](../packages/local-npm-registry/src/services/Verdaccio.service.ts#L481) does for
+publish:
 
 - npm / pnpm: `--registry=<url>`, plus one `--@<org>:registry=<url>` per scoped org, plus
   `--//<host>/:_authToken=fake`
@@ -93,12 +52,13 @@ to override a scoped registry the consumer already configures. Env vars alone si
 `.npmrc`, so `npm_config_*` is not sufficient on its own for npm and pnpm. Yarn Classic inverts that
 ordering and ranks env vars above a project `.npmrc`, which is what makes its entry above work.
 
-This deletes the entire create/backup/restore mechanism, so there is no file to leak and no race to
-lose. [`PACKAGE_MANAGER_INFO.configFormat`](../packages/local-npm-registry/src/types/PackageManager.ts#L22)
-becomes `registryOverride(registryUrl, organizations)` returning both args and env, and
-`RegistryConfigService` is replaced by
-[`RegistryOverrideService`](../packages/local-npm-registry/src/services/PackageManagerService/RegistryOverrideService/RegistryOverride.service.ts),
-which resolves the scope list and builds the override. The `.tmp` sentinel goes away with it.
+There is no file to leak and no race to lose.
+[`PackageManagerCliService`](../packages/local-npm-registry/src/services/PackageManagerService/PackageManagerCli.service.ts)
+resolves the scope list and runs the install, and each package manager's own form of the redirection
+sits in
+[`PACKAGE_MANAGER_INFO.getRegistryOverrideCliOptions`](../packages/local-npm-registry/src/types/PackageManager.ts).
+The scope list comes from the store: every package the consumer is subscribed to, per
+[`getSubscribedPackages`](../packages/local-npm-registry/src/services/LocalPackageStore.service.ts#L164).
 
 #### Spike results
 
@@ -116,8 +76,8 @@ mechanism was also negative-controlled by removing it and confirming the install
 | Yarn Berry | Works | `YARN_NPM_REGISTRY_SERVER` plus `YARN_UNSAFE_HTTP_WHITELIST`. Berry ignores `.npmrc` entirely, and refuses plain http without the whitelist |
 
 No unrecognized flag hard-errors: pnpm accepts the npm-style scoped flag, and Yarn Classic parses
-`--@<org>:registry` without complaint even though it does nothing with it. Two findings the plan above
-did not anticipate:
+`--@<org>:registry` without complaint even though it does nothing with it. Two findings worth keeping
+in mind:
 
 1. **Yarn Classic needs an env var, not a flag.** A flags-only implementation resolves scoped packages
    from the consumer's configured registry with no warning. This is the one place where the mechanism
@@ -125,16 +85,12 @@ did not anticipate:
 2. **Yarn Berry's `npmScopes` cannot be overridden.** A consumer `.yarnrc.yml` that sets
    `npmScopes.<scope>.npmRegistryServer` beats `YARN_NPM_REGISTRY_SERVER`, and Berry rejects
    `YARN_NPM_SCOPES` outright: `Map configuration settings "npmScopes" must be an object in
-   <environment>`. This is not a regression, since the current file-based approach shallow-merges into
-   `.yarnrc.yml` and leaves `npmScopes` in place, so it loses the same way. Worth warning when a Yarn
-   Berry consumer has an `npmScopes` entry for a package being redirected.
+   <environment>`. `PackageManagerCliService` warns when a Yarn Berry consumer has an `npmScopes`
+   entry for a scope being redirected.
 
-Conclusion: viable for all four package managers, so nothing here blocks fix 1.
+### Making mutations crash safe
 
-### Fix 2 (needed regardless): make mutations crash safe
-
-`package.json` gets mutated whether or not fix 1 lands, so the recovery machinery is worth building on
-its own:
+`package.json` still gets mutated, so the recovery machinery is worth building on its own:
 
 - **Journal before mutating.** `<dataDir>/pending-mutations.json` holding
   `{ id, pid, startedAt, kind, targetPath, originalContent }` per in-flight change, cleared on
@@ -143,26 +99,14 @@ its own:
 - **Self heal on startup.** Every command replays journal entries whose `pid` is no longer alive
   before doing anything else.
 - **`local-npm doctor [--fix]`.** Replays the journal, and sweeps every known subscriber path for a
-  `.npmrc` carrying the generated header plus any `.npmrc.tmp`.
+  `.npmrc` carrying the `# Created by local-npm-registry` header plus any `.npmrc.tmp`, both of which
+  older versions of the tool can leave behind.
 - **Signal handlers.** `SIGINT`, `SIGTERM`, `SIGHUP`, and `uncaughtException` restore synchronously
   (`fs.writeFileSync`), release the Verdaccio lock, and re-raise. Async cleanup in a signal handler is
   not reliable. Nothing in [`index.ts`](../packages/local-npm-registry/src/index.ts) registers any
   handler today.
-- **Per-consumer lock.** If file writes stay, hold a `proper-lockfile` lock keyed by a hash of the
-  consumer path across the whole
-  [create/install/restore span](../packages/local-npm-registry/src/services/PackageManagerService/PackageManager.service.ts#L119).
-  The lock has to be keyed by consumer rather than by package, because the contended resource is the
-  consumer directory and a consumer has many publishers.
-- **Never back up a generated file.** If the on-disk content
-  [read at create time](../packages/local-npm-registry/src/services/PackageManagerService/RegistryConfigService/RegistryConfig.service.ts#L41)
-  starts with the header, it is our own output, so it is never valid backup content. This single guard
-  kills root cause 1 even without locks.
-- **Keep backups out of the repo.** `<dataDir>/backups/<hash>.npmrc` rather than `.npmrc.tmp`, so a
-  crash cannot leave anything inside a git working tree.
-- **Verify after restore.** Assert no generated `.npmrc` and no `.npmrc.tmp` remain, and warn plus
-  auto-clean if they do.
 
-### Fix 3: stop the pile-up at the source
+### Stopping the pile-up at the source
 
 - Per package publish lock so overlapping publishes queue instead of interleave, with a supersede
   rule: a newer queued publish for the same package replaces the waiting one rather than adding to
@@ -174,16 +118,9 @@ its own:
 One consumer subscribing to several local packages at once is a first-class case, and several places
 assume otherwise:
 
-- **It is the main trigger for root cause 1.** Two libraries with watchers running both call
-  `runInstallWithRegistry` against the same consumer directory, which is exactly the interleaving
-  above. This is the common path, not an edge case.
-- **The redirect set is derived from the wrong source.**
-  [`#generateRegistryConfig`](../packages/local-npm-registry/src/services/PackageManagerService/RegistryConfigService/RegistryConfig.service.ts#L273)
-  collects orgs from the consumer's own scope plus whatever appears in its `.npmrc` chain. The correct
-  source is the store: every package the consumer is subscribed to. It works today only because the
-  default `registry=` line catches scopes that have no explicit override. Derive the set from
-  [`getSubscribedPackages`](../packages/local-npm-registry/src/services/LocalPackageStore.service.ts#L164)
-  instead, and carry that through to fix 1's flag construction.
+- **Two watchers still run two installs in one consumer.** Two libraries with watchers running both
+  call `runInstallWithRegistry` against the same consumer directory. Nothing is written to that
+  directory any more, but the two installs still race on its lockfile and `node_modules`.
 - **`clear-store` runs N concurrent installs in the same directory.** Reset operations are collected
   per package and per subscriber, then
   [mapped in parallel](../packages/local-npm-registry/src/commands/ClearStoreCommand.ts#L59) with
@@ -467,7 +404,7 @@ Worktrees get deleted, which the current model has no answer for:
 4. **`stale` doubles as the acquire timeout.** See the concurrency section above. The same conflation
    also sets how long a publish waits after a previous run is hard-killed, since the abandoned lock
    only becomes reclaimable once `stale` elapses.
-5. **Skip self-referential Verdaccio uplinks.** See root cause 3.
+5. **Skip self-referential Verdaccio uplinks.** See the self-proxying uplink above.
 6. **`updatePackageVersion` rewrites every `"version":` in the file.** The
    [regex is global](../packages/local-npm-registry/src/services/PackageJson.service.ts#L80), so a
    nested `"version"` key anywhere in the `package.json` is rewritten too. Latent rather than live,
@@ -485,31 +422,24 @@ Worktrees get deleted, which the current model has no answer for:
 
 ## Suggested phases
 
-**Phase 1, stop the bleeding.** Hardening items 1, 2, 3, and 5. Never back up a generated file.
-Journal plus signal handlers plus `local-npm doctor --fix`. Small, independent, and each one removes a
-class of leftover.
+**Phase 1, stop the bleeding.** Hardening items 1, 2, 3, and 5. Journal plus signal handlers plus
+`local-npm doctor --fix`. Small, independent, and each one removes a class of leftover.
 
-**Phase 2, remove the mechanism.** Fix 1, once the spike confirms the flag and env forms. Delete
-[`RegistryConfigService`](../packages/local-npm-registry/src/services/PackageManagerService/RegistryConfigService/RegistryConfig.service.ts)'s
-file mutation and the `.npmrc.tmp` sentinel, and derive the redirect set from the store rather than
-from the `.npmrc` chain.
-
-**Phase 3, chains and multiple subscriptions.** The topological cascade walk, moving the prune to
+**Phase 2, chains and multiple subscriptions.** The topological cascade walk, moving the prune to
 after a successful cascade, the pre-pack pin check, restoring dependency rewrites, and the grouping
 fixes so a consumer gets one install per operation. This is the phase that fixes the
 dependency-of-a-dependency failures.
 
-**Phase 4, branches.** Store v2 plus migration, branch-scoped versions and dist tags, per-branch
+**Phase 3, branches.** Store v2 plus migration, branch-scoped versions and dist tags, per-branch
 retention, subscriber branch binding, the lock wait budget, `prune`, and the CLI surface in
 [`index.ts`](../packages/local-npm-registry/src/index.ts).
 
-**Phase 5, tests.**
+**Phase 4, tests.**
 [`TestProjectUtils`](../packages/local-npm-registry/test-utils/TestProjectUtils.ts) is a good base.
 Add:
 
-- Two concurrent publishes touching one shared subscriber, asserting no leftover `.npmrc` or
-  `.npmrc.tmp` and a correct final `.npmrc`. Extends
-  [`RegistryConfig.service.spec.ts`](../packages/local-npm-registry/src/services/PackageManagerService/RegistryConfigService/RegistryConfig.service.spec.ts).
+- Two concurrent publishes touching one shared subscriber, asserting a correct final lockfile in the
+  consumer.
 - A three-level chain (`lib` to `midLib` to `consumer`) asserting that publishing `lib` re-publishes
   `midLib`, that the consumer resolves exactly one copy of `lib`, and that a second `lib` publish does
   not break the consumer's install.
@@ -535,11 +465,8 @@ Add:
 
 ## Open questions
 
-1. If the spike shows the flag approach failing for one package manager, does that package manager
-   keep file mutation (made crash safe via fix 2) while the others move to flags, or does the whole
-   fix stay blocked?
-2. Should a cascade publish be automatic, or opt-in per package? Automatic is correct, and skipping the
+1. Should a cascade publish be automatic, or opt-in per package? Automatic is correct, and skipping the
    dependent rebuild keeps it cheap, but one save in `core-ts-lib` still means four pack-and-publish
    round trips before the consumer install.
-3. Should `propagateVersion` stay in the build script that the watch loop runs? The pre-pack pin check
+2. Should `propagateVersion` stay in the build script that the watch loop runs? The pre-pack pin check
    makes it survivable either way, so this is now about noise rather than correctness.
