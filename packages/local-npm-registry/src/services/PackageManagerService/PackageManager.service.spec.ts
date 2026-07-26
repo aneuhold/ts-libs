@@ -206,20 +206,6 @@ describe('Unit Tests', () => {
       expect(await fs.pathExists(`${npmrcPath}.tmp`)).toBe(false);
     });
 
-    it('should not create configuration files in the project', async () => {
-      const packagePath = await TestProjectUtils.createTestPackage(
-        `@test-${testId}/no-config-files`,
-        '1.0.0',
-        PackageManager.Npm
-      );
-
-      await PackageManagerService.runInstallWithRegistry(packagePath);
-
-      const npmrcPath = path.join(packagePath, '.npmrc');
-      expect(await fs.pathExists(npmrcPath)).toBe(false);
-      expect(await fs.pathExists(`${npmrcPath}.tmp`)).toBe(false);
-    });
-
     it('should auto-detect package manager from project', async () => {
       // Create a pnpm project
       const pnpmPath = await TestProjectUtils.createTestPackage(

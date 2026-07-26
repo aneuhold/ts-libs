@@ -54,28 +54,13 @@ describe('Unit Tests', () => {
   });
 
   describe('runInstall', () => {
-    it('should run a bare install when no override is given', async () => {
+    it('should run a bare install with npm_config_ variables stripped', async () => {
       const projectPath = await TestProjectUtils.createTestPackage(
         `@test-${testId}/bare-install`,
         '1.0.0',
         PackageManager.Npm
       );
-
-      await PackageManagerCliService.runInstall(projectPath, PackageManager.Npm);
-
-      expect(execa).toHaveBeenCalledWith('npm', ['install'], {
-        cwd: projectPath,
-        env: environmentWithoutNpmConfig(),
-        extendEnv: false
-      });
-    });
-
-    it('should remove npm_config_ variables from the environment', async () => {
-      const projectPath = await TestProjectUtils.createTestPackage(
-        `@test-${testId}/clean-env`,
-        '1.0.0',
-        PackageManager.Npm
-      );
+      // Package managers inject these, and they point back at the public registry
       vi.stubEnv('npm_config_registry', 'https://registry.npmjs.org/');
 
       await PackageManagerCliService.runInstall(projectPath, PackageManager.Npm);
@@ -195,7 +180,9 @@ describe('Unit Tests', () => {
       });
     });
 
-    it('should derive scopes from the store rather than from the project scope', async () => {
+    it('should derive scopes from the store and nowhere else', async () => {
+      // The subscriber's own scope and its .npmrc both differ from what it subscribes
+      // to, and the old implementation drew the redirect set from exactly those two
       const subscriberPath = await TestProjectUtils.createTestPackage(
         `@consumer-${testId}/subscriber`,
         '1.0.0',
@@ -212,6 +199,10 @@ describe('Unit Tests', () => {
         subscribers: [{ subscriberPath, originalSpecifier: '1.0.0' }],
         packageRootPath: publisherPath
       });
+      await TestProjectUtils.createNpmrcFile(
+        subscriberPath,
+        `@npmrc-${testId}:registry=https://custom-registry.com/\n`
+      );
       const runInstall = mockRunInstall();
 
       await PackageManagerCliService.runInstallWithRegistry(
@@ -226,50 +217,6 @@ describe('Unit Tests', () => {
           `--@publisher-${testId}:registry=${registryUrl}`,
           authTokenArg
         ],
-        env: {}
-      });
-    });
-
-    it('should ignore scopes configured only in the project .npmrc', async () => {
-      const { subscriberPath, organization } = await createSubscription(PackageManager.Npm);
-      await TestProjectUtils.createNpmrcFile(
-        subscriberPath,
-        `@unrelated-${testId}:registry=https://custom-registry.com/\n`
-      );
-      const runInstall = mockRunInstall();
-
-      await PackageManagerCliService.runInstallWithRegistry(
-        subscriberPath,
-        PackageManager.Npm,
-        registryUrl
-      );
-
-      expect(runInstall).toHaveBeenCalledWith(subscriberPath, PackageManager.Npm, {
-        args: [
-          `--registry=${registryUrl}`,
-          `--@${organization}:registry=${registryUrl}`,
-          authTokenArg
-        ],
-        env: {}
-      });
-    });
-
-    it('should pass no scope flags for a project without subscriptions', async () => {
-      const projectPath = await TestProjectUtils.createTestPackage(
-        `@test-${testId}/no-subscriptions`,
-        '1.0.0',
-        PackageManager.Npm
-      );
-      const runInstall = mockRunInstall();
-
-      await PackageManagerCliService.runInstallWithRegistry(
-        projectPath,
-        PackageManager.Npm,
-        registryUrl
-      );
-
-      expect(runInstall).toHaveBeenCalledWith(projectPath, PackageManager.Npm, {
-        args: [`--registry=${registryUrl}`, authTokenArg],
         env: {}
       });
     });
@@ -303,6 +250,33 @@ describe('Unit Tests', () => {
         args: [`--registry=${registryUrl}`, authTokenArg],
         env: {}
       });
+    });
+
+    it('should write no configuration file into the project', async () => {
+      const { subscriberPath } = await createSubscription(PackageManager.Npm);
+      const npmrcPath = path.join(subscriberPath, '.npmrc');
+
+      await PackageManagerCliService.runInstallWithRegistry(
+        subscriberPath,
+        PackageManager.Npm,
+        registryUrl
+      );
+
+      expect(await fs.pathExists(npmrcPath)).toBe(false);
+      expect(await fs.pathExists(`${npmrcPath}.tmp`)).toBe(false);
+
+      // A failed install must not leave anything behind either
+      vi.mocked(execa).mockRejectedValueOnce(new Error('install failed'));
+      await expect(
+        PackageManagerCliService.runInstallWithRegistry(
+          subscriberPath,
+          PackageManager.Npm,
+          registryUrl
+        )
+      ).rejects.toThrow();
+
+      expect(await fs.pathExists(npmrcPath)).toBe(false);
+      expect(await fs.pathExists(`${npmrcPath}.tmp`)).toBe(false);
     });
 
     it('should fall back to the configured registry when none is given', async () => {
