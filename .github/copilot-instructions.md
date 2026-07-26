@@ -17,6 +17,7 @@
 - NEVER use `any` type
 - `unknown` is acceptable as a staging type before narrowing with a type guard, runtime schema (e.g. zod), or an explicit cast at system boundaries (`JSON.parse`, file reads, wire responses, library types that are incorrect). Prefer it over `any` when a cast is unavoidable.
 - NEVER use `!` non-null assertion operator. Check for null / undefined properly if it can be null.
+- Do not export a bunch of random functions from a file. Prefer services / classes.
 
 ### Documentation & Naming
 
@@ -63,6 +64,6 @@
 ## Testing
 
 - Test files: `filename.spec.ts` (matching source file name)
-- Never test private methods directly
+- Never test private methods directly. Also, don't make methods that should be private public just to get around this. If a method isn't used outside it's own class, it should be private.
 - Structure: Root describe as "Unit Tests"/"Integration Tests", nested describes named after tested methods
 - Always prefer to use the built-in Vitest VS Code extension for testing

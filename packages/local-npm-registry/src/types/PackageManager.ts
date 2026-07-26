@@ -16,12 +16,28 @@ export type PackageManagerInfo = {
   command: string;
   /** Lock file name used by this package manager */
   lockFile: string;
-  /** Configuration file name used for registry settings */
-  configFile: string;
-  /** Configuration format/content template for registry settings */
-  configFormat: (registryUrl: string) => string;
+  /**
+   * Builds the redirection that points this package manager at the given registry
+   * for a single invocation. Organizations are the scopes that have to resolve
+   * from that registry.
+   */
+  getRegistryOverrideCliOptions: (
+    registryUrl: string,
+    organizations: string[]
+  ) => PackageManagerRegistryOverride;
   /** Display name for user-facing messages */
   displayName: string;
+};
+
+/**
+ * Registry redirection for a single package manager invocation, expressed as
+ * command line arguments and environment variables.
+ */
+export type PackageManagerRegistryOverride = {
+  /** Arguments to append to the package manager command */
+  args: string[];
+  /** Environment variables to set for the package manager process */
+  env: Record<string, string>;
 };
 
 /**
@@ -32,30 +48,57 @@ export const PACKAGE_MANAGER_INFO: Record<PackageManager, PackageManagerInfo> = 
   [PackageManager.Npm]: {
     command: 'npm',
     lockFile: 'package-lock.json',
-    configFile: '.npmrc',
-    configFormat: (registryUrl: string) => `registry=${registryUrl}\n`,
+    // The scoped flags are load bearing. `--registry` alone sits below a project
+    // `.npmrc` for any scope that file configures explicitly.
+    getRegistryOverrideCliOptions: (registryUrl, organizations) => ({
+      args: [
+        `--registry=${registryUrl}`,
+        ...organizations.map((organization) => `--@${organization}:registry=${registryUrl}`),
+        `--//${registryUrl.replace(/^https?:\/\//, '')}/:_authToken=fake`
+      ],
+      env: {}
+    }),
     displayName: 'npm'
   },
   [PackageManager.Pnpm]: {
     command: 'pnpm',
     lockFile: 'pnpm-lock.yaml',
-    configFile: '.npmrc',
-    configFormat: (registryUrl: string) => `registry=${registryUrl}\n`,
+    // pnpm accepts the npm style scoped flag directly, with no `--config.` prefix
+    getRegistryOverrideCliOptions: (registryUrl, organizations) => ({
+      args: [
+        `--registry=${registryUrl}`,
+        ...organizations.map((organization) => `--@${organization}:registry=${registryUrl}`),
+        `--//${registryUrl.replace(/^https?:\/\//, '')}/:_authToken=fake`
+      ],
+      env: {}
+    }),
     displayName: 'pnpm'
   },
   [PackageManager.Yarn]: {
     command: 'yarn',
     lockFile: 'yarn.lock',
-    configFile: '.npmrc',
-    configFormat: (registryUrl: string) => `registry=${registryUrl}\n`,
+    // Yarn Classic silently ignores `--@<org>:registry` and ranks environment
+    // variables above a project `.npmrc`, so scopes have to go through the env
+    getRegistryOverrideCliOptions: (registryUrl, organizations) => ({
+      args: [`--registry=${registryUrl}`],
+      env: Object.fromEntries(
+        organizations.map((organization) => [`npm_config_@${organization}:registry`, registryUrl])
+      )
+    }),
     displayName: 'Yarn Classic'
   },
   [PackageManager.Yarn4]: {
     command: 'yarn',
     lockFile: 'yarn.lock',
-    configFile: '.yarnrc.yml',
-    configFormat: (registryUrl: string) =>
-      `npmRegistryServer: ${registryUrl}\nunsafeHttpWhitelist: ['localhost']\n`,
+    // Yarn Berry ignores `.npmrc` entirely, and refuses plain http registries
+    // whose hostname is not whitelisted
+    getRegistryOverrideCliOptions: (registryUrl) => ({
+      args: [],
+      env: {
+        YARN_NPM_REGISTRY_SERVER: registryUrl,
+        YARN_UNSAFE_HTTP_WHITELIST: registryUrl.replace(/^https?:\/\//, '').replace(/[:/].*$/, '')
+      }
+    }),
     displayName: 'Yarn Berry'
   }
 };

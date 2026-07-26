@@ -8,8 +8,6 @@ import { LocalPackageStoreService } from '../services/LocalPackageStore.service.
 import { MutexService } from '../services/Mutex.service.js';
 import { VerdaccioService } from '../services/Verdaccio.service.js';
 import { PackageManager } from '../types/PackageManager.js';
-import { PublishCommand } from './PublishCommand.js';
-import { SubscribeCommand } from './SubscribeCommand.js';
 import { UnpublishCommand } from './UnpublishCommand.js';
 
 vi.mock('@aneuhold/core-ts-lib', async () => {
@@ -123,10 +121,12 @@ describe('Integration Tests', () => {
    */
   const testUnpublishWithSubscribers = async (packageManager: PackageManager, version: string) => {
     // Create and setup publisher and subscriber
-    const { publisherPath, subscriberPath, packageName } = await setupPublisherAndSubscriber(
+    const packageName = `@test-${testId}/${packageManager}-unpublish-current`;
+    const { publisherPath, subscriberPath } = await TestProjectUtils.publishAndSubscribe(
+      packageName,
+      `${packageName}-subscriber`,
       packageManager,
-      version,
-      'unpublish-current'
+      version
     );
 
     // Verify subscription is active before unpublishing
@@ -139,7 +139,7 @@ describe('Integration Tests', () => {
     await UnpublishCommand.execute();
 
     // Verify package was removed from local store
-    const packageEntry = await TestProjectUtils.getPackageEntry(packageName);
+    const packageEntry = await LocalPackageStoreService.getPackageEntry(packageName);
     expect(packageEntry).toBeNull();
 
     // Verify subscriber was reset to original version
@@ -164,10 +164,12 @@ describe('Integration Tests', () => {
    */
   const testUnpublishByName = async (packageManager: PackageManager, version: string) => {
     // Create and setup publisher and subscriber
-    const { publisherPath, subscriberPath, packageName } = await setupPublisherAndSubscriber(
+    const packageName = `@test-${testId}/${packageManager}-unpublish-by-name`;
+    const { publisherPath, subscriberPath } = await TestProjectUtils.publishAndSubscribe(
+      packageName,
+      `${packageName}-subscriber`,
       packageManager,
-      version,
-      'unpublish-by-name'
+      version
     );
 
     // Change to a different directory (not the publisher directory)
@@ -179,7 +181,7 @@ describe('Integration Tests', () => {
     await UnpublishCommand.execute(packageName);
 
     // Verify package was removed from local store
-    const packageEntry = await TestProjectUtils.getPackageEntry(packageName);
+    const packageEntry = await LocalPackageStoreService.getPackageEntry(packageName);
     expect(packageEntry).toBeNull();
 
     // Verify subscriber was reset to original version
@@ -194,49 +196,5 @@ describe('Integration Tests', () => {
     expect(DR.logger.info).toHaveBeenCalledWith(
       `Successfully unpublished ${packageName} and reset all subscribers`
     );
-  };
-
-  /**
-   * Helper function to setup a publisher and subscriber for testing
-   *
-   * @param packageManager The package manager to use
-   * @param version The version for the packages
-   * @param testSuffix Suffix to make package names unique
-   */
-  const setupPublisherAndSubscriber = async (
-    packageManager: PackageManager,
-    version: string,
-    testSuffix: string
-  ) => {
-    const packageName = `@test-${testId}/${packageManager}-${testSuffix}`;
-
-    // Create publisher package
-    const publisherPath = await TestProjectUtils.createTestPackage(
-      packageName,
-      version,
-      packageManager
-    );
-
-    // Create subscriber package
-    const subscriberPath = await TestProjectUtils.createSubscriberProject(
-      `@test-${testId}/${packageManager}-${testSuffix}-subscriber`,
-      packageName,
-      version,
-      packageManager
-    );
-
-    // Publish the package
-    TestProjectUtils.changeToProject(publisherPath);
-    await PublishCommand.execute();
-
-    // Subscribe to the package
-    TestProjectUtils.changeToProject(subscriberPath);
-    await SubscribeCommand.execute(packageName);
-
-    return {
-      publisherPath,
-      subscriberPath,
-      packageName
-    };
   };
 });

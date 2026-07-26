@@ -85,7 +85,9 @@ describe('Integration Tests', () => {
     await SubscribeCommand.execute(`@test-${testId}/subscribe-target`);
 
     // Verify subscriber was added
-    const packageEntry = await TestProjectUtils.getPackageEntry(`@test-${testId}/subscribe-target`);
+    const packageEntry = await LocalPackageStoreService.getPackageEntry(
+      `@test-${testId}/subscribe-target`
+    );
     expect(
       packageEntry?.subscribers.some(
         (s) => s.subscriberPath === subscriberPath && s.originalSpecifier === '^1.0.0'

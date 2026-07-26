@@ -8,7 +8,6 @@ import { PACKAGE_MANAGER_INFO, PackageManager } from '../../types/PackageManager
 import { MutexService } from '../Mutex.service.js';
 import { VerdaccioService } from '../Verdaccio.service.js';
 import { PackageManagerService } from './PackageManager.service.js';
-import { RegistryConfigService } from './RegistryConfigService/RegistryConfig.service.js';
 
 vi.mock('@aneuhold/core-ts-lib', async () => {
   const actual = await vi.importActual('@aneuhold/core-ts-lib');
@@ -143,68 +142,6 @@ describe('Unit Tests', () => {
   });
 
   describe('runInstallWithRegistry', () => {
-    it('should restore original configuration files', async () => {
-      const packagePath = await TestProjectUtils.createTestPackage(
-        `@test-${testId}/restore-test`,
-        '1.0.0',
-        PackageManager.Npm
-      );
-
-      // Create existing .npmrc file
-      const npmrcPath = path.join(packagePath, '.npmrc');
-      const originalContent = 'registry=https://registry.npmjs.org/';
-      await fs.writeFile(npmrcPath, originalContent);
-
-      // Create registry config (should backup existing)
-      const backup = await RegistryConfigService.createRegistryConfig(
-        PackageManager.Npm,
-        'http://localhost:4873',
-        packagePath
-      );
-
-      // Verify file was modified
-      let currentContent = await fs.readFile(npmrcPath, 'utf8');
-      expect(currentContent).toContain('localhost:4873');
-
-      // Restore configuration
-      await RegistryConfigService.restoreRegistryConfig(backup);
-
-      // Verify original content was restored
-      currentContent = await fs.readFile(npmrcPath, 'utf8');
-      expect(currentContent).toBe(originalContent);
-    });
-
-    it('should remove files that did not exist originally', async () => {
-      const packagePath = await TestProjectUtils.createTestPackage(
-        `@test-${testId}/remove-test`,
-        '1.0.0',
-        PackageManager.Npm
-      );
-
-      const npmrcPath = path.join(packagePath, '.npmrc');
-
-      // Verify file doesn't exist initially
-      expect(await fs.pathExists(npmrcPath)).toBe(false);
-
-      // Create registry config
-      const backup = await RegistryConfigService.createRegistryConfig(
-        PackageManager.Npm,
-        'http://localhost:4873',
-        packagePath
-      );
-
-      // Verify file was created
-      expect(await fs.pathExists(npmrcPath)).toBe(true);
-
-      // Restore configuration
-      await RegistryConfigService.restoreRegistryConfig(backup);
-
-      // Verify file was removed since it didn't exist originally
-      expect(await fs.pathExists(npmrcPath)).toBe(false);
-    });
-  });
-
-  describe('runInstallWithRegistry', () => {
     beforeEach(async () => {
       // Start Verdaccio before running install tests
       await VerdaccioService.start();
@@ -244,14 +181,14 @@ describe('Unit Tests', () => {
       expect(DR.logger.info).toHaveBeenCalledWith(expect.stringContaining('Running npm install'));
     });
 
-    it('should restore configuration even when install fails', async () => {
+    it('should leave an existing .npmrc untouched when the install fails', async () => {
       const packagePath = await TestProjectUtils.createTestPackage(
         `@test-${testId}/install-fail-test`,
         '1.0.0',
         PackageManager.Npm
       );
 
-      // Create existing .npmrc file to verify it gets restored
+      // Create existing .npmrc file to verify it is never written to
       const npmrcPath = path.join(packagePath, '.npmrc');
       const originalContent = 'registry=https://registry.npmjs.org/';
       await fs.writeFile(npmrcPath, originalContent);
@@ -265,9 +202,22 @@ describe('Unit Tests', () => {
         // Expected to fail
       }
 
-      // Verify original content was restored despite failure
-      const restoredContent = await fs.readFile(npmrcPath, 'utf8');
-      expect(restoredContent).toBe(originalContent);
+      expect(await fs.readFile(npmrcPath, 'utf8')).toBe(originalContent);
+      expect(await fs.pathExists(`${npmrcPath}.tmp`)).toBe(false);
+    });
+
+    it('should not create configuration files in the project', async () => {
+      const packagePath = await TestProjectUtils.createTestPackage(
+        `@test-${testId}/no-config-files`,
+        '1.0.0',
+        PackageManager.Npm
+      );
+
+      await PackageManagerService.runInstallWithRegistry(packagePath);
+
+      const npmrcPath = path.join(packagePath, '.npmrc');
+      expect(await fs.pathExists(npmrcPath)).toBe(false);
+      expect(await fs.pathExists(`${npmrcPath}.tmp`)).toBe(false);
     });
 
     it('should auto-detect package manager from project', async () => {
@@ -294,7 +244,11 @@ describe('Unit Tests', () => {
     });
 
     /**
-     * Helper function to test successful install with a specific package manager
+     * Helper function to test successful install with a specific package manager.
+     *
+     * The subscriber points its own scope at the public registry, so the install
+     * only resolves the published package if the command line override outranks
+     * the project's own configuration.
      *
      * @param packageManager The package manager to test
      * @param expectedLogMessage The expected log message to verify
@@ -304,24 +258,20 @@ describe('Unit Tests', () => {
       expectedLogMessage: string
     ) => {
       const packageManagerName = packageManager.toLowerCase();
+      const publisherName = `@test-${testId}/${packageManagerName}-install-publisher`;
 
-      // Create a publisher package and publish it
-      const publisherPath = await TestProjectUtils.createTestPackage(
-        `@test-${testId}/${packageManagerName}-install-publisher`,
-        '1.0.0',
+      // Create a publisher package and a subscriber bound to it
+      const { publisherPath, subscriberPath } = await TestProjectUtils.createSubscribedProjects(
+        publisherName,
+        `@test-${testId}/${packageManagerName}-install-subscriber`,
         packageManager
       );
 
       TestProjectUtils.changeToProject(publisherPath);
       await VerdaccioService.publishPackage(publisherPath);
 
-      // Create a subscriber package that depends on the published package
-      const subscriberPath = await TestProjectUtils.createSubscriberProject(
-        `@test-${testId}/${packageManagerName}-install-subscriber`,
-        `@test-${testId}/${packageManagerName}-install-publisher`,
-        '1.0.0',
-        packageManager
-      );
+      const npmrcContent = `@test-${testId}:registry=https://registry.npmjs.org/\n`;
+      await TestProjectUtils.createNpmrcFile(subscriberPath, npmrcContent);
 
       // Run install with registry
       await PackageManagerService.runInstallWithRegistry(subscriberPath);
@@ -332,7 +282,12 @@ describe('Unit Tests', () => {
 
       const lockFileContent = await fs.readFile(lockFilePath, 'utf8');
       expect(lockFileContent.trim().length).toBeGreaterThan(0);
-      expect(lockFileContent).toContain(`@test-${testId}/${packageManagerName}-install-publisher`);
+      expect(lockFileContent).toContain(publisherName);
+
+      // Verify the project's own configuration was left alone
+      const npmrcPath = path.join(subscriberPath, '.npmrc');
+      expect(await fs.readFile(npmrcPath, 'utf8')).toBe(npmrcContent);
+      expect(await fs.pathExists(`${npmrcPath}.tmp`)).toBe(false);
 
       // Verify package manager was detected correctly
       expect(DR.logger.info).toHaveBeenCalledWith(expect.stringContaining(expectedLogMessage));

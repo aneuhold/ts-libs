@@ -3,11 +3,10 @@ import { randomUUID } from 'crypto';
 import fs from 'fs-extra';
 import path from 'path';
 import { expect } from 'vitest';
+import { PublishCommand } from '../src/commands/PublishCommand.js';
+import { SubscribeCommand } from '../src/commands/SubscribeCommand.js';
 import { ConfigService } from '../src/services/Config.service.js';
-import {
-  LocalPackageStoreService,
-  type PackageEntry
-} from '../src/services/LocalPackageStore.service.js';
+import { LocalPackageStoreService } from '../src/services/LocalPackageStore.service.js';
 import { PACKAGE_MANAGER_INFO, PackageManager } from '../src/types/PackageManager.js';
 
 /**
@@ -124,6 +123,10 @@ export class TestProjectUtils {
     // Clear configuration cache to ensure test isolation
     ConfigService.clearCache();
 
+    // Work from the tmp directory so the test configuration is the one that is
+    // found, which keeps the store and Verdaccio data out of the real data directory
+    process.chdir(TestProjectUtils.#globalTempDir);
+
     // Create a unique directory for this test instance using a GUID
     const testId = randomUUID();
     TestProjectUtils.#testInstanceDir = path.join(TestProjectUtils.#globalTempDir, testId);
@@ -228,6 +231,79 @@ export class TestProjectUtils {
   }
 
   /**
+   * Creates a publisher package and a subscriber project bound to it in the local
+   * package store, without publishing anything to the registry.
+   *
+   * @param packageName - Name of the package the subscriber depends on
+   * @param subscriberName - Name of the subscribing project
+   * @param packageManager - Package manager both projects use
+   * @param version - Version the package is registered under
+   */
+  static async createSubscribedProjects(
+    packageName: string,
+    subscriberName: string,
+    packageManager: PackageManager = PackageManager.Npm,
+    version = '1.0.0'
+  ): Promise<{ publisherPath: string; subscriberPath: string }> {
+    const publisherPath = await TestProjectUtils.createTestPackage(
+      packageName,
+      version,
+      packageManager
+    );
+    const subscriberPath = await TestProjectUtils.createSubscriberProject(
+      subscriberName,
+      packageName,
+      version,
+      packageManager
+    );
+
+    await LocalPackageStoreService.updatePackageEntry(packageName, {
+      originalVersion: version,
+      currentVersion: version,
+      subscribers: [{ subscriberPath, originalSpecifier: version }],
+      packageRootPath: publisherPath
+    });
+
+    return { publisherPath, subscriberPath };
+  }
+
+  /**
+   * Creates a publisher package and a subscriber project, then binds them by
+   * running the real publish and subscribe commands.
+   *
+   * @param packageName - Name of the package to publish
+   * @param subscriberName - Name of the subscribing project
+   * @param packageManager - Package manager both projects use
+   * @param version - Version the package starts at
+   */
+  static async publishAndSubscribe(
+    packageName: string,
+    subscriberName: string,
+    packageManager: PackageManager = PackageManager.Npm,
+    version = '1.0.0'
+  ): Promise<{ publisherPath: string; subscriberPath: string }> {
+    const publisherPath = await TestProjectUtils.createTestPackage(
+      packageName,
+      version,
+      packageManager
+    );
+    const subscriberPath = await TestProjectUtils.createSubscriberProject(
+      subscriberName,
+      packageName,
+      version,
+      packageManager
+    );
+
+    TestProjectUtils.changeToProject(publisherPath);
+    await PublishCommand.execute();
+
+    TestProjectUtils.changeToProject(subscriberPath);
+    await SubscribeCommand.execute(packageName);
+
+    return { publisherPath, subscriberPath };
+  }
+
+  /**
    * Creates an empty lock file for the specified package manager.
    * This simulates the initial state without running actual install commands.
    *
@@ -284,15 +360,6 @@ export class TestProjectUtils {
       throw new Error(`package.json at ${projectPath} did not match PackageJson shape`);
     }
     return raw;
-  }
-
-  /**
-   * Gets a package entry from the local package store
-   *
-   * @param packageName - Name of the package to retrieve
-   */
-  static async getPackageEntry(packageName: string): Promise<PackageEntry | null> {
-    return LocalPackageStoreService.getPackageEntry(packageName);
   }
 
   /**

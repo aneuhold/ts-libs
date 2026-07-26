@@ -7,7 +7,6 @@ import { MutexService } from '../services/Mutex.service.js';
 import { VerdaccioService } from '../services/Verdaccio.service.js';
 import { PackageManager } from '../types/PackageManager.js';
 import { PublishCommand } from './PublishCommand.js';
-import { SubscribeCommand } from './SubscribeCommand.js';
 import { UnsubscribeCommand } from './UnsubscribeCommand.js';
 
 vi.mock('@aneuhold/core-ts-lib', async () => {
@@ -129,10 +128,12 @@ describe('Integration Tests', () => {
     version: string
   ) => {
     // Create and setup publisher and subscriber
-    const { subscriberPath, packageName } = await setupPublisherAndSubscriber(
+    const packageName = `@test-${testId}/${packageManager}-unsubscribe-specific`;
+    const { subscriberPath } = await TestProjectUtils.publishAndSubscribe(
+      packageName,
+      `${packageName}-subscriber`,
       packageManager,
-      version,
-      'unsubscribe-specific'
+      version
     );
 
     // Verify subscription is active (package has timestamp version)
@@ -145,7 +146,7 @@ describe('Integration Tests', () => {
     await UnsubscribeCommand.execute(packageName);
 
     // Verify package entry no longer has this subscriber
-    const packageEntry = await TestProjectUtils.getPackageEntry(packageName);
+    const packageEntry = await LocalPackageStoreService.getPackageEntry(packageName);
     expect(packageEntry?.subscribers.some((s) => s.subscriberPath === subscriberPath)).toBe(false);
 
     // Verify subscriber's package.json was reset to original version
@@ -154,49 +155,5 @@ describe('Integration Tests', () => {
 
     // Verify success message was logged
     expect(DR.logger.info).toHaveBeenCalledWith(`Successfully unsubscribed from ${packageName}`);
-  };
-
-  /**
-   * Helper function to setup a publisher and subscriber for testing
-   *
-   * @param packageManager The package manager to use
-   * @param version The version for the packages
-   * @param testSuffix Suffix to make package names unique
-   */
-  const setupPublisherAndSubscriber = async (
-    packageManager: PackageManager,
-    version: string,
-    testSuffix: string
-  ) => {
-    const packageName = `@test-${testId}/${packageManager}-${testSuffix}`;
-
-    // Create publisher package
-    const publisherPath = await TestProjectUtils.createTestPackage(
-      packageName,
-      version,
-      packageManager
-    );
-
-    // Create subscriber package
-    const subscriberPath = await TestProjectUtils.createSubscriberProject(
-      `@test-${testId}/${packageManager}-${testSuffix}-subscriber`,
-      packageName,
-      version,
-      packageManager
-    );
-
-    // Publish the package
-    TestProjectUtils.changeToProject(publisherPath);
-    await PublishCommand.execute();
-
-    // Subscribe to the package
-    TestProjectUtils.changeToProject(subscriberPath);
-    await SubscribeCommand.execute(packageName);
-
-    return {
-      publisherPath,
-      subscriberPath,
-      packageName
-    };
   };
 });

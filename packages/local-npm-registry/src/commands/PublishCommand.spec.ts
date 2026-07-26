@@ -79,7 +79,9 @@ describe('Integration Tests', () => {
     await PublishCommand.execute();
 
     // Verify the package entry was created in the local store
-    const packageEntry = await TestProjectUtils.getPackageEntry(`@test-${testId}/my-package`);
+    const packageEntry = await LocalPackageStoreService.getPackageEntry(
+      `@test-${testId}/my-package`
+    );
     expect(packageEntry).toBeTruthy();
     expect(packageEntry?.originalVersion).toBe('1.0.0');
     expect(packageEntry?.currentVersion).toMatch(/^1\.0\.0-\d{17}$/);
@@ -172,14 +174,16 @@ describe('Integration Tests', () => {
     await PublishCommand.execute();
 
     // Verify subscriber was added
-    let packageEntry = await TestProjectUtils.getPackageEntry(`@test-${testId}/republish-test`);
+    let packageEntry = await LocalPackageStoreService.getPackageEntry(
+      `@test-${testId}/republish-test`
+    );
     expect(packageEntry?.subscribers.some((s) => s.subscriberPath === subscriberPath)).toBe(true);
 
     // Publish again
     await PublishCommand.execute();
 
     // Verify subscriber is still there
-    packageEntry = await TestProjectUtils.getPackageEntry(`@test-${testId}/republish-test`);
+    packageEntry = await LocalPackageStoreService.getPackageEntry(`@test-${testId}/republish-test`);
     expect(packageEntry?.subscribers.some((s) => s.subscriberPath === subscriberPath)).toBe(true);
     expect(packageEntry?.subscribers).toHaveLength(1);
   });
@@ -240,7 +244,7 @@ describe('Integration Tests', () => {
     await PublishCommand.execute();
 
     // Verify the package entry was created in the local store
-    const packageEntry = await TestProjectUtils.getPackageEntry(
+    const packageEntry = await LocalPackageStoreService.getPackageEntry(
       `@test-${testId}/npmrc-override-test`
     );
     expect(packageEntry).toBeTruthy();
@@ -317,7 +321,7 @@ describe('Integration Tests', () => {
     await PublishCommand.execute();
 
     // Verify package entry exists
-    const packageEntry = await TestProjectUtils.getPackageEntry(
+    const packageEntry = await LocalPackageStoreService.getPackageEntry(
       `@test-${testId}/${packageManager}-publisher`
     );
     expect(packageEntry?.originalVersion).toBe(version);

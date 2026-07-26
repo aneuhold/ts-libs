@@ -82,8 +82,12 @@ describe('Integration Tests', () => {
     await PublishCommand.execute();
 
     // Verify packages exist in store
-    let package1Entry = await TestProjectUtils.getPackageEntry(`@test-${testId}/clear-test-1`);
-    let package2Entry = await TestProjectUtils.getPackageEntry(`@test-${testId}/clear-test-2`);
+    let package1Entry = await LocalPackageStoreService.getPackageEntry(
+      `@test-${testId}/clear-test-1`
+    );
+    let package2Entry = await LocalPackageStoreService.getPackageEntry(
+      `@test-${testId}/clear-test-2`
+    );
     expect(package1Entry).toBeTruthy();
     expect(package2Entry).toBeTruthy();
 
@@ -91,8 +95,8 @@ describe('Integration Tests', () => {
     await ClearStoreCommand.execute();
 
     // Verify packages are removed from store
-    package1Entry = await TestProjectUtils.getPackageEntry(`@test-${testId}/clear-test-1`);
-    package2Entry = await TestProjectUtils.getPackageEntry(`@test-${testId}/clear-test-2`);
+    package1Entry = await LocalPackageStoreService.getPackageEntry(`@test-${testId}/clear-test-1`);
+    package2Entry = await LocalPackageStoreService.getPackageEntry(`@test-${testId}/clear-test-2`);
     expect(package1Entry).toBeNull();
     expect(package2Entry).toBeNull();
 
