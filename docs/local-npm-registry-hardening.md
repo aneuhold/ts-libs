@@ -22,9 +22,9 @@ save. No signal handlers exist, so `finally` never runs. Left behind:
   successful restore. Sits next to the
   [store file](../packages/local-npm-registry/src/services/LocalPackageStore.service.ts#L223).
 - **Self heal on startup.** Every command replays entries whose `pid` is dead before doing anything
-  else.
-- **`local-npm doctor [--fix]`.** Replays the journal on demand, so a stale timestamped
-  `package.json` recovers without another publish.
+  else, so recovery needs no separate command. `prune` picks up the same replay as its manual
+  trigger, since a dead `pid` and a dead directory are the same fact: the thing this record points at
+  is gone.
 - **Signal handlers.** `SIGINT`, `SIGTERM`, `SIGHUP`, and `uncaughtException` restore synchronously
   (`fs.writeFileSync`), release the lock, and re-raise. Async cleanup in a signal handler is
   unreliable. [`index.ts`](../packages/local-npm-registry/src/index.ts) registers none.
@@ -32,13 +32,33 @@ save. No signal handlers exist, so `finally` never runs. Left behind:
 ### Stopping the pile-up at the source
 
 - Per package publish lock, with a supersede rule: a newer queued publish for the same package
-  replaces the waiting one rather than joining the queue.
-- Consider `local-npm watch` owning the debounce instead of nodemon's kill-and-restart.
+  replaces the waiting one rather than joining the queue. Queued work for one package is identical
+  work, so dropping the older one is unambiguously correct.
+- Consider `local-npm watch` owning the debounce instead of nodemon's kill-and-restart, over the
+  packages it is given. It cannot own the machine, since any directory can start a publish at any
+  time and a process that did own the machine would be the background daemon this document rejects.
+  So batching is best effort: several packages under one watcher collapse into one debounce and one
+  install per consumer, and anything started separately falls back to serializing on the lock. That
+  is a throughput difference only, never a correctness one.
 
 ## Problem 2: multiple subscriptions in one consumer
 
-- **Two watchers run two installs in one consumer.** Both call `runInstallWithRegistry` against the
-  same directory, racing on its lockfile and `node_modules`.
+- **N watched packages means N installs in one consumer.** Two publishes cannot overlap, since both
+  hold the Verdaccio lock across their installs
+  ([`PublishCommand.ts:33`](../packages/local-npm-registry/src/commands/PublishCommand.ts#L33) through
+  [`CommandUtil.service.ts:99`](../packages/local-npm-registry/src/services/CommandUtil.service.ts#L99)),
+  so this is a throughput problem rather than a race: a consumer subscribed to five local packages
+  gets five sequential full installs when all five are touched. The dominant source is the problem 3
+  cascade, where one save in `core-ts-lib` republishes four dependents that `gcloud-backend` all
+  subscribes to. That case is in one process, which knows the whole set up front, so grouping fixes
+  it. Only independent watchers need the debounce below, and two libraries being touched at once is
+  the rare case.
+- **Installs outside the lock can still collide.**
+  [`ClearStoreCommand.ts:66`](../packages/local-npm-registry/src/commands/ClearStoreCommand.ts#L66) and
+  [`UnsubscribeCommand.ts:58`](../packages/local-npm-registry/src/commands/UnsubscribeCommand.ts#L58),
+  [`:136`](../packages/local-npm-registry/src/commands/UnsubscribeCommand.ts#L136) call `runInstall`
+  without acquiring anything, so one of them racing a publish in the same consumer is the real
+  lockfile hazard.
 - **`clear-store` runs N concurrent installs in the same directory.** Resets are collected per
   package and per subscriber, then
   [mapped in parallel](../packages/local-npm-registry/src/commands/ClearStoreCommand.ts#L59) with
@@ -48,7 +68,8 @@ save. No signal handlers exist, so `finally` never runs. Left behind:
   groups and installs once. [The package paths plan](./local-npm-registry-package-paths-plan.md)
   rewrites this loop and does the grouping there.
 - **Sweeps must cross both dimensions.** `unsubscribe` with no argument, `clear-store`, and `prune`
-  walk every package and every publishing directory.
+  walk every package and every publishing directory. Publish only ever sees its own path's
+  subscribers, so nothing else covers this.
 
 ## Problem 3: chains of locally published packages
 
@@ -140,30 +161,23 @@ Two checkouts of one repository publishing and being consumed at the same time. 
 git, so a second clone behaves like a `git worktree`.
 
 [`local-npm-registry-package-paths-plan.md`](./local-npm-registry-package-paths-plan.md) has the
-design and the steps: the isolation key and its slug, store v2 and its migration, per path versions
-and dist tags, subscriber binding, retention through the running server, the lock's stale window, and
-the commands for paths that no longer exist. It also owns the store concurrency and write error
-items.
+design and the steps: the isolation key and its slug, store v2, per path versions and dist tags,
+subscriber binding, retention through the running server, the lock's stale window, and the commands
+for paths that no longer exist. It also owns the store concurrency, write error, and invalid store
+items, since a store that is not v2 and a store that is corrupt get the same treatment there.
 
 ## Other hardening items
 
-1. **A corrupt store silently becomes an empty store.**
-   [`getStore`](../packages/local-npm-registry/src/services/LocalPackageStore.service.ts#L83) returns
-   `{ packages: {} }` on any read or parse error, and
-   [`#isLocalPackageStore`](../packages/local-npm-registry/src/services/LocalPackageStore.service.ts#L210)
-   only checks that `packages` is an object, so malformed entries pass too. Every subscriber is
-   orphaned, since the `originalSpecifier` values needed to reset them are gone. Back up the bad
-   file, validate entries, and refuse destructive operations.
-2. **`updatePackageVersion` rewrites every `"version":` in the file.** The
+1. **`updatePackageVersion` rewrites every `"version":` in the file.** The
    [regex is global](../packages/local-npm-registry/src/services/PackageJson.service.ts#L80), so a
    nested `"version"` key is rewritten too. Latent, but destructive if hit and cheap to anchor to the
    top-level key.
-3. **Failures do not affect the exit code.** Subscriber update failures are logged and the process
+2. **Failures do not affect the exit code.** Subscriber update failures are logged and the process
    exits 0
    ([`CommandUtil.service.ts:110`](../packages/local-npm-registry/src/services/CommandUtil.service.ts#L110),
    [`ClearStoreCommand.ts:77`](../packages/local-npm-registry/src/commands/ClearStoreCommand.ts#L77)).
    In a watch loop that makes breakage invisible.
-4. **`publishArgs` merge semantics are unclear.** `subscribe`
+3. **`publishArgs` merge semantics are unclear.** `subscribe`
    [reuses stored args](../packages/local-npm-registry/src/commands/SubscribeCommand.ts#L53),
    `publish`
    [overwrites them](../packages/local-npm-registry/src/services/CommandUtil.service.ts#L73). Pick
@@ -171,7 +185,7 @@ items.
 
 ## Suggested phases
 
-**Phase 1.** Hardening item 1, the journal, signal handlers, and `local-npm doctor --fix`.
+**Phase 1.** The journal and signal handlers, plus extending `prune` to replay it.
 
 **Phase 2.** The topological cascade walk, moving the prune to the end of it, the pre-pack pin check,
 restoring dependency rewrites, and the grouping fixes.

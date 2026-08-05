@@ -9,7 +9,8 @@ Everything happens inside `packages/local-npm-registry`.
 
 ## Scope
 
-- Store v2 (package name, then package root path) plus a migration from the flat v1 shape.
+- Store v2 (package name, then package root path). Anything that is not a v2 store is set aside and
+  reset, never migrated.
 - Per path version slugs and dist tags.
 - Per path registry retention, replacing "delete the whole package before every publish".
 - Explicit subscriber binding at subscribe time.
@@ -18,8 +19,8 @@ Everything happens inside `packages/local-npm-registry`.
   own right, and the rest of this is built on them.
 - `prune`, path-aware `unpublish`, and grouped `list`.
 
-Out of scope: the journal, signal handlers, `doctor`, the topological cascade (problem 3), and the
-corrupt store handling. Nothing here blocks them.
+Out of scope: the journal, signal handlers, and the topological cascade (problem 3). Nothing here
+blocks them. `prune` is the reconciliation command the journal work later extends.
 
 ## Design
 
@@ -104,8 +105,12 @@ commands that never start Verdaccio still write the store safely.
   `retry.operation`, which supports `forever`:
 
   ```ts
-  retries: { forever: true, minTimeout: 500, maxTimeout: 500 };
+  retries: { forever: true, minTimeout: 100, maxTimeout: 100 };
   ```
+
+  The current 500ms interval means a waiter can sit up to half a second after the holder has already
+  released. That never shows up uncontended, where acquiring measures 0.5ms median, but it is dead
+  time on every queued publish in the two-watcher case. Polling a lockfile stat at 100ms is cheap.
 
 - While waiting, log elapsed time on a 5s interval started before `lockfile.lock` and cleared in a
   `finally`, so the first tick only fires under contention. proper-lockfile exposes no per-retry
@@ -149,10 +154,17 @@ Key helpers, public statics here because the key semantics belong with the thing
 
 Reads and writes:
 
-- `getStore()` normalizes after reading: a store with no `version` field is folded to v2 in memory by
-  moving each flat entry under its recorded `packageRootPath` with
-  `publishedVersions: [currentVersion]`. Nothing is written during a read; the first mutation
-  persists the migrated shape.
+- `getStore()` accepts `version: 2` and nothing else. A missing version, an older shape, a parse
+  failure, and a structurally invalid store are one case with one outcome: rename the file to
+  `<store>.invalid-<timestamp>`, log where it went, and continue from an empty store. No migration,
+  and no second shape for the rest of the codebase to know about.
+- `#isLocalPackageStore` checks `version === 2` and validates entries, rather than only checking that
+  `packages` is an object, so a malformed entry cannot pass as valid. This also closes the "a corrupt
+  store silently becomes an empty store" hardening item, since a corrupt store and a v1 store are now
+  the same case on the same path.
+- The set-aside file still holds the old subscriber paths and `originalSpecifier` values, so a
+  consumer left on a timestamped pin can be recovered by hand or with `git checkout package.json`.
+  Re-subscribing is the normal path.
 - New private `#withStore(mutator)`: acquire `MutexLockName.Store`, read, apply, write, release in a
   `finally`. Every mutator goes through it, closing the lost-update race between processes.
 - `#writeStore` writes to a temp file and renames over the store, and throws instead of logging and
@@ -185,6 +197,11 @@ Delete `addSubscriber`: no callers, and subscribe writes the whole entry.
 - Pruning sits here so both `publish` and `subscribe` get it, and it runs before the caller stops the
   server because it needs the server. Versions that fail to unpublish stay in `publishedVersions` and
   retry on the next publish. Problem 3 later moves this prune to the end of a cascade.
+- Drop a subscriber whose directory no longer exists instead of logging it. The loop already visits
+  every subscriber and already swallows the failure
+  ([`:102`](../packages/local-npm-registry/src/services/CommandUtil.service.ts#L102)), so the record
+  otherwise survives every future publish. Key this on the directory being missing, not on the update
+  failing, so a transient install error cannot silently unsubscribe a live consumer.
 
 **`src/services/Verdaccio.service.ts`**
 
@@ -205,9 +222,11 @@ Delete `addSubscriber`: no callers, and subscribe writes the whole entry.
   `dist-tags`, the `_distfiles`/`_attachments` bookkeeping) and deleting the matching tarball, which
   reimplements unpublish against an internal on-disk format. Secondarily, the prune runs while the
   server is up, and Verdaccio holds the `.verdaccio-db.json` package list in memory.
-- In `stop()`, call `server.closeIdleConnections()` before `server.close()`. Package managers leave
-  their connection open after the install that used it, so `close` otherwise waits for those to time
-  out, delaying the next process's turn at the lock.
+- Leave `stop()` alone. `server.closeIdleConnections()` looks necessary on the theory that package
+  managers hold their connection open past the install, but measurement says otherwise:
+  `server.close()` runs in 0.1ms median over 95 samples, and the wait never reproduced. Every package
+  manager runs as an execa subprocess, so its sockets are gone before `stop()` is reached and `close`
+  has nothing to wait on. Do not add the call without a measurement showing it is needed.
 
 **`src/commands/PublishCommand.ts`**
 
@@ -244,11 +263,16 @@ entry holding it.
 subscriber path and run one install per consumer instead of one per binding. This also fixes the
 `clear-store` bullet in problem 2.
 
-**`src/commands/PruneCommand.ts`** (new) — per package and path: if the directory is gone, restore
+**`src/commands/PruneCommand.ts`** (new) — for every package root path that no longer exists: restore
 each live subscriber's `originalSpecifier`, unpublish its `publishedVersions`, and remove the entry.
-For surviving paths, drop subscriber records whose paths are gone. Group restores by subscriber path,
-one install per consumer. Without this, every publish logs failures for dead paths forever, and a
-consumer bound to a deleted checkout keeps a pin it can never resolve.
+Group restores by subscriber path, one install per consumer.
+
+Dead subscriber records are handled during publish, so this is only about dead publishing paths, and
+it stays an explicit command for two reasons. Nothing else walks every path: publish runs from `cwd`,
+which by definition exists, so a deleted checkout is never visited again and leaves its consumers
+pinned to versions that can never resolve. And the repair rewrites consumer `package.json` files,
+runs installs, and removes versions from the registry, which is too consequential to fire as a side
+effect of an unrelated command.
 
 **`src/services/Command.service.ts`** — add `prune`, thread the new arguments through `subscribe` and
 `unpublish`.
@@ -262,7 +286,7 @@ consumer bound to a deleted checkout keeps a pin it can never resolve.
 
 - `subscribe <package-name> [--path <path>]`
 - `unpublish [package-name] [--path <path>] [--all-paths]`
-- `prune`, described as dropping publishing directories that no longer exist
+- `prune`, described as reconciling the store with what is actually on disk
 - `list` groups by package, then path, printing each path, its slug, current version, and
   subscribers, and marking the one matching the current directory
 
@@ -275,12 +299,13 @@ consumer bound to a deleted checkout keeps a pin it can never resolve.
 - `createSubscribedProjects` writes a v2 entry.
 - A helper that creates a second checkout of an existing test package and publishes from it.
 
-**New `src/services/LocalPackageStore.service.spec.ts`** — slug derivation, the v1 to v2 migration
-folding a flat entry onto its recorded `packageRootPath`, and parallel mutations across processes
-asserting no lost updates.
+**New `src/services/LocalPackageStore.service.spec.ts`** — slug derivation, parallel mutations across
+processes asserting no lost updates, and the invalid-store path: a v1 shape, unparseable JSON, and a
+malformed entry each get set aside and yield an empty store.
 
 **New `src/commands/PruneCommand.spec.ts`** — a deleted publishing directory with a live subscriber:
-the specifier is restored, the entry is dropped, a surviving path is untouched.
+the specifier is restored, the entry is dropped, a surviving path is untouched. Separately, that a
+publish drops a subscriber whose directory is gone but keeps one whose install merely failed.
 
 **`src/commands/PublishCommand.spec.ts`** and **`SubscribeCommand.spec.ts`** — two checkouts of one
 package with two consumers: each consumer resolves its own build, publishing from one checkout leaves
@@ -325,7 +350,8 @@ tests should reuse the existing per-test temp instance rather than spawning para
    with the server down.
 2. **One `npm unpublish` subprocess per pruned version.** Normally one per publish, growing only if
    earlier prunes failed.
-3. **Subscriber paths get `realpath` treatment too.** Migration leaves already-stored subscriber
-   paths untouched, so a consumer recorded through a symlink keeps its old path until it resubscribes.
+3. **An existing store is discarded rather than migrated**, so everyone re-subscribes once. Subscriber
+   paths get `realpath` treatment like package root paths, and with no migration every stored path is
+   normalized the same way.
 4. **`--path` takes a path, not a slug**, even though `list` prints slugs. Accepting either is a small
    addition if the paths are annoying to type.
