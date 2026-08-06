@@ -10,7 +10,7 @@
     "build": "rimraf lib && pnpm build:withoutClean",
     "build:withoutClean": "tsc --project tsconfig.build.json && tsx ./scripts/copyTsFiles.ts && pnpm propagateVersion",
     "propagateVersion": "tsx ../../scripts/propagateVersion.ts",
-    "watch": "nodemon --ignore lib/ -e ts --exec \"pnpm build:withoutClean\"",
+    "watch": "nodemon --ignore lib/ -e ts --exec \"pnpm build:withoutClean && local-npm publish\"",
     "lint": "eslint",
     "check": "tsc --noEmit",
     "test": "vitest run",
@@ -68,6 +68,7 @@
     "Node.js"
   ],
   "devDependencies": {
+    "@aneuhold/local-npm-registry": "^0.2.34",
     "@types/node": "^25.0.2",
     "eslint": "^9.39.2",
     "jsr": "^0.13.5",
@@ -77,5 +78,8 @@
     "tsx": "^4.21.0",
     "typescript": "~6.0.3",
     "vitest": "^4.0.15"
+  },
+  "devDependenciesComments": {
+    "@aneuhold/local-npm-registry": "So, I thought by adding this it would create an infinite loop. But it turns out just fine. Interesting. Leaving it as is for now because it makes everything in the repo cleaner 😅"
   }
 }
