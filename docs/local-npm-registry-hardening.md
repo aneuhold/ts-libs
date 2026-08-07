@@ -36,10 +36,9 @@ save. No signal handlers exist, so `finally` never runs. Left behind:
   work, so dropping the older one is unambiguously correct.
 - Consider `local-npm watch` owning the debounce instead of nodemon's kill-and-restart, over the
   packages it is given. It cannot own the machine, since any directory can start a publish at any
-  time and a process that did own the machine would be the background daemon this document rejects.
-  So batching is best effort: several packages under one watcher collapse into one debounce and one
-  install per consumer, and anything started separately falls back to serializing on the lock. That
-  is a throughput difference only, never a correctness one.
+  time, so batching is best effort: packages under one watcher collapse into one debounce and one
+  install per consumer, and anything started separately falls back to serializing on the lock. A
+  throughput difference only.
 
 ## Problem 2: multiple subscriptions in one consumer
 
@@ -49,10 +48,9 @@ save. No signal handlers exist, so `finally` never runs. Left behind:
   [`CommandUtil.service.ts:99`](../packages/local-npm-registry/src/services/CommandUtil.service.ts#L99)),
   so this is a throughput problem rather than a race: a consumer subscribed to five local packages
   gets five sequential full installs when all five are touched. The dominant source is the problem 3
-  cascade, where one save in `core-ts-lib` republishes four dependents that `gcloud-backend` all
-  subscribes to. That case is in one process, which knows the whole set up front, so grouping fixes
-  it. Only independent watchers need the debounce below, and two libraries being touched at once is
-  the rare case.
+  cascade, which can rewrite several of one consumer's specifiers in a single run. That case is in one
+  process, which knows the whole set up front, so grouping fixes it. Only independent watchers need
+  the debounce below, and two libraries being touched at once is the rare case.
 - **Installs outside the lock can still collide.**
   [`ClearStoreCommand.ts:66`](../packages/local-npm-registry/src/commands/ClearStoreCommand.ts#L66) and
   [`UnsubscribeCommand.ts:58`](../packages/local-npm-registry/src/commands/UnsubscribeCommand.ts#L58),
@@ -124,14 +122,81 @@ the sibling's version, so pnpm silently fetches from Verdaccio into the monorepo
 `node_modules`, and a later plain `pnpm install` at the root fails once that version is pruned.
 Consumers outside the workspace never had the link, so they resolve differently from the monorepo.
 
-### Fixes
+### The fix: cascade through a derived graph
 
-- **Cascade publishes through the local dependency graph.** A subscriber that is itself locally
-  published must be **re-published** after its dependency changes, not just re-installed. Publishing
-  `core-ts-lib` should re-publish `core-ts-api-lib`, `core-ts-db-lib`, `be-ts-lib`, and
-  `be-ts-db-lib`, then update leaf consumers once at the end. The store already holds the graph: a
-  subscriber is also a publisher when some entry's `packageRootPath` equals that `subscriberPath`.
-  Walk in topological order, dedupe, detect cycles.
+A dependent that is itself locally published must be **re-published** after its dependency changes,
+not just re-installed. Publishing `core-ts-lib` re-publishes `core-ts-db-lib`, `core-ts-api-lib`,
+`be-ts-lib`, and `be-ts-db-lib`, then updates leaf consumers once at the end. It rebuilds none of
+them: compiled output does not embed the dependency, so only the specifier and the version change.
+
+A subscription is an intent and must be explicit. A dependency edge is a fact already in package.json
+and must never be re-declared. Expressing both through subscriptions costs ts-libs 10 `subscribe`
+calls where 1 carries information, and a missed one silently drops a package from the cascade.
+
+So on every publish, read each publishing package root's `dependencies` and `optionalDependencies`; a
+name matching another publishing root is an edge. `devDependencies` and `peerDependencies` do not
+count, since neither is carried in a dependent's tarball and the cascade exists to keep tarballs
+consistent. That leaves 1 subscription in the consumer and 0 inside the monorepo, and works outside a
+workspace, unlike reading `pnpm-workspace.yaml`.
+
+The nodes are the `(name, path)` pairs already in the store, which is every package set up to publish
+and nothing else. `pnpm watch` fills it at startup, since nodemon runs its exec command immediately
+rather than only on change. The window before a watcher's first publish closes itself: a dependent
+publishing before its dependency is re-pinned by that dependency's cascade a moment later, and one
+publishing after is pinned by its own pre-pack pin check. With two checkouts of one package
+registered, a dependency name resolves to the path sharing the longest **segment-wise** common
+ancestor with the dependent, so `~/dev/ts-libs` cannot match `~/dev/ts-libs-hotfix` on a string
+prefix, and a tie warns and drops the edge rather than guessing.
+
+The graph is never stored. Building it costs 0.172ms median against ~370ms per `npm publish`, so a
+cached copy saves nothing worth an invalidation rule, and recomputing is stricter anyway because **an
+edge is the presence of a dependency key, never its value**: neither `propagateVersion` rewriting a
+specifier nor a transient pin mid-cascade can change what it sees. Caching each entry's outgoing
+edges instead leaves a dependent's edges short until that dependent itself publishes, which is the
+same silent drop one layer down.
+
+### The walk
+
+One process runs all of it. The `publish` the edited folder's watcher started derives the graph,
+sorts it, and packs each dependent itself, by writing that dependent's version and pins, publishing
+from its folder, and restoring the file. No other watcher takes part and none is notified.
+
+The publishing node goes first, then its dependents in topological order, deduped, pruned to nodes
+that reach a live subscriber through dependent edges. Dedupe and order are one mechanism rather than
+two: the dependents walk collects a set, so a node reached by several routes is added once, and the
+order comes from topologically sorting that set afterwards. Deduping on first arrival during an
+ordered traversal packs a node at its earliest route rather than its latest, which is the stale pin
+the ordering exists to prevent.
+
+Order is load bearing because each node is packed once and a tarball's requirements are frozen at
+pack time, so a node packed too early keeps a stale pin that no later install repairs. Sorting is
+still an optimization rather than the correctness mechanism: re-triggering every dependent to
+quiescence converges on the same tarballs without a sort, at one pack per **path** rather than per
+node, 12 against 5 for the chain above.
+
+A cycle has no correct pack order, so throw naming it. Counting `devDependencies` would manufacture
+one immediately, since `core-ts-lib` devDepends on `local-npm-registry` which depends on
+`core-ts-lib`, and only the second of those is an edge. An unreadable package.json contributes no
+edges and is logged, with `prune` as the repair.
+
+### Watchers must not watch package.json
+
+The walk packs each node once because one process is the only thing publishing. A watcher triggering
+on `package.json` breaks that outright: every pin and every restore the cascade writes into a
+dependent's folder starts a competing publish.
+
+It does not stop at wasted publishes either. `propagateVersion` rewrites dependents on every build
+and [covers `devDependencies`](../packages/core-ts-lib/src/services/Dependency.service.ts#L260), so
+`core-ts-lib` writes `local-npm-registry` and `local-npm-registry` writes `core-ts-lib` back. Its
+`currentDep !== newDep` guard would end that after one round, except a publish timestamps a version
+and then restores it, so the propagated specifier flips between `^2.4.6-<slug>.<ts>` and `^2.4.6`
+indefinitely and neither watcher settles.
+
+Every watch script is `nodemon -e ts`, which is what makes this safe. Watching `package.json`, or
+dropping `-e`, reintroduces it.
+
+### The rest of the cascade
+
 - **Batch the leaf installs.** One install per consumer after the cascade settles, the same grouping
   problem 2 needs.
 - **Prune after the cascade succeeds.** An interrupted cascade otherwise leaves consumers pinned to
@@ -148,23 +213,20 @@ Consumers outside the workspace never had the link, so they resolve differently 
   `version` field, so a package that both publishes and subscribes keeps a timestamped specifier in
   its working tree forever. That dirties the repo, breaks a later plain install, and leaks into any
   real npm publish. With the pin check, the pin becomes transient pack-time state.
+- **Write package.json atomically**, temp file and rename, matching `#writeStore` in the paths plan.
+  `propagateVersion` rewrites dependents outside every lock, so a reader must see the old file or the
+  new one and never a torn one.
 
-A cascade re-publish does not need to rebuild the dependent: compiled output does not embed the
-dependency, so only the specifier and the version change.
-
-Topological order matters. `be-ts-db-lib` depends on `core-ts-db-lib` depends on `core-ts-lib`, so
-publishing `be-ts-db-lib` first bakes a stale `core-ts-db-lib` pin into its tarball.
+Transient pins left behind by a cascade killed partway are the journal's problem, in problem 1.
 
 ## Problem 4: one package published from two directories at once
 
 Two checkouts of one repository publishing and being consumed at the same time. Nothing depends on
 git, so a second clone behaves like a `git worktree`.
 
-[`local-npm-registry-package-paths-plan.md`](./local-npm-registry-package-paths-plan.md) has the
-design and the steps: the isolation key and its slug, store v2, per path versions and dist tags,
-subscriber binding, retention through the running server, the lock's stale window, and the commands
-for paths that no longer exist. It also owns the store concurrency, write error, and invalid store
-items, since a store that is not v2 and a store that is corrupt get the same treatment there.
+[`local-npm-registry-package-paths-plan.md`](./local-npm-registry-package-paths-plan.md) carries the
+design and the steps. It also owns the store concurrency, write error, and invalid store items, since
+a store that is not v2 and a store that is corrupt get the same treatment there.
 
 ## Other hardening items
 
@@ -187,8 +249,8 @@ items, since a store that is not v2 and a store that is corrupt get the same tre
 
 **Phase 1.** The journal and signal handlers, plus extending `prune` to replay it.
 
-**Phase 2.** The topological cascade walk, moving the prune to the end of it, the pre-pack pin check,
-restoring dependency rewrites, and the grouping fixes.
+**Phase 2.** Deriving the graph and the topological cascade walk, moving the prune to the end of it,
+the pre-pack pin check, restoring dependency rewrites, and the grouping fixes.
 
 **Phase 3.** [The package paths plan](./local-npm-registry-package-paths-plan.md), which carries its
 own tests.
@@ -199,6 +261,8 @@ is the base.
 - Two concurrent publishes on one shared subscriber, asserting a correct final lockfile.
 - A three-level chain (`lib` → `midLib` → `consumer`): publishing `lib` re-publishes `midLib`, the
   consumer resolves exactly one copy of `lib`, and a second `lib` publish does not break its install.
+- The emitted publish order for a known graph, plus dedupe and the subscriber prune. Nothing at
+  runtime guards any of the three.
 - The silent variant: the consumer never ends up with two versions of one local package.
 - One consumer subscribed to two packages: a single install per consumer on `clear-store`, and
   correct resets across both.
@@ -211,8 +275,8 @@ is the base.
 
 ## Open questions
 
-1. Automatic cascade publish, or opt-in per package? Automatic is correct, and skipping the dependent
-   rebuild keeps it cheap, but one save in `core-ts-lib` is still four pack-and-publish round trips
-   before the consumer install.
+1. Does the cascade need an opt-out per package? The subscriber prune already bounds it to nodes a
+   consumer can reach and no dependent is rebuilt, but the deepest chain here is still five
+   pack-and-publish round trips, roughly 1.9s, before the consumer install starts.
 2. Should `propagateVersion` stay in the build script the watch loop runs? The pre-pack pin check
    makes it survivable either way, so it is about noise rather than correctness.

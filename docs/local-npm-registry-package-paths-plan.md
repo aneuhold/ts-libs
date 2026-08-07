@@ -239,8 +239,15 @@ Delete `addSubscriber`: no callers, and subscribe writes the whole entry.
 
 - `execute(packageName, packageRootPath?)`. With a path, resolve it and require it to be a publishing
   path for the package. Without one, use the sole path if there is exactly one, otherwise throw
-  listing every path and its slug. Which checkout the consumer wants cannot be inferred from the
-  consumer.
+  listing every candidate path, its slug, and the exact command to re-run.
+- Which checkout the consumer wants cannot be inferred from it, and a wrong guess is the worst
+  outcome available, since the consumer then tests against the other checkout's build with nothing to
+  indicate it. Ancestor matching does not transfer from the cascade's edge resolution, because a
+  dependent sits inside one checkout while a consumer sits outside all of them, and picking by most
+  recently published would rebind on timing.
+- Throwing rather than prompting, since `subscribe` runs from setup scripts and CI as much as from a
+  terminal, where a prompt hangs with no TTY, reads a piped stdin, or interleaves with others on one
+  terminal. Only a `--path` written into a script survives to the next person.
 - Before binding, look for an existing subscription for this consumer and package on another path.
   Carry its `originalSpecifier` over and remove the old binding, so moving a consumer between
   checkouts cannot record a timestamped version as the original specifier. A consumer has one
@@ -348,10 +355,6 @@ tests should reuse the existing per-test temp instance rather than spawning para
    needs and what the server already implements, but it makes both slower than a file delete and
    makes them contend for the Verdaccio lock. Visible change for anyone used to `unpublish` working
    with the server down.
-2. **One `npm unpublish` subprocess per pruned version.** Normally one per publish, growing only if
-   earlier prunes failed.
-3. **An existing store is discarded rather than migrated**, so everyone re-subscribes once. Subscriber
+2. **An existing store is discarded rather than migrated**, so everyone re-subscribes once. Subscriber
    paths get `realpath` treatment like package root paths, and with no migration every stored path is
    normalized the same way.
-4. **`--path` takes a path, not a slug**, even though `list` prints slugs. Accepting either is a small
-   addition if the paths are annoying to type.
