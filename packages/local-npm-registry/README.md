@@ -97,7 +97,7 @@ local-npm publish --verbose
 
 - Adds your current project as a subscriber
 - Installs the latest local version immediately
-- Preserves publish arguments: Uses the same npm publish options that were used when the package was originally published
+- Preserves publish arguments: Uses the same npm publish options as the package's most recent publish
 - Great for frontend projects consuming your libraries
 
 ### `local-npm unpublish [package-name]`

@@ -31,14 +31,12 @@ save. No signal handlers exist, so `finally` never runs. Left behind:
 
 ### Stopping the pile-up at the source
 
-- Per package publish lock, with a supersede rule: a newer queued publish for the same package
-  replaces the waiting one rather than joining the queue. Queued work for one package is identical
-  work, so dropping the older one is unambiguously correct.
-- Consider `local-npm watch` owning the debounce instead of nodemon's kill-and-restart, over the
-  packages it is given. It cannot own the machine, since any directory can start a publish at any
-  time, so batching is best effort: packages under one watcher collapse into one debounce and one
-  install per consumer, and anything started separately falls back to serializing on the lock. A
-  throughput difference only.
+A per package publish lock, with a supersede rule: a newer queued publish for the same package
+replaces the waiting one rather than joining the queue. Queued work for one package is identical
+work, so dropping the older one is unambiguously correct.
+
+That is as far out as it goes. Watching belongs to the consumer, so independent watchers stay
+independent and two edits at one moment still cost two full runs.
 
 ## Problem 2: multiple subscriptions in one consumer
 
@@ -49,8 +47,8 @@ save. No signal handlers exist, so `finally` never runs. Left behind:
   so this is a throughput problem rather than a race: a consumer subscribed to five local packages
   gets five sequential full installs when all five are touched. The dominant source is the problem 3
   cascade, which can rewrite several of one consumer's specifiers in a single run. That case is in one
-  process, which knows the whole set up front, so grouping fixes it. Only independent watchers need
-  the debounce below, and two libraries being touched at once is the rare case.
+  process, which knows the whole set up front, so grouping fixes it. Nothing groups across watchers,
+  and two libraries being touched at once is the rare case.
 - **Installs outside the lock can still collide.**
   [`ClearStoreCommand.ts:66`](../packages/local-npm-registry/src/commands/ClearStoreCommand.ts#L66) and
   [`UnsubscribeCommand.ts:58`](../packages/local-npm-registry/src/commands/UnsubscribeCommand.ts#L58),
@@ -182,15 +180,9 @@ edges and is logged, with `prune` as the repair.
 ### Watchers must not watch package.json
 
 The walk packs each node once because one process is the only thing publishing. A watcher triggering
-on `package.json` breaks that outright: every pin and every restore the cascade writes into a
-dependent's folder starts a competing publish.
-
-It does not stop at wasted publishes either. `propagateVersion` rewrites dependents on every build
-and [covers `devDependencies`](../packages/core-ts-lib/src/services/Dependency.service.ts#L260), so
-`core-ts-lib` writes `local-npm-registry` and `local-npm-registry` writes `core-ts-lib` back. Its
-`currentDep !== newDep` guard would end that after one round, except a publish timestamps a version
-and then restores it, so the propagated specifier flips between `^2.4.6-<slug>.<ts>` and `^2.4.6`
-indefinitely and neither watcher settles.
+on `package.json` breaks that outright, and not just by wasting publishes: the cascade writes each
+dependent's file twice, once to pin and once to restore, so every dependent it touches would start a
+publish that cascades and writes again. It sustains itself.
 
 Every watch script is `nodemon -e ts`, which is what makes this safe. Watching `package.json`, or
 dropping `-e`, reintroduces it.
@@ -205,17 +197,23 @@ dropping `-e`, reintroduces it.
   already turns delete-before-publish into a per path prune after the publish; what remains is moving
   it out to the end of the cascade.
 - **Check pins before packing.** Assert every locally published dependency is pinned to its current
-  local version, and re-pin if not. This closes the
-  [propagation race](../packages/core-ts-lib/src/services/Dependency.service.ts#L241): a dependent's
-  watcher can fire while `propagateVersion` has the specifier back at `^2.4.6`, shipping a tarball
-  that resolves to the real npmjs version.
+  local version, and re-pin if not. Restoring the rewrite after packing leaves a dependent's
+  specifier sitting at `^2.4.6`, which no prerelease satisfies, so packing without pinning first
+  ships a tarball that resolves through the npmjs uplink to the real published version. This is the
+  silent variant above, reached from the other direction.
 - **Restore dependency rewrites after packing.** `publishAndUpdateSubscribers` restores only the
   `version` field, so a package that both publishes and subscribes keeps a timestamped specifier in
   its working tree forever. That dirties the repo, breaks a later plain install, and leaks into any
   real npm publish. With the pin check, the pin becomes transient pack-time state.
 - **Write package.json atomically**, temp file and rename, matching `#writeStore` in the paths plan.
-  `propagateVersion` rewrites dependents outside every lock, so a reader must see the old file or the
-  new one and never a torn one.
+  A reader must see the old file or the new one and never a torn one.
+- **Drop `pnpm propagateVersion` from `build:withoutClean`** in all six packages. It exists to keep
+  workspace dependents' declared ranges in sync with bumped versions for the real npm publish, which
+  [`prepareAllPackages`](../scripts/prepareAllPackages.ts) already does by running it after
+  `preparePkg` until checksums settle, and which CI enforces through `versionPropagation:validate`.
+  The cascade needs none of it, since it re-pins dependents itself before packing. Running it on
+  every build is what clobbers the exact pin on every save, and what propagates `^2.4.6-<ts>` into
+  every dependent when a build lands while a version is timestamped. The script itself stays.
 
 Transient pins left behind by a cascade killed partway are the journal's problem, in problem 1.
 
@@ -239,11 +237,6 @@ a store that is not v2 and a store that is corrupt get the same treatment there.
    ([`CommandUtil.service.ts:110`](../packages/local-npm-registry/src/services/CommandUtil.service.ts#L110),
    [`ClearStoreCommand.ts:77`](../packages/local-npm-registry/src/commands/ClearStoreCommand.ts#L77)).
    In a watch loop that makes breakage invisible.
-3. **`publishArgs` merge semantics are unclear.** `subscribe`
-   [reuses stored args](../packages/local-npm-registry/src/commands/SubscribeCommand.ts#L53),
-   `publish`
-   [overwrites them](../packages/local-npm-registry/src/services/CommandUtil.service.ts#L73). Pick
-   one rule.
 
 ## Suggested phases
 
@@ -272,11 +265,10 @@ is the base.
 
 - **A persistent or daemonized Verdaccio.** The registry does not sit in the background consuming
   resources; it starts and stops per command. Everything else has to work inside that.
+- **A `local-npm watch` that owns the build.** Watching stays in the consumer's hands. Owning it
+  means supporting every option and parameter someone's build might need, which is not coverable.
 
 ## Open questions
 
-1. Does the cascade need an opt-out per package? The subscriber prune already bounds it to nodes a
-   consumer can reach and no dependent is rebuilt, but the deepest chain here is still five
-   pack-and-publish round trips, roughly 1.9s, before the consumer install starts.
-2. Should `propagateVersion` stay in the build script the watch loop runs? The pre-pack pin check
-   makes it survivable either way, so it is about noise rather than correctness.
+None. The cascade is automatic with no opt-out, since the subscriber prune already bounds it and a
+package nobody can reach is never packed.
