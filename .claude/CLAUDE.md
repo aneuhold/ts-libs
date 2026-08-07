@@ -12,6 +12,7 @@
 
 - Add explicit types when unclear; extract complex object types to separate `type` declarations
 - Use PascalCase for type names; file names should match the primary exported type
+- Always order types from the highest-level type first, down to the lowest-level type. A type that references another comes before the type it references
 - Use arrow functions and `const`/`let` (never `var`)
 - Use `async`/`await` instead of `.then()`
 - NEVER use `any` type
