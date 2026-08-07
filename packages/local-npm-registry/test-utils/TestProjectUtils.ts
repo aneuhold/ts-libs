@@ -257,11 +257,10 @@ export class TestProjectUtils {
       packageManager
     );
 
-    await LocalPackageStoreService.updatePackageEntry(packageName, {
+    await LocalPackageStoreService.updatePackageEntry(packageName, publisherPath, {
       originalVersion: version,
       currentVersion: version,
-      subscribers: [{ subscriberPath, originalSpecifier: version }],
-      packageRootPath: publisherPath
+      subscribers: [{ subscriberPath, originalSpecifier: version }]
     });
 
     return { publisherPath, subscriberPath };
