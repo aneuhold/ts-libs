@@ -80,7 +80,7 @@ Replaces the [current flat shape](../packages/local-npm-registry/src/services/Lo
 }
 ```
 
-`packageRootPath` stops being a field, since it is the key. Nothing records which versions a path has
+`packagePath` stops being a field, since it is the key. Nothing records which versions a path has
 in the registry either, because the slug inside every version already says which path published it,
 so retention asks the registry and filters on the slug rather than reading a stored list. Two maps
 deep with no wrapper between them, at the cost that every key under a package name has to be a path.

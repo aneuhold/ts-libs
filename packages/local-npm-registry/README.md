@@ -243,37 +243,41 @@ This tool solves these issues by using a real npm registry (Verdaccio) locally, 
 
 ### Local JSON Store Structure
 
-The local JSON store maintains the following structure:
+Every package is keyed by its name, then by the absolute path of the directory it is published from,
+so two checkouts of one repository each get their own entry:
 
 ```json
 {
+  "version": 2,
   "packages": {
     "@aneuhold/core-ts-lib": {
-      "originalVersion": "1.2.3",
-      "currentVersion": "1.2.3-20250526123456",
-      "subscribers": [
-        {
-          "subscriberPath": "/path/to/consumer-project-1",
-          "originalSpecifier": "^1.2.3"
-        },
-        {
-          "subscriberPath": "/path/to/consumer-project-2",
-          "originalSpecifier": "~1.2.0"
-        }
-      ],
-      "packageRootPath": "/path/to/core-ts-lib",
-      "publishArgs": ["--ignore-scripts", "--verbose"]
+      "/path/to/core-ts-lib": {
+        "originalVersion": "1.2.3",
+        "currentVersion": "1.2.3-20250526123456789",
+        "subscribers": [
+          {
+            "subscriberPath": "/path/to/consumer-project-1",
+            "originalSpecifier": "^1.2.3"
+          },
+          {
+            "subscriberPath": "/path/to/consumer-project-2",
+            "originalSpecifier": "~1.2.0"
+          }
+        ],
+        "publishArgs": ["--ignore-scripts", "--verbose"]
+      }
     },
     "@aneuhold/be-ts-lib": {
-      "originalVersion": "2.1.0",
-      "currentVersion": "2.1.0-20250526134567",
-      "subscribers": [
-        {
-          "subscriberPath": "/path/to/consumer-project-3",
-          "originalSpecifier": "^2.1.0"
-        }
-      ],
-      "packageRootPath": "/path/to/be-ts-lib"
+      "/path/to/be-ts-lib": {
+        "originalVersion": "2.1.0",
+        "currentVersion": "2.1.0-20250526134567890",
+        "subscribers": [
+          {
+            "subscriberPath": "/path/to/consumer-project-3",
+            "originalSpecifier": "^2.1.0"
+          }
+        ]
+      }
     }
   }
 }

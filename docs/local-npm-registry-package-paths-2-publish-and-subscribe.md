@@ -28,7 +28,7 @@ directory sits. Ordering between paths does not matter, because subscribers pin 
 
 **`src/services/CommandUtil.service.ts`**
 
-- `publishAndUpdateSubscribers` takes the resolved `packageRootPath` and, in order: derives the slug,
+- `publishAndUpdateSubscribers` takes the resolved `packagePath` and, in order: derives the slug,
   writes the timestamped version into `package.json`, publishes, writes the entry, updates only that
   path's subscribers, prunes that path's older versions, restores the original version.
 - The prune lists the package's versions from the registry and removes every one carrying this path's
@@ -85,7 +85,7 @@ target resolution on top of this.
 
 **`src/commands/SubscribeCommand.ts`**
 
-- `execute(packageName, packageRootPath?)`. With a path, resolve it and require it to be a publishing
+- `execute(packageName, packagePath?)`. With a path, resolve it and require it to be a publishing
   path for the package. Without one, use the sole path if there is exactly one, otherwise throw
   listing every candidate path, its slug, and the exact command to re-run.
 - Which checkout the consumer wants cannot be inferred from it, and a wrong guess is the worst

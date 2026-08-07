@@ -9,7 +9,7 @@ import { VerdaccioService } from '../src/services/Verdaccio.service.js';
 export async function setup(): Promise<void> {
   // Ensure no mutex lock exists before starting tests
   try {
-    await MutexService.forceReleaseLock();
+    await MutexService.forceReleaseAllLocks();
   } catch {
     // Ignore errors if no lock exists
   }
@@ -22,7 +22,7 @@ export async function teardown(): Promise<void> {
   // Clean up any remaining mutex lock and stop Verdaccio service
   try {
     await VerdaccioService.stop();
-    await MutexService.forceReleaseLock();
+    await MutexService.forceReleaseAllLocks();
 
     const testPackagePattern = /^@test-[a-fA-F0-9]{8}\//;
     await LocalPackageStoreService.removePackagesByPattern(testPackagePattern);

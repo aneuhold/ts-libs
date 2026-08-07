@@ -112,19 +112,19 @@ program
         return;
       }
 
-      const currentPath = await LocalPackageStoreService.resolvePackageRootPath(process.cwd());
+      const currentPath = await LocalPackageStoreService.resolvePackagePath(process.cwd());
 
       DR.logger.info('Local Registry Packages:');
-      for (const [packageName, packageRoots] of Object.entries(store.packages)) {
+      for (const [packageName, pathEntries] of Object.entries(store.packages)) {
         DR.logger.info(`${packageName}:`);
-        for (const [packageRootPath, entry] of Object.entries(packageRoots ?? {})) {
+        for (const [packagePath, entry] of Object.entries(pathEntries ?? {})) {
           if (!entry) {
-            DR.logger.warn(`  ${packageRootPath} has no entry in the store`);
+            DR.logger.warn(`  ${packagePath} has no entry in the store`);
             continue;
           }
-          const currentMarker = packageRootPath === currentPath ? ' (current directory)' : '';
+          const currentMarker = packagePath === currentPath ? ' (current directory)' : '';
           DR.logger.info(
-            `  ${LocalPackageStoreService.getPathSlug(packageRootPath)}  ${packageRootPath}${currentMarker}`
+            `  ${LocalPackageStoreService.getPathSlug(packagePath)}  ${packagePath}${currentMarker}`
           );
           DR.logger.info(`    Original Version: ${entry.originalVersion}`);
           DR.logger.info(`    Current Version: ${entry.currentVersion}`);
