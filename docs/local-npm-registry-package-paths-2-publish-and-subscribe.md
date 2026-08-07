@@ -29,12 +29,14 @@ directory sits. Ordering between paths does not matter, because subscribers pin 
 **`src/services/CommandUtil.service.ts`**
 
 - `publishAndUpdateSubscribers` takes the resolved `packageRootPath` and, in order: derives the slug,
-  writes the timestamped version into `package.json`, publishes, writes the entry with
-  `publishedVersions` appended, updates only that path's subscribers, prunes that path's older
-  versions, restores the original version.
-- Pruning sits here so both `publish` and `subscribe` get it, and it runs before the caller stops the
-  server because it needs the server. Versions that fail to unpublish stay in `publishedVersions` and
-  retry on the next publish. Problem 3 later moves this prune to the end of a cascade.
+  writes the timestamped version into `package.json`, publishes, writes the entry, updates only that
+  path's subscribers, prunes that path's older versions, restores the original version.
+- The prune lists the package's versions from the registry and removes every one carrying this path's
+  slug except the one just published. Nothing has to be stored for this: the slug inside a version
+  already says which path published it, and reading the registry means a version whose earlier
+  removal failed is found and retried rather than leaking. Pruning sits here so both `publish` and
+  `subscribe` get it, and it runs before the caller stops the server because it needs the server.
+  Problem 3 later moves this prune to the end of a cascade.
 - Drop a subscriber whose directory no longer exists instead of logging it. The loop already visits
   every subscriber and already swallows the failure
   ([`:102`](../packages/local-npm-registry/src/services/CommandUtil.service.ts#L102)), so the record
@@ -50,6 +52,9 @@ directory sits. Ordering between paths does not matter, because subscribers pin 
   keeps this service from having to know about the store.
 - Delete the `#clearPublishedPackagesLocally` call from `publishPackage`, so one directory cannot
   destroy the version the other directory's consumer is pinned to.
+- New `listPublishedVersions(packageName)`: the versions the registry currently holds for a package,
+  empty when it holds none. Every caller that needs one path's versions filters this on that path's
+  slug, which is what keeps retention per path without the store tracking it.
 - New `unpublishVersions(packageName, versions)`: one
   `npm unpublish <pkg>@<version> --registry=<url> --//<host>/:_authToken=fake --force` per version,
   logging and continuing on failure, returning the versions actually removed.
@@ -70,8 +75,9 @@ directory sits. Ordering between paths does not matter, because subscribers pin 
 
 **`src/commands/UnpublishCommand.ts`**
 
-`unpublishPackage` is gone, so the command calls `unpublishVersions` with its target's
-`publishedVersions`, and starts and stops Verdaccio around it. Removal now goes through the server
+`unpublishPackage` is gone, so the command starts Verdaccio, calls `unpublishVersions` with the
+versions `listPublishedVersions` reports that carry its target's slug, then stops it. Removal now
+goes through the server
 rather than the filesystem, so `unpublish` requires a running Verdaccio from here on. Part 3 adds the
 target resolution on top of this.
 

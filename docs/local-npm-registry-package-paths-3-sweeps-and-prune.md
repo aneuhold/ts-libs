@@ -18,15 +18,16 @@ Everything happens inside `packages/local-npm-registry`.
 `allPaths` wins, then an explicit path, then the current directory if it publishes that package, then
 the sole path, otherwise throw listing them. This replaces the interim sole-path rule from part 1.
 
-Per target: reset its subscribers, start Verdaccio, `unpublishVersions` its `publishedVersions`,
-stop, `removePackageRoot`. Restore the package's own `package.json` version only when the current
-directory is the target.
+Per target: reset its subscribers, start Verdaccio, `unpublishVersions` every version
+`listPublishedVersions` reports that carries the target's slug, stop, `removePackageRoot`. Restore
+the package's own `package.json` version only when the current directory is the target.
 
 ## Step 2: prune
 
 **`src/commands/PruneCommand.ts`** (new): for every package root path that no longer exists, restore
-each live subscriber's `originalSpecifier`, unpublish its `publishedVersions`, and remove the entry.
-Group restores by subscriber path, one install per consumer.
+each live subscriber's `originalSpecifier`, unpublish the versions carrying that path's slug, and
+remove the entry. The path is gone but the store still holds it as a key, so its slug is still
+derivable. Group restores by subscriber path, one install per consumer.
 
 Dead subscriber records are handled during publish, so this is only about dead publishing paths, and
 it stays an explicit command for two reasons. Nothing else walks every path: publish runs from `cwd`,

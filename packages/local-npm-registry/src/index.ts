@@ -112,25 +112,33 @@ program
         return;
       }
 
+      const currentPath = await LocalPackageStoreService.resolvePackageRootPath(process.cwd());
+
       DR.logger.info('Local Registry Packages:');
-      for (const [packageName, entry] of Object.entries(store.packages)) {
-        if (!entry) {
-          DR.logger.warn(`Package ${packageName} has no entry in the store`);
-          continue;
-        }
+      for (const [packageName, packageRoots] of Object.entries(store.packages)) {
         DR.logger.info(`${packageName}:`);
-        DR.logger.info(`  Original Version: ${entry.originalVersion}`);
-        DR.logger.info(`  Current Version: ${entry.currentVersion}`);
-        if (entry.publishArgs && entry.publishArgs.length > 0) {
-          DR.logger.info(`  Publish Args: ${entry.publishArgs.join(' ')}`);
-        }
-        DR.logger.info(`  Subscribers (${entry.subscribers.length}):`);
-        if (entry.subscribers.length === 0) {
-          DR.logger.info('    (none)');
-        } else {
-          entry.subscribers.forEach((sub) => {
-            DR.logger.info(`    - ${sub.subscriberPath}`);
-          });
+        for (const [packageRootPath, entry] of Object.entries(packageRoots ?? {})) {
+          if (!entry) {
+            DR.logger.warn(`  ${packageRootPath} has no entry in the store`);
+            continue;
+          }
+          const currentMarker = packageRootPath === currentPath ? ' (current directory)' : '';
+          DR.logger.info(
+            `  ${LocalPackageStoreService.getPathSlug(packageRootPath)}  ${packageRootPath}${currentMarker}`
+          );
+          DR.logger.info(`    Original Version: ${entry.originalVersion}`);
+          DR.logger.info(`    Current Version: ${entry.currentVersion}`);
+          if (entry.publishArgs && entry.publishArgs.length > 0) {
+            DR.logger.info(`    Publish Args: ${entry.publishArgs.join(' ')}`);
+          }
+          DR.logger.info(`    Subscribers (${entry.subscribers.length}):`);
+          if (entry.subscribers.length === 0) {
+            DR.logger.info('      (none)');
+          } else {
+            entry.subscribers.forEach((sub) => {
+              DR.logger.info(`      - ${sub.subscriberPath}`);
+            });
+          }
         }
       }
     } catch (error) {

@@ -58,7 +58,6 @@ export type PackageRootEntry = {
   originalVersion: string;
   currentVersion: string;
   subscribers: PackageSubscriber[];
-  publishedVersions: string[];
   publishArgs?: string[];
 };
 
@@ -118,9 +117,7 @@ Each item is the smallest correct change for the new API. Where part 2 or 3 repl
 outright, it says so.
 
 **`src/services/CommandUtil.service.ts`**: write through `updatePackageRootEntry` with the
-`packageRootPath` it already takes, resolved through `resolvePackageRootPath`. Set
-`publishedVersions` to `[currentVersion]`, which is accurate while publish still deletes the whole
-package first. Part 2 turns that into an append plus a prune.
+`packageRootPath` it already takes, resolved through `resolvePackageRootPath`.
 
 **`src/commands/PublishCommand.ts`**: resolve the path from `process.cwd()` and read that path's
 entry, so `originalVersion` and the subscriber list come from this checkout rather than whichever
