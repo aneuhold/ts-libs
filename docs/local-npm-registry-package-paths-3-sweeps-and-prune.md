@@ -25,7 +25,7 @@ the package's own `package.json` version only when the current directory is the 
 
 ## Step 2: prune, and the sweep that reuses it
 
-**`src/commands/PruneCommand.ts`** (new): for every package root path that no longer exists, restore
+**`src/commands/PruneCommand.ts`** (new): for every package path that no longer exists, restore
 each live subscriber's `originalSpecifier`, unpublish the versions carrying that path's slug, and
 remove the entry. The path is gone but the store still holds it as a key, so its slug is still
 derivable.

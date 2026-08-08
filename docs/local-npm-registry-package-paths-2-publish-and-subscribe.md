@@ -5,32 +5,20 @@ Part 2 of three, on top of
 [The overview](./local-npm-registry-package-paths-plan.md) carries the design and the reasoning
 behind the key, the slug, and the store shape.
 
-This is the part that makes two checkouts of one package work at the same time. A published version
-carries the slug of the directory it came from, each directory gets its own dist tag, retention
-happens per path instead of by deleting the whole package, and a consumer states which directory it
+This is the part that makes two checkouts of one package work at the same time. Versions already
+carry the slug of the directory they came from, so what remains is a dist tag per directory,
+retention per path instead of deleting the whole package, and a consumer stating which directory it
 is subscribing to.
 
 Everything happens inside `packages/local-npm-registry`.
 
-## Step 1: the version format
+## Step 1: the publish path
 
 **`src/services/CommandUtil.service.ts`**
 
-`generateTimestampVersion(originalVersion, pathSlug)` produces `<original>-<slug>.<timestamp>`, for
-example `2.4.6-pa1b2c3d4.20250726123456789`, replacing any existing suffix matching
-`timestampPattern`.
-
-Valid semver: prerelease identifiers are dot-separated alphanumerics and hyphens, and the numeric
-timestamp has no leading zero. The slug is fixed width, so versions stay short however deep the
-directory sits. Ordering between paths does not matter, because subscribers pin exact versions.
-
-## Step 2: the publish path
-
-**`src/services/CommandUtil.service.ts`**
-
-- `publishAndUpdateSubscribers` takes the resolved `packagePath` and, in order: derives the slug,
-  writes the timestamped version into `package.json`, publishes, writes the entry, updates only that
-  path's subscribers, prunes that path's older versions, restores the original version.
+- `publishAndUpdateSubscribers` already takes the resolved `packagePath` and writes the version into
+  `package.json`, publishes, writes the entry, and updates that path's subscribers. It gains the
+  prune of that path's older versions, before it restores the original version.
 - The prune lists the package's versions from the registry and removes every one carrying this path's
   slug except the one just published. Nothing has to be stored for this: the slug inside a version
   already says which path published it, and reading the registry means a version whose earlier
@@ -43,7 +31,7 @@ directory sits. Ordering between paths does not matter, because subscribers pin 
   otherwise survives every future publish. Key this on the directory being missing, not on the update
   failing, so a transient install error cannot silently unsubscribe a live consumer.
 
-## Step 3: registry retention
+## Step 2: registry retention
 
 **`src/services/Verdaccio.service.ts`**
 
@@ -54,7 +42,9 @@ directory sits. Ordering between paths does not matter, because subscribers pin 
   destroy the version the other directory's consumer is pinned to.
 - New `listPublishedVersions(packageName)`: the versions the registry currently holds for a package,
   empty when it holds none. Every caller that needs one path's versions filters this on that path's
-  slug, which is what keeps retention per path without the store tracking it.
+  slug, which is what keeps retention per path without the store tracking it. Deriving a slug from a
+  path is private to `generateTimestampVersion` today, since nothing outside it needed one, so this
+  step is what gives `LocalPackageStoreService` a public way to ask for one.
 - New `unpublishVersions(packageName, versions)`: one
   `npm unpublish <pkg>@<version> --registry=<url> --//<host>/:_authToken=fake --force` per version,
   logging and continuing on failure, returning the versions actually removed.
@@ -81,13 +71,14 @@ goes through the server
 rather than the filesystem, so `unpublish` requires a running Verdaccio from here on. Part 3 adds the
 target resolution on top of this.
 
-## Step 4: subscribe binding
+## Step 3: subscribe binding
 
 **`src/commands/SubscribeCommand.ts`**
 
-- `execute(packageName, packagePath?)`. With a path, resolve it and require it to be a publishing
-  path for the package. Without one, use the sole path if there is exactly one, otherwise throw
-  listing every candidate path, its slug, and the exact command to re-run.
+- `execute(packageName, packagePath?)`, handing the path to `getPackagePath`, which already requires
+  an explicit path to be one the package publishes from and falls back to the sole path. What this
+  step adds is the flag that reaches it, and the exact command to re-run in the message listing the
+  candidates.
 - Which checkout the consumer wants cannot be inferred from it, and a wrong guess is the worst
   outcome available, since the consumer then tests against the other checkout's build with nothing to
   indicate it. Ancestor matching does not transfer from the cascade's edge resolution, because a
@@ -105,7 +96,7 @@ target resolution on top of this.
 **`src/services/Command.service.ts`** and **`src/index.ts`**: thread the path through `subscribe`,
 and register `subscribe <package-name> [--path <path>]`.
 
-## Step 5: tests
+## Step 4: tests
 
 **`test-utils/TestProjectUtils.ts`**
 
@@ -119,14 +110,14 @@ the other's version installed and resolvable, and subscribing with two candidate
 `--path` fails and lists them. Separately, that a publish drops a subscriber whose directory is gone
 but keeps one whose install merely failed.
 
-**`src/services/Verdaccio.service.spec.ts`**: the new version pattern, the per path dist tag, and
-`unpublishVersions` removing one version while leaving the other path's version resolvable.
+**`src/services/Verdaccio.service.spec.ts`**: the per path dist tag, and `unpublishVersions`
+removing one version while leaving the other path's version resolvable.
 
-## Step 6: documentation
+## Step 5: documentation
 
 **`packages/local-npm-registry/README.md`**
 
-- Describe per path versions and dist tags in the technical details.
+- Describe per path dist tags and retention in the technical details.
 - Correct the note grouping `unpublish` with `unsubscribe` as commands that do not require Verdaccio
   running. `unsubscribe` does not; `unpublish` does, because removal goes through the server.
 
