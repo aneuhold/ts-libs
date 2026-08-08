@@ -3,8 +3,9 @@ import os from 'os';
 import path from 'path';
 import lockfile from 'proper-lockfile';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { MutexLockName } from '../types/MutexLockName.js';
 import { ConfigService } from './Config.service.js';
-import { MutexLockName, MutexService } from './Mutex.service.js';
+import { MutexService } from './Mutex.service.js';
 import { VerdaccioService } from './Verdaccio.service.js';
 
 vi.mock('@aneuhold/core-ts-lib', async () => {

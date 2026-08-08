@@ -4,6 +4,7 @@ import fs from 'fs-extra';
 import yaml from 'js-yaml';
 import path from 'path';
 import { DEFAULT_CONFIG } from '../../types/LocalNpmConfig.js';
+import type { LocalPackageStore } from '../../types/LocalPackageStore.js';
 import {
   PACKAGE_MANAGER_INFO,
   PackageManager,
@@ -43,7 +44,6 @@ export class PackageManagerCliService {
       const cleanEnv = { ...process.env };
       Object.keys(cleanEnv).forEach((key) => {
         if (key.startsWith('npm_config_')) {
-          // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
           delete cleanEnv[key];
         }
       });
@@ -69,11 +69,13 @@ export class PackageManagerCliService {
    *
    * @param projectPath - Path to the project directory
    * @param packageManager - The package manager to run
+   * @param store - The store holding the subscriptions whose scopes are redirected
    * @param registryUrl - The registry URL to use for installation
    */
   static async runInstallWithRegistry(
     projectPath: string,
     packageManager: PackageManager,
+    store: LocalPackageStore,
     registryUrl?: string
   ): Promise<void> {
     const config = await ConfigService.loadConfig();
@@ -82,7 +84,8 @@ export class PackageManagerCliService {
     const registryOverride = await this.#buildRegistryOverride(
       packageManager,
       actualRegistryUrl,
-      projectPath
+      projectPath,
+      store
     );
 
     await this.runInstall(projectPath, packageManager, registryOverride);
@@ -96,13 +99,15 @@ export class PackageManagerCliService {
    * @param packageManager The package manager that runs the command
    * @param registryUrl The registry URL that packages have to resolve from
    * @param projectPath The path to the project directory
+   * @param store The store holding the subscriptions whose scopes are redirected
    */
   static async #buildRegistryOverride(
     packageManager: PackageManager,
     registryUrl: string,
-    projectPath: string
+    projectPath: string,
+    store: LocalPackageStore
   ): Promise<PackageManagerRegistryOverride> {
-    const organizations = await this.#resolvePackageOrganizations(projectPath);
+    const organizations = this.#resolvePackageOrganizations(projectPath, store);
 
     if (packageManager === PackageManager.Yarn4) {
       await this.#warnOnPinnedYarn4Scopes(projectPath, organizations);
@@ -119,12 +124,16 @@ export class PackageManagerCliService {
    * scopes of every package the project is subscribed to.
    *
    * @param projectPath The path to the project directory
+   * @param store The store holding the project's subscriptions
    */
-  static async #resolvePackageOrganizations(projectPath: string): Promise<string[]> {
-    const subscribedPackages = await LocalPackageStoreService.getSubscribedPackages(projectPath);
+  static #resolvePackageOrganizations(projectPath: string, store: LocalPackageStore): string[] {
+    const subscriptions = LocalPackageStoreService.getSubscriptionsForSubscriber(
+      store,
+      projectPath
+    );
     const organizations = new Set<string>();
 
-    for (const packageName of subscribedPackages) {
+    for (const { packageName } of subscriptions) {
       const organization = PackageJsonService.extractOrganization(packageName);
       if (organization) {
         organizations.add(organization);

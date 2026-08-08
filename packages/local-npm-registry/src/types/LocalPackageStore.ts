@@ -49,21 +49,19 @@ export type PackageSubscriber = {
 };
 
 /**
- * Type guard that checks whether an unknown value is a {@link LocalPackageStore}
- * of a given version, validating every entry it holds rather than only its
- * outermost shape.
+ * Type guard that checks whether an unknown value is a {@link LocalPackageStore},
+ * validating every entry it holds rather than only its outermost shape.
+ *
+ * Which version the store has to declare is the reader's decision, so this only
+ * requires that it declares one.
  *
  * @param value - The value to narrow
- * @param version - The store version the value has to declare
  */
-export const isLocalPackageStore = (
-  value: unknown,
-  version: number
-): value is LocalPackageStore => {
+export const isLocalPackageStore = (value: unknown): value is LocalPackageStore => {
   if (typeof value !== 'object' || value === null) {
     return false;
   }
-  if (!('version' in value) || value.version !== version) {
+  if (!('version' in value) || typeof value.version !== 'number') {
     return false;
   }
   if (!('packages' in value) || typeof value.packages !== 'object' || value.packages === null) {

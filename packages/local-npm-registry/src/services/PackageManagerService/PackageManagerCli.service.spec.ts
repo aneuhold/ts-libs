@@ -111,6 +111,7 @@ describe('Unit Tests', () => {
       await PackageManagerCliService.runInstallWithRegistry(
         subscriberPath,
         PackageManager.Npm,
+        await LocalPackageStoreService.getStore(),
         registryUrl
       );
 
@@ -131,6 +132,7 @@ describe('Unit Tests', () => {
       await PackageManagerCliService.runInstallWithRegistry(
         subscriberPath,
         PackageManager.Pnpm,
+        await LocalPackageStoreService.getStore(),
         registryUrl
       );
 
@@ -151,6 +153,7 @@ describe('Unit Tests', () => {
       await PackageManagerCliService.runInstallWithRegistry(
         subscriberPath,
         PackageManager.Yarn,
+        await LocalPackageStoreService.getStore(),
         registryUrl
       );
 
@@ -168,6 +171,7 @@ describe('Unit Tests', () => {
       await PackageManagerCliService.runInstallWithRegistry(
         subscriberPath,
         PackageManager.Yarn4,
+        await LocalPackageStoreService.getStore(),
         registryUrl
       );
 
@@ -193,11 +197,17 @@ describe('Unit Tests', () => {
         '1.0.0',
         PackageManager.Npm
       );
-      await LocalPackageStoreService.updatePackageEntry(`@publisher-${testId}/library`, {
-        originalVersion: '1.0.0',
-        currentVersion: '1.0.0',
-        subscribers: [{ subscriberPath, originalSpecifier: '1.0.0' }],
-        packageRootPath: publisherPath
+      await TestProjectUtils.mutateStore((store) => {
+        LocalPackageStoreService.updatePackageEntry(
+          store,
+          `@publisher-${testId}/library`,
+          publisherPath,
+          {
+            originalVersion: '1.0.0',
+            currentVersion: '1.0.0',
+            subscribers: [{ subscriberPath, originalSpecifier: '1.0.0' }]
+          }
+        );
       });
       await TestProjectUtils.createNpmrcFile(
         subscriberPath,
@@ -208,6 +218,7 @@ describe('Unit Tests', () => {
       await PackageManagerCliService.runInstallWithRegistry(
         subscriberPath,
         PackageManager.Npm,
+        await LocalPackageStoreService.getStore(),
         registryUrl
       );
 
@@ -232,17 +243,24 @@ describe('Unit Tests', () => {
         '1.0.0',
         PackageManager.Npm
       );
-      await LocalPackageStoreService.updatePackageEntry(`unscoped-library-${testId}`, {
-        originalVersion: '1.0.0',
-        currentVersion: '1.0.0',
-        subscribers: [{ subscriberPath, originalSpecifier: '1.0.0' }],
-        packageRootPath: publisherPath
+      await TestProjectUtils.mutateStore((store) => {
+        LocalPackageStoreService.updatePackageEntry(
+          store,
+          `unscoped-library-${testId}`,
+          publisherPath,
+          {
+            originalVersion: '1.0.0',
+            currentVersion: '1.0.0',
+            subscribers: [{ subscriberPath, originalSpecifier: '1.0.0' }]
+          }
+        );
       });
       const runInstall = mockRunInstall();
 
       await PackageManagerCliService.runInstallWithRegistry(
         subscriberPath,
         PackageManager.Npm,
+        await LocalPackageStoreService.getStore(),
         registryUrl
       );
 
@@ -259,6 +277,7 @@ describe('Unit Tests', () => {
       await PackageManagerCliService.runInstallWithRegistry(
         subscriberPath,
         PackageManager.Npm,
+        await LocalPackageStoreService.getStore(),
         registryUrl
       );
 
@@ -271,6 +290,7 @@ describe('Unit Tests', () => {
         PackageManagerCliService.runInstallWithRegistry(
           subscriberPath,
           PackageManager.Npm,
+          await LocalPackageStoreService.getStore(),
           registryUrl
         )
       ).rejects.toThrow();
@@ -283,7 +303,11 @@ describe('Unit Tests', () => {
       const { subscriberPath, organization } = await createSubscription(PackageManager.Npm);
       const runInstall = mockRunInstall();
 
-      await PackageManagerCliService.runInstallWithRegistry(subscriberPath, PackageManager.Npm);
+      await PackageManagerCliService.runInstallWithRegistry(
+        subscriberPath,
+        PackageManager.Npm,
+        await LocalPackageStoreService.getStore()
+      );
 
       expect(runInstall).toHaveBeenCalledWith(subscriberPath, PackageManager.Npm, {
         args: [
@@ -306,6 +330,7 @@ describe('Unit Tests', () => {
       await PackageManagerCliService.runInstallWithRegistry(
         subscriberPath,
         PackageManager.Yarn4,
+        await LocalPackageStoreService.getStore(),
         registryUrl
       );
 
@@ -325,6 +350,7 @@ describe('Unit Tests', () => {
       await PackageManagerCliService.runInstallWithRegistry(
         subscriberPath,
         PackageManager.Yarn4,
+        await LocalPackageStoreService.getStore(),
         registryUrl
       );
 

@@ -1,6 +1,7 @@
 import { LocalPackageStoreService } from '../src/services/LocalPackageStore.service.js';
 import { MutexService } from '../src/services/Mutex.service.js';
 import { VerdaccioService } from '../src/services/Verdaccio.service.js';
+import { TestProjectUtils } from './TestProjectUtils.js';
 
 /**
  * Global setup function that runs once before all test suites.
@@ -25,7 +26,9 @@ export async function teardown(): Promise<void> {
     await MutexService.forceReleaseAllLocks();
 
     const testPackagePattern = /^@test-[a-fA-F0-9]{8}\//;
-    await LocalPackageStoreService.removePackagesByPattern(testPackagePattern);
+    await TestProjectUtils.mutateStore((store) =>
+      LocalPackageStoreService.removePackagesByPattern(store, testPackagePattern)
+    );
   } catch {
     // Ignore errors during cleanup
   }

@@ -25,6 +25,26 @@ export class MutexService {
   static readonly #lockReleases = new Map<MutexLockName, () => Promise<void>>();
 
   /**
+   * Runs an operation while holding a system-wide mutex lock, releasing the lock
+   * however the operation ends.
+   *
+   * @param lockName - The lock to hold for the length of the operation
+   * @param operation - Runs while the lock is held
+   */
+  static async withLock<TResult>(
+    lockName: MutexLockName,
+    operation: () => Promise<TResult>
+  ): Promise<TResult> {
+    await MutexService.acquireLock(lockName);
+
+    try {
+      return await operation();
+    } finally {
+      await MutexService.releaseLock(lockName);
+    }
+  }
+
+  /**
    * Acquires a system-wide mutex lock, waiting until it is available.
    *
    * @param lockName - The lock to acquire

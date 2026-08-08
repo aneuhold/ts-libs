@@ -10,10 +10,11 @@ import http from 'http';
 import path from 'path';
 import { runServer } from 'verdaccio';
 import { DEFAULT_CONFIG, type LocalNpmConfig } from '../types/LocalNpmConfig.js';
+import { MutexLockName } from '../types/MutexLockName.js';
 import { PACKAGE_MANAGER_INFO, PackageManager } from '../types/PackageManager.js';
 import { VERDACCIO_DB_FILE_NAME, isVerdaccioDb } from '../types/VerdaccioDb.js';
 import { ConfigService } from './Config.service.js';
-import { MutexLockName, MutexService } from './Mutex.service.js';
+import { MutexService } from './Mutex.service.js';
 import { NpmrcService } from './Npmrc.service.js';
 import { PackageJsonService } from './PackageJson.service.js';
 

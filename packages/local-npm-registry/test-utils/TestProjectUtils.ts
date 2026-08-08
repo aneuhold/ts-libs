@@ -7,6 +7,9 @@ import { PublishCommand } from '../src/commands/PublishCommand.js';
 import { SubscribeCommand } from '../src/commands/SubscribeCommand.js';
 import { ConfigService } from '../src/services/Config.service.js';
 import { LocalPackageStoreService } from '../src/services/LocalPackageStore.service.js';
+import { MutexService } from '../src/services/Mutex.service.js';
+import type { LocalPackageStore } from '../src/types/LocalPackageStore.js';
+import { MutexLockName } from '../src/types/MutexLockName.js';
 import { PACKAGE_MANAGER_INFO, PackageManager } from '../src/types/PackageManager.js';
 
 /**
@@ -257,13 +260,29 @@ export class TestProjectUtils {
       packageManager
     );
 
-    await LocalPackageStoreService.updatePackageEntry(packageName, publisherPath, {
-      originalVersion: version,
-      currentVersion: version,
-      subscribers: [{ subscriberPath, originalSpecifier: version }]
+    await TestProjectUtils.mutateStore((store) => {
+      LocalPackageStoreService.updatePackageEntry(store, packageName, publisherPath, {
+        originalVersion: version,
+        currentVersion: version,
+        subscribers: [{ subscriberPath, originalSpecifier: version }]
+      });
     });
 
     return { publisherPath, subscriberPath };
+  }
+
+  /**
+   * Applies a mutation to the local package store under the store lock, so test
+   * setup reads and writes the store the way the commands do.
+   *
+   * @param mutator - Applies the change to the store that is about to be written
+   */
+  static async mutateStore(mutator: (store: LocalPackageStore) => void): Promise<void> {
+    await MutexService.withLock(MutexLockName.Store, async () => {
+      const store = await LocalPackageStoreService.getStore();
+      mutator(store);
+      await LocalPackageStoreService.writeStore(store);
+    });
   }
 
   /**
