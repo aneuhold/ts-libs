@@ -70,7 +70,8 @@ That's it! Your frontend project will now automatically receive updates whenever
 
 📤 **Publishes your current package** and automatically updates all projects that are subscribed to it.
 
-- Creates a timestamped version (e.g., `1.2.3-20250528123456`)
+- Creates a version carrying the publishing directory and the moment it was published (e.g.,
+  `1.2.3-pa1b2c3d4.20250528123456789`)
 - Updates all subscriber projects with the new version
 - Perfect for the watch command in your library
 - Supports all npm publish options: Pass any [npm publish options](https://docs.npmjs.com/cli/v11/using-npm/config#shorthands-and-other-cli-niceties) directly to the underlying `npm publish` command
@@ -244,7 +245,11 @@ This tool solves these issues by using a real npm registry (Verdaccio) locally, 
 ### Local JSON Store Structure
 
 Every package is keyed by its name, then by the absolute path of the directory it is published from,
-so two checkouts of one repository each get their own entry:
+so two checkouts of one repository each get their own entry.
+
+Published versions take the form `<yourVersion>-<pathSlug>.<timestamp>`. The slug is derived from the
+publishing directory's path, which a version cannot hold whole, and it is what keeps two checkouts of
+one package from landing on the same version. You never have to type it: every command takes a path.
 
 ```json
 {
@@ -253,7 +258,7 @@ so two checkouts of one repository each get their own entry:
     "@aneuhold/core-ts-lib": {
       "/path/to/core-ts-lib": {
         "originalVersion": "1.2.3",
-        "currentVersion": "1.2.3-20250526123456789",
+        "currentVersion": "1.2.3-pa1b2c3d4.20250526123456789",
         "subscribers": [
           {
             "subscriberPath": "/path/to/consumer-project-1",
@@ -270,7 +275,7 @@ so two checkouts of one repository each get their own entry:
     "@aneuhold/be-ts-lib": {
       "/path/to/be-ts-lib": {
         "originalVersion": "2.1.0",
-        "currentVersion": "2.1.0-20250526134567890",
+        "currentVersion": "2.1.0-pf9e8d7c6.20250526134567890",
         "subscribers": [
           {
             "subscriberPath": "/path/to/consumer-project-3",
