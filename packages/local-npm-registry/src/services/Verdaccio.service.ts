@@ -13,7 +13,7 @@ import { DEFAULT_CONFIG, type LocalNpmConfig } from '../types/LocalNpmConfig.js'
 import { PACKAGE_MANAGER_INFO, PackageManager } from '../types/PackageManager.js';
 import { VERDACCIO_DB_FILE_NAME, isVerdaccioDb } from '../types/VerdaccioDb.js';
 import { ConfigService } from './Config.service.js';
-import { MutexService } from './Mutex.service.js';
+import { MutexLockName, MutexService } from './Mutex.service.js';
 import { NpmrcService } from './Npmrc.service.js';
 import { PackageJsonService } from './PackageJson.service.js';
 
@@ -69,7 +69,7 @@ export class VerdaccioService {
 
     try {
       // Acquire mutex lock before starting Verdaccio
-      await MutexService.acquireLock();
+      await MutexService.acquireLock(MutexLockName.Verdaccio);
 
       const config = await ConfigService.loadConfig();
       const port = config.registryPort || DEFAULT_CONFIG.registryPort;
@@ -86,7 +86,7 @@ export class VerdaccioService {
 
       // Release mutex lock if we acquired it but failed to start
       try {
-        await MutexService.releaseLock();
+        await MutexService.releaseLock(MutexLockName.Verdaccio);
       } catch (releaseError) {
         DR.logger.error(
           `Failed to release mutex lock after startup failure: ${String(releaseError)}`
@@ -120,7 +120,7 @@ export class VerdaccioService {
             this.#verdaccioServer = null;
 
             // Release mutex lock after stopping Verdaccio
-            MutexService.releaseLock()
+            MutexService.releaseLock(MutexLockName.Verdaccio)
               .then(() => {
                 DR.logger.info('Verdaccio mutex lock released successfully');
                 resolve();

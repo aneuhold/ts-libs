@@ -5,7 +5,7 @@ import path from 'path';
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TestProjectUtils } from '../../../test-utils/TestProjectUtils.js';
 import { PACKAGE_MANAGER_INFO, PackageManager } from '../../types/PackageManager.js';
-import { MutexService } from '../Mutex.service.js';
+import { MutexLockName, MutexService } from '../Mutex.service.js';
 import { VerdaccioService } from '../Verdaccio.service.js';
 import { PackageManagerService } from './PackageManager.service.js';
 
@@ -51,7 +51,7 @@ describe('Unit Tests', () => {
     testId = randomUUID().slice(0, 8);
     // Ensure clean mutex state for each test
     try {
-      await MutexService.forceReleaseLock();
+      await MutexService.forceReleaseLock(MutexLockName.Verdaccio);
     } catch {
       // Ignore errors if no lock exists or server wasn't running
     }
@@ -61,7 +61,7 @@ describe('Unit Tests', () => {
     await TestProjectUtils.cleanupTestInstance();
     // Clean up mutex lock after each test
     try {
-      await MutexService.forceReleaseLock();
+      await MutexService.forceReleaseLock(MutexLockName.Verdaccio);
       await VerdaccioService.stop();
     } catch {
       // Ignore errors during cleanup
