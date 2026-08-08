@@ -22,9 +22,10 @@ export class CommandService {
    * Implements the 'local-npm subscribe <package-name>' command.
    *
    * @param packageName - Name of the package to subscribe to
+   * @param packagePath - Directory the package is published from, which is required when it is published from several
    */
-  static async subscribe(packageName: string): Promise<void> {
-    return SubscribeCommand.execute(packageName);
+  static async subscribe(packageName: string, packagePath?: string): Promise<void> {
+    return SubscribeCommand.execute(packageName, packagePath);
   }
 
   /**

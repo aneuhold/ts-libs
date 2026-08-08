@@ -194,7 +194,7 @@ the five other watchers stay idle throughout and none of them is notified.
 it and nothing depends on it through `dependencies`, so the walk drops it. That leaves five publishes
 before the install starts, roughly 1.9 seconds of packing at ~370ms each, for one keystroke.
 
-## 6. Two checkouts of ts-libs at once
+## 6. Two copies of ts-libs publishing at once
 
 **New here:** one package name published from two directories. This is a separate axis from the
 cascade, and composes with all of the above.
@@ -236,11 +236,11 @@ flowchart TD
     PB -.->|"never touches"| CA
 ```
 
-Each directory gets its own slug, version namespace, dist tag, and subscriber list. A publish updates
+Each directory gets its own slug, version namespace, and subscriber list. A publish updates
 only the consumers bound to the directory it ran from, and pruning removes only that directory's old
 versions.
 
 The two publishes still serialize on the Verdaccio lock, so the second waits rather than failing, but
 neither can overwrite or delete what the other produced. Each also runs its own cascade, over its own
-copy of the graph, resolved to its own checkout by
+copy of the graph, resolved to its own publishing directory by
 [segment-wise path matching](./local-npm-registry-hardening.md).

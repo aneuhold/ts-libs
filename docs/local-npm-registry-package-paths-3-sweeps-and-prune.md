@@ -48,7 +48,7 @@ and returns a boolean, so nothing in that array can reject.
 
 Dead subscriber records are handled during publish, so this is only about dead publishing paths, and
 prune stays a command of its own. Nothing else walks every path: publish runs from `cwd`, which by
-definition exists, so a deleted checkout is never visited again and leaves its consumers pinned to
+definition exists, so a deleted publishing directory is never visited again and leaves its consumers pinned to
 versions that can never resolve. `clear-store` is the one caller that gets to invoke it without being
 asked, because a command already committed to discarding the whole store is committed to rewriting
 consumer `package.json` files and running installs anyway. Anywhere else that repair is too

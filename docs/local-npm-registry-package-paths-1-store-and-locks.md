@@ -8,8 +8,8 @@ between processes, lock acquisition that waits instead of timing out, and the ve
 carries the publishing directory. It ends with every caller migrated onto the new store API, so the
 package builds and the existing suite passes.
 
-Two checkouts get distinct versions after this, but they still share one dist tag, so they still
-overwrite each other there. Part 2 fixes that.
+Two publishing directories get distinct versions after this, but a publish still deletes the whole
+package from the registry first, so they still overwrite each other there. Part 2 fixes that.
 
 Everything happens inside `packages/local-npm-registry`.
 
@@ -149,7 +149,7 @@ through `updatePackageEntry`, and persists before touching subscribers so an ins
 partway still leaves the published version recorded.
 
 **`src/commands/PublishCommand.ts`**: resolves the path from `process.cwd()` and reads that path's
-entry, so `originalVersion` and the subscriber list come from this checkout rather than whichever
+entry, so `originalVersion` and the subscriber list come from this directory rather than whichever
 published last.
 
 **`src/commands/SubscribeCommand.ts`**: resolves the publishing path with `getPackagePath`. Part 2
@@ -215,8 +215,8 @@ Run `/changelog` before merging so `CHANGELOG.md` picks the branch up.
 
 ## What this part leaves
 
-- The dist tag is still the shared `local`, so two checkouts still overwrite each other there. Part 2.
-- `publishPackage` still deletes the whole package from the registry before publishing. Part 2.
+- `publishPackage` still deletes the whole package from the registry before publishing, so two
+  publishing directories still overwrite each other there. Part 2.
 - `subscribe` and `unpublish` have no `--path`, so a package with two publishing paths can only be
   reported, not chosen, even though the store resolves an explicit path already. Parts 2 and 3.
 - Nothing walks dead publishing directories. Part 3.

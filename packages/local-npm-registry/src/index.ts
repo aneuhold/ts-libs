@@ -45,10 +45,14 @@ program
   .command('subscribe')
   .description('Subscribe to a package and install its latest timestamp version')
   .argument('<package-name>', 'The name of the package to subscribe to')
-  .action(async (packageName: string) => {
+  .option(
+    '--path <path>',
+    'The directory the package is published from, which is required when it is published from several'
+  )
+  .action(async (packageName: string, options: { path?: string }) => {
     try {
       DR.logger.setVerboseLogging(Boolean(program.getOptionValue('verbose')));
-      await CommandService.subscribe(packageName);
+      await CommandService.subscribe(packageName, options.path);
     } catch (error) {
       DR.logger.error(`Failed to subscribe: ${String(error)}`);
       process.exit(1);

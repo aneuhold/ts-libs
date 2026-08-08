@@ -141,7 +141,7 @@ The nodes are the `(name, path)` pairs already in the store, which is every pack
 and nothing else. `pnpm watch` fills it at startup, since nodemon runs its exec command immediately
 rather than only on change. The window before a watcher's first publish closes itself: a dependent
 publishing before its dependency is re-pinned by that dependency's cascade a moment later, and one
-publishing after is pinned by its own pre-pack pin check. With two checkouts of one package
+publishing after is pinned by its own pre-pack pin check. With two publishing directories of one package
 registered, a dependency name resolves to the path sharing the longest **segment-wise** common
 ancestor with the dependent, so `~/dev/ts-libs` cannot match `~/dev/ts-libs-hotfix` on a string
 prefix, and a tie warns and drops the edge rather than guessing.
@@ -219,8 +219,9 @@ Transient pins left behind by a cascade killed partway are the journal's problem
 
 ## Problem 4: one package published from two directories at once
 
-Two checkouts of one repository publishing and being consumed at the same time. Nothing depends on
-git, so a second clone behaves like a `git worktree`.
+Two copies of one package publishing and being consumed at the same time. Nothing looks at git, so
+how the second directory got there does not matter: a clone, a worktree, and a copied directory are
+all the same thing here.
 
 [`local-npm-registry-package-paths-plan.md`](./local-npm-registry-package-paths-plan.md) carries the
 design and the steps. It also owns the store concurrency, write error, and invalid store items, since
