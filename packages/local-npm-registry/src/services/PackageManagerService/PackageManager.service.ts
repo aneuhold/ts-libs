@@ -1,5 +1,6 @@
 import fs from 'fs-extra';
 import path from 'path';
+import type { LocalPackageStore } from '../../types/LocalPackageStore.js';
 import { PACKAGE_MANAGER_INFO, PackageManager } from '../../types/PackageManager.js';
 import { PackageJsonService } from '../PackageJson.service.js';
 import { PackageManagerCliService } from './PackageManagerCli.service.js';
@@ -76,13 +77,23 @@ export class PackageManagerService {
    * Runs install command in a project directory using the specified registry.
    *
    * @param projectPath - Path to the project directory
+   * @param store - The store to read the project's subscriptions from
    * @param registryUrl - The registry URL to use for installation
    */
-  static async runInstallWithRegistry(projectPath: string, registryUrl?: string): Promise<void> {
+  static async runInstallWithRegistry(
+    projectPath: string,
+    store: LocalPackageStore,
+    registryUrl?: string
+  ): Promise<void> {
     // Detect the package manager based on lock files in the target project
     const packageManager = await PackageManagerService.detectPackageManager(projectPath);
 
-    await PackageManagerCliService.runInstallWithRegistry(projectPath, packageManager, registryUrl);
+    await PackageManagerCliService.runInstallWithRegistry(
+      projectPath,
+      packageManager,
+      store,
+      registryUrl
+    );
   }
 
   /**

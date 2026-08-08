@@ -5,6 +5,7 @@ import { TestProjectUtils } from '../../test-utils/TestProjectUtils.js';
 import { LocalPackageStoreService } from '../services/LocalPackageStore.service.js';
 import { MutexService } from '../services/Mutex.service.js';
 import { VerdaccioService } from '../services/Verdaccio.service.js';
+import { MutexLockName } from '../types/MutexLockName.js';
 import { ClearStoreCommand } from './ClearStoreCommand.js';
 import { PublishCommand } from './PublishCommand.js';
 
@@ -36,7 +37,9 @@ describe('Integration Tests', () => {
   afterAll(async () => {
     await TestProjectUtils.cleanupGlobalTempDir();
     const testPackagePattern = /^@test-[a-fA-F0-9]{8}\//;
-    await LocalPackageStoreService.removePackagesByPattern(testPackagePattern);
+    await TestProjectUtils.mutateStore((store) =>
+      LocalPackageStoreService.removePackagesByPattern(store, testPackagePattern)
+    );
   });
 
   // Per-test setup/teardown for unique test instances
@@ -46,7 +49,7 @@ describe('Integration Tests', () => {
     testId = randomUUID().slice(0, 8);
     // Ensure clean mutex state for each test
     try {
-      await MutexService.forceReleaseLock();
+      await MutexService.forceReleaseLock(MutexLockName.Verdaccio);
     } catch {
       // Ignore errors if no lock exists or server wasn't running
     }
@@ -56,7 +59,7 @@ describe('Integration Tests', () => {
     await TestProjectUtils.cleanupTestInstance();
     // Clean up mutex lock after each test
     try {
-      await MutexService.forceReleaseLock();
+      await MutexService.forceReleaseLock(MutexLockName.Verdaccio);
       await VerdaccioService.stop();
     } catch {
       // Ignore errors during cleanup
@@ -82,11 +85,16 @@ describe('Integration Tests', () => {
     await PublishCommand.execute();
 
     // Verify packages exist in store
-    let package1Entry = await LocalPackageStoreService.getPackageEntry(
-      `@test-${testId}/clear-test-1`
+    let store = await LocalPackageStoreService.getStore();
+    let package1Entry = LocalPackageStoreService.getPackageEntry(
+      store,
+      `@test-${testId}/clear-test-1`,
+      package1Path
     );
-    let package2Entry = await LocalPackageStoreService.getPackageEntry(
-      `@test-${testId}/clear-test-2`
+    let package2Entry = LocalPackageStoreService.getPackageEntry(
+      store,
+      `@test-${testId}/clear-test-2`,
+      package2Path
     );
     expect(package1Entry).toBeTruthy();
     expect(package2Entry).toBeTruthy();
@@ -95,8 +103,17 @@ describe('Integration Tests', () => {
     await ClearStoreCommand.execute();
 
     // Verify packages are removed from store
-    package1Entry = await LocalPackageStoreService.getPackageEntry(`@test-${testId}/clear-test-1`);
-    package2Entry = await LocalPackageStoreService.getPackageEntry(`@test-${testId}/clear-test-2`);
+    store = await LocalPackageStoreService.getStore();
+    package1Entry = LocalPackageStoreService.getPackageEntry(
+      store,
+      `@test-${testId}/clear-test-1`,
+      package1Path
+    );
+    package2Entry = LocalPackageStoreService.getPackageEntry(
+      store,
+      `@test-${testId}/clear-test-2`,
+      package2Path
+    );
     expect(package1Entry).toBeNull();
     expect(package2Entry).toBeNull();
 

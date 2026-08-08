@@ -7,6 +7,7 @@ import { TestProjectUtils } from '../../test-utils/TestProjectUtils.js';
 import { LocalPackageStoreService } from '../services/LocalPackageStore.service.js';
 import { MutexService } from '../services/Mutex.service.js';
 import { VerdaccioService } from '../services/Verdaccio.service.js';
+import { MutexLockName } from '../types/MutexLockName.js';
 import { PackageManager } from '../types/PackageManager.js';
 import { UnpublishCommand } from './UnpublishCommand.js';
 
@@ -38,7 +39,9 @@ describe('Integration Tests', () => {
   afterAll(async () => {
     await TestProjectUtils.cleanupGlobalTempDir();
     const testPackagePattern = /^@test-[a-fA-F0-9]{8}\//;
-    await LocalPackageStoreService.removePackagesByPattern(testPackagePattern);
+    await TestProjectUtils.mutateStore((store) =>
+      LocalPackageStoreService.removePackagesByPattern(store, testPackagePattern)
+    );
   });
 
   // Per-test setup/teardown for unique test instances
@@ -48,7 +51,7 @@ describe('Integration Tests', () => {
     testId = randomUUID().slice(0, 8);
     // Ensure clean mutex state for each test
     try {
-      await MutexService.forceReleaseLock();
+      await MutexService.forceReleaseLock(MutexLockName.Verdaccio);
     } catch {
       // Ignore errors if no lock exists or server wasn't running
     }
@@ -58,7 +61,7 @@ describe('Integration Tests', () => {
     await TestProjectUtils.cleanupTestInstance();
     // Clean up mutex lock after each test
     try {
-      await MutexService.forceReleaseLock();
+      await MutexService.forceReleaseLock(MutexLockName.Verdaccio);
       await VerdaccioService.stop();
     } catch {
       // Ignore errors during cleanup
@@ -131,15 +134,22 @@ describe('Integration Tests', () => {
 
     // Verify subscription is active before unpublishing
     let subscriberPackageJson = await TestProjectUtils.readPackageJson(subscriberPath);
-    const timestampPattern = new RegExp(`^${version.replace(/\./g, '\\.')}-\\d{17}$`);
+    const timestampPattern = new RegExp(
+      `^${version.replace(/\./g, '\\.')}-p[0-9a-f]{8}\\.\\d{17}$`
+    );
     expect(subscriberPackageJson.dependencies?.[packageName]).toMatch(timestampPattern);
 
     // Unpublish from publisher directory (current directory)
     TestProjectUtils.changeToProject(publisherPath);
     await UnpublishCommand.execute();
 
-    // Verify package was removed from local store
-    const packageEntry = await LocalPackageStoreService.getPackageEntry(packageName);
+    // Verify the publishing directory was removed from the local store
+    const store = await LocalPackageStoreService.getStore();
+    const packageEntry = LocalPackageStoreService.getPackageEntry(
+      store,
+      packageName,
+      publisherPath
+    );
     expect(packageEntry).toBeNull();
 
     // Verify subscriber was reset to original version
@@ -180,8 +190,13 @@ describe('Integration Tests', () => {
     // Unpublish by package name
     await UnpublishCommand.execute(packageName);
 
-    // Verify package was removed from local store
-    const packageEntry = await LocalPackageStoreService.getPackageEntry(packageName);
+    // Verify the publishing directory was removed from the local store
+    const store = await LocalPackageStoreService.getStore();
+    const packageEntry = LocalPackageStoreService.getPackageEntry(
+      store,
+      packageName,
+      publisherPath
+    );
     expect(packageEntry).toBeNull();
 
     // Verify subscriber was reset to original version

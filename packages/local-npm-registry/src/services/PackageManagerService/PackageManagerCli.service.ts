@@ -69,7 +69,7 @@ export class PackageManagerCliService {
    *
    * @param projectPath - Path to the project directory
    * @param packageManager - The package manager to run
-   * @param store - The store holding the subscriptions whose scopes are redirected
+   * @param store - The store to read the project's subscriptions from
    * @param registryUrl - The registry URL to use for installation
    */
   static async runInstallWithRegistry(
@@ -99,7 +99,7 @@ export class PackageManagerCliService {
    * @param packageManager The package manager that runs the command
    * @param registryUrl The registry URL that packages have to resolve from
    * @param projectPath The path to the project directory
-   * @param store The store holding the subscriptions whose scopes are redirected
+   * @param store The store to read the project's subscriptions from
    */
   static async #buildRegistryOverride(
     packageManager: PackageManager,
@@ -124,7 +124,7 @@ export class PackageManagerCliService {
    * scopes of every package the project is subscribed to.
    *
    * @param projectPath The path to the project directory
-   * @param store The store holding the project's subscriptions
+   * @param store The store to read the project's subscriptions from
    */
   static #resolvePackageOrganizations(projectPath: string, store: LocalPackageStore): string[] {
     const subscriptions = LocalPackageStoreService.getSubscriptionsForSubscriber(

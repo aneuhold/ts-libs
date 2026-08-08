@@ -1,9 +1,10 @@
 import { DR } from '@aneuhold/core-ts-lib';
-import {
-  LocalPackageStoreService,
-  type PackageEntry,
-  type PackageSubscriber
-} from './LocalPackageStore.service.js';
+import type {
+  LocalPackageStore,
+  PackageEntry,
+  PackageSubscriber
+} from '../types/LocalPackageStore.js';
+import { LocalPackageStoreService } from './LocalPackageStore.service.js';
 import { PackageJsonService } from './PackageJson.service.js';
 import { PackageManagerService } from './PackageManagerService/PackageManager.service.js';
 import { VerdaccioService } from './Verdaccio.service.js';
@@ -13,63 +14,50 @@ import { VerdaccioService } from './Verdaccio.service.js';
  */
 export class CommandUtilService {
   /**
-   * Generates a timestamp version by appending current timestamp to the original version.
-   * If the version already contains a timestamp, it replaces the existing timestamp.
-   *
-   * @param originalVersion - The original version string (may already contain a timestamp)
-   */
-  static generateTimestampVersion(originalVersion: string): string {
-    const timestamp = new Date()
-      .toISOString()
-      .replace(/[-:T.]/g, '')
-      .slice(0, 17); // Include milliseconds (YYYYMMDDHHMMssSSS)
-
-    if (LocalPackageStoreService.timestampPattern.test(originalVersion)) {
-      // Replace existing timestamp with new one
-      return originalVersion.replace(LocalPackageStoreService.timestampPattern, `-${timestamp}`);
-    }
-
-    // No existing timestamp, append new one
-    return `${originalVersion}-${timestamp}`;
-  }
-
-  /**
    * Publishes a package with a fresh timestamp version and updates all subscribers.
    * This unified method is used by both publish and subscribe commands.
    *
+   * The caller has to hold `MutexLockName.Store` across the read that produced
+   * the store and this call, since the entry written here replaces whatever the
+   * store holds for the package path.
+   *
+   * @param store - The store the published entry is written into
    * @param packageName - Name of the package to publish
-   * @param packageRootPath - Root path of the package to publish
+   * @param packagePath - Path of the package to publish
    * @param originalVersion - Original version from package.json
    * @param existingSubscribers - Existing subscribers to preserve (empty array for new packages)
    * @param additionalSubscriber - Optional additional subscriber to add (used by subscribe command)
    * @param additionalPublishArgs - Additional arguments to pass to the npm publish command
    */
   static async publishAndUpdateSubscribers(
+    store: LocalPackageStore,
     packageName: string,
-    packageRootPath: string,
+    packagePath: string,
     originalVersion: string,
     existingSubscribers: PackageSubscriber[] = [],
     additionalSubscriber?: PackageSubscriber,
     additionalPublishArgs: string[] = []
   ): Promise<string> {
     // Generate fresh timestamp version
-    const timestampVersion = this.generateTimestampVersion(originalVersion);
+    const timestampVersion = LocalPackageStoreService.generateTimestampVersion(
+      originalVersion,
+      packagePath
+    );
 
     try {
       DR.logger.info(`Publishing ${packageName}@${timestampVersion} to Verdaccio`);
 
       // Update package.json with timestamp version
-      await PackageJsonService.updatePackageVersion(packageRootPath, packageName, timestampVersion);
+      await PackageJsonService.updatePackageVersion(packagePath, packageName, timestampVersion);
 
       // Publish to Verdaccio registry
-      await VerdaccioService.publishPackage(packageRootPath, additionalPublishArgs);
+      await VerdaccioService.publishPackage(packagePath, additionalPublishArgs);
 
       // Create/update local store entry
       const entry: PackageEntry = {
         originalVersion,
         currentVersion: timestampVersion,
         subscribers: [...existingSubscribers],
-        packageRootPath,
         publishArgs: additionalPublishArgs.length > 0 ? [...additionalPublishArgs] : undefined
       };
 
@@ -83,42 +71,42 @@ export class CommandUtilService {
         entry.subscribers.push(additionalSubscriber);
       }
 
-      await LocalPackageStoreService.updatePackageEntry(packageName, entry);
+      // Persisted before the subscribers are touched, so an install that fails
+      // partway still leaves the published version recorded
+      LocalPackageStoreService.updatePackageEntry(store, packageName, packagePath, entry);
+      await LocalPackageStoreService.writeStore(store);
 
-      // Update all subscribers in parallel
+      // Update all subscribers in parallel. Every subscriber is attempted before
+      // any failure is reported, so one broken consumer cannot hide the rest
       if (entry.subscribers.length > 0) {
         DR.logger.info(`Updating ${entry.subscribers.length} subscriber(s)`);
 
-        const updatePromises = entry.subscribers.map(async (subscriber) => {
-          try {
+        const results = await Promise.allSettled(
+          entry.subscribers.map(async ({ subscriberPath }) => {
             await PackageJsonService.updatePackageVersion(
-              subscriber.subscriberPath,
+              subscriberPath,
               packageName,
               timestampVersion
             );
-            await PackageManagerService.runInstallWithRegistry(subscriber.subscriberPath);
-            return { success: true, subscriber };
-          } catch (error) {
-            DR.logger.error(
-              `Failed to update subscriber ${subscriber.subscriberPath}: ${String(error)}`
-            );
-            return { success: false, subscriber, error };
-          }
-        });
-
-        // Execute all updates in parallel
-        const results = await Promise.allSettled(updatePromises);
-        const successCount = results.filter(
-          (result) => result.status === 'fulfilled' && result.value.success
-        ).length;
-
-        DR.logger.info(
-          `Completed parallel subscriber updates: ${successCount}/${entry.subscribers.length} successful`
+            await PackageManagerService.runInstallWithRegistry(subscriberPath, store);
+          })
         );
+
+        const failures = results.flatMap((result, index) =>
+          result.status === 'rejected'
+            ? [`  ${entry.subscribers[index].subscriberPath}: ${String(result.reason)}`]
+            : []
+        );
+
+        if (failures.length > 0) {
+          throw new Error(
+            `Published ${packageName}@${timestampVersion}, but ${failures.length} of ${entry.subscribers.length} subscriber(s) could not be updated:\n${failures.join('\n')}`
+          );
+        }
       }
 
       // Restore original version in package.json after publishing
-      await PackageJsonService.updatePackageVersion(packageRootPath, packageName, originalVersion);
+      await PackageJsonService.updatePackageVersion(packagePath, packageName, originalVersion);
 
       DR.logger.info(`Successfully published ${packageName}@${timestampVersion}`);
 
@@ -126,11 +114,7 @@ export class CommandUtilService {
     } catch (error) {
       // Ensure we restore the original version even if publishing fails
       try {
-        await PackageJsonService.updatePackageVersion(
-          packageRootPath,
-          packageName,
-          originalVersion
-        );
+        await PackageJsonService.updatePackageVersion(packagePath, packageName, originalVersion);
       } catch (restoreError) {
         DR.logger.error(
           `Failed to restore original version after publish error: ${String(restoreError)}`

@@ -1,8 +1,10 @@
 import { DR } from '@aneuhold/core-ts-lib';
 import { LocalPackageStoreService } from '../services/LocalPackageStore.service.js';
+import { MutexService } from '../services/Mutex.service.js';
 import { PackageJsonService } from '../services/PackageJson.service.js';
 import { PackageManagerService } from '../services/PackageManagerService/PackageManager.service.js';
 import { VerdaccioService } from '../services/Verdaccio.service.js';
+import { MutexLockName } from '../types/MutexLockName.js';
 
 /**
  * Implements the 'local-npm unpublish <package-name>' command.
@@ -26,42 +28,47 @@ export class UnpublishCommand {
       targetPackageName = packageInfo.name;
     }
 
-    const entry = await LocalPackageStoreService.getPackageEntry(targetPackageName);
-    if (!entry) {
-      throw new Error(`Package '${targetPackageName}' not found in local registry`);
-    }
+    await MutexService.withLock(MutexLockName.Store, async () => {
+      const store = await LocalPackageStoreService.getStore();
+      const packagePath = LocalPackageStoreService.getPackagePath(store, targetPackageName);
+      const entry = LocalPackageStoreService.getPackageEntry(store, targetPackageName, packagePath);
+      if (!entry) {
+        throw new Error(`Package '${targetPackageName}' not found in local registry`);
+      }
 
-    // Reset all subscribers to original version
-    if (entry.subscribers.length > 0) {
-      DR.logger.info(`Resetting ${entry.subscribers.length} subscriber(s) to original version`);
+      // Reset all subscribers to original version
+      if (entry.subscribers.length > 0) {
+        DR.logger.info(`Resetting ${entry.subscribers.length} subscriber(s) to original version`);
 
-      for (const subscriber of entry.subscribers) {
-        try {
-          await PackageJsonService.updatePackageVersion(
-            subscriber.subscriberPath,
-            targetPackageName,
-            subscriber.originalSpecifier
-          );
-          await PackageManagerService.runInstall(subscriber.subscriberPath);
-        } catch (error) {
-          DR.logger.error(
-            `Failed to reset subscriber ${subscriber.subscriberPath}: ${String(error)}`
-          );
+        for (const subscriber of entry.subscribers) {
+          try {
+            await PackageJsonService.updatePackageVersion(
+              subscriber.subscriberPath,
+              targetPackageName,
+              subscriber.originalSpecifier
+            );
+            await PackageManagerService.runInstall(subscriber.subscriberPath);
+          } catch (error) {
+            DR.logger.error(
+              `Failed to reset subscriber ${subscriber.subscriberPath}: ${String(error)}`
+            );
+          }
         }
       }
-    }
 
-    // Reset current package.json to original version if we're in the package directory
-    if (!packageName) {
-      await PackageJsonService.updatePackageVersion(
-        process.cwd(),
-        targetPackageName,
-        entry.originalVersion
-      );
-    }
+      // Reset current package.json to original version if we're in the package directory
+      if (!packageName) {
+        await PackageJsonService.updatePackageVersion(
+          process.cwd(),
+          targetPackageName,
+          entry.originalVersion
+        );
+      }
 
-    // Remove package from local store
-    await LocalPackageStoreService.removePackage(targetPackageName);
+      // Remove the publishing directory from the local store
+      LocalPackageStoreService.removePackagePath(store, targetPackageName, packagePath);
+      await LocalPackageStoreService.writeStore(store);
+    });
 
     // Unpublish from Verdaccio
     await VerdaccioService.unpublishPackage(targetPackageName);

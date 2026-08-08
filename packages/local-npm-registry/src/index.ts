@@ -123,9 +123,7 @@ program
             continue;
           }
           const currentMarker = packagePath === currentPath ? ' (current directory)' : '';
-          DR.logger.info(
-            `  ${LocalPackageStoreService.getPathSlug(packagePath)}  ${packagePath}${currentMarker}`
-          );
+          DR.logger.info(`  ${packagePath}${currentMarker}`);
           DR.logger.info(`    Original Version: ${entry.originalVersion}`);
           DR.logger.info(`    Current Version: ${entry.currentVersion}`);
           if (entry.publishArgs && entry.publishArgs.length > 0) {

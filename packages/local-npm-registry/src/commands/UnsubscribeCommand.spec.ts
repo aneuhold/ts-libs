@@ -5,6 +5,7 @@ import { TestProjectUtils } from '../../test-utils/TestProjectUtils.js';
 import { LocalPackageStoreService } from '../services/LocalPackageStore.service.js';
 import { MutexService } from '../services/Mutex.service.js';
 import { VerdaccioService } from '../services/Verdaccio.service.js';
+import { MutexLockName } from '../types/MutexLockName.js';
 import { PackageManager } from '../types/PackageManager.js';
 import { PublishCommand } from './PublishCommand.js';
 import { UnsubscribeCommand } from './UnsubscribeCommand.js';
@@ -37,7 +38,9 @@ describe('Integration Tests', () => {
   afterAll(async () => {
     await TestProjectUtils.cleanupGlobalTempDir();
     const testPackagePattern = /^@test-[a-fA-F0-9]{8}\//;
-    await LocalPackageStoreService.removePackagesByPattern(testPackagePattern);
+    await TestProjectUtils.mutateStore((store) =>
+      LocalPackageStoreService.removePackagesByPattern(store, testPackagePattern)
+    );
   });
 
   // Per-test setup/teardown for unique test instances
@@ -47,7 +50,7 @@ describe('Integration Tests', () => {
     testId = randomUUID().slice(0, 8);
     // Ensure clean mutex state for each test
     try {
-      await MutexService.forceReleaseLock();
+      await MutexService.forceReleaseLock(MutexLockName.Verdaccio);
     } catch {
       // Ignore errors if no lock exists or server wasn't running
     }
@@ -57,7 +60,7 @@ describe('Integration Tests', () => {
     await TestProjectUtils.cleanupTestInstance();
     // Clean up mutex lock after each test
     try {
-      await MutexService.forceReleaseLock();
+      await MutexService.forceReleaseLock(MutexLockName.Verdaccio);
       await VerdaccioService.stop();
     } catch {
       // Ignore errors during cleanup
@@ -129,7 +132,7 @@ describe('Integration Tests', () => {
   ) => {
     // Create and setup publisher and subscriber
     const packageName = `@test-${testId}/${packageManager}-unsubscribe-specific`;
-    const { subscriberPath } = await TestProjectUtils.publishAndSubscribe(
+    const { publisherPath, subscriberPath } = await TestProjectUtils.publishAndSubscribe(
       packageName,
       `${packageName}-subscriber`,
       packageManager,
@@ -138,7 +141,9 @@ describe('Integration Tests', () => {
 
     // Verify subscription is active (package has timestamp version)
     let subscriberPackageJson = await TestProjectUtils.readPackageJson(subscriberPath);
-    const timestampPattern = new RegExp(`^${version.replace(/\./g, '\\.')}-\\d{17}$`);
+    const timestampPattern = new RegExp(
+      `^${version.replace(/\./g, '\\.')}-p[0-9a-f]{8}\\.\\d{17}$`
+    );
     expect(subscriberPackageJson.dependencies?.[packageName]).toMatch(timestampPattern);
 
     // Unsubscribe from the package
@@ -146,7 +151,12 @@ describe('Integration Tests', () => {
     await UnsubscribeCommand.execute(packageName);
 
     // Verify package entry no longer has this subscriber
-    const packageEntry = await LocalPackageStoreService.getPackageEntry(packageName);
+    const store = await LocalPackageStoreService.getStore();
+    const packageEntry = LocalPackageStoreService.getPackageEntry(
+      store,
+      packageName,
+      publisherPath
+    );
     expect(packageEntry?.subscribers.some((s) => s.subscriberPath === subscriberPath)).toBe(false);
 
     // Verify subscriber's package.json was reset to original version

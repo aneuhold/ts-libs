@@ -4,8 +4,10 @@ import fs from 'fs-extra';
 import path from 'path';
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TestProjectUtils } from '../../../test-utils/TestProjectUtils.js';
+import { MutexLockName } from '../../types/MutexLockName.js';
 import { PACKAGE_MANAGER_INFO, PackageManager } from '../../types/PackageManager.js';
-import { MutexLockName, MutexService } from '../Mutex.service.js';
+import { LocalPackageStoreService } from '../LocalPackageStore.service.js';
+import { MutexService } from '../Mutex.service.js';
 import { VerdaccioService } from '../Verdaccio.service.js';
 import { PackageManagerService } from './PackageManager.service.js';
 
@@ -171,7 +173,11 @@ describe('Unit Tests', () => {
       // This will likely fail since the custom registry doesn't exist,
       // but we can verify the configuration was created with the right URL
       try {
-        await PackageManagerService.runInstallWithRegistry(packagePath, customRegistryUrl);
+        await PackageManagerService.runInstallWithRegistry(
+          packagePath,
+          await LocalPackageStoreService.getStore(),
+          customRegistryUrl
+        );
       } catch {
         // Expected to fail since registry doesn't exist
       }
@@ -197,7 +203,11 @@ describe('Unit Tests', () => {
       const badRegistryUrl = 'http://localhost:9999';
 
       try {
-        await PackageManagerService.runInstallWithRegistry(packagePath, badRegistryUrl);
+        await PackageManagerService.runInstallWithRegistry(
+          packagePath,
+          await LocalPackageStoreService.getStore(),
+          badRegistryUrl
+        );
       } catch {
         // Expected to fail
       }
@@ -218,7 +228,10 @@ describe('Unit Tests', () => {
       const detectSpy = vi.spyOn(PackageManagerService, 'detectPackageManager');
 
       try {
-        await PackageManagerService.runInstallWithRegistry(pnpmPath);
+        await PackageManagerService.runInstallWithRegistry(
+          pnpmPath,
+          await LocalPackageStoreService.getStore()
+        );
       } catch {
         // May fail due to missing dependencies, but that's OK for this test
       }
@@ -260,7 +273,10 @@ describe('Unit Tests', () => {
       await TestProjectUtils.createNpmrcFile(subscriberPath, npmrcContent);
 
       // Run install with registry
-      await PackageManagerService.runInstallWithRegistry(subscriberPath);
+      await PackageManagerService.runInstallWithRegistry(
+        subscriberPath,
+        await LocalPackageStoreService.getStore()
+      );
 
       // Verify install succeeded by checking that the lock file has content
       const lockFilePath = path.join(subscriberPath, PACKAGE_MANAGER_INFO[packageManager].lockFile);

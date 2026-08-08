@@ -7,6 +7,7 @@ import { TestProjectUtils } from '../../test-utils/TestProjectUtils.js';
 import { LocalPackageStoreService } from '../services/LocalPackageStore.service.js';
 import { MutexService } from '../services/Mutex.service.js';
 import { VerdaccioService } from '../services/Verdaccio.service.js';
+import { MutexLockName } from '../types/MutexLockName.js';
 import { PackageManager } from '../types/PackageManager.js';
 import { PublishCommand } from './PublishCommand.js';
 
@@ -38,7 +39,9 @@ describe('Integration Tests', () => {
   afterAll(async () => {
     await TestProjectUtils.cleanupGlobalTempDir();
     const testPackagePattern = /^@test-[a-fA-F0-9]{8}\//;
-    await LocalPackageStoreService.removePackagesByPattern(testPackagePattern);
+    await TestProjectUtils.mutateStore((store) =>
+      LocalPackageStoreService.removePackagesByPattern(store, testPackagePattern)
+    );
   });
 
   // Per-test setup/teardown for unique test instances
@@ -48,7 +51,7 @@ describe('Integration Tests', () => {
     testId = randomUUID().slice(0, 8);
     // Ensure clean mutex state for each test
     try {
-      await MutexService.forceReleaseLock();
+      await MutexService.forceReleaseLock(MutexLockName.Verdaccio);
     } catch {
       // Ignore errors if no lock exists or server wasn't running
     }
@@ -58,7 +61,7 @@ describe('Integration Tests', () => {
     await TestProjectUtils.cleanupTestInstance();
     // Clean up mutex lock after each test
     try {
-      await MutexService.forceReleaseLock();
+      await MutexService.forceReleaseLock(MutexLockName.Verdaccio);
       await VerdaccioService.stop();
     } catch {
       // Ignore errors during cleanup
@@ -78,15 +81,17 @@ describe('Integration Tests', () => {
     // Run publish command
     await PublishCommand.execute();
 
-    // Verify the package entry was created in the local store
-    const packageEntry = await LocalPackageStoreService.getPackageEntry(
-      `@test-${testId}/my-package`
+    // Verify the package entry was created in the local store under its path
+    const store = await LocalPackageStoreService.getStore();
+    const packageEntry = LocalPackageStoreService.getPackageEntry(
+      store,
+      `@test-${testId}/my-package`,
+      packagePath
     );
     expect(packageEntry).toBeTruthy();
     expect(packageEntry?.originalVersion).toBe('1.0.0');
-    expect(packageEntry?.currentVersion).toMatch(/^1\.0\.0-\d{17}$/);
+    expect(packageEntry?.currentVersion).toMatch(/^1\.0\.0-p[0-9a-f]{8}\.\d{17}$/);
     expect(packageEntry?.subscribers).toEqual([]);
-    expect(packageEntry?.packageRootPath).toBe(packagePath);
 
     // Verify the package.json was restored to original version
     const finalPackageJson = await TestProjectUtils.readPackageJson(packagePath);
@@ -95,7 +100,9 @@ describe('Integration Tests', () => {
     // Verify success was logged
     expect(DR.logger.info).toHaveBeenCalledWith(
       expect.stringMatching(
-        new RegExp(`Successfully published @test-${testId}/my-package@1\\.0\\.0-\\d{17}`)
+        new RegExp(
+          `Successfully published @test-${testId}/my-package@1\\.0\\.0-p[0-9a-f]{8}\\.\\d{17}`
+        )
       )
     );
   });
@@ -163,19 +170,28 @@ describe('Integration Tests', () => {
     TestProjectUtils.changeToProject(subscriberPath);
     // Note: We would need to import SubscribeCommand here for a complete test
     // For now, we manually add the subscriber to test republishing functionality
-    await LocalPackageStoreService.updatePackageEntry(`@test-${testId}/republish-test`, {
-      originalVersion: '1.0.0',
-      currentVersion: '1.0.0-000000000000000001', // Mock timestamp version
-      subscribers: [{ subscriberPath, originalSpecifier: '1.0.0' }],
-      packageRootPath: publisherPath
+    await TestProjectUtils.mutateStore((store) => {
+      LocalPackageStoreService.updatePackageEntry(
+        store,
+        `@test-${testId}/republish-test`,
+        publisherPath,
+        {
+          originalVersion: '1.0.0',
+          currentVersion: '1.0.0-000000000000000001', // Mock timestamp version
+          subscribers: [{ subscriberPath, originalSpecifier: '1.0.0' }]
+        }
+      );
     });
 
     TestProjectUtils.changeToProject(publisherPath);
     await PublishCommand.execute();
 
     // Verify subscriber was added
-    let packageEntry = await LocalPackageStoreService.getPackageEntry(
-      `@test-${testId}/republish-test`
+    let store = await LocalPackageStoreService.getStore();
+    let packageEntry = LocalPackageStoreService.getPackageEntry(
+      store,
+      `@test-${testId}/republish-test`,
+      publisherPath
     );
     expect(packageEntry?.subscribers.some((s) => s.subscriberPath === subscriberPath)).toBe(true);
 
@@ -183,12 +199,17 @@ describe('Integration Tests', () => {
     await PublishCommand.execute();
 
     // Verify subscriber is still there
-    packageEntry = await LocalPackageStoreService.getPackageEntry(`@test-${testId}/republish-test`);
+    store = await LocalPackageStoreService.getStore();
+    packageEntry = LocalPackageStoreService.getPackageEntry(
+      store,
+      `@test-${testId}/republish-test`,
+      publisherPath
+    );
     expect(packageEntry?.subscribers.some((s) => s.subscriberPath === subscriberPath)).toBe(true);
     expect(packageEntry?.subscribers).toHaveLength(1);
   });
 
-  it('should handle subscriber update failures gracefully', async () => {
+  it('should throw when a subscriber cannot be updated', async () => {
     // Create publisher package
     const publisherPath = await TestProjectUtils.createTestPackage(
       `@test-${testId}/error-test`,
@@ -201,27 +222,24 @@ describe('Integration Tests', () => {
     // Don't create a package.json - this will cause read errors
 
     // Manually add the bad subscriber to the package entry
-    await LocalPackageStoreService.updatePackageEntry(`@test-${testId}/error-test`, {
-      originalVersion: '1.0.0',
-      currentVersion: '1.0.0',
-      subscribers: [{ subscriberPath: badSubscriberPath, originalSpecifier: '1.0.0' }],
-      packageRootPath: publisherPath
+    await TestProjectUtils.mutateStore((store) => {
+      LocalPackageStoreService.updatePackageEntry(
+        store,
+        `@test-${testId}/error-test`,
+        publisherPath,
+        {
+          originalVersion: '1.0.0',
+          currentVersion: '1.0.0',
+          subscribers: [{ subscriberPath: badSubscriberPath, originalSpecifier: '1.0.0' }]
+        }
+      );
     });
 
     TestProjectUtils.changeToProject(publisherPath);
-    await PublishCommand.execute();
 
-    // Verify error was logged but publish continued
-    expect(DR.logger.error).toHaveBeenCalledWith(
-      expect.stringContaining(`Failed to update subscriber ${badSubscriberPath}`)
-    );
-
-    // Verify main publish still completed
-    expect(DR.logger.info).toHaveBeenCalledWith(
-      expect.stringMatching(
-        new RegExp(`Successfully published @test-${testId}/error-test@1\\.0\\.0-\\d{17}`)
-      )
-    );
+    // The package reached the registry, but the consumer never got it, so the
+    // failure has to surface rather than be counted and logged
+    await expect(PublishCommand.execute()).rejects.toThrow(badSubscriberPath);
   });
 
   it('should publish locally even with existing .npmrc org-specific registry setting', async () => {
@@ -244,14 +262,16 @@ describe('Integration Tests', () => {
     await PublishCommand.execute();
 
     // Verify the package entry was created in the local store
-    const packageEntry = await LocalPackageStoreService.getPackageEntry(
-      `@test-${testId}/npmrc-override-test`
+    const store = await LocalPackageStoreService.getStore();
+    const packageEntry = LocalPackageStoreService.getPackageEntry(
+      store,
+      `@test-${testId}/npmrc-override-test`,
+      packagePath
     );
     expect(packageEntry).toBeTruthy();
     expect(packageEntry?.originalVersion).toBe('1.0.0');
-    expect(packageEntry?.currentVersion).toMatch(/^1\.0\.0-\d{17}$/);
+    expect(packageEntry?.currentVersion).toMatch(/^1\.0\.0-p[0-9a-f]{8}\.\d{17}$/);
     expect(packageEntry?.subscribers).toEqual([]);
-    expect(packageEntry?.packageRootPath).toBe(packagePath);
 
     // Verify the .npmrc file is still there and unchanged
     const finalNpmrcContent = await fs.readFile(npmrcPath, 'utf8');
@@ -264,7 +284,9 @@ describe('Integration Tests', () => {
     // Verify success was logged
     expect(DR.logger.info).toHaveBeenCalledWith(
       expect.stringMatching(
-        new RegExp(`Successfully published @test-${testId}/npmrc-override-test@1\\.0\\.0-\\d{17}`)
+        new RegExp(
+          `Successfully published @test-${testId}/npmrc-override-test@1\\.0\\.0-p[0-9a-f]{8}\\.\\d{17}`
+        )
       )
     );
 
@@ -321,12 +343,15 @@ describe('Integration Tests', () => {
     await PublishCommand.execute();
 
     // Verify package entry exists
-    const packageEntry = await LocalPackageStoreService.getPackageEntry(
-      `@test-${testId}/${packageManager}-publisher`
+    const store = await LocalPackageStoreService.getStore();
+    const packageEntry = LocalPackageStoreService.getPackageEntry(
+      store,
+      `@test-${testId}/${packageManager}-publisher`,
+      publisherPath
     );
     expect(packageEntry?.originalVersion).toBe(version);
     expect(packageEntry?.currentVersion).toMatch(
-      new RegExp(`^${version.replace(/\./g, '\\.')}-\\d{17}$`)
+      new RegExp(`^${version.replace(/\./g, '\\.')}-p[0-9a-f]{8}\\.\\d{17}$`)
     );
   };
 });
