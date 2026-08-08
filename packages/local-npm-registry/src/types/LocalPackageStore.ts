@@ -47,3 +47,93 @@ export type PackageSubscriber = {
   /** The original version specifier that existed for the package in the subscriber's dependencies */
   originalSpecifier: string;
 };
+
+/**
+ * Type guard that checks whether an unknown value is a {@link LocalPackageStore}
+ * of a given version, validating every entry it holds rather than only its
+ * outermost shape.
+ *
+ * @param value - The value to narrow
+ * @param version - The store version the value has to declare
+ */
+export const isLocalPackageStore = (
+  value: unknown,
+  version: number
+): value is LocalPackageStore => {
+  if (typeof value !== 'object' || value === null) {
+    return false;
+  }
+  if (!('version' in value) || value.version !== version) {
+    return false;
+  }
+  if (!('packages' in value) || typeof value.packages !== 'object' || value.packages === null) {
+    return false;
+  }
+  const pathEntriesByName: unknown[] = Object.values(value.packages);
+
+  return pathEntriesByName.every((pathEntries) => isPackagePathEntries(pathEntries));
+};
+
+/**
+ * Type guard that checks whether an unknown value has the shape of
+ * {@link PackagePathEntries}.
+ *
+ * @param value - The value to narrow
+ */
+const isPackagePathEntries = (value: unknown): value is PackagePathEntries => {
+  if (typeof value !== 'object' || value === null) {
+    return false;
+  }
+  const entries: unknown[] = Object.values(value);
+  return entries.every((entry) => isPackageEntry(entry));
+};
+
+/**
+ * Type guard that checks whether an unknown value has the shape of a
+ * {@link PackageEntry}.
+ *
+ * @param value - The value to narrow
+ */
+const isPackageEntry = (value: unknown): value is PackageEntry => {
+  if (typeof value !== 'object' || value === null) {
+    return false;
+  }
+  if (!('originalVersion' in value) || typeof value.originalVersion !== 'string') {
+    return false;
+  }
+  if (!('currentVersion' in value) || typeof value.currentVersion !== 'string') {
+    return false;
+  }
+  if (
+    'publishArgs' in value &&
+    value.publishArgs !== undefined &&
+    !isStringArray(value.publishArgs)
+  ) {
+    return false;
+  }
+  if (!('subscribers' in value) || !Array.isArray(value.subscribers)) {
+    return false;
+  }
+  return value.subscribers.every((subscriber) => isPackageSubscriber(subscriber));
+};
+
+/**
+ * Type guard that checks whether an unknown value has the shape of a
+ * {@link PackageSubscriber}.
+ *
+ * @param value - The value to narrow
+ */
+const isPackageSubscriber = (value: unknown): value is PackageSubscriber => {
+  if (typeof value !== 'object' || value === null) {
+    return false;
+  }
+  return (
+    'subscriberPath' in value &&
+    typeof value.subscriberPath === 'string' &&
+    'originalSpecifier' in value &&
+    typeof value.originalSpecifier === 'string'
+  );
+};
+
+const isStringArray = (value: unknown): value is string[] =>
+  Array.isArray(value) && value.every((item) => typeof item === 'string');

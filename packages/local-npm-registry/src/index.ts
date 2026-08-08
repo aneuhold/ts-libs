@@ -112,7 +112,7 @@ program
         return;
       }
 
-      const currentPath = await LocalPackageStoreService.resolvePackagePath(process.cwd());
+      const currentPath = process.cwd();
 
       DR.logger.info('Local Registry Packages:');
       for (const [packageName, pathEntries] of Object.entries(store.packages)) {
