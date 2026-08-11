@@ -10,7 +10,7 @@ import { TestProjectUtils } from './TestProjectUtils.js';
 export async function setup(): Promise<void> {
   // Ensure no mutex lock exists before starting tests
   try {
-    await MutexService.forceReleaseAllLocks();
+    await MutexService.forceReleaseLock();
   } catch {
     // Ignore errors if no lock exists
   }
@@ -23,7 +23,7 @@ export async function teardown(): Promise<void> {
   // Clean up any remaining mutex lock and stop Verdaccio service
   try {
     await VerdaccioService.stop();
-    await MutexService.forceReleaseAllLocks();
+    await MutexService.forceReleaseLock();
 
     const testPackagePattern = /^@test-[a-fA-F0-9]{8}\//;
     await TestProjectUtils.mutateStore((store) =>
