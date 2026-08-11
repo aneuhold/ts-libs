@@ -3,7 +3,6 @@ import { execa } from 'execa';
 import fs from 'fs-extra';
 import yaml from 'js-yaml';
 import path from 'path';
-import { DEFAULT_CONFIG } from '../../types/LocalNpmConfig.js';
 import type { LocalPackageStore } from '../../types/LocalPackageStore.js';
 import {
   PACKAGE_MANAGER_INFO,
@@ -78,45 +77,59 @@ export class PackageManagerCliService {
     store: LocalPackageStore,
     registryUrl?: string
   ): Promise<void> {
-    const config = await ConfigService.loadConfig();
-    const actualRegistryUrl = registryUrl || config.registryUrl || DEFAULT_CONFIG.registryUrl;
-
-    const registryOverride = await this.#buildRegistryOverride(
-      packageManager,
-      actualRegistryUrl,
-      projectPath,
-      store
-    );
-
-    await this.runInstall(projectPath, packageManager, registryOverride);
-  }
-
-  /**
-   * Builds the arguments and environment variables that point a package manager at
-   * a registry for a single invocation, leaving every configuration file in the
-   * project untouched.
-   *
-   * @param packageManager The package manager that runs the command
-   * @param registryUrl The registry URL that packages have to resolve from
-   * @param projectPath The path to the project directory
-   * @param store The store to read the project's subscriptions from
-   */
-  static async #buildRegistryOverride(
-    packageManager: PackageManager,
-    registryUrl: string,
-    projectPath: string,
-    store: LocalPackageStore
-  ): Promise<PackageManagerRegistryOverride> {
+    const resolvedRegistryUrl = registryUrl || (await ConfigService.getLocalRegistryUrl());
     const organizations = this.#resolvePackageOrganizations(projectPath, store);
-
     if (packageManager === PackageManager.Yarn4) {
       await this.#warnOnPinnedYarn4Scopes(projectPath, organizations);
     }
 
-    return PACKAGE_MANAGER_INFO[packageManager].getRegistryOverrideCliOptions(
-      registryUrl,
-      organizations
+    await this.runInstall(
+      projectPath,
+      packageManager,
+      PACKAGE_MANAGER_INFO[packageManager].getRegistryOverrideCliOptions(
+        resolvedRegistryUrl,
+        organizations
+      )
     );
+  }
+
+  /**
+   * Publishes a package to the local registry, returning what npm wrote to
+   * stdout. We always use npm because it is universal and this doesn't depend on the project's
+   * actual package manager.
+   *
+   * @param packagePath - Path to the directory of the package to publish
+   * @param packageName - Name of the package to publish
+   * @param additionalArgs - Additional arguments to pass to the publish command
+   */
+  static async runNpmPublish(
+    packagePath: string,
+    packageName: string,
+    additionalArgs: string[] = []
+  ): Promise<string> {
+    const npmInfo = PACKAGE_MANAGER_INFO[PackageManager.Npm];
+
+    // A package carries at most one scope, which is the only one a publish has
+    // to redirect.
+    const organization = PackageJsonService.extractOrganization(packageName);
+    const scopesToRedirect = organization ? [organization] : [];
+
+    const { args: registryArgs, env } = npmInfo.getRegistryOverrideCliOptions(
+      await ConfigService.getLocalRegistryUrl(),
+      scopesToRedirect
+    );
+
+    // The redirection goes last. npm takes the last occurrence of a flag, so a
+    // caller cannot send the publish to a registry other than the local one
+    const publishArgs = ['publish', ...additionalArgs, ...registryArgs];
+
+    const { stdout } = await execa(npmInfo.command, publishArgs, {
+      cwd: packagePath,
+      env,
+      stdio: 'pipe'
+    });
+
+    return stdout;
   }
 
   /**
