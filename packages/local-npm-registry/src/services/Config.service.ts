@@ -92,6 +92,15 @@ export class ConfigService {
   }
 
   /**
+   * Gets the URL of the local registry, which is where packages are published
+   * to and resolved from.
+   */
+  static async getLocalRegistryUrl(): Promise<string> {
+    const config = await ConfigService.loadConfig();
+    return config.registryUrl || DEFAULT_CONFIG.registryUrl;
+  }
+
+  /**
    * Gets the path to the data directory where local-npm-registry stores its data.
    * This is typically a subdirectory of the configured data directory.
    *

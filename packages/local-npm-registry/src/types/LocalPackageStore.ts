@@ -49,6 +49,17 @@ export type PackageSubscriber = {
 };
 
 /**
+ * One consumer's subscription to one package, flattened out of the store so
+ * that it names both ends of the binding rather than only the consumer's.
+ */
+export type PackageSubscription = PackageSubscriber & {
+  /** The name of the package that is subscribed to */
+  packageName: string;
+  /** The absolute path of the directory that publishes the package */
+  packagePath: string;
+};
+
+/**
  * Type guard that checks whether an unknown value is a {@link LocalPackageStore},
  * validating every entry it holds rather than only its outermost shape.
  *

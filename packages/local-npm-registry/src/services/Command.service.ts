@@ -1,4 +1,5 @@
 import { ClearStoreCommand } from '../commands/ClearStoreCommand.js';
+import { PruneCommand } from '../commands/PruneCommand.js';
 import { PublishCommand } from '../commands/PublishCommand.js';
 import { SubscribeCommand } from '../commands/SubscribeCommand.js';
 import { UnpublishCommand } from '../commands/UnpublishCommand.js';
@@ -29,12 +30,25 @@ export class CommandService {
   }
 
   /**
-   * Implements the 'local-npm unpublish <package-name>' command.
+   * Implements the 'local-npm unpublish [package-name]' command.
    *
    * @param packageName - Optional package name to unpublish. If not provided, uses current directory's package.json
+   * @param packagePath - The directory to unpublish, which has to be one the package is published from
+   * @param allPaths - Unpublish every directory the package is published from
    */
-  static async unpublish(packageName?: string): Promise<void> {
-    return UnpublishCommand.execute(packageName);
+  static async unpublish(
+    packageName?: string,
+    packagePath?: string,
+    allPaths?: boolean
+  ): Promise<void> {
+    return UnpublishCommand.execute(packageName, packagePath, allPaths);
+  }
+
+  /**
+   * Implements the 'local-npm prune' command.
+   */
+  static async prune(): Promise<void> {
+    return PruneCommand.execute();
   }
 
   /**
