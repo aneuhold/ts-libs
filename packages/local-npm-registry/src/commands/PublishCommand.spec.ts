@@ -5,11 +5,13 @@ import path from 'path';
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TestProjectUtils } from '../../test-utils/TestProjectUtils.js';
 import { LocalPackageStoreService } from '../services/LocalPackageStore.service.js';
+import { LocalPackageVersionService } from '../services/LocalPackageVersion.service.js';
 import { MutexService } from '../services/Mutex.service.js';
+import { PackageManagerService } from '../services/PackageManagerService/PackageManager.service.js';
 import { VerdaccioService } from '../services/Verdaccio.service.js';
-import { MutexLockName } from '../types/MutexLockName.js';
 import { PackageManager } from '../types/PackageManager.js';
 import { PublishCommand } from './PublishCommand.js';
+import { SubscribeCommand } from './SubscribeCommand.js';
 
 vi.mock('@aneuhold/core-ts-lib', async () => {
   const actual = await vi.importActual('@aneuhold/core-ts-lib');
@@ -51,7 +53,7 @@ describe('Integration Tests', () => {
     testId = randomUUID().slice(0, 8);
     // Ensure clean mutex state for each test
     try {
-      await MutexService.forceReleaseLock(MutexLockName.Verdaccio);
+      await MutexService.forceReleaseLock();
     } catch {
       // Ignore errors if no lock exists or server wasn't running
     }
@@ -61,7 +63,7 @@ describe('Integration Tests', () => {
     await TestProjectUtils.cleanupTestInstance();
     // Clean up mutex lock after each test
     try {
-      await MutexService.forceReleaseLock(MutexLockName.Verdaccio);
+      await MutexService.forceReleaseLock();
       await VerdaccioService.stop();
     } catch {
       // Ignore errors during cleanup
@@ -90,7 +92,9 @@ describe('Integration Tests', () => {
     );
     expect(packageEntry).toBeTruthy();
     expect(packageEntry?.originalVersion).toBe('1.0.0');
-    expect(packageEntry?.currentVersion).toMatch(/^1\.0\.0-p[0-9a-f]{8}\.\d{17}$/);
+    expect(packageEntry?.currentVersion).toMatch(
+      TestProjectUtils.getLocalVersionPattern('1.0.0', packagePath)
+    );
     expect(packageEntry?.subscribers).toEqual([]);
 
     // Verify the package.json was restored to original version
@@ -101,7 +105,7 @@ describe('Integration Tests', () => {
     expect(DR.logger.info).toHaveBeenCalledWith(
       expect.stringMatching(
         new RegExp(
-          `Successfully published @test-${testId}/my-package@1\\.0\\.0-p[0-9a-f]{8}\\.\\d{17}`
+          `Successfully published @test-${testId}/my-package@1\\.0\\.0${LocalPackageVersionService.getSuffixRegex(packagePath).source}`
         )
       )
     );
@@ -209,6 +213,27 @@ describe('Integration Tests', () => {
     expect(packageEntry?.subscribers).toHaveLength(1);
   });
 
+  it('should record the version a killed publish left in package.json without its suffix', async () => {
+    const packageName = `@test-${testId}/leftover-version`;
+    const packagePath = await TestProjectUtils.createTestPackage(
+      packageName,
+      '1.0.0-pdeadbeef.20250726123456789'
+    );
+
+    TestProjectUtils.changeToProject(packagePath);
+    await PublishCommand.execute();
+
+    // Nothing else names the version this directory publishes under once the
+    // store has no entry for it, so the suffix would otherwise be baked in
+    const packageEntry = LocalPackageStoreService.getPackageEntry(
+      await LocalPackageStoreService.getStore(),
+      packageName,
+      packagePath
+    );
+    expect(packageEntry?.originalVersion).toBe('1.0.0');
+    expect((await TestProjectUtils.readPackageJson(packagePath)).version).toBe('1.0.0');
+  });
+
   it('should throw when a subscriber cannot be updated', async () => {
     // Create publisher package
     const publisherPath = await TestProjectUtils.createTestPackage(
@@ -242,6 +267,164 @@ describe('Integration Tests', () => {
     await expect(PublishCommand.execute()).rejects.toThrow(badSubscriberPath);
   });
 
+  it('should collect versions the store never named and leave the other directory alone', async () => {
+    const packageName = `@test-${testId}/orphan-retention`;
+    const { firstPublisherPath, secondPublisherPath } =
+      await TestProjectUtils.publishFromTwoDirectories(packageName);
+
+    const packageStorage = path.join(
+      VerdaccioService.verdaccioConfig.storage,
+      ...packageName.split('/')
+    );
+    const tarballBaseName = packageName.split('/').pop() ?? packageName;
+    const firstPublisherSlug = LocalPackageVersionService.getPathSlug(firstPublisherPath);
+
+    const secondPublisherEntry = LocalPackageStoreService.getPackageEntry(
+      await LocalPackageStoreService.getStore(),
+      packageName,
+      secondPublisherPath
+    );
+    if (!secondPublisherEntry) {
+      throw new Error(`${packageName} is not published from ${secondPublisherPath}`);
+    }
+
+    // A publish killed before it writes the store leaves a version nothing names
+    const orphanTarball = path.join(
+      packageStorage,
+      `${tarballBaseName}-1.0.0-${firstPublisherSlug}.00000000000000000.tgz`
+    );
+    await fs.writeFile(orphanTarball, '');
+
+    TestProjectUtils.changeToProject(firstPublisherPath);
+    await PublishCommand.execute();
+
+    // The directory that published keeps exactly the version it just published
+    const tarballs = await fs.readdir(packageStorage);
+    expect(
+      tarballs.filter((fileName) => fileName.includes(`-${firstPublisherSlug}.`))
+    ).toHaveLength(1);
+    expect(await fs.pathExists(orphanTarball)).toBe(false);
+    expect(tarballs).toContain(`${tarballBaseName}-${secondPublisherEntry.currentVersion}.tgz`);
+  });
+
+  it('should keep two publishing directories of one package resolvable at the same time', async () => {
+    const packageName = `@test-${testId}/two-publishers`;
+    const { firstPublisherPath, secondPublisherPath } =
+      await TestProjectUtils.publishFromTwoDirectories(packageName);
+    const consumerAPath = await TestProjectUtils.createSubscriberProject(
+      `@test-${testId}/consumer-a`,
+      packageName,
+      '^1.0.0'
+    );
+    const consumerBPath = await TestProjectUtils.createSubscriberProject(
+      `@test-${testId}/consumer-b`,
+      packageName,
+      '^1.0.0'
+    );
+
+    // Each consumer states the directory it wants
+    TestProjectUtils.changeToProject(consumerAPath);
+    await SubscribeCommand.execute(packageName, firstPublisherPath);
+    TestProjectUtils.changeToProject(consumerBPath);
+    await SubscribeCommand.execute(packageName, secondPublisherPath);
+
+    const storeAfterSubscribing = await LocalPackageStoreService.getStore();
+    const secondPublisherVersion = LocalPackageStoreService.getPackageEntry(
+      storeAfterSubscribing,
+      packageName,
+      secondPublisherPath
+    )?.currentVersion;
+    expect(secondPublisherVersion).toBeTruthy();
+
+    // Publishing from one directory has to leave the other directory's consumer
+    // on the build it subscribed to
+    TestProjectUtils.changeToProject(firstPublisherPath);
+    await PublishCommand.execute();
+
+    const store = await LocalPackageStoreService.getStore();
+    const firstPublisherVersion = LocalPackageStoreService.getPackageEntry(
+      store,
+      packageName,
+      firstPublisherPath
+    )?.currentVersion;
+    expect(firstPublisherVersion).toBeTruthy();
+    expect(firstPublisherVersion).not.toBe(secondPublisherVersion);
+
+    const consumerAPackageJson = await TestProjectUtils.readPackageJson(consumerAPath);
+    const consumerBPackageJson = await TestProjectUtils.readPackageJson(consumerBPath);
+    expect(consumerAPackageJson.dependencies?.[packageName]).toBe(firstPublisherVersion);
+    expect(consumerBPackageJson.dependencies?.[packageName]).toBe(secondPublisherVersion);
+
+    // Each consumer resolves the build of the directory it is bound to
+    const installedForConsumerA = await TestProjectUtils.readInstalledPackageJson(
+      consumerAPath,
+      packageName
+    );
+    const installedForConsumerB = await TestProjectUtils.readInstalledPackageJson(
+      consumerBPath,
+      packageName
+    );
+    expect(installedForConsumerA.version).toBe(firstPublisherVersion);
+    expect(installedForConsumerB.version).toBe(secondPublisherVersion);
+
+    // Retention runs on every publish, so what the first directory removed has
+    // to be its own version and nothing else: the second directory's consumer
+    // installs again from scratch and still gets what it is pinned to
+    await fs.remove(path.join(consumerBPath, 'node_modules'));
+
+    await VerdaccioService.start();
+    try {
+      await PackageManagerService.runInstallWithRegistry(consumerBPath, store);
+    } finally {
+      await VerdaccioService.stop();
+    }
+
+    expect(
+      (await TestProjectUtils.readInstalledPackageJson(consumerBPath, packageName)).version
+    ).toBe(secondPublisherVersion);
+  });
+
+  it('should drop a subscriber whose directory is gone and keep one whose update failed', async () => {
+    const packageName = `@test-${testId}/subscriber-retention`;
+    const publisherPath = await TestProjectUtils.createTestPackage(packageName, '1.0.0');
+
+    // A directory that was never there, against one that is there but cannot
+    // be updated because it holds no package.json
+    const removedSubscriberPath = path.join(
+      TestProjectUtils.getTestInstanceDir(),
+      'removed-subscriber'
+    );
+    const failingSubscriberPath = path.join(
+      TestProjectUtils.getTestInstanceDir(),
+      'failing-subscriber'
+    );
+    await fs.ensureDir(failingSubscriberPath);
+
+    await TestProjectUtils.mutateStore((store) => {
+      LocalPackageStoreService.updatePackageEntry(store, packageName, publisherPath, {
+        originalVersion: '1.0.0',
+        currentVersion: '1.0.0',
+        subscribers: [
+          { subscriberPath: removedSubscriberPath, originalSpecifier: '1.0.0' },
+          { subscriberPath: failingSubscriberPath, originalSpecifier: '1.0.0' }
+        ]
+      });
+    });
+
+    TestProjectUtils.changeToProject(publisherPath);
+    await expect(PublishCommand.execute()).rejects.toThrow(failingSubscriberPath);
+
+    const store = await LocalPackageStoreService.getStore();
+    const packageEntry = LocalPackageStoreService.getPackageEntry(
+      store,
+      packageName,
+      publisherPath
+    );
+    expect(packageEntry?.subscribers.map((subscriber) => subscriber.subscriberPath)).toEqual([
+      failingSubscriberPath
+    ]);
+  });
+
   it('should publish locally even with existing .npmrc org-specific registry setting', async () => {
     // Create a test package with a scoped name
     const packagePath = await TestProjectUtils.createTestPackage(
@@ -270,7 +453,9 @@ describe('Integration Tests', () => {
     );
     expect(packageEntry).toBeTruthy();
     expect(packageEntry?.originalVersion).toBe('1.0.0');
-    expect(packageEntry?.currentVersion).toMatch(/^1\.0\.0-p[0-9a-f]{8}\.\d{17}$/);
+    expect(packageEntry?.currentVersion).toMatch(
+      TestProjectUtils.getLocalVersionPattern('1.0.0', packagePath)
+    );
     expect(packageEntry?.subscribers).toEqual([]);
 
     // Verify the .npmrc file is still there and unchanged
@@ -285,7 +470,7 @@ describe('Integration Tests', () => {
     expect(DR.logger.info).toHaveBeenCalledWith(
       expect.stringMatching(
         new RegExp(
-          `Successfully published @test-${testId}/npmrc-override-test@1\\.0\\.0-p[0-9a-f]{8}\\.\\d{17}`
+          `Successfully published @test-${testId}/npmrc-override-test@1\\.0\\.0${LocalPackageVersionService.getSuffixRegex(packagePath).source}`
         )
       )
     );
@@ -351,7 +536,7 @@ describe('Integration Tests', () => {
     );
     expect(packageEntry?.originalVersion).toBe(version);
     expect(packageEntry?.currentVersion).toMatch(
-      new RegExp(`^${version.replace(/\./g, '\\.')}-p[0-9a-f]{8}\\.\\d{17}$`)
+      TestProjectUtils.getLocalVersionPattern(version, publisherPath)
     );
   };
 });

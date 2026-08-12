@@ -5,7 +5,6 @@ import { TestProjectUtils } from '../../test-utils/TestProjectUtils.js';
 import { LocalPackageStoreService } from '../services/LocalPackageStore.service.js';
 import { MutexService } from '../services/Mutex.service.js';
 import { VerdaccioService } from '../services/Verdaccio.service.js';
-import { MutexLockName } from '../types/MutexLockName.js';
 import { ClearStoreCommand } from './ClearStoreCommand.js';
 import { PublishCommand } from './PublishCommand.js';
 
@@ -49,7 +48,7 @@ describe('Integration Tests', () => {
     testId = randomUUID().slice(0, 8);
     // Ensure clean mutex state for each test
     try {
-      await MutexService.forceReleaseLock(MutexLockName.Verdaccio);
+      await MutexService.forceReleaseLock();
     } catch {
       // Ignore errors if no lock exists or server wasn't running
     }
@@ -59,7 +58,7 @@ describe('Integration Tests', () => {
     await TestProjectUtils.cleanupTestInstance();
     // Clean up mutex lock after each test
     try {
-      await MutexService.forceReleaseLock(MutexLockName.Verdaccio);
+      await MutexService.forceReleaseLock();
       await VerdaccioService.stop();
     } catch {
       // Ignore errors during cleanup

@@ -7,7 +7,7 @@ import {
 } from '@aneuhold/core-ts-lib';
 import fs from 'fs-extra';
 import path from 'path';
-import { LocalPackageStoreService } from './LocalPackageStore.service.js';
+import { LocalPackageVersionService } from './LocalPackageVersion.service.js';
 
 /**
  * Service for managing package.json files.
@@ -68,7 +68,7 @@ export class PackageJsonService {
     const currentSpecifier = await this.getCurrentSpecifier(projectPath, packageName);
     if (
       !currentSpecifier ||
-      !LocalPackageStoreService.versionStringIsForLocalPackage(currentSpecifier, projectPath)
+      !LocalPackageVersionService.versionStringIsForLocalPackage(currentSpecifier, projectPath)
     ) {
       return;
     }

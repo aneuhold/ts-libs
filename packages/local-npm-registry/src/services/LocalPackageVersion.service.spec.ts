@@ -52,6 +52,18 @@ describe('Unit Tests', () => {
     });
   });
 
+  describe('removeSuffix', () => {
+    it('should strip the suffix of any publishing directory', () => {
+      expect(LocalPackageVersionService.removeSuffix('1.0.0-pf33aa924.20250726123456789')).toBe(
+        '1.0.0'
+      );
+    });
+
+    it('should leave a version carrying no suffix alone', () => {
+      expect(LocalPackageVersionService.removeSuffix('1.0.0-rc.1')).toBe('1.0.0-rc.1');
+    });
+  });
+
   describe('versionStringIsForLocalPackage', () => {
     const packagePath = '/dev/first-publisher/packages/lib';
 

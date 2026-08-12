@@ -1,31 +1,26 @@
 import { DR } from '@aneuhold/core-ts-lib';
-import { createHash } from 'crypto';
 import fs from 'fs-extra';
 import path from 'path';
 import {
   isLocalPackageStore,
   type LocalPackageStore,
   type PackageEntry,
-  type PackagePathEntries
+  type PackagePathEntries,
+  type PackageSubscription
 } from '../types/LocalPackageStore.js';
 import { ConfigService } from './Config.service.js';
+import { LocalPackageVersionService } from './LocalPackageVersion.service.js';
 
 /**
  * Service to manage the local package store.
  *
  * Every method apart from `getStore` and `writeStore` works against a store the
  * caller already holds, so one read serves a whole operation and one write ends
- * it. A caller that reads and later writes has to hold `MutexLockName.Store`
+ * it. A caller that reads and later writes has to hold the `MutexService` lock
  * across both, or a competing process can change the file in between and the
  * write puts back a store built from what the file no longer holds.
  */
 export class LocalPackageStoreService {
-  /**
-   * Regular expression pattern for matching the suffix this tool appends to
-   * package versions, which is a path slug and a timestamp.
-   */
-  static readonly #TIMESTAMP_PATTERN = /-p[0-9a-f]{8}\.\d{17}$/;
-
   static readonly #STORE_VERSION = 2;
 
   static readonly #STORE_FILE_NAME = 'local-package-store.json';
@@ -141,7 +136,7 @@ export class LocalPackageStoreService {
 
     if (packagePaths.length > 1) {
       throw new Error(
-        `Package '${packageName}' is published from ${packagePaths.length} directories:\n${candidates}`
+        `Package '${packageName}' is published from ${packagePaths.length} directories:\n${candidates}\nRe-run the command with --path set to one of them, for example --path ${packagePaths[0]}`
       );
     }
 
@@ -158,21 +153,13 @@ export class LocalPackageStoreService {
   static getSubscriptionsForSubscriber(
     store: LocalPackageStore,
     subscriberPath: string
-  ): Array<{ packageName: string; packagePath: string; subscribersOriginalSpecifier: string }> {
+  ): PackageSubscription[] {
     return Object.entries(store.packages).flatMap(([packageName, pathEntries]) =>
       Object.entries(pathEntries ?? {}).flatMap(([packagePath, entry]) => {
         const subscriber = entry?.subscribers.find(
           (candidate) => candidate.subscriberPath === subscriberPath
         );
-        return subscriber
-          ? [
-              {
-                packageName,
-                packagePath,
-                subscribersOriginalSpecifier: subscriber.originalSpecifier
-              }
-            ]
-          : [];
+        return subscriber ? [{ ...subscriber, packageName, packagePath }] : [];
       })
     );
   }
@@ -272,34 +259,6 @@ export class LocalPackageStoreService {
   }
 
   /**
-   * Generates the version a package is published under, carrying the directory
-   * it is published from and the moment it was published, and replacing any
-   * suffix the original version already carries.
-   *
-   * The directory is hashed down to a fixed width slug because a version cannot
-   * hold a whole path, which keeps two directories publishing the same package
-   * from landing on the same version. The `p` prefix keeps that slug from being
-   * read as a number.
-   *
-   * @param originalVersion - The original version string, which may already carry a suffix
-   * @param packagePath - Resolved absolute path of the package being published
-   */
-  static generateTimestampVersion(originalVersion: string, packagePath: string): string {
-    const timestamp = new Date()
-      .toISOString()
-      .replace(/[-:T.]/g, '')
-      .slice(0, 17); // Include milliseconds (YYYYMMDDHHMMssSSS)
-    const pathSlug = `p${createHash('sha256').update(packagePath).digest('hex').slice(0, 8)}`;
-    const suffix = `-${pathSlug}.${timestamp}`;
-
-    if (this.#TIMESTAMP_PATTERN.test(originalVersion)) {
-      return originalVersion.replace(this.#TIMESTAMP_PATTERN, suffix);
-    }
-
-    return `${originalVersion}${suffix}`;
-  }
-
-  /**
    * Gets the store file path from configuration.
    */
   static async #getStoreFilePath(): Promise<string> {
@@ -341,11 +300,7 @@ export class LocalPackageStoreService {
    * @param storeFilePath - Path of the store file to move
    */
   static async #deprecatePackageStore(storeFilePath: string): Promise<void> {
-    const timestamp = new Date()
-      .toISOString()
-      .replace(/[-:T.]/g, '')
-      .slice(0, 17);
-    const deprecatedPath = `${storeFilePath}.deprecated-${timestamp}`;
+    const deprecatedPath = `${storeFilePath}.deprecated-${LocalPackageVersionService.getTimestamp()}`;
 
     try {
       await fs.rename(storeFilePath, deprecatedPath);

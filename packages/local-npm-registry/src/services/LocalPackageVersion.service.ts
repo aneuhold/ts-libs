@@ -23,14 +23,17 @@ export class LocalPackageVersionService {
    * @param packagePath - Resolved absolute path of the package being published
    */
   static generateTimestampVersion(originalVersion: string, packagePath: string): string {
-    const suffix = `-${this.getPathSlug(packagePath)}.${this.getTimestamp()}`;
-    const anySuffixRegex = this.#buildSuffixRegex(this.#ANY_PATH_SLUG_REGEX, true);
+    return `${this.removeSuffix(originalVersion)}-${this.getPathSlug(packagePath)}.${this.getTimestamp()}`;
+  }
 
-    if (anySuffixRegex.test(originalVersion)) {
-      return originalVersion.replace(anySuffixRegex, suffix);
-    }
-
-    return `${originalVersion}${suffix}`;
+  /**
+   * Strips the suffix a version carries when it was published from a directory,
+   * leaving a version that carries none alone.
+   *
+   * @param version - The version string to strip
+   */
+  static removeSuffix(version: string): string {
+    return version.replace(this.#buildSuffixRegex(this.#ANY_PATH_SLUG_REGEX, true), '');
   }
 
   /**
