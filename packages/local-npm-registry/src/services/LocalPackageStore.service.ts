@@ -201,6 +201,7 @@ export class LocalPackageStoreService {
       return;
     }
     delete pathEntries[packagePath];
+    // Remove the entire package if there are no entries left
     if (Object.keys(pathEntries).length === 0) {
       delete store.packages[packageName];
     }
