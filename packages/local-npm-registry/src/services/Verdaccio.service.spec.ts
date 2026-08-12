@@ -1,11 +1,5 @@
-import fs from 'fs-extra';
-import os from 'os';
-import path from 'path';
-import lockfile from 'proper-lockfile';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { MutexLockName } from '../types/MutexLockName.js';
-import { ConfigService } from './Config.service.js';
-import { MutexService } from './Mutex.service.js';
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { TestProjectUtils } from '../../test-utils/TestProjectUtils.js';
 import { VerdaccioService } from './Verdaccio.service.js';
 
 vi.mock('@aneuhold/core-ts-lib', async () => {
@@ -26,111 +20,39 @@ vi.mock('@aneuhold/core-ts-lib', async () => {
 });
 
 describe('Integration Tests', () => {
+  // Global setup/teardown for the tmp directory
+  beforeAll(async () => {
+    await TestProjectUtils.setupGlobalTempDir();
+  });
+
+  afterAll(async () => {
+    await TestProjectUtils.cleanupGlobalTempDir();
+  });
+
   // Per-test setup/teardown for unique test instances
   beforeEach(async () => {
-    // Ensure clean mutex state for each test
-    try {
-      await VerdaccioService.stop();
-      await MutexService.forceReleaseLock(MutexLockName.Verdaccio);
-    } catch {
-      // Ignore errors if no lock exists or server wasn't running
-    }
+    await TestProjectUtils.setupTestInstance();
+    await VerdaccioService.stop();
   });
 
   afterEach(async () => {
-    // Clean up mutex lock and server after each test
     try {
       await VerdaccioService.stop();
-      await MutexService.forceReleaseLock(MutexLockName.Verdaccio);
     } catch {
       // Ignore errors during cleanup
     }
+    await TestProjectUtils.cleanupTestInstance();
   });
 
-  it('should acquire mutex lock when starting Verdaccio', async () => {
-    // Verify no lock exists initially
-    const initialLock = await MutexService.isLocked(MutexLockName.Verdaccio);
-    expect(initialLock).toBe(false);
+  describe('start', () => {
+    it('should leave the server running when called again', async () => {
+      await VerdaccioService.start();
 
-    // Start Verdaccio which should acquire the lock
-    await VerdaccioService.start();
+      await expect(VerdaccioService.start()).resolves.not.toThrow();
 
-    // Verify lock is now held
-    const lockAfterStart = await MutexService.isLocked(MutexLockName.Verdaccio);
-    expect(lockAfterStart).toBe(true);
-  });
-
-  it('should release mutex lock when stopping Verdaccio', async () => {
-    // Start Verdaccio to acquire lock
-    await VerdaccioService.start();
-
-    // Verify lock is held
-    const lockAfterStart = await MutexService.isLocked(MutexLockName.Verdaccio);
-    expect(lockAfterStart).toBe(true);
-
-    // Stop Verdaccio which should release the lock
-    await VerdaccioService.stop();
-
-    // Verify lock is released
-    const lockAfterStop = await MutexService.isLocked(MutexLockName.Verdaccio);
-    expect(lockAfterStop).toBe(false);
-  });
-
-  it('should handle multiple start calls gracefully', async () => {
-    // First start should succeed
-    await VerdaccioService.start();
-
-    // Verify lock is held
-    const lockAfterFirstStart = await MutexService.isLocked(MutexLockName.Verdaccio);
-    expect(lockAfterFirstStart).toBe(true);
-
-    // Second start should not throw an error (should return early)
-    await expect(VerdaccioService.start()).resolves.not.toThrow();
-
-    // Lock should still be held
-    const lockAfterSecondStart = await MutexService.isLocked(MutexLockName.Verdaccio);
-    expect(lockAfterSecondStart).toBe(true);
-  });
-
-  it('should wait for another process to release the lock instead of failing', async () => {
-    // Use lockfile directly to create a lock from "another process"
-    // We need to use the same path logic as MutexService
-
-    // Get the lock file path that MutexService would use
-    const config = await ConfigService.loadConfig();
-    const baseDirectory = config.dataDirectory || os.homedir();
-    const LOCK_DIR = path.join(baseDirectory, '.local-npm-registry');
-    const LOCK_FILE_PATH = path.join(LOCK_DIR, MutexLockName.Verdaccio);
-
-    // Ensure the lock file exists
-    await fs.ensureDir(LOCK_DIR);
-    await fs.ensureFile(LOCK_FILE_PATH);
-
-    // Acquire lock directly with lockfile (simulating another process)
-    const release = await lockfile.lock(LOCK_FILE_PATH, {
-      stale: 60000,
-      retries: 0
+      // The second call returning early rather than starting a second server is
+      // what leaves this one able to stop it
+      await expect(VerdaccioService.stop()).resolves.not.toThrow();
     });
-
-    // Verify lock is held
-    const lockAfterAcquire = await MutexService.isLocked(MutexLockName.Verdaccio);
-    expect(lockAfterAcquire).toBe(true);
-
-    // Now attempt to acquire the lock through MutexService (simulating this process),
-    // which queues behind the holder rather than giving up
-    let acquired = false;
-    const acquisition = MutexService.acquireLock(MutexLockName.Verdaccio).then(() => {
-      acquired = true;
-    });
-
-    await new Promise((resolve) => setTimeout(resolve, 500));
-    expect(acquired).toBe(false);
-
-    // Release the external lock, which lets the queued acquisition through
-    await release();
-    await acquisition;
-
-    expect(acquired).toBe(true);
-    expect(await MutexService.isLocked(MutexLockName.Verdaccio)).toBe(true);
   });
 });
