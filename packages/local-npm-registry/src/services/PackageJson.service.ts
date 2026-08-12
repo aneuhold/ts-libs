@@ -7,6 +7,7 @@ import {
 } from '@aneuhold/core-ts-lib';
 import fs from 'fs-extra';
 import path from 'path';
+import { LocalPackageStoreService } from './LocalPackageStore.service.js';
 
 /**
  * Service for managing package.json files.
@@ -14,6 +15,9 @@ import path from 'path';
 export class PackageJsonService {
   /**
    * Reads and validates the package.json file in the specified directory.
+   *
+   * The triple declaration of the signature must have been an experiment by Anton.
+   * This is not a great idea (note written by Anton btw, just saying I should rewrite this).
    *
    * @param dir - Directory to search for package.json
    * @param requireVersion - Whether to require the version field (default: true for packages being published)
@@ -46,6 +50,30 @@ export class PackageJsonService {
       DR.logger.error(`Error reading package.json: ${String(error)}`);
       return null;
     }
+  }
+
+  /**
+   * Updates a package's own version only while its package.json holds a version
+   * generated for that directory, which leaves a version updated by hand alone.
+   *
+   * @param projectPath - Path to the project directory containing package.json
+   * @param packageName - Name of the package to update
+   * @param version - New version to set
+   */
+  static async updatePackageVersionIfLocal(
+    projectPath: string,
+    packageName: string,
+    version: string
+  ): Promise<void> {
+    const currentSpecifier = await this.getCurrentSpecifier(projectPath, packageName);
+    if (
+      !currentSpecifier ||
+      !LocalPackageStoreService.versionStringIsForLocalPackage(currentSpecifier, projectPath)
+    ) {
+      return;
+    }
+
+    await this.updatePackageVersion(projectPath, packageName, version);
   }
 
   /**
@@ -123,7 +151,8 @@ export class PackageJsonService {
   }
 
   /**
-   * Gets the current version specifier for a package from a project's package.json.
+   * Gets the current version specifier a project's package.json holds for a
+   * package, which for the project's own package is its version field.
    *
    * @param projectPath - Path to the project directory containing package.json
    * @param packageName - Name of the package to find the specifier for
@@ -151,6 +180,10 @@ export class PackageJsonService {
     // Check peerDependencies
     if (packageInfo.peerDependencies?.[packageName]) {
       return packageInfo.peerDependencies[packageName];
+    }
+
+    if (packageInfo.name === packageName && isPackageJson(packageInfo)) {
+      return packageInfo.version;
     }
 
     return null;
