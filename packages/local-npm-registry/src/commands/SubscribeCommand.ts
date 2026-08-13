@@ -43,7 +43,7 @@ export class SubscribeCommand {
       }
 
       // Get the current specifier from package.json to save as original
-      const currentSpecifier = await PackageJsonService.getCurrentSpecifier(
+      const currentSpecifier = await PackageJsonService.getCurrentPackageVersionSpecifier(
         currentProjectPath,
         packageName
       );
@@ -91,15 +91,20 @@ export class SubscribeCommand {
       await VerdaccioService.start();
 
       // Publish package and update subscribers
-      const publishedVersion = await LocalPackagePublisherService.publishAndUpdateSubscribers(
-        store,
-        packageName,
-        resolvedPackagePath,
-        entry.originalVersion,
-        entry.subscribers,
-        { subscriberPath: currentProjectPath, originalSpecifier },
-        entry.publishArgs || [] // Use stored publish args from when package was originally published
-      );
+      const publishedVersion =
+        await LocalPackagePublisherService.publishWithDependentsAndUpdateSubscribers(
+          store,
+          { packageName, packagePath: resolvedPackagePath },
+          entry.originalVersion,
+          {
+            additionalSubscriber: {
+              subscriberPath: currentProjectPath,
+              originalSpecifier
+            },
+            // Use stored publish args from when package was originally published
+            additionalPublishArgs: entry.publishArgs ?? []
+          }
+        );
 
       await VerdaccioService.stop();
 

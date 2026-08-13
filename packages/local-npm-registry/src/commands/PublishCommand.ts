@@ -45,20 +45,16 @@ export class PublishCommand {
       // Start Verdaccio server
       await VerdaccioService.start();
 
-      const existingSubscribers = existingEntry?.subscribers || [];
-
-      // Publish package and update subscribers
-      await LocalPackagePublisherService.publishAndUpdateSubscribers(
+      // Publish the package, along with every locally published package that
+      // depends on it, and update the subscribers of all of them
+      await LocalPackagePublisherService.publishWithDependentsAndUpdateSubscribers(
         store,
-        packageName,
-        packagePath,
+        { packageName, packagePath },
         originalVersion,
-        existingSubscribers,
-        undefined,
-        additionalArgs
+        { additionalPublishArgs: additionalArgs }
       );
 
-      if (existingSubscribers.length === 0) {
+      if ((existingEntry?.subscribers ?? []).length === 0) {
         DR.logger.info('No subscribers to update');
       }
 
