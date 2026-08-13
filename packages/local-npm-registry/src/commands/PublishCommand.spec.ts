@@ -472,7 +472,9 @@ describe('Integration Tests', () => {
     // Verify the publish was done to local registry, not npm
     // We can check this by verifying that the command used the correct registry arguments
     expect(DR.logger.info).toHaveBeenCalledWith(expect.stringContaining('Publishing package from'));
-    expect(DR.logger.info).toHaveBeenCalledWith(expect.stringContaining('http://localhost:4873'));
+    expect(DR.logger.info).toHaveBeenCalledWith(
+      expect.stringContaining(await TestProjectUtils.getRegistryUrl())
+    );
   });
 
   it('should re-publish a dependent so its consumer resolves one copy of the package', async () => {

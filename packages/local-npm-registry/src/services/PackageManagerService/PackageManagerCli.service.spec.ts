@@ -5,7 +5,6 @@ import fs from 'fs-extra';
 import path from 'path';
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TestProjectUtils } from '../../../test-utils/TestProjectUtils.js';
-import { DEFAULT_CONFIG } from '../../types/LocalNpmConfig.js';
 import { PackageManager } from '../../types/PackageManager.js';
 import { LocalPackageStoreService } from '../LocalPackageStore.service.js';
 import { PackageManagerCliService } from './PackageManagerCli.service.js';
@@ -31,11 +30,16 @@ vi.mock('@aneuhold/core-ts-lib', async () => {
 
 describe('Unit Tests', () => {
   let testId: string;
-  const registryUrl = DEFAULT_CONFIG.registryUrl;
-  const authTokenArg = '--//localhost:4873/:_authToken=fake';
+  let registryUrl: string;
+  let authTokenArg: string;
 
   beforeAll(async () => {
     await TestProjectUtils.setupGlobalTempDir();
+
+    // The registry a worker's tests run against carries a port of its own, so
+    // what it is has to be read rather than assumed
+    registryUrl = await TestProjectUtils.getRegistryUrl();
+    authTokenArg = `--//${registryUrl.replace(/^https?:\/\//, '')}/:_authToken=fake`;
   });
 
   afterAll(async () => {

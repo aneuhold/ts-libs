@@ -11,9 +11,11 @@ import { LocalPackageVersionService } from '../src/services/LocalPackageVersion.
 import { MutexService } from '../src/services/Mutex.service.js';
 import { PackageManagerService } from '../src/services/PackageManagerService/PackageManager.service.js';
 import { VerdaccioService } from '../src/services/Verdaccio.service.js';
+import { DEFAULT_CONFIG, type LocalNpmConfig } from '../src/types/LocalNpmConfig.js';
 import type { LocalPackageStore } from '../src/types/LocalPackageStore.js';
 import { PACKAGE_MANAGER_INFO, PackageManager } from '../src/types/PackageManager.js';
 import { VERDACCIO_DB_FILE_NAME, isVerdaccioDb } from '../src/types/VerdaccioDb.js';
+import { VitestUtils } from './VitestUtils.js';
 
 /**
  * Test utilities for creating temporary test projects with isolated configurations.
@@ -440,6 +442,15 @@ export class TestProjectUtils {
   }
 
   /**
+   * The URL of the registry the tests of this worker publish to and install
+   * from, which carries a port of the worker's own so that spec files can run
+   * at the same time.
+   */
+  static async getRegistryUrl(): Promise<string> {
+    return ConfigService.getLocalRegistryUrl();
+  }
+
+  /**
    * Gets the current test instance directory
    */
   static getTestInstanceDir(): string {
@@ -563,7 +574,8 @@ project-specific-setting=project-specific-value
 
   /**
    * Sets up a test-specific configuration file that points to the tmp directory
-   * for the store location to prevent pollution of the global store file.
+   * for the store location to prevent pollution of the global store file, and
+   * to a registry port of this worker's own.
    */
   static async #setupTestConfig(): Promise<void> {
     if (!TestProjectUtils.#globalTempDir) {
@@ -574,9 +586,22 @@ project-specific-setting=project-specific-value
     ConfigService.clearCache();
 
     // Create test configuration file in the tmp directory
-    TestProjectUtils.#testConfigFilePath = await ConfigService.createDefaultConfig(
-      TestProjectUtils.#globalTempDir
-    );
+    const configFilePath = await ConfigService.createDefaultConfig(TestProjectUtils.#globalTempDir);
+
+    // Everything else a spec file touches already sits under its own temp
+    // directory, so the port is the one thing two of them running at once would
+    // otherwise share
+    const registryPort = DEFAULT_CONFIG.registryPort + VitestUtils.getWorkerId();
+    const testConfig: LocalNpmConfig = {
+      ...DEFAULT_CONFIG,
+      dataDirectory: TestProjectUtils.#globalTempDir,
+      registryPort,
+      registryUrl: `http://localhost:${registryPort}`
+    };
+    await fs.writeJson(configFilePath, testConfig, { spaces: 2 });
+    ConfigService.clearCache();
+
+    TestProjectUtils.#testConfigFilePath = configFilePath;
 
     // Change working directory to the tmp directory so the config is found
     process.chdir(TestProjectUtils.#globalTempDir);
