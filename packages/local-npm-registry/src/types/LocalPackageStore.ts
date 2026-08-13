@@ -29,7 +29,7 @@ export type PackageEntry = {
   originalVersion: string;
   /** The current version with timestamp suffix */
   currentVersion: string;
-  /** List of subscribers to this package */
+  /** List of subscribers to the package published from this directory */
   subscribers: PackageSubscriber[];
   /** Additional arguments that were used when publishing this package */
   publishArgs?: string[];
@@ -49,8 +49,9 @@ export type PackageSubscriber = {
 };
 
 /**
- * One consumer's subscription to one package, flattened out of the store so
- * that it names both ends of the binding rather than only the consumer's.
+ * One subscriber's subscription to one package, flattened out of the
+ * {@link LocalPackageStore} so that it names both ends of the binding rather
+ * than only the end a {@link PackageSubscriber} holds.
  */
 export type PackageSubscription = PackageSubscriber & {
   /** The name of the package that is subscribed to */

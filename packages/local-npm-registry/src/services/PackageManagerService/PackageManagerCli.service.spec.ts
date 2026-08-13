@@ -188,7 +188,7 @@ describe('Unit Tests', () => {
       // The subscriber's own scope and its .npmrc both differ from what it subscribes
       // to, and the old implementation drew the redirect set from exactly those two
       const subscriberPath = await TestProjectUtils.createTestPackage(
-        `@consumer-${testId}/subscriber`,
+        `@subscriber-${testId}/app`,
         '1.0.0',
         PackageManager.Npm
       );

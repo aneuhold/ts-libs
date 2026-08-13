@@ -2,15 +2,16 @@ import { isPackageJson, type PackageJson } from '@aneuhold/core-ts-lib';
 import { randomUUID } from 'crypto';
 import fs from 'fs-extra';
 import path from 'path';
-import { expect } from 'vitest';
 import { PublishCommand } from '../src/commands/PublishCommand.js';
 import { SubscribeCommand } from '../src/commands/SubscribeCommand.js';
 import { ConfigService } from '../src/services/Config.service.js';
 import { LocalPackageStoreService } from '../src/services/LocalPackageStore.service.js';
+import { LocalPackageVersionService } from '../src/services/LocalPackageVersion.service.js';
 import { MutexService } from '../src/services/Mutex.service.js';
+import { VerdaccioService } from '../src/services/Verdaccio.service.js';
 import type { LocalPackageStore } from '../src/types/LocalPackageStore.js';
-import { MutexLockName } from '../src/types/MutexLockName.js';
 import { PACKAGE_MANAGER_INFO, PackageManager } from '../src/types/PackageManager.js';
+import { VERDACCIO_DB_FILE_NAME, isVerdaccioDb } from '../src/types/VerdaccioDb.js';
 
 /**
  * Test utilities for creating temporary test projects with isolated configurations.
@@ -52,66 +53,19 @@ export class TestProjectUtils {
     await fs.remove(TestProjectUtils.#globalTempDir);
     await fs.ensureDir(TestProjectUtils.#globalTempDir);
 
-    // Create test configuration file in the tmp directory
-    await TestProjectUtils.setupTestConfig();
-  }
-
-  /**
-   * Sets up a test-specific configuration file that points to the tmp directory
-   * for the store location to prevent pollution of the global store file.
-   */
-  static async setupTestConfig(): Promise<void> {
-    if (!TestProjectUtils.#globalTempDir) {
-      throw new Error('Global temp directory must be set up first');
-    }
-
-    // Clear any cached configuration to ensure we use the test config
-    ConfigService.clearCache();
-
-    // Create test configuration file in the tmp directory
-    TestProjectUtils.#testConfigFilePath = await ConfigService.createDefaultConfig(
-      TestProjectUtils.#globalTempDir
-    );
-
-    // Change working directory to the tmp directory so the config is found
-    process.chdir(TestProjectUtils.#globalTempDir);
+    await TestProjectUtils.#setupTestConfig();
   }
 
   /**
    * Cleans up the global tmp directory (called once after all tests in a test file)
    */
   static async cleanupGlobalTempDir(): Promise<void> {
-    // Clean up test configuration first
-    await TestProjectUtils.cleanupTestConfig();
+    // Clean up test configuration first, which is what restores the original
+    // working directory
+    await TestProjectUtils.#cleanupTestConfig();
 
     if (TestProjectUtils.#globalTempDir) {
       await fs.remove(TestProjectUtils.#globalTempDir);
-    }
-    if (TestProjectUtils.#originalCwd) {
-      process.chdir(TestProjectUtils.#originalCwd);
-    }
-  }
-
-  /**
-   * Clears the test configuration and restores the original working directory
-   */
-  static async cleanupTestConfig(): Promise<void> {
-    // Clear the configuration cache to prevent test pollution
-    ConfigService.clearCache();
-
-    // Restore original working directory
-    if (TestProjectUtils.#originalCwd) {
-      process.chdir(TestProjectUtils.#originalCwd);
-    }
-
-    // Clean up the test config file
-    if (TestProjectUtils.#testConfigFilePath) {
-      try {
-        await fs.remove(TestProjectUtils.#testConfigFilePath);
-      } catch {
-        // Ignore errors during cleanup
-      }
-      TestProjectUtils.#testConfigFilePath = null;
     }
   }
 
@@ -157,27 +111,26 @@ export class TestProjectUtils {
   }
 
   /**
-   * Creates a test package project with package.json and runs install to generate lock files
+   * Creates a test package project with package.json and an empty lock file
    *
    * @param name - Package name
    * @param version - Package version
    * @param packageManager - Package manager to use
    * @param dependencies - Optional dependencies to include
+   * @param directoryName - Name of the directory to create the package in, which two publishing directories of one package name need to keep apart
    */
   static async createTestPackage(
     name: string,
     version = '1.0.0',
     packageManager: PackageManager = PackageManager.Npm,
-    dependencies: Record<string, string> = {}
+    dependencies: Record<string, string> = {},
+    directoryName: string = name.replace('@', '').replace('/', '-')
   ): Promise<string> {
     if (!TestProjectUtils.#testInstanceDir) {
       throw new Error('Test instance directory not initialized. Call setupTestInstance() first.');
     }
 
-    const packageDir = path.join(
-      TestProjectUtils.#testInstanceDir,
-      name.replace('@', '').replace('/', '-')
-    );
+    const packageDir = path.join(TestProjectUtils.#testInstanceDir, directoryName);
     await fs.ensureDir(packageDir);
 
     // Create package.json
@@ -208,8 +161,7 @@ export class TestProjectUtils {
       `// Test package ${name}\nmodule.exports = { name: '${name}', version: '${version}' };\n`
     );
 
-    // Create empty lock file for the package manager instead of running install
-    await TestProjectUtils.createEmptyLockFile(packageDir, packageManager);
+    await TestProjectUtils.#createEmptyLockFile(packageDir, packageManager);
 
     return packageDir;
   }
@@ -248,16 +200,11 @@ export class TestProjectUtils {
     packageManager: PackageManager = PackageManager.Npm,
     version = '1.0.0'
   ): Promise<{ publisherPath: string; subscriberPath: string }> {
-    const publisherPath = await TestProjectUtils.createTestPackage(
+    const { publisherPath, subscriberPath } = await TestProjectUtils.#createPublisherAndSubscriber(
       packageName,
-      version,
-      packageManager
-    );
-    const subscriberPath = await TestProjectUtils.createSubscriberProject(
       subscriberName,
-      packageName,
-      version,
-      packageManager
+      packageManager,
+      version
     );
 
     await TestProjectUtils.mutateStore((store) => {
@@ -269,20 +216,6 @@ export class TestProjectUtils {
     });
 
     return { publisherPath, subscriberPath };
-  }
-
-  /**
-   * Applies a mutation to the local package store under the store lock, so test
-   * setup reads and writes the store the way the commands do.
-   *
-   * @param mutator - Applies the change to the store that is about to be written
-   */
-  static async mutateStore(mutator: (store: LocalPackageStore) => void): Promise<void> {
-    await MutexService.withLock(MutexLockName.Store, async () => {
-      const store = await LocalPackageStoreService.getStore();
-      mutator(store);
-      await LocalPackageStoreService.writeStore(store);
-    });
   }
 
   /**
@@ -300,16 +233,11 @@ export class TestProjectUtils {
     packageManager: PackageManager = PackageManager.Npm,
     version = '1.0.0'
   ): Promise<{ publisherPath: string; subscriberPath: string }> {
-    const publisherPath = await TestProjectUtils.createTestPackage(
+    const { publisherPath, subscriberPath } = await TestProjectUtils.#createPublisherAndSubscriber(
       packageName,
-      version,
-      packageManager
-    );
-    const subscriberPath = await TestProjectUtils.createSubscriberProject(
       subscriberName,
-      packageName,
-      version,
-      packageManager
+      packageManager,
+      version
     );
 
     TestProjectUtils.changeToProject(publisherPath);
@@ -322,40 +250,51 @@ export class TestProjectUtils {
   }
 
   /**
-   * Creates an empty lock file for the specified package manager.
-   * This simulates the initial state without running actual install commands.
+   * Creates two copies of one package name in separate directories and
+   * publishes from both, which is what puts one package in the store under two
+   * publishing directories.
    *
-   * For pnpm projects, this also creates an empty pnpm-workspace.yaml file.
-   *
-   * Actual install commands cannot be run because the test packages are not
-   * actually published to NPM.
-   *
-   * @param projectPath - Path to the project directory
-   * @param packageManager - Package manager to use
+   * @param packageName - Name of the package both directories hold
+   * @param version - Version both directories start at
+   * @param packageManager - Package manager both directories use
    */
-  static async createEmptyLockFile(
-    projectPath: string,
-    packageManager: PackageManager
-  ): Promise<void> {
-    const lockFileName = PACKAGE_MANAGER_INFO[packageManager].lockFile;
-    const lockFilePath = path.join(projectPath, lockFileName);
+  static async publishFromTwoDirectories(
+    packageName: string,
+    version = '1.0.0',
+    packageManager: PackageManager = PackageManager.Npm
+  ): Promise<{ firstPublisherPath: string; secondPublisherPath: string }> {
+    const publisherPaths: string[] = [];
 
-    switch (packageManager) {
-      case PackageManager.Npm:
-        await fs.writeFile(lockFilePath, '{}');
-        break;
-      case PackageManager.Pnpm: {
-        await fs.writeFile(lockFilePath, '');
-        // Create empty pnpm-workspace.yaml file for pnpm projects
-        const workspaceFilePath = path.join(projectPath, 'pnpm-workspace.yaml');
-        await fs.writeFile(workspaceFilePath, '');
-        break;
-      }
-      case PackageManager.Yarn:
-      case PackageManager.Yarn4:
-        await fs.writeFile(lockFilePath, '');
-        break;
+    for (const directoryName of ['first-publisher', 'second-publisher']) {
+      const publisherPath = await TestProjectUtils.createTestPackage(
+        packageName,
+        version,
+        packageManager,
+        {},
+        directoryName
+      );
+
+      TestProjectUtils.changeToProject(publisherPath);
+      await PublishCommand.execute();
+
+      publisherPaths.push(publisherPath);
     }
+
+    return { firstPublisherPath: publisherPaths[0], secondPublisherPath: publisherPaths[1] };
+  }
+
+  /**
+   * Applies a mutation to the local package store under the store lock, so test
+   * setup reads and writes the store the way the commands do.
+   *
+   * @param mutator - Applies the change to the store that is about to be written
+   */
+  static async mutateStore(mutator: (store: LocalPackageStore) => void): Promise<void> {
+    await MutexService.withLock(async () => {
+      const store = await LocalPackageStoreService.getStore();
+      mutator(store);
+      await LocalPackageStoreService.writeStore(store);
+    });
   }
 
   /**
@@ -381,6 +320,88 @@ export class TestProjectUtils {
   }
 
   /**
+   * Adds a dependency to a project after it was created, for a subscriber that
+   * can only declare its second local package once the first one resolves.
+   *
+   * @param projectPath - Path to the project directory
+   * @param packageName - Name of the dependency to add
+   * @param specifier - Specifier to declare it with
+   */
+  static async addDependencyToProject(
+    projectPath: string,
+    packageName: string,
+    specifier: string
+  ): Promise<void> {
+    const packageJson = await TestProjectUtils.readPackageJson(projectPath);
+    packageJson.dependencies = { ...packageJson.dependencies, [packageName]: specifier };
+
+    await fs.writeJson(path.join(projectPath, 'package.json'), packageJson, { spaces: 2 });
+  }
+
+  /**
+   * Reads the package.json of a dependency as it was installed into a project,
+   * which is what the project actually resolves rather than what it asks for.
+   *
+   * @param projectPath - Path to the project directory
+   * @param packageName - Name of the installed dependency
+   */
+  static async readInstalledPackageJson(
+    projectPath: string,
+    packageName: string
+  ): Promise<PackageJson> {
+    return TestProjectUtils.readPackageJson(
+      path.join(projectPath, 'node_modules', ...packageName.split('/'))
+    );
+  }
+
+  /**
+   * Builds the pattern a version published from a directory matches, so a test
+   * can assert that a specifier was moved onto the local registry's version of
+   * an original version without naming the timestamp it landed on.
+   *
+   * @param originalVersion - The version the local one is built from
+   * @param packagePath - The directory the package is published from
+   */
+  static getLocalVersionPattern(originalVersion: string, packagePath: string): RegExp {
+    return new RegExp(
+      `^${originalVersion.replace(/\./g, '\\.')}${LocalPackageVersionService.getSuffixRegex(packagePath).source}$`
+    );
+  }
+
+  /**
+   * The directory the local registry keeps a package's tarballs and metadata in
+   *
+   * @param packageName - The package to locate
+   */
+  static getRegistryPackageStorage(packageName: string): string {
+    return path.join(VerdaccioService.verdaccioConfig.storage, ...packageName.split('/'));
+  }
+
+  /**
+   * The file name the local registry stores a version of a package under
+   *
+   * @param packageName - The package the tarball holds
+   * @param version - The version the tarball holds
+   */
+  static getRegistryTarballName(packageName: string, version: string): string {
+    return `${packageName.split('/').pop() ?? packageName}-${version}.tgz`;
+  }
+
+  /**
+   * Reads the names of the packages the local registry holds itself rather than
+   * proxies, which is what its database records.
+   */
+  static async getRegistryDbPackageNames(): Promise<string[]> {
+    const dbContent: unknown = await fs.readJson(
+      path.join(VerdaccioService.verdaccioConfig.storage, VERDACCIO_DB_FILE_NAME)
+    );
+    if (!isVerdaccioDb(dbContent)) {
+      throw new Error('The local registry database is not in the expected format');
+    }
+    return dbContent.list;
+  }
+
+  /**
    * Gets the current test instance directory
    */
   static getTestInstanceDir(): string {
@@ -397,66 +418,7 @@ export class TestProjectUtils {
    * @param packageManager - Package manager to get lock file for
    */
   static getLockFilePath(projectPath: string, packageManager: PackageManager): string {
-    const lockFileName = PACKAGE_MANAGER_INFO[packageManager].lockFile;
-    return path.join(projectPath, lockFileName);
-  }
-
-  /**
-   * Checks if a project has a non-empty lock file for the specified package manager
-   *
-   * @param projectPath - Path to the project directory
-   * @param packageManager - Package manager to check lock file for
-   */
-  static async hasNonEmptyLockFile(
-    projectPath: string,
-    packageManager: PackageManager
-  ): Promise<boolean> {
-    const lockFilePath = TestProjectUtils.getLockFilePath(projectPath, packageManager);
-
-    try {
-      const stats = await fs.stat(lockFilePath);
-      if (!stats.isFile()) {
-        return false;
-      }
-
-      // Check if file has content beyond empty/minimal placeholder
-      const content = await fs.readFile(lockFilePath, 'utf8');
-
-      switch (packageManager) {
-        case PackageManager.Npm:
-          // npm lock files should have more than just "{}"
-          return content.trim() !== '{}' && content.trim().length > 2;
-        case PackageManager.Pnpm:
-        case PackageManager.Yarn:
-        case PackageManager.Yarn4:
-          // yarn and pnpm lock files should not be empty
-          return content.trim().length > 0;
-        default:
-          return false;
-      }
-    } catch {
-      // File doesn't exist or can't be read
-      return false;
-    }
-  }
-
-  /**
-   * Validates that subscriber projects have non-empty lock files
-   *
-   * @param subscriberPaths - Array of paths to subscriber projects
-   * @param packageManager - Package manager to check lock files for
-   */
-  static async validateSubscriberLockFiles(
-    subscriberPaths: string[],
-    packageManager: PackageManager
-  ): Promise<void> {
-    for (const subscriberPath of subscriberPaths) {
-      const hasLockFile = await TestProjectUtils.hasNonEmptyLockFile(
-        subscriberPath,
-        packageManager
-      );
-      expect(hasLockFile).toBe(true);
-    }
+    return path.join(projectPath, PACKAGE_MANAGER_INFO[packageManager].lockFile);
   }
 
   /**
@@ -470,42 +432,6 @@ export class TestProjectUtils {
     const npmrcPath = path.join(directoryPath, '.npmrc');
     await fs.writeFile(npmrcPath, npmrcContent);
     return npmrcPath;
-  }
-
-  /**
-   * Creates a multi-layer directory structure with .npmrc files for testing
-   * npmrc parsing up the directory tree.
-   *
-   * @param baseDir - Base directory to create the structure in
-   * @param layers - Array of objects describing each layer with directory name and npmrc content
-   * @returns Object with paths to created directories and npmrc files
-   */
-  static async createMultiLayerNpmrcStructure(
-    baseDir: string,
-    layers: Array<{ dirName: string; npmrcContent: string }>
-  ): Promise<{
-    directories: string[];
-    npmrcFiles: string[];
-    deepestDir: string;
-  }> {
-    const directories: string[] = [];
-    const npmrcFiles: string[] = [];
-    let currentPath = baseDir;
-
-    for (const layer of layers) {
-      currentPath = path.join(currentPath, layer.dirName);
-      directories.push(currentPath);
-
-      await fs.ensureDir(currentPath);
-      const npmrcPath = await this.createNpmrcFile(currentPath, layer.npmrcContent);
-      npmrcFiles.push(npmrcPath);
-    }
-
-    return {
-      directories,
-      npmrcFiles,
-      deepestDir: currentPath
-    };
   }
 
   /**
@@ -560,7 +486,10 @@ project-specific-setting=project-specific-value
       }
     ];
 
-    const structure = await this.createMultiLayerNpmrcStructure(testInstanceDir, layers);
+    const structure = await TestProjectUtils.#createMultiLayerNpmrcStructure(
+      testInstanceDir,
+      layers
+    );
 
     // Expected configurations with closest files taking precedence
     const expectedConfigs = new Map<string, string>([
@@ -591,6 +520,143 @@ project-specific-setting=project-specific-value
       structure,
       expectedConfigs,
       uniqueRegistries
+    };
+  }
+
+  /**
+   * Sets up a test-specific configuration file that points to the tmp directory
+   * for the store location to prevent pollution of the global store file.
+   */
+  static async #setupTestConfig(): Promise<void> {
+    if (!TestProjectUtils.#globalTempDir) {
+      throw new Error('Global temp directory must be set up first');
+    }
+
+    // Clear any cached configuration to ensure we use the test config
+    ConfigService.clearCache();
+
+    // Create test configuration file in the tmp directory
+    TestProjectUtils.#testConfigFilePath = await ConfigService.createDefaultConfig(
+      TestProjectUtils.#globalTempDir
+    );
+
+    // Change working directory to the tmp directory so the config is found
+    process.chdir(TestProjectUtils.#globalTempDir);
+  }
+
+  /**
+   * Clears the test configuration and restores the original working directory
+   */
+  static async #cleanupTestConfig(): Promise<void> {
+    // Clear the configuration cache to prevent test pollution
+    ConfigService.clearCache();
+
+    // Restore original working directory
+    if (TestProjectUtils.#originalCwd) {
+      process.chdir(TestProjectUtils.#originalCwd);
+    }
+
+    // Clean up the test config file
+    if (TestProjectUtils.#testConfigFilePath) {
+      try {
+        await fs.remove(TestProjectUtils.#testConfigFilePath);
+      } catch {
+        // Ignore errors during cleanup
+      }
+      TestProjectUtils.#testConfigFilePath = null;
+    }
+  }
+
+  /**
+   * Creates the publisher package and the subscriber project a binding is made
+   * between, leaving how they are bound to the caller.
+   *
+   * @param packageName - Name of the package the subscriber depends on
+   * @param subscriberName - Name of the subscribing project
+   * @param packageManager - Package manager both projects use
+   * @param version - Version the package starts at
+   */
+  static async #createPublisherAndSubscriber(
+    packageName: string,
+    subscriberName: string,
+    packageManager: PackageManager,
+    version: string
+  ): Promise<{ publisherPath: string; subscriberPath: string }> {
+    const publisherPath = await TestProjectUtils.createTestPackage(
+      packageName,
+      version,
+      packageManager
+    );
+    const subscriberPath = await TestProjectUtils.createSubscriberProject(
+      subscriberName,
+      packageName,
+      version,
+      packageManager
+    );
+
+    return { publisherPath, subscriberPath };
+  }
+
+  /**
+   * Creates an empty lock file for the specified package manager.
+   * This simulates the initial state without running actual install commands.
+   *
+   * For pnpm projects, this also creates an empty pnpm-workspace.yaml file.
+   *
+   * Actual install commands cannot be run because the test packages are not
+   * actually published to NPM.
+   *
+   * @param projectPath - Path to the project directory
+   * @param packageManager - Package manager to use
+   */
+  static async #createEmptyLockFile(
+    projectPath: string,
+    packageManager: PackageManager
+  ): Promise<void> {
+    // An npm lock file has to parse as JSON, where the others are read as text
+    await fs.writeFile(
+      TestProjectUtils.getLockFilePath(projectPath, packageManager),
+      packageManager === PackageManager.Npm ? '{}' : ''
+    );
+
+    if (packageManager === PackageManager.Pnpm) {
+      await fs.writeFile(path.join(projectPath, 'pnpm-workspace.yaml'), '');
+    }
+  }
+
+  /**
+   * Creates a multi-layer directory structure with .npmrc files for testing
+   * npmrc parsing up the directory tree.
+   *
+   * @param baseDir - Base directory to create the structure in
+   * @param layers - Array of objects describing each layer with directory name and npmrc content
+   * @returns Object with paths to created directories and npmrc files
+   */
+  static async #createMultiLayerNpmrcStructure(
+    baseDir: string,
+    layers: Array<{ dirName: string; npmrcContent: string }>
+  ): Promise<{
+    directories: string[];
+    npmrcFiles: string[];
+    deepestDir: string;
+  }> {
+    const directories: string[] = [];
+    const npmrcFiles: string[] = [];
+    let currentPath = baseDir;
+
+    for (const layer of layers) {
+      currentPath = path.join(currentPath, layer.dirName);
+      directories.push(currentPath);
+
+      await fs.ensureDir(currentPath);
+      const npmrcPath = await TestProjectUtils.createNpmrcFile(currentPath, layer.npmrcContent);
+      npmrcFiles.push(npmrcPath);
+    }
+
+    return {
+      directories,
+      npmrcFiles,
+      deepestDir: currentPath
     };
   }
 }

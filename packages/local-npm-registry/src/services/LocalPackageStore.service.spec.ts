@@ -59,7 +59,7 @@ describe('Integration Tests', () => {
           '@test/library': {
             originalVersion: '1.0.0',
             currentVersion: '1.0.0-20250726123456789',
-            subscribers: [{ subscriberPath: '/dev/consumer', originalSpecifier: '^1.0.0' }],
+            subscribers: [{ subscriberPath: '/dev/subscriber', originalSpecifier: '^1.0.0' }],
             packageRootPath: '/dev/library'
           }
         }
@@ -88,7 +88,7 @@ describe('Integration Tests', () => {
             '/dev/library': {
               originalVersion: '1.0.0',
               currentVersion: '1.0.0-20250726123456789',
-              subscribers: [{ subscriberPath: '/dev/consumer' }]
+              subscribers: [{ subscriberPath: '/dev/subscriber' }]
             }
           }
         }
@@ -140,7 +140,7 @@ describe('Integration Tests', () => {
   describe('getSubscriptions', () => {
     it('should find a binding regardless of which directory published it', async () => {
       const packageName = `@test-${testId}/library`;
-      const subscriberPath = path.join(TestProjectUtils.getTestInstanceDir(), 'consumer');
+      const subscriberPath = path.join(TestProjectUtils.getTestInstanceDir(), 'subscriber');
       const firstPath = path.join(TestProjectUtils.getTestInstanceDir(), 'first-publisher');
       const secondPath = path.join(TestProjectUtils.getTestInstanceDir(), 'second-publisher');
 
