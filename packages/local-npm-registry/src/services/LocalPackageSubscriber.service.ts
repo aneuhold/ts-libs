@@ -3,7 +3,9 @@ import fs from 'fs-extra';
 import type {
   LocalPackageStore,
   PackageSubscriber,
-  PackageSubscription
+  PackageSubscription,
+  PublishedPackage,
+  PublishedPackageAndVersion
 } from '../types/LocalPackageStore.js';
 import { LocalPackageStoreService } from './LocalPackageStore.service.js';
 import { PackageJsonService } from './PackageJson.service.js';
@@ -11,62 +13,73 @@ import { PackageManagerService } from './PackageManagerService/PackageManager.se
 import { VerdaccioService } from './Verdaccio.service.js';
 
 /**
- * Service for the projects that subscribe to a locally published package, which
- * owns the specifier each one holds for that package and the install that
- * follows a change to it.
+ * The version each project has to declare for a package, keyed by the
+ * {@link PackageSubscriber.subscriberPath} of the project and then by the name
+ * of the package.
+ *
+ * ```json
+ * {
+ *   "/home/someone/dev/some-project": {
+ *     "@some-org/some-package": "1.2.3-pa1b2c3d4.20250528123456789",
+ *     "@some-org/another-package": "^2.0.0"
+ *   },
+ *   "/home/someone/dev/another-project": {
+ *     "@some-org/some-package": "1.2.3-pa1b2c3d4.20250528123456789"
+ *   }
+ * }
+ * ```
+ */
+type VersionsBySubscriberPath = Map<string, Map<string, string>>;
+
+/**
+ * Service for the projects that subscribe to a locally published package.
  */
 export class LocalPackageSubscriberService {
   /**
-   * Points every {@link PackageSubscriber} of a package at a version and
-   * installs it, dropping the ones whose project directory is gone.
+   * Points every {@link PackageSubscriber} of a set of published packages at
+   * the version its package was published under, and installs each subscribing
+   * project once however many of those packages it subscribes to.
    *
-   * Every subscriber is attempted before any failure is reported, so one broken
-   * subscriber cannot hide the rest.
-   *
-   * @param store - The store the dropped subscribers are removed from
-   * @param packageName - Name of the package the subscribers are updated to
-   * @param packagePath - Path the package is published from
-   * @param subscribers - The subscribers recorded for that path
-   * @param version - The version to point them at
+   * @param store - The store the published versions are read from and the dropped subscribers are removed from
+   * @param publishedPackages - The packages a publish covered
    */
-  static async updateSubscribersToVersion(
+  static async updateSubscribersToPublishedVersions(
     store: LocalPackageStore,
-    packageName: string,
-    packagePath: string,
-    subscribers: PackageSubscriber[],
-    version: string
+    publishedPackages: PublishedPackage[]
   ): Promise<void> {
-    const liveSubscribers = await this.#deleteSubscribersWithMissingDirectories(
+    // The version each subscription's package was published under is what that
+    // subscriber declares for it
+    const subscriptions: Array<PackageSubscription & PublishedPackageAndVersion> =
+      publishedPackages.flatMap(({ packageName, packagePath }) => {
+        const entry = LocalPackageStoreService.getPackageEntry(store, packageName, packagePath);
+        if (!entry) {
+          return [];
+        }
+        return entry.subscribers.map((subscriber) => ({
+          ...subscriber,
+          packageName,
+          packagePath,
+          publishedVersion: entry.currentVersion
+        }));
+      });
+
+    const liveSubscriptions = await this.#dropSubscriptionsWithMissingDirectories(
       store,
-      packageName,
-      packagePath,
-      subscribers
+      subscriptions
     );
 
-    if (liveSubscribers.length === 0) {
+    if (liveSubscriptions.length === 0) {
       return;
     }
 
-    DR.logger.info(`Updating ${liveSubscribers.length} subscriber(s)`);
-
-    const results = await Promise.allSettled(
-      liveSubscribers.map(async ({ subscriberPath }) => {
-        await PackageJsonService.updatePackageVersion(subscriberPath, packageName, version);
-        await PackageManagerService.runInstallWithRegistry(subscriberPath, store);
-      })
+    const versionsBySubscriberPath = this.#collectVersionsBySubscriberPath(
+      liveSubscriptions,
+      ({ publishedVersion }) => publishedVersion
     );
 
-    const failures = results.flatMap((result, index) =>
-      result.status === 'rejected'
-        ? [`  ${liveSubscribers[index].subscriberPath}: ${String(result.reason)}`]
-        : []
-    );
+    DR.logger.info(`Updating ${versionsBySubscriberPath.size} subscriber(s)`);
 
-    if (failures.length > 0) {
-      throw new Error(
-        `${failures.length} of ${liveSubscribers.length} subscriber(s) could not be updated to ${packageName}@${version}:\n${failures.join('\n')}`
-      );
-    }
+    await this.#updateSubscriberVersionsAndInstall(store, versionsBySubscriberPath);
   }
 
   /**
@@ -89,35 +102,23 @@ export class LocalPackageSubscriberService {
     }
     await LocalPackageStoreService.writeStore(store);
 
-    const subscriberPathToSubscriptions = this.#groupBySubscriberPath(subscriptions);
+    const liveSubscriptions = await this.#dropSubscriptionsWithMissingDirectories(
+      store,
+      subscriptions
+    );
+
+    if (liveSubscriptions.length === 0) {
+      return;
+    }
+
+    const versionsBySubscriberPath = this.#collectVersionsBySubscriberPath(
+      liveSubscriptions,
+      ({ originalSpecifier }) => originalSpecifier
+    );
 
     await VerdaccioService.start();
     try {
-      for (const [subscriberPath, subscriberSubscriptions] of subscriberPathToSubscriptions) {
-        try {
-          for (const { packageName, originalSpecifier } of subscriberSubscriptions) {
-            await PackageJsonService.updatePackageVersion(
-              subscriberPath,
-              packageName,
-              originalSpecifier
-            );
-          }
-
-          // Only run the install with the registry if there are still active subscriptions for
-          // a particular path. Otherwise install like normal.
-          if (
-            LocalPackageStoreService.getSubscriptionsForSubscriber(store, subscriberPath).length > 0
-          ) {
-            await PackageManagerService.runInstallWithRegistry(subscriberPath, store);
-          } else {
-            await PackageManagerService.runInstall(subscriberPath);
-          }
-
-          DR.logger.info(`Reset ${subscriberSubscriptions.length} package(s) in ${subscriberPath}`);
-        } catch (error) {
-          DR.logger.error(`Failed to reset subscriber ${subscriberPath}: ${String(error)}`);
-        }
-      }
+      await this.#updateSubscriberVersionsAndInstall(store, versionsBySubscriberPath);
     } finally {
       await VerdaccioService.stop();
     }
@@ -131,68 +132,133 @@ export class LocalPackageSubscriberService {
    * @param subscriptions - The subscriptions being undone
    */
   static countSubscribers(subscriptions: PackageSubscription[]): number {
-    return this.#groupBySubscriberPath(subscriptions).size;
+    return this.#getSubscriberPaths(subscriptions).length;
   }
 
   /**
-   * Collects {@link PackageSubscription}s by the
-   * {@link PackageSubscriber.subscriberPath} they belong to, which is the key
-   * of the returned map.
+   * Writes the version each project has to declare and installs each of them
+   * once, whichever direction the versions came from.
    *
-   * @param subscriptions - The subscriptions to group
+   * A project still holding subscriptions installs through the local registry,
+   * since that is the only place the versions it is pinned to resolve, and a
+   * project holding none installs the way it normally would.
+   *
+   * @param store - The store the projects' remaining subscriptions are read from
+   * @param versionsBySubscriberPath - The version each project has to declare for each package
    */
-  static #groupBySubscriberPath(
-    subscriptions: PackageSubscription[]
-  ): Map<string, PackageSubscription[]> {
-    const bySubscriber = new Map<string, PackageSubscription[]>();
+  static async #updateSubscriberVersionsAndInstall(
+    store: LocalPackageStore,
+    versionsBySubscriberPath: VersionsBySubscriberPath
+  ): Promise<void> {
+    const subscriberPaths = [...versionsBySubscriberPath.keys()];
+
+    const results = await Promise.allSettled(
+      subscriberPaths.map(async (subscriberPath) => {
+        const versionsByPackageName =
+          versionsBySubscriberPath.get(subscriberPath) ?? new Map<string, string>();
+
+        await PackageJsonService.updateDependencySpecifiers(subscriberPath, versionsByPackageName);
+
+        if (
+          LocalPackageStoreService.getSubscriptionsForSubscriber(store, subscriberPath).length > 0
+        ) {
+          await PackageManagerService.runInstallWithRegistry(subscriberPath, store);
+        } else {
+          await PackageManagerService.runInstall(subscriberPath);
+        }
+
+        DR.logger.info(`Updated ${versionsByPackageName.size} package(s) in ${subscriberPath}`);
+      })
+    );
+
+    const failures = results.flatMap((result, index) =>
+      result.status === 'rejected' ? [`  ${subscriberPaths[index]}: ${String(result.reason)}`] : []
+    );
+
+    if (failures.length > 0) {
+      throw new Error(
+        `${failures.length} of ${subscriberPaths.length} subscriber(s) could not be updated:\n${failures.join('\n')}`
+      );
+    }
+  }
+
+  /**
+   * Collects the version each project has to declare for each package it
+   * subscribes to, which is one install's worth of work per project.
+   *
+   * @param subscriptions - The subscriptions the versions are taken from
+   * @param getVersion - The version one subscription resolves to
+   */
+  static #collectVersionsBySubscriberPath<TSubscription extends PackageSubscription>(
+    subscriptions: TSubscription[],
+    getVersion: (subscription: TSubscription) => string
+  ): VersionsBySubscriberPath {
+    const versionsBySubscriberPath: VersionsBySubscriberPath = new Map();
 
     for (const subscription of subscriptions) {
-      const forSubscriber = bySubscriber.get(subscription.subscriberPath) ?? [];
-      forSubscriber.push(subscription);
-      bySubscriber.set(subscription.subscriberPath, forSubscriber);
+      const { subscriberPath, packageName } = subscription;
+      const versionsByPackageName =
+        versionsBySubscriberPath.get(subscriberPath) ?? new Map<string, string>();
+
+      versionsByPackageName.set(packageName, getVersion(subscription));
+      versionsBySubscriberPath.set(subscriberPath, versionsByPackageName);
     }
 
-    return bySubscriber;
+    return versionsBySubscriberPath;
   }
 
   /**
-   * Removes the subscribers whose project directory is gone, returning the ones
-   * that are left.
+   * The distinct {@link PackageSubscriber.subscriberPath}s a set of subscribers
+   * covers, which is what a project is counted and installed in once by however
+   * many packages it subscribes to.
+   *
+   * @param subscribers - The subscribers to take the paths of
+   */
+  static #getSubscriberPaths(subscribers: PackageSubscriber[]): string[] {
+    return [...new Set(subscribers.map(({ subscriberPath }) => subscriberPath))];
+  }
+
+  /**
+   * Removes the subscribers whose project directory is gone from the store,
+   * returning the subscriptions that are left.
+   *
+   * A directory is checked once however many subscriptions it holds.
    *
    * @param store - The store the subscribers are removed from
-   * @param packageName - Name of the package being published
-   * @param packagePath - Path of the package being published
-   * @param subscribers - The subscribers recorded for that path
+   * @param subscriptions - The subscriptions to check the directories of
    */
-  static async #deleteSubscribersWithMissingDirectories(
+  static async #dropSubscriptionsWithMissingDirectories<TSubscription extends PackageSubscription>(
     store: LocalPackageStore,
-    packageName: string,
-    packagePath: string,
-    subscribers: PackageSubscriber[]
-  ): Promise<PackageSubscriber[]> {
-    const subscriberDirectories = await Promise.all(
-      subscribers.map(async (subscriber) => ({
-        subscriber,
-        directoryExists: await fs.pathExists(subscriber.subscriberPath)
+    subscriptions: TSubscription[]
+  ): Promise<TSubscription[]> {
+    const subscriberPaths = this.#getSubscriberPaths(subscriptions);
+    const directoryChecks = await Promise.all(
+      subscriberPaths.map(async (subscriberPath) => ({
+        subscriberPath,
+        directoryExists: await fs.pathExists(subscriberPath)
       }))
     );
 
-    const missingSubscribers = subscriberDirectories
-      .filter(({ directoryExists }) => !directoryExists)
-      .map(({ subscriber }) => subscriber);
+    const missingPaths = new Set(
+      directoryChecks
+        .filter(({ directoryExists }) => !directoryExists)
+        .map(({ subscriberPath }) => subscriberPath)
+    );
 
-    if (missingSubscribers.length === 0) {
-      return subscribers;
+    if (missingPaths.size === 0) {
+      return subscriptions;
     }
 
-    for (const { subscriberPath } of missingSubscribers) {
+    for (const subscriberPath of missingPaths) {
       DR.logger.warn(`Dropping subscriber ${subscriberPath}, whose directory no longer exists`);
-      LocalPackageStoreService.removeSubscriber(store, packageName, packagePath, subscriberPath);
+    }
+    for (const { packageName, packagePath, subscriberPath } of subscriptions) {
+      if (missingPaths.has(subscriberPath)) {
+        LocalPackageStoreService.removeSubscriber(store, packageName, packagePath, subscriberPath);
+      }
     }
     await LocalPackageStoreService.writeStore(store);
 
-    return subscriberDirectories
-      .filter(({ directoryExists }) => directoryExists)
-      .map(({ subscriber }) => subscriber);
+    return subscriptions.filter(({ subscriberPath }) => !missingPaths.has(subscriberPath));
   }
 }
