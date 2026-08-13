@@ -1,35 +1,19 @@
 import { DR } from '@aneuhold/core-ts-lib';
 import fs from 'fs-extra';
 import type {
+  PublishedPackageAndVersion,
+  VersionsBySubscriberPath
+} from '../types/LocalPackageOperations.js';
+import type {
   LocalPackageStore,
   PackageSubscriber,
   PackageSubscription,
-  PublishedPackage,
-  PublishedPackageAndVersion
+  PublishedPackage
 } from '../types/LocalPackageStore.js';
 import { LocalPackageStoreService } from './LocalPackageStore.service.js';
 import { PackageJsonService } from './PackageJson.service.js';
 import { PackageManagerService } from './PackageManagerService/PackageManager.service.js';
 import { VerdaccioService } from './Verdaccio.service.js';
-
-/**
- * The version each project has to declare for a package, keyed by the
- * {@link PackageSubscriber.subscriberPath} of the project and then by the name
- * of the package.
- *
- * ```json
- * {
- *   "/home/someone/dev/some-project": {
- *     "@some-org/some-package": "1.2.3-pa1b2c3d4.20250528123456789",
- *     "@some-org/another-package": "^2.0.0"
- *   },
- *   "/home/someone/dev/another-project": {
- *     "@some-org/some-package": "1.2.3-pa1b2c3d4.20250528123456789"
- *   }
- * }
- * ```
- */
-type VersionsBySubscriberPath = Map<string, Map<string, string>>;
 
 /**
  * Service for the projects that subscribe to a locally published package.
