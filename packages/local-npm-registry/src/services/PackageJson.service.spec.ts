@@ -115,24 +115,179 @@ describe('PackageJsonService', () => {
     });
   });
 
+  describe('updateVersionField', () => {
+    it('should leave a version nested in another object alone', async () => {
+      const projectPath = await writePackageJson(
+        [
+          '{',
+          '  "name": "@test/nested-version",',
+          '  "version": "1.0.0",',
+          '  "volta": {',
+          '    "version": "0.0.1"',
+          '  }',
+          '}',
+          ''
+        ].join('\n')
+      );
+
+      await PackageJsonService.updateVersionField(projectPath, '2.0.0');
+
+      expect(await readPackageJsonText(projectPath)).toBe(
+        [
+          '{',
+          '  "name": "@test/nested-version",',
+          '  "version": "2.0.0",',
+          '  "volta": {',
+          '    "version": "0.0.1"',
+          '  }',
+          '}',
+          ''
+        ].join('\n')
+      );
+    });
+
+    it('should write the version the file parses to rather than one that comes first', async () => {
+      const projectPath = await writePackageJson(
+        [
+          '{',
+          '\t"name": "@test/brace-in-script",',
+          '\t"scripts": {',
+          '\t\t"greet": "echo }"',
+          '\t},',
+          '\t"volta": {',
+          '\t\t"version": "0.0.1"',
+          '\t},',
+          '\t"version": "1.0.0"',
+          '}',
+          ''
+        ].join('\n')
+      );
+
+      await PackageJsonService.updateVersionField(projectPath, '2.0.0');
+
+      expect(await readPackageJsonText(projectPath)).toBe(
+        [
+          '{',
+          '\t"name": "@test/brace-in-script",',
+          '\t"scripts": {',
+          '\t\t"greet": "echo }"',
+          '\t},',
+          '\t"volta": {',
+          '\t\t"version": "0.0.1"',
+          '\t},',
+          '\t"version": "2.0.0"',
+          '}',
+          ''
+        ].join('\n')
+      );
+    });
+  });
+
+  describe('updateDependencySpecifiers', () => {
+    it('should write every section that declares the package and nothing else', async () => {
+      const projectPath = await writePackageJson(
+        [
+          '{',
+          '    "name": "@test/every-section",',
+          '    "dependencies": {',
+          '        "@test/lib": "^1.0.0",',
+          '        "@test/other": "^1.0.0"',
+          '    },',
+          '    "devDependencies": {',
+          '        "@test/lib": "^1.0.0"',
+          '    },',
+          '    "peerDependencies": {',
+          '        "@test/lib": "^1.0.0"',
+          '    },',
+          '    "overrides": {',
+          '        "@test/lib": "^1.0.0"',
+          '    }',
+          '}',
+          ''
+        ].join('\n')
+      );
+
+      await PackageJsonService.updateDependencySpecifiers(
+        projectPath,
+        new Map([
+          ['@test/lib', '1.0.0-pa1b2c3d4.20250528123456789'],
+          ['@test/never-declared', '9.9.9']
+        ])
+      );
+
+      // The four-space indentation is the file's own, the package it does not
+      // declare is not added, and what an override forces is not its own
+      // dependency to rewrite
+      expect(await readPackageJsonText(projectPath)).toBe(
+        [
+          '{',
+          '    "name": "@test/every-section",',
+          '    "dependencies": {',
+          '        "@test/lib": "1.0.0-pa1b2c3d4.20250528123456789",',
+          '        "@test/other": "^1.0.0"',
+          '    },',
+          '    "devDependencies": {',
+          '        "@test/lib": "1.0.0-pa1b2c3d4.20250528123456789"',
+          '    },',
+          '    "peerDependencies": {',
+          '        "@test/lib": "1.0.0-pa1b2c3d4.20250528123456789"',
+          '    },',
+          '    "overrides": {',
+          '        "@test/lib": "^1.0.0"',
+          '    }',
+          '}',
+          ''
+        ].join('\n')
+      );
+    });
+  });
+
   describe('extractOrganization', () => {
     it('should extract organization from scoped package name', () => {
-      expect(PackageJsonService.extractOrganization('@myorg/package-name')).toBe('myorg');
-      expect(PackageJsonService.extractOrganization('@test/another-package')).toBe('test');
-      expect(PackageJsonService.extractOrganization('@company/ui-lib')).toBe('company');
+      expect(PackageJsonService.extractOrganizationFromPackageName('@myorg/package-name')).toBe(
+        'myorg'
+      );
+      expect(PackageJsonService.extractOrganizationFromPackageName('@test/another-package')).toBe(
+        'test'
+      );
+      expect(PackageJsonService.extractOrganizationFromPackageName('@company/ui-lib')).toBe(
+        'company'
+      );
     });
 
     it('should return null for non-scoped package names', () => {
-      expect(PackageJsonService.extractOrganization('package-name')).toBeNull();
-      expect(PackageJsonService.extractOrganization('react')).toBeNull();
-      expect(PackageJsonService.extractOrganization('lodash')).toBeNull();
+      expect(PackageJsonService.extractOrganizationFromPackageName('package-name')).toBeNull();
+      expect(PackageJsonService.extractOrganizationFromPackageName('react')).toBeNull();
+      expect(PackageJsonService.extractOrganizationFromPackageName('lodash')).toBeNull();
     });
 
     it('should return null for invalid package names', () => {
-      expect(PackageJsonService.extractOrganization('')).toBeNull();
-      expect(PackageJsonService.extractOrganization('@')).toBeNull();
-      expect(PackageJsonService.extractOrganization('@/')).toBeNull();
-      expect(PackageJsonService.extractOrganization('@org')).toBeNull();
+      expect(PackageJsonService.extractOrganizationFromPackageName('')).toBeNull();
+      expect(PackageJsonService.extractOrganizationFromPackageName('@')).toBeNull();
+      expect(PackageJsonService.extractOrganizationFromPackageName('@/')).toBeNull();
+      expect(PackageJsonService.extractOrganizationFromPackageName('@org')).toBeNull();
     });
   });
+
+  /**
+   * Writes a package.json exactly as given, which is what a test asserting on
+   * the formatting a write left behind needs.
+   *
+   * @param content - The raw text of the package.json
+   */
+  const writePackageJson = async (content: string): Promise<string> => {
+    const projectPath = path.join(TestProjectUtils.getTestInstanceDir(), `project-${testId}`);
+    await fs.ensureDir(projectPath);
+    await fs.writeFile(path.join(projectPath, 'package.json'), content, 'utf-8');
+
+    return projectPath;
+  };
+
+  /**
+   * The raw text of a project's package.json.
+   *
+   * @param projectPath - Path to the project directory containing package.json
+   */
+  const readPackageJsonText = async (projectPath: string): Promise<string> =>
+    fs.readFile(path.join(projectPath, 'package.json'), 'utf-8');
 });

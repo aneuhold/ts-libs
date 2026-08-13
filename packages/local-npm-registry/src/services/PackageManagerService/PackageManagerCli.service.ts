@@ -111,7 +111,7 @@ export class PackageManagerCliService {
 
     // A package carries at most one scope, which is the only one a publish has
     // to redirect.
-    const organization = PackageJsonService.extractOrganization(packageName);
+    const organization = PackageJsonService.extractOrganizationFromPackageName(packageName);
     const scopesToRedirect = organization ? [organization] : [];
 
     const { args: registryArgs, env } = npmInfo.getRegistryOverrideCliOptions(
@@ -147,7 +147,7 @@ export class PackageManagerCliService {
     const organizations = new Set<string>();
 
     for (const { packageName } of subscriptions) {
-      const organization = PackageJsonService.extractOrganization(packageName);
+      const organization = PackageJsonService.extractOrganizationFromPackageName(packageName);
       if (organization) {
         organizations.add(organization);
       }

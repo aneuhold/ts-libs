@@ -14,6 +14,31 @@ import { LocalPackageVersionService } from './LocalPackageVersion.service.js';
  */
 export class PackageJsonService {
   /**
+   * Matches a `version` key and the value it holds. Group 1 is the key and the
+   * spacing that leads to the value, which a rewrite puts back as it was, and
+   * group 2 is the value on its own, which is what the top-level key is told
+   * apart by.
+   */
+  static readonly #VERSION_PROPERTY_REGEX = /("version"\s*:\s*")([^"]*)(?=")/g;
+
+  /**
+   * Matches a section that declares dependencies, up to the brace that closes
+   * it. Group 1 is the key and the brace it opens, group 2 everything the
+   * section declares, which holds no brace of its own since a section holds
+   * only strings.
+   */
+  static readonly #DEPENDENCY_SECTION_REGEX =
+    /("(?:dependencies|devDependencies|peerDependencies)"\s*:\s*\{)([^}]*)/g;
+
+  /**
+   * Matches one `"package": "specifier"` declaration. Group 1 is the package
+   * and the spacing that leads to the specifier, group 2 the package name on
+   * its own, which is what a specifier is looked up by. The specifier is left
+   * uncaptured, since a rewrite overwrites it rather than reading it.
+   */
+  static readonly #SPECIFIER_PROPERTY_REGEX = /("([^"]+)"\s*:\s*")[^"]*(?=")/g;
+
+  /**
    * Reads and validates the package.json file in the specified directory.
    *
    * The triple declaration of the signature must have been an experiment by Anton.
@@ -53,112 +78,94 @@ export class PackageJsonService {
   }
 
   /**
-   * Updates a package's own version only while its package.json holds a version
+   * Writes a project's own version, which is the top-level `version` field of
+   * its package.json rather than a `version` nested inside another object.
+   *
+   * @param projectPath - Path to the project directory containing package.json
+   * @param version - New version to set
+   */
+  static async updateVersionField(projectPath: string, version: string): Promise<void> {
+    const { content, packageJson } = await this.#readPackageJson(projectPath);
+    let hasWritten = false;
+
+    // What the file parsed to is what tells the top-level key apart from a
+    // nested one. A nested `version` holding the same string ahead of it is
+    // taken instead, which a lookbehind skipping whole nested objects would
+    // rule out, at the cost of a nesting depth it cannot see past
+    const updatedContent = content.replace(
+      this.#VERSION_PROPERTY_REGEX,
+      (match: string, keyAndSpacing: string, currentVersion: string) => {
+        if (hasWritten || currentVersion !== packageJson.version) {
+          return match;
+        }
+        hasWritten = true;
+        return `${keyAndSpacing}${version}`;
+      }
+    );
+
+    await this.#writePackageJson(projectPath, content, updatedContent);
+  }
+
+  /**
+   * Writes a project's own version only while its package.json holds a version
    * generated for that directory, which leaves a version updated by hand alone.
    *
    * @param projectPath - Path to the project directory containing package.json
-   * @param packageName - Name of the package to update
    * @param version - New version to set
    */
-  static async updatePackageVersionIfLocal(
-    projectPath: string,
-    packageName: string,
-    version: string
-  ): Promise<void> {
-    const currentSpecifier = await this.getCurrentSpecifier(projectPath, packageName);
+  static async updateVersionFieldIfLocal(projectPath: string, version: string): Promise<void> {
+    const packageInfo = await this.getPackageInfo(projectPath, false);
     if (
-      !currentSpecifier ||
-      !LocalPackageVersionService.versionStringIsForLocalPackage(currentSpecifier, projectPath)
+      !packageInfo?.version ||
+      !LocalPackageVersionService.versionStringIsForLocalPackage(packageInfo.version, projectPath)
     ) {
       return;
     }
 
-    await this.updatePackageVersion(projectPath, packageName, version);
+    await this.updateVersionField(projectPath, version);
   }
 
   /**
-   * Updates a package.json file with a new version for a specific package.
-   * Preserves original formatting, indentation, and comments.
+   * Writes the specifiers a project declares for a set of packages, across
+   * every dependency section that declares one of them.
+   *
+   * A package the project does not declare is left out rather than added, and
+   * an `overrides` or `resolutions` entry naming one is left alone, since
+   * neither is what the project itself asks for. A `dependencies` key nested in
+   * another object, such as a pnpm package extension, is written along with the
+   * project's own, which telling the two apart would cost a brace depth count.
    *
    * @param projectPath - Path to the project directory containing package.json
-   * @param packageName - Name of the package to update
-   * @param version - New version to set
+   * @param specifiersByPackageName - The specifier to declare each package with
    */
-  static async updatePackageVersion(
+  static async updateDependencySpecifiers(
     projectPath: string,
-    packageName: string,
-    version: string
+    specifiersByPackageName: Map<string, string>
   ): Promise<void> {
-    try {
-      const packageJsonPath = path.join(projectPath, 'package.json');
-
-      // Read the original file content to preserve formatting
-      const originalContent = await fs.readFile(packageJsonPath, 'utf-8');
-      const rawPackageJson: unknown = await fs.readJson(packageJsonPath);
-      if (!isPackageJsonWithoutVersion(rawPackageJson)) {
-        throw new Error('package.json must contain a name field');
-      }
-      const packageJson = rawPackageJson;
-
-      let updatedContent = originalContent;
-      let hasUpdates = false;
-
-      // Update the package's own version if this is the package being published
-      if (packageJson.name === packageName) {
-        const versionRegex = new RegExp(`(["']version["']\\s*:\\s*["'])([^"']+)(["'])`, 'g');
-        if (versionRegex.test(originalContent)) {
-          updatedContent = updatedContent.replace(versionRegex, `$1${version}$3`);
-          hasUpdates = true;
-        }
-      }
-
-      // Helper function to update dependencies in specific sections
-      const updateDependencySection = (sectionName: string): void => {
-        const sectionRegex = new RegExp(
-          `(["']${sectionName}["']\\s*:\\s*{[^}]*["']${this.#escapeRegex(packageName)}["']\\s*:\\s*["'])([^"']+)(["'])`,
-          'g'
-        );
-        if (sectionRegex.test(updatedContent)) {
-          updatedContent = updatedContent.replace(sectionRegex, `$1${version}$3`);
-          hasUpdates = true;
-        }
-      };
-
-      // Update dependencies sections
-      if (packageJson.dependencies?.[packageName]) {
-        updateDependencySection('dependencies');
-      }
-
-      if (packageJson.devDependencies?.[packageName]) {
-        updateDependencySection('devDependencies');
-      }
-
-      if (packageJson.peerDependencies?.[packageName]) {
-        updateDependencySection('peerDependencies');
-      }
-
-      // Only write if we made updates
-      if (hasUpdates) {
-        await fs.writeFile(packageJsonPath, updatedContent, 'utf-8');
-        DR.logger.info(`Updated ${packageName} to ${version} in ${projectPath}`);
-      } else {
-        DR.logger.info(`No updates needed for ${packageName} in ${projectPath}`);
-      }
-    } catch (error) {
-      DR.logger.error(`Error updating package.json in ${projectPath}: ${String(error)}`);
-      throw error;
+    if (specifiersByPackageName.size === 0) {
+      return;
     }
+
+    const { content } = await this.#readPackageJson(projectPath);
+
+    const updatedContent = content.replace(
+      this.#DEPENDENCY_SECTION_REGEX,
+      (match: string, keyAndOpeningBrace: string, declarations: string) =>
+        `${keyAndOpeningBrace}${this.#writeDeclaredSpecifiers(declarations, specifiersByPackageName)}`
+    );
+
+    await this.#writePackageJson(projectPath, content, updatedContent);
   }
 
   /**
-   * Gets the current version specifier a project's package.json holds for a
-   * package, which for the project's own package is its version field.
+   * Gets the current version specifier a project's package.json declares for a
+   * package.
    *
    * @param projectPath - Path to the project directory containing package.json
    * @param packageName - Name of the package to find the specifier for
    * @returns The current version specifier or null if not found
    */
-  static async getCurrentSpecifier(
+  static async getCurrentPackageVersionSpecifier(
     projectPath: string,
     packageName: string
   ): Promise<string | null> {
@@ -182,10 +189,6 @@ export class PackageJsonService {
       return packageInfo.peerDependencies[packageName];
     }
 
-    if (packageInfo.name === packageName && isPackageJson(packageInfo)) {
-      return packageInfo.version;
-    }
-
     return null;
   }
 
@@ -195,17 +198,81 @@ export class PackageJsonService {
    * @param packageName The package name (e.g., "@myorg/package-name")
    * @returns The organization name or null if not a scoped package
    */
-  static extractOrganization(packageName: string): string | null {
+  static extractOrganizationFromPackageName(packageName: string): string | null {
     const orgMatch = packageName.match(/^@([^/]+)\//);
     return orgMatch ? orgMatch[1] : null;
   }
 
   /**
-   * Escapes special regex characters in a string.
+   * Rewrites the specifier of every declaration of one dependency section that
+   * names a package the caller has a specifier for, leaving the rest of the
+   * section as it sits.
    *
-   * @param str - String to escape
+   * The raw text between the braces of one section, which is what
+   * `declarations` holds, looks like this:
+   *
+   * ```
+   *     "some-package": "^1.0.0",
+   *     "another-package": "^2.0.0"
+   * ```
+   *
+   * @param declarations - The raw text between the braces of one section
+   * @param specifiersByPackageName - The specifier to declare each package with
    */
-  static #escapeRegex(str: string): string {
-    return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  static #writeDeclaredSpecifiers(
+    declarations: string,
+    specifiersByPackageName: Map<string, string>
+  ): string {
+    // Doing a single pass at all specifiers with regex is a lot more performant than making a regex
+    // per package and calling replace multiple times. (Note by Anton 8/13/2026). Can validate this
+    // again in the future. But for many packages this comes out ot like a 100x performance increase.
+    return declarations.replace(
+      this.#SPECIFIER_PROPERTY_REGEX,
+      (declaration: string, packageAndSpacing: string, packageName: string) => {
+        const specifier = specifiersByPackageName.get(packageName);
+        return specifier === undefined ? declaration : `${packageAndSpacing}${specifier}`;
+      }
+    );
+  }
+
+  /**
+   * Reads a project's package.json both as the text a write works against, so
+   * that the file keeps the formatting it was written with, and as what that
+   * text parses to, which is what a write locates its target by.
+   *
+   * @param projectPath - Path to the project directory containing package.json
+   */
+  static async #readPackageJson(
+    projectPath: string
+  ): Promise<{ content: string; packageJson: PackageJsonWithoutVersion }> {
+    const packageJson = await this.getPackageInfo(projectPath, false);
+    if (!packageJson) {
+      throw new Error(`No package.json to update in ${projectPath}`);
+    }
+
+    return {
+      content: await fs.readFile(path.join(projectPath, 'package.json'), 'utf-8'),
+      packageJson
+    };
+  }
+
+  /**
+   * Writes a project's package.json back, leaving a file no rewrite reached
+   * untouched.
+   *
+   * @param projectPath - Path to the project directory containing package.json
+   * @param content - The raw text the rewrite worked against
+   * @param updatedContent - The raw text the rewrite produced
+   */
+  static async #writePackageJson(
+    projectPath: string,
+    content: string,
+    updatedContent: string
+  ): Promise<void> {
+    if (updatedContent === content) {
+      return;
+    }
+
+    await fs.writeFile(path.join(projectPath, 'package.json'), updatedContent, 'utf-8');
   }
 }
