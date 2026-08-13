@@ -1,5 +1,5 @@
 import type { User } from '@aneuhold/core-ts-db-lib';
-import { UserSchema } from '@aneuhold/core-ts-db-lib';
+import { DocumentService, UserSchema } from '@aneuhold/core-ts-db-lib';
 import { createHash } from 'crypto';
 import { describe, expect, it } from 'vitest';
 import { expectToThrow, getTestUserName } from '../../../test-util/testsUtil.js';
@@ -162,7 +162,12 @@ describe('getUserByRefreshTokenHash', () => {
     const newUser = UserSchema.parse({ userName: getTestUserName() });
     await userRepo.insertNew(newUser);
 
-    const tokenHash = createHash('sha256').update('test-refresh-token').digest('hex');
+    // Every run shares one database, so a hash built from a fixed string is
+    // held by the users of past runs too, and the lookup below can return one
+    // of those instead of the user this test just inserted
+    const tokenHash = createHash('sha256')
+      .update(`test-refresh-token-${newUser._id}`)
+      .digest('hex');
     await userRepo.update({
       _id: newUser._id,
       auth: {
@@ -177,7 +182,9 @@ describe('getUserByRefreshTokenHash', () => {
   });
 
   it('returns null when no user has the given token hash', async () => {
-    const nonExistentHash = createHash('sha256').update('nonexistent-token').digest('hex');
+    const nonExistentHash = createHash('sha256')
+      .update(`nonexistent-token-${DocumentService.generateID()}`)
+      .digest('hex');
     const found = await userRepo.getUserByRefreshTokenHash(nonExistentHash);
     expect(found).toBeNull();
   });
