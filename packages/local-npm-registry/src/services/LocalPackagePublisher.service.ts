@@ -5,28 +5,32 @@ import type {
   PackageSubscriber
 } from '../types/LocalPackageStore.js';
 import { LocalPackageStoreService } from './LocalPackageStore.service.js';
+import { LocalPackageSubscriberService } from './LocalPackageSubscriber.service.js';
+import { LocalPackageVersionService } from './LocalPackageVersion.service.js';
 import { PackageJsonService } from './PackageJson.service.js';
-import { PackageManagerService } from './PackageManagerService/PackageManager.service.js';
 import { VerdaccioService } from './Verdaccio.service.js';
 
 /**
- * Utility service containing shared methods used by command classes.
+ * Service for the directories that publish a package to the local registry,
+ * which owns the version each one publishes under and the
+ * {@link PackageEntry} that records it.
  */
-export class CommandUtilService {
+export class LocalPackagePublisherService {
   /**
    * Publishes a package with a fresh timestamp version and updates all subscribers.
-   * This unified method is used by both publish and subscribe commands.
    *
-   * The caller has to hold `MutexLockName.Store` across the read that produced
-   * the store and this call, since the entry written here replaces whatever the
-   * store holds for the package path.
+   * The caller has to hold the `MutexService` lock from the read that produced
+   * the store through this call returning. The entry written here replaces
+   * whatever the store holds for the package path, and the subscribers updated
+   * here have their `package.json` rewritten and a package manager run in them,
+   * neither of which another command can be doing at the same time.
    *
    * @param store - The store the published entry is written into
    * @param packageName - Name of the package to publish
    * @param packagePath - Path of the package to publish
    * @param originalVersion - Original version from package.json
    * @param existingSubscribers - Existing subscribers to preserve (empty array for new packages)
-   * @param additionalSubscriber - Optional additional subscriber to add (used by subscribe command)
+   * @param additionalSubscriber - Optional additional subscriber to add
    * @param additionalPublishArgs - Additional arguments to pass to the npm publish command
    */
   static async publishAndUpdateSubscribers(
@@ -39,7 +43,7 @@ export class CommandUtilService {
     additionalPublishArgs: string[] = []
   ): Promise<string> {
     // Generate fresh timestamp version
-    const timestampVersion = LocalPackageStoreService.generateTimestampVersion(
+    const timestampVersion = LocalPackageVersionService.generateTimestampVersion(
       originalVersion,
       packagePath
     );
@@ -61,7 +65,6 @@ export class CommandUtilService {
         publishArgs: additionalPublishArgs.length > 0 ? [...additionalPublishArgs] : undefined
       };
 
-      // Add additional subscriber if provided (for subscribe command)
       if (
         additionalSubscriber &&
         !entry.subscribers.some(
@@ -76,34 +79,22 @@ export class CommandUtilService {
       LocalPackageStoreService.updatePackageEntry(store, packageName, packagePath, entry);
       await LocalPackageStoreService.writeStore(store);
 
-      // Update all subscribers in parallel. Every subscriber is attempted before
-      // any failure is reported, so one broken consumer cannot hide the rest
-      if (entry.subscribers.length > 0) {
-        DR.logger.info(`Updating ${entry.subscribers.length} subscriber(s)`);
+      await LocalPackageSubscriberService.updateSubscribersToVersion(
+        store,
+        packageName,
+        packagePath,
+        entry.subscribers,
+        timestampVersion
+      );
 
-        const results = await Promise.allSettled(
-          entry.subscribers.map(async ({ subscriberPath }) => {
-            await PackageJsonService.updatePackageVersion(
-              subscriberPath,
-              packageName,
-              timestampVersion
-            );
-            await PackageManagerService.runInstallWithRegistry(subscriberPath, store);
-          })
-        );
-
-        const failures = results.flatMap((result, index) =>
-          result.status === 'rejected'
-            ? [`  ${entry.subscribers[index].subscriberPath}: ${String(result.reason)}`]
-            : []
-        );
-
-        if (failures.length > 0) {
-          throw new Error(
-            `Published ${packageName}@${timestampVersion}, but ${failures.length} of ${entry.subscribers.length} subscriber(s) could not be updated:\n${failures.join('\n')}`
-          );
-        }
-      }
+      // This directory keeps one version in the registry, and the sweep is by
+      // slug rather than by what the store named, so a version an interrupted
+      // publish left behind goes with it
+      await VerdaccioService.removeVersionsPublishedFrom(
+        packageName,
+        packagePath,
+        timestampVersion
+      );
 
       // Restore original version in package.json after publishing
       await PackageJsonService.updatePackageVersion(packagePath, packageName, originalVersion);

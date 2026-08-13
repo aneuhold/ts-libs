@@ -262,7 +262,7 @@ describe('Integration Tests', () => {
 
     TestProjectUtils.changeToProject(publisherPath);
 
-    // The package reached the registry, but the consumer never got it, so the
+    // The package reached the registry, but the subscriber never got it, so the
     // failure has to surface rather than be counted and logged
     await expect(PublishCommand.execute()).rejects.toThrow(badSubscriberPath);
   });
@@ -272,11 +272,7 @@ describe('Integration Tests', () => {
     const { firstPublisherPath, secondPublisherPath } =
       await TestProjectUtils.publishFromTwoDirectories(packageName);
 
-    const packageStorage = path.join(
-      VerdaccioService.verdaccioConfig.storage,
-      ...packageName.split('/')
-    );
-    const tarballBaseName = packageName.split('/').pop() ?? packageName;
+    const packageStorage = TestProjectUtils.getRegistryPackageStorage(packageName);
     const firstPublisherSlug = LocalPackageVersionService.getPathSlug(firstPublisherPath);
 
     const secondPublisherEntry = LocalPackageStoreService.getPackageEntry(
@@ -291,7 +287,10 @@ describe('Integration Tests', () => {
     // A publish killed before it writes the store leaves a version nothing names
     const orphanTarball = path.join(
       packageStorage,
-      `${tarballBaseName}-1.0.0-${firstPublisherSlug}.00000000000000000.tgz`
+      TestProjectUtils.getRegistryTarballName(
+        packageName,
+        `1.0.0-${firstPublisherSlug}.00000000000000000`
+      )
     );
     await fs.writeFile(orphanTarball, '');
 
@@ -304,28 +303,30 @@ describe('Integration Tests', () => {
       tarballs.filter((fileName) => fileName.includes(`-${firstPublisherSlug}.`))
     ).toHaveLength(1);
     expect(await fs.pathExists(orphanTarball)).toBe(false);
-    expect(tarballs).toContain(`${tarballBaseName}-${secondPublisherEntry.currentVersion}.tgz`);
+    expect(tarballs).toContain(
+      TestProjectUtils.getRegistryTarballName(packageName, secondPublisherEntry.currentVersion)
+    );
   });
 
   it('should keep two publishing directories of one package resolvable at the same time', async () => {
     const packageName = `@test-${testId}/two-publishers`;
     const { firstPublisherPath, secondPublisherPath } =
       await TestProjectUtils.publishFromTwoDirectories(packageName);
-    const consumerAPath = await TestProjectUtils.createSubscriberProject(
-      `@test-${testId}/consumer-a`,
+    const subscriberAPath = await TestProjectUtils.createSubscriberProject(
+      `@test-${testId}/subscriber-a`,
       packageName,
       '^1.0.0'
     );
-    const consumerBPath = await TestProjectUtils.createSubscriberProject(
-      `@test-${testId}/consumer-b`,
+    const subscriberBPath = await TestProjectUtils.createSubscriberProject(
+      `@test-${testId}/subscriber-b`,
       packageName,
       '^1.0.0'
     );
 
-    // Each consumer states the directory it wants
-    TestProjectUtils.changeToProject(consumerAPath);
+    // Each subscriber states the directory it wants
+    TestProjectUtils.changeToProject(subscriberAPath);
     await SubscribeCommand.execute(packageName, firstPublisherPath);
-    TestProjectUtils.changeToProject(consumerBPath);
+    TestProjectUtils.changeToProject(subscriberBPath);
     await SubscribeCommand.execute(packageName, secondPublisherPath);
 
     const storeAfterSubscribing = await LocalPackageStoreService.getStore();
@@ -336,7 +337,7 @@ describe('Integration Tests', () => {
     )?.currentVersion;
     expect(secondPublisherVersion).toBeTruthy();
 
-    // Publishing from one directory has to leave the other directory's consumer
+    // Publishing from one directory has to leave the other directory's subscriber
     // on the build it subscribed to
     TestProjectUtils.changeToProject(firstPublisherPath);
     await PublishCommand.execute();
@@ -350,37 +351,37 @@ describe('Integration Tests', () => {
     expect(firstPublisherVersion).toBeTruthy();
     expect(firstPublisherVersion).not.toBe(secondPublisherVersion);
 
-    const consumerAPackageJson = await TestProjectUtils.readPackageJson(consumerAPath);
-    const consumerBPackageJson = await TestProjectUtils.readPackageJson(consumerBPath);
-    expect(consumerAPackageJson.dependencies?.[packageName]).toBe(firstPublisherVersion);
-    expect(consumerBPackageJson.dependencies?.[packageName]).toBe(secondPublisherVersion);
+    const subscriberAPackageJson = await TestProjectUtils.readPackageJson(subscriberAPath);
+    const subscriberBPackageJson = await TestProjectUtils.readPackageJson(subscriberBPath);
+    expect(subscriberAPackageJson.dependencies?.[packageName]).toBe(firstPublisherVersion);
+    expect(subscriberBPackageJson.dependencies?.[packageName]).toBe(secondPublisherVersion);
 
-    // Each consumer resolves the build of the directory it is bound to
-    const installedForConsumerA = await TestProjectUtils.readInstalledPackageJson(
-      consumerAPath,
+    // Each subscriber resolves the build of the directory it is bound to
+    const installedForSubscriberA = await TestProjectUtils.readInstalledPackageJson(
+      subscriberAPath,
       packageName
     );
-    const installedForConsumerB = await TestProjectUtils.readInstalledPackageJson(
-      consumerBPath,
+    const installedForSubscriberB = await TestProjectUtils.readInstalledPackageJson(
+      subscriberBPath,
       packageName
     );
-    expect(installedForConsumerA.version).toBe(firstPublisherVersion);
-    expect(installedForConsumerB.version).toBe(secondPublisherVersion);
+    expect(installedForSubscriberA.version).toBe(firstPublisherVersion);
+    expect(installedForSubscriberB.version).toBe(secondPublisherVersion);
 
     // Retention runs on every publish, so what the first directory removed has
-    // to be its own version and nothing else: the second directory's consumer
+    // to be its own version and nothing else: the second directory's subscriber
     // installs again from scratch and still gets what it is pinned to
-    await fs.remove(path.join(consumerBPath, 'node_modules'));
+    await fs.remove(path.join(subscriberBPath, 'node_modules'));
 
     await VerdaccioService.start();
     try {
-      await PackageManagerService.runInstallWithRegistry(consumerBPath, store);
+      await PackageManagerService.runInstallWithRegistry(subscriberBPath, store);
     } finally {
       await VerdaccioService.stop();
     }
 
     expect(
-      (await TestProjectUtils.readInstalledPackageJson(consumerBPath, packageName)).version
+      (await TestProjectUtils.readInstalledPackageJson(subscriberBPath, packageName)).version
     ).toBe(secondPublisherVersion);
   });
 

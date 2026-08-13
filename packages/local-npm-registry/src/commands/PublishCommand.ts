@@ -1,5 +1,5 @@
 import { DR } from '@aneuhold/core-ts-lib';
-import { CommandUtilService } from '../services/CommandUtil.service.js';
+import { LocalPackagePublisherService } from '../services/LocalPackagePublisher.service.js';
 import { LocalPackageStoreService } from '../services/LocalPackageStore.service.js';
 import { LocalPackageVersionService } from '../services/LocalPackageVersion.service.js';
 import { MutexService } from '../services/Mutex.service.js';
@@ -48,7 +48,7 @@ export class PublishCommand {
       const existingSubscribers = existingEntry?.subscribers || [];
 
       // Publish package and update subscribers
-      await CommandUtilService.publishAndUpdateSubscribers(
+      await LocalPackagePublisherService.publishAndUpdateSubscribers(
         store,
         packageName,
         packagePath,

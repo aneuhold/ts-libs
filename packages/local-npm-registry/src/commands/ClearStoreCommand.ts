@@ -1,6 +1,6 @@
 import { DR } from '@aneuhold/core-ts-lib';
-import { CommandUtilService } from '../services/CommandUtil.service.js';
 import { LocalPackageStoreService } from '../services/LocalPackageStore.service.js';
+import { LocalPackageSubscriberService } from '../services/LocalPackageSubscriber.service.js';
 import { MutexService } from '../services/Mutex.service.js';
 import { VerdaccioService } from '../services/Verdaccio.service.js';
 import type { PackageSubscription } from '../types/LocalPackageStore.js';
@@ -43,12 +43,12 @@ export class ClearStoreCommand {
       LocalPackageStoreService.clearStore(store);
       await LocalPackageStoreService.writeStore(store);
 
-      const subscriberCount = CommandUtilService.countSubscribers(subscriptions);
+      const subscriberCount = LocalPackageSubscriberService.countSubscribers(subscriptions);
       if (subscriberCount > 0) {
         DR.logger.info(`Resetting ${subscriberCount} subscriber(s)`);
       }
 
-      await CommandUtilService.resetPackageSubscriptions(store, subscriptions);
+      await LocalPackageSubscriberService.resetPackageSubscriptions(store, subscriptions);
 
       // Nothing points at anything the registry holds any more, which makes this
       // where the versions every other command left behind are collected
