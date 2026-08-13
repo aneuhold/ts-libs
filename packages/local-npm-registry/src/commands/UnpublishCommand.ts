@@ -56,11 +56,7 @@ export class UnpublishCommand {
         }
 
         // Revert the package version if it is a local one.
-        await PackageJsonService.updatePackageVersionIfLocal(
-          targetPath,
-          targetPackageName,
-          entry.originalVersion
-        );
+        await PackageJsonService.updateVersionFieldIfLocal(targetPath, entry.originalVersion);
 
         unpublishedPaths.push(targetPath);
         subscriptions.push(

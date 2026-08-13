@@ -57,7 +57,6 @@ graph TD
         PubNPM -.-> |Uses| TB2[tb pkg publishNpm]
         GHRelease -.-> |Uses| ExtractCL[scripts/extractChangelogForRelease.ts]
         PropagationCheck -.-> |Uses| PV[scripts/validatePackageVersions.ts]
-        Build -.-> |Uses| PV2[scripts/propagateVersion.ts]
     end
 ```
 

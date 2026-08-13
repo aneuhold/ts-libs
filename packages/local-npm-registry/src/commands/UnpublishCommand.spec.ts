@@ -50,6 +50,7 @@ describe('Integration Tests', () => {
     vi.clearAllMocks();
     await TestProjectUtils.setupTestInstance();
     testId = randomUUID().slice(0, 8);
+    TestProjectUtils.stubInstallWithoutRegistry();
     // Ensure clean mutex state for each test
     try {
       await MutexService.forceReleaseLock();
@@ -59,6 +60,7 @@ describe('Integration Tests', () => {
   });
 
   afterEach(async () => {
+    vi.restoreAllMocks();
     await TestProjectUtils.cleanupTestInstance();
     // Clean up mutex lock after each test
     try {
@@ -133,12 +135,7 @@ describe('Integration Tests', () => {
     await TestProjectUtils.addDependencyToProject(subscriberPath, keptName, '^1.0.0');
     await SubscribeCommand.execute(keptName);
 
-    const store = await LocalPackageStoreService.getStore();
-    const keptVersion = LocalPackageStoreService.getPackageEntry(
-      store,
-      keptName,
-      keptPath
-    )?.currentVersion;
+    const keptVersion = await TestProjectUtils.getCurrentVersion(keptName, keptPath);
 
     await UnpublishCommand.execute(unpublishedName);
 
@@ -175,12 +172,10 @@ describe('Integration Tests', () => {
     TestProjectUtils.changeToProject(subscriberPath);
     await SubscribeCommand.execute(packageName, secondPublisherPath);
 
-    const storeBefore = await LocalPackageStoreService.getStore();
-    const secondPublisherVersion = LocalPackageStoreService.getPackageEntry(
-      storeBefore,
+    const secondPublisherVersion = await TestProjectUtils.getCurrentVersion(
       packageName,
       secondPublisherPath
-    )?.currentVersion;
+    );
 
     await UnpublishCommand.execute(packageName, firstPublisherPath);
 

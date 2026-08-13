@@ -1,5 +1,7 @@
 import { DR } from '@aneuhold/core-ts-lib';
 import { randomUUID } from 'crypto';
+import fs from 'fs-extra';
+import path from 'path';
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TestProjectUtils } from '../../test-utils/TestProjectUtils.js';
 import { LocalPackageStoreService } from '../services/LocalPackageStore.service.js';
@@ -48,6 +50,7 @@ describe('Integration Tests', () => {
     vi.clearAllMocks();
     await TestProjectUtils.setupTestInstance();
     testId = randomUUID().slice(0, 8);
+    TestProjectUtils.stubInstallWithoutRegistry();
     // Ensure clean mutex state for each test
     try {
       await MutexService.forceReleaseLock();
@@ -57,6 +60,7 @@ describe('Integration Tests', () => {
   });
 
   afterEach(async () => {
+    vi.restoreAllMocks();
     await TestProjectUtils.cleanupTestInstance();
     // Clean up mutex lock after each test
     try {
@@ -112,12 +116,7 @@ describe('Integration Tests', () => {
     await TestProjectUtils.addDependencyToProject(subscriberPath, keptName, '^1.0.0');
     await SubscribeCommand.execute(keptName);
 
-    const store = await LocalPackageStoreService.getStore();
-    const keptVersion = LocalPackageStoreService.getPackageEntry(
-      store,
-      keptName,
-      keptPath
-    )?.currentVersion;
+    const keptVersion = await TestProjectUtils.getCurrentVersion(keptName, keptPath);
 
     await UnsubscribeCommand.execute(droppedName);
 
@@ -130,6 +129,22 @@ describe('Integration Tests', () => {
     expect(
       (await TestProjectUtils.readInstalledPackageJson(subscriberPath, keptName)).version
     ).toBe(keptVersion);
+  });
+
+  it('should reject when a subscriber cannot be reset', async () => {
+    const packageName = `@test-${testId}/failing-reset-lib`;
+    const { subscriberPath } = await TestProjectUtils.publishAndSubscribe(
+      packageName,
+      `@test-${testId}/failing-reset-subscriber`
+    );
+
+    // The project is still there and still pinned to a version the reset is
+    // what takes it off, so leaving it as it is has to be reported
+    await fs.remove(path.join(subscriberPath, 'package.json'));
+
+    TestProjectUtils.changeToProject(subscriberPath);
+
+    await expect(UnsubscribeCommand.execute(packageName)).rejects.toThrow(subscriberPath);
   });
 
   it('should handle unsubscribing from non-existent package', async () => {

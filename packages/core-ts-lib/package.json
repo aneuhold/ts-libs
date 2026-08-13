@@ -8,7 +8,7 @@
   "type": "module",
   "scripts": {
     "build": "rimraf lib && pnpm build:withoutClean",
-    "build:withoutClean": "tsc --project tsconfig.build.json && tsx ./scripts/copyTsFiles.ts && pnpm propagateVersion",
+    "build:withoutClean": "tsc --project tsconfig.build.json && tsx ./scripts/copyTsFiles.ts",
     "propagateVersion": "tsx ../../scripts/propagateVersion.ts",
     "watch": "nodemon --ignore lib/ -e ts --exec \"pnpm build:withoutClean && local-npm publish\"",
     "lint": "eslint",

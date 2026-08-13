@@ -73,20 +73,11 @@ describe('Integration Tests', () => {
       const packageName = `@test-${testId}/registry-sweep`;
       const { firstPublisherPath, secondPublisherPath } =
         await TestProjectUtils.publishFromTwoDirectories(packageName);
-      const store = await LocalPackageStoreService.getStore();
-      const keptVersion = LocalPackageStoreService.getPackageEntry(
-        store,
-        packageName,
-        firstPublisherPath
-      )?.currentVersion;
-      const otherDirectoryVersion = LocalPackageStoreService.getPackageEntry(
-        store,
+      const keptVersion = await TestProjectUtils.getCurrentVersion(packageName, firstPublisherPath);
+      const otherDirectoryVersion = await TestProjectUtils.getCurrentVersion(
         packageName,
         secondPublisherPath
-      )?.currentVersion;
-      if (!keptVersion || !otherDirectoryVersion) {
-        throw new Error(`${packageName} is not published from both directories`);
-      }
+      );
 
       // A publish killed before it writes the store leaves a version nothing
       // names, which is what the sweep is by slug rather than by store for

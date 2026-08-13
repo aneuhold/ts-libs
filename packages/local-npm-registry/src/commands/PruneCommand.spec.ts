@@ -46,6 +46,7 @@ describe('Integration Tests', () => {
     vi.clearAllMocks();
     await TestProjectUtils.setupTestInstance();
     testId = randomUUID().slice(0, 8);
+    TestProjectUtils.stubInstallWithoutRegistry();
     // Prune walks the whole store, so an entry another test left behind is
     // another dead publishing directory as far as it is concerned
     await TestProjectUtils.mutateStore((store) => {
@@ -59,6 +60,7 @@ describe('Integration Tests', () => {
   });
 
   afterEach(async () => {
+    vi.restoreAllMocks();
     await TestProjectUtils.cleanupTestInstance();
     try {
       await MutexService.forceReleaseLock();
@@ -77,12 +79,7 @@ describe('Integration Tests', () => {
     const { publisherPath: livePath, subscriberPath: liveSubscriberPath } =
       await TestProjectUtils.publishAndSubscribe(liveName, `@test-${testId}/live-subscriber`);
 
-    const storeBefore = await LocalPackageStoreService.getStore();
-    const liveVersion = LocalPackageStoreService.getPackageEntry(
-      storeBefore,
-      liveName,
-      livePath
-    )?.currentVersion;
+    const liveVersion = await TestProjectUtils.getCurrentVersion(liveName, livePath);
 
     // The publishing directory goes away, which nothing else in the tool visits
     await fs.remove(deadPath);

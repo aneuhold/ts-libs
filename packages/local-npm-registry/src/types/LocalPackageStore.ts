@@ -53,8 +53,14 @@ export type PackageSubscriber = {
  * {@link LocalPackageStore} so that it names both ends of the binding rather
  * than only the end a {@link PackageSubscriber} holds.
  */
-export type PackageSubscription = PackageSubscriber & {
-  /** The name of the package that is subscribed to */
+export type PackageSubscription = PackageSubscriber & PublishedPackage;
+
+/**
+ * One package as it is published from one directory, which is what a
+ * {@link LocalPackageStore} is keyed by.
+ */
+export type PublishedPackage = {
+  /** The name of the package */
   packageName: string;
   /** The absolute path of the directory that publishes the package */
   packagePath: string;

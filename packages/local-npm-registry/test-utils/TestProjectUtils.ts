@@ -2,12 +2,14 @@ import { isPackageJson, type PackageJson } from '@aneuhold/core-ts-lib';
 import { randomUUID } from 'crypto';
 import fs from 'fs-extra';
 import path from 'path';
+import { vi, type MockInstance } from 'vitest';
 import { PublishCommand } from '../src/commands/PublishCommand.js';
 import { SubscribeCommand } from '../src/commands/SubscribeCommand.js';
 import { ConfigService } from '../src/services/Config.service.js';
 import { LocalPackageStoreService } from '../src/services/LocalPackageStore.service.js';
 import { LocalPackageVersionService } from '../src/services/LocalPackageVersion.service.js';
 import { MutexService } from '../src/services/Mutex.service.js';
+import { PackageManagerService } from '../src/services/PackageManagerService/PackageManager.service.js';
 import { VerdaccioService } from '../src/services/Verdaccio.service.js';
 import type { LocalPackageStore } from '../src/types/LocalPackageStore.js';
 import { PACKAGE_MANAGER_INFO, PackageManager } from '../src/types/PackageManager.js';
@@ -284,6 +286,18 @@ export class TestProjectUtils {
   }
 
   /**
+   * Stands in for the install a project runs once it holds no subscriptions,
+   * which resolves from the public registry and so never finds a package
+   * invented for a test.
+   *
+   * The install through the local registry is left alone, since that one
+   * resolves what a test published.
+   */
+  static stubInstallWithoutRegistry(): MockInstance<typeof PackageManagerService.runInstall> {
+    return vi.spyOn(PackageManagerService, 'runInstall').mockResolvedValue();
+  }
+
+  /**
    * Applies a mutation to the local package store under the store lock, so test
    * setup reads and writes the store the way the commands do.
    *
@@ -295,6 +309,26 @@ export class TestProjectUtils {
       mutator(store);
       await LocalPackageStoreService.writeStore(store);
     });
+  }
+
+  /**
+   * The version a directory publishes under, which the store is what names.
+   *
+   * @param packageName - Name of the published package
+   * @param packagePath - Directory it is published from
+   */
+  static async getCurrentVersion(packageName: string, packagePath: string): Promise<string> {
+    const entry = LocalPackageStoreService.getPackageEntry(
+      await LocalPackageStoreService.getStore(),
+      packageName,
+      packagePath
+    );
+
+    if (!entry) {
+      throw new Error(`${packageName} is not published from ${packagePath}`);
+    }
+
+    return entry.currentVersion;
   }
 
   /**
