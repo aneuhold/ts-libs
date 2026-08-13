@@ -92,21 +92,25 @@ local-npm publish --verbose
 
 </details>
 
-### `local-npm subscribe <package-name>`
+### `local-npm subscribe <package-name> [--path <path>]`
 
 🔔 **Subscribe to a package** to receive automatic updates when it's published locally.
 
 - Adds your current project as a subscriber
 - Installs the latest local version immediately
 - Preserves publish arguments: Uses the same npm publish options as the package's most recent publish
+- Use `--path` to pick which directory to subscribe to when a package is published from several
 - Great for frontend projects consuming your libraries
 
-### `local-npm unpublish [package-name]`
+### `local-npm unpublish [package-name] [--path <path>] [--all-paths]`
 
 🗑️ **Removes a package** from the local registry and resets all subscribers to original versions.
 
 - Cleans up when you're done testing
-- Resets all consuming projects back to their original package versions
+- Resets all subscribers back to their original package versions
+- Removes only what the target directory published, leaving other directories alone
+- Defaults to the current directory, or to the only one publishing the package. Use `--path` to pick
+  one of several, or `--all-paths` for every one
 
 ### `local-npm unsubscribe [package-name]`
 
@@ -114,6 +118,7 @@ local-npm publish --verbose
 
 - Remove subscription from one package or all packages (if no name provided)
 - Resets your project back to the original package versions
+- Leaves any subscriptions you keep working as they were
 
 ## 💡 Why Use This?
 
@@ -126,11 +131,12 @@ local-npm publish --verbose
 
 ## 🔧 Additional Commands
 
+- `local-npm prune` - Drop packages whose publishing directory is gone and reset their subscribers.
 - `local-npm list` - See all packages in your local registry and their subscribers
 - `local-npm get-store` - View the raw local package store data
 - `local-npm config` - Show current configuration
 - `local-npm init-config` - Create a configuration file
-- `local-npm clear-store` - Reset everything and start fresh
+- `local-npm clear-store` - Reset everything and start fresh, emptying the registry's storage
 
 ## ⚙️ Configuration
 
@@ -182,7 +188,11 @@ This will create a `.local-npm-registry.json` file in the current directory with
 
 This tool uses Verdaccio (a private npm registry) under the hood to simulate publishing packages locally. It maintains a JSON store that tracks package versions and subscriber relationships, ensuring clean workflows and easy cleanup.
 
-> **Note:** Verdaccio is only started for commands that need to publish packages (`publish` and `subscribe`). The `unpublish` and `unsubscribe` commands only modify package.json files and the local store, so they don't require Verdaccio to be running necessarily.
+Each publishing directory keeps exactly one version in the registry: publishing again replaces what
+that directory published last and leaves every other directory's version alone.
+
+> **Note:** Verdaccio is started and stopped for you. Any command that publishes or installs runs it,
+> since local versions resolve nowhere else.
 
 ### Why Not Use Local File Paths?
 
@@ -245,11 +255,12 @@ This tool solves these issues by using a real npm registry (Verdaccio) locally, 
 ### Local JSON Store Structure
 
 Every package is keyed by its name, then by the absolute path of the directory it is published from,
-so two checkouts of one repository each get their own entry.
+so two copies of one repository each get their own entry.
 
 Published versions take the form `<yourVersion>-<pathSlug>.<timestamp>`. The slug is derived from the
-publishing directory's path, which a version cannot hold whole, and it is what keeps two checkouts of
-one package from landing on the same version. You never have to type it: every command takes a path.
+publishing directory's path, which a version cannot hold whole, and it is what keeps two publishing
+directories of one package from landing on the same version. You never have to type it: every
+command takes a path.
 
 ```json
 {
@@ -261,11 +272,11 @@ one package from landing on the same version. You never have to type it: every c
         "currentVersion": "1.2.3-pa1b2c3d4.20250526123456789",
         "subscribers": [
           {
-            "subscriberPath": "/path/to/consumer-project-1",
+            "subscriberPath": "/path/to/subscriber-project-1",
             "originalSpecifier": "^1.2.3"
           },
           {
-            "subscriberPath": "/path/to/consumer-project-2",
+            "subscriberPath": "/path/to/subscriber-project-2",
             "originalSpecifier": "~1.2.0"
           }
         ],
@@ -278,7 +289,7 @@ one package from landing on the same version. You never have to type it: every c
         "currentVersion": "2.1.0-pf9e8d7c6.20250526134567890",
         "subscribers": [
           {
-            "subscriberPath": "/path/to/consumer-project-3",
+            "subscriberPath": "/path/to/subscriber-project-3",
             "originalSpecifier": "^2.1.0"
           }
         ]
