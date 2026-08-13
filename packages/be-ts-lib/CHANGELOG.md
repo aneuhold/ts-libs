@@ -7,13 +7,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## 🔖 [3.1.19] (2026-08-13)
 
-### ✅ Added
-
 ### 🏗️ Changed
 
-### 🩹 Fixed
-
-### 🔥 Removed
+- Updated `@aneuhold/core-ts-api-lib` to `^3.0.42` and `@aneuhold/core-ts-lib` to `^2.4.7`.
 
 ## 🔖 [3.1.18] (2026-07-23)
 
