@@ -23,6 +23,9 @@
     "npm:publish": "npm publish --access public",
     "upgrade:all": "pnpm update '!@aneuhold/*' --latest"
   },
+  "scriptsComments": {
+    "watch": "`local-npm` needs to be installed globally for the command to work. This is so we don't have an infinite loop in the build."
+  },
   "main": "lib/browser.js",
   "types": "lib/browser.d.ts",
   "files": [
@@ -68,7 +71,6 @@
     "Node.js"
   ],
   "devDependencies": {
-    "@aneuhold/local-npm-registry": "^1.0.0",
     "@types/node": "^25.0.2",
     "eslint": "^9.39.2",
     "jsr": "^0.13.5",
@@ -78,8 +80,5 @@
     "tsx": "^4.21.0",
     "typescript": "~6.0.3",
     "vitest": "^4.0.15"
-  },
-  "devDependenciesComments": {
-    "@aneuhold/local-npm-registry": "So, I thought by adding this it would create an infinite loop. But it turns out just fine. Interesting. Leaving it as is for now because it makes everything in the repo cleaner 😅"
   }
 }
