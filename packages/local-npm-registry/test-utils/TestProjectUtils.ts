@@ -119,6 +119,7 @@ export class TestProjectUtils {
    * @param version - Package version
    * @param packageManager - Package manager to use
    * @param dependencies - Optional dependencies to include
+   * @param devDependencies - Optional devDependencies to include, which nothing a dependent packs carries
    * @param directoryName - Name of the directory to create the package in, which two publishing directories of one package name need to keep apart
    */
   static async createTestPackage(
@@ -126,6 +127,7 @@ export class TestProjectUtils {
     version = '1.0.0',
     packageManager: PackageManager = PackageManager.Npm,
     dependencies: Record<string, string> = {},
+    devDependencies: Record<string, string> = {},
     directoryName: string = name.replace('@', '').replace('/', '-')
   ): Promise<string> {
     if (!TestProjectUtils.#testInstanceDir) {
@@ -142,6 +144,7 @@ export class TestProjectUtils {
       description: `Test package ${name}`,
       main: 'index.js',
       dependencies,
+      ...(Object.keys(devDependencies).length > 0 && { devDependencies }),
       scripts: {
         test: 'echo "Test script"'
       },
@@ -272,6 +275,7 @@ export class TestProjectUtils {
         packageName,
         version,
         packageManager,
+        {},
         {},
         directoryName
       );
