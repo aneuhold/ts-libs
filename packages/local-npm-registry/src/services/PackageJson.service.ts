@@ -5,6 +5,7 @@ import {
   type PackageJson,
   type PackageJsonWithoutVersion
 } from '@aneuhold/core-ts-lib';
+import { randomUUID } from 'crypto';
 import fs from 'fs-extra';
 import path from 'path';
 import { LocalPackageVersionService } from './LocalPackageVersion.service.js';
@@ -273,6 +274,22 @@ export class PackageJsonService {
       return;
     }
 
-    await fs.writeFile(path.join(projectPath, 'package.json'), updatedContent, 'utf-8');
+    const packageJsonPath = path.join(projectPath, 'package.json');
+    // A package manager, or Node resolving a module, can read this file at any
+    // moment. Writing to it directly truncates it first, which a reader landing
+    // in between sees as an empty file rather than a package.json. The
+    // replacement is staged beside it so the rename that swaps it in stays on
+    // one filesystem, and a reader sees either the old file or the new one.
+    const stagingPath = path.join(projectPath, `package.json.${randomUUID()}.tmp`);
+
+    try {
+      await fs.writeFile(stagingPath, updatedContent, 'utf-8');
+      await fs.rename(stagingPath, packageJsonPath);
+    } catch (error) {
+      await fs.remove(stagingPath).catch(() => {
+        // The write is the failure worth reporting
+      });
+      throw error;
+    }
   }
 }

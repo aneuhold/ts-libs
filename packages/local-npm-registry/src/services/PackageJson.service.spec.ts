@@ -3,6 +3,7 @@ import { randomUUID } from 'crypto';
 import fs from 'fs-extra';
 import path from 'path';
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { ConcurrentTestProjectUtils } from '../../test-utils/ConcurrentTestProjectUtils.js';
 import { TestProjectUtils } from '../../test-utils/TestProjectUtils.js';
 import { PackageJsonService } from './PackageJson.service.js';
 
@@ -181,6 +182,31 @@ describe('PackageJsonService', () => {
         ].join('\n')
       );
     });
+
+    it('should leave the file readable while another process rewrites it', async () => {
+      const projectPath = await writePackageJson(
+        `${JSON.stringify({ name: '@test/concurrent-read', version: '1.0.0' }, null, 2)}\n`
+      );
+      const outputDirectory = path.join(TestProjectUtils.getTestInstanceDir(), `reads-${testId}`);
+      await fs.ensureDir(outputDirectory);
+
+      // One worker rewrites, the other two read, which is what a package
+      // manager and Node's module resolution do to a subscriber being updated
+      await ConcurrentTestProjectUtils.runConcurrently('readPackageJsonWhileRewritten.ts', 3, [
+        projectPath,
+        outputDirectory
+      ]);
+
+      const reports = (await fs.readdir(outputDirectory)).filter((fileName) =>
+        fileName.startsWith('unreadable-')
+      );
+      expect(reports).toHaveLength(2);
+      for (const report of reports) {
+        expect(await fs.readFile(path.join(outputDirectory, report), 'utf-8')).toBe('0');
+      }
+      // Nothing the rewrites staged is left behind
+      expect(await fs.readdir(projectPath)).toEqual(['package.json']);
+    }, 30000);
   });
 
   describe('updateDependencySpecifiers', () => {
