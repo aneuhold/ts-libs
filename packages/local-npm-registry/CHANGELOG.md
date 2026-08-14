@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## 🔖 [1.0.1] (2026-08-14)
+
+### 🏗️ Changed
+
+- Updated `commander` to `^15.0.0`, `execa` to `^10.0.1`, `js-yaml` to `^5.2.3`, `fs-extra` to `^11.4.0`, and `verdaccio` to `^6.9.2`.
+- Updated `@aneuhold/core-ts-lib` to `^2.4.8`.
+
 ## 🔖 [1.0.0] (2026-08-13)
 
 ### ✅ Added
@@ -234,6 +241,7 @@ No direct code changes; version bump for compatibility.
 - Updated workflow permissions to allow repository write access
 
 <!-- Link References -->
+[1.0.1]: https://github.com/aneuhold/ts-libs/compare/local-npm-registry-v1.0.0...local-npm-registry-v1.0.1
 [1.0.0]: https://github.com/aneuhold/ts-libs/compare/local-npm-registry-v0.2.34...local-npm-registry-v1.0.0
 [0.2.34]: https://github.com/aneuhold/ts-libs/compare/local-npm-registry-v0.2.33...local-npm-registry-v0.2.34
 [0.2.33]: https://github.com/aneuhold/ts-libs/compare/local-npm-registry-v0.2.32...local-npm-registry-v0.2.33
