@@ -4,8 +4,7 @@ import fs from 'fs-extra';
 import path from 'path';
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TestProjectUtils } from '../../../test-utils/TestProjectUtils.js';
-import { MutexLockName } from '../../types/MutexLockName.js';
-import { PACKAGE_MANAGER_INFO, PackageManager } from '../../types/PackageManager.js';
+import { PackageManager } from '../../types/PackageManager.js';
 import { LocalPackageStoreService } from '../LocalPackageStore.service.js';
 import { MutexService } from '../Mutex.service.js';
 import { VerdaccioService } from '../Verdaccio.service.js';
@@ -53,7 +52,7 @@ describe('Unit Tests', () => {
     testId = randomUUID().slice(0, 8);
     // Ensure clean mutex state for each test
     try {
-      await MutexService.forceReleaseLock(MutexLockName.Verdaccio);
+      await MutexService.forceReleaseLock();
     } catch {
       // Ignore errors if no lock exists or server wasn't running
     }
@@ -63,7 +62,7 @@ describe('Unit Tests', () => {
     await TestProjectUtils.cleanupTestInstance();
     // Clean up mutex lock after each test
     try {
-      await MutexService.forceReleaseLock(MutexLockName.Verdaccio);
+      await MutexService.forceReleaseLock();
       await VerdaccioService.stop();
     } catch {
       // Ignore errors during cleanup
@@ -279,7 +278,7 @@ describe('Unit Tests', () => {
       );
 
       // Verify install succeeded by checking that the lock file has content
-      const lockFilePath = path.join(subscriberPath, PACKAGE_MANAGER_INFO[packageManager].lockFile);
+      const lockFilePath = TestProjectUtils.getLockFilePath(subscriberPath, packageManager);
       expect(await fs.pathExists(lockFilePath)).toBe(true);
 
       const lockFileContent = await fs.readFile(lockFilePath, 'utf8');

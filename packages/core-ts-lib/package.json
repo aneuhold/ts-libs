@@ -2,13 +2,13 @@
   "name": "@aneuhold/core-ts-lib",
   "author": "Anton G. Neuhold Jr.",
   "license": "MIT",
-  "version": "2.4.6",
+  "version": "2.4.7",
   "description": "A core library for all of my TypeScript projects",
   "packageManager": "pnpm@10.25.0",
   "type": "module",
   "scripts": {
     "build": "rimraf lib && pnpm build:withoutClean",
-    "build:withoutClean": "tsc --project tsconfig.build.json && tsx ./scripts/copyTsFiles.ts && pnpm propagateVersion",
+    "build:withoutClean": "tsc --project tsconfig.build.json && tsx ./scripts/copyTsFiles.ts",
     "propagateVersion": "tsx ../../scripts/propagateVersion.ts",
     "watch": "nodemon --ignore lib/ -e ts --exec \"pnpm build:withoutClean && local-npm publish\"",
     "lint": "eslint",
@@ -22,6 +22,9 @@
     "jsr:publish": "tsx ./scripts/publishJsr.ts",
     "npm:publish": "npm publish --access public",
     "upgrade:all": "pnpm update '!@aneuhold/*' --latest"
+  },
+  "scriptsComments": {
+    "watch": "`local-npm` needs to be installed globally for the command to work. This is so we don't have an infinite loop in the build."
   },
   "main": "lib/browser.js",
   "types": "lib/browser.d.ts",
@@ -68,7 +71,6 @@
     "Node.js"
   ],
   "devDependencies": {
-    "@aneuhold/local-npm-registry": "^0.2.34",
     "@types/node": "^25.0.2",
     "eslint": "^9.39.2",
     "jsr": "^0.13.5",
@@ -78,8 +80,5 @@
     "tsx": "^4.21.0",
     "typescript": "~6.0.3",
     "vitest": "^4.0.15"
-  },
-  "devDependenciesComments": {
-    "@aneuhold/local-npm-registry": "So, I thought by adding this it would create an infinite loop. But it turns out just fine. Interesting. Leaving it as is for now because it makes everything in the repo cleaner 😅"
   }
 }

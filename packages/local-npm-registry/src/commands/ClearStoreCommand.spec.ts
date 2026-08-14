@@ -5,9 +5,10 @@ import { TestProjectUtils } from '../../test-utils/TestProjectUtils.js';
 import { LocalPackageStoreService } from '../services/LocalPackageStore.service.js';
 import { MutexService } from '../services/Mutex.service.js';
 import { VerdaccioService } from '../services/Verdaccio.service.js';
-import { MutexLockName } from '../types/MutexLockName.js';
+import { PackageManager } from '../types/PackageManager.js';
 import { ClearStoreCommand } from './ClearStoreCommand.js';
 import { PublishCommand } from './PublishCommand.js';
+import { SubscribeCommand } from './SubscribeCommand.js';
 
 vi.mock('@aneuhold/core-ts-lib', async () => {
   const actual = await vi.importActual('@aneuhold/core-ts-lib');
@@ -47,19 +48,21 @@ describe('Integration Tests', () => {
     vi.clearAllMocks();
     await TestProjectUtils.setupTestInstance();
     testId = randomUUID().slice(0, 8);
+    TestProjectUtils.stubInstallWithoutRegistry();
     // Ensure clean mutex state for each test
     try {
-      await MutexService.forceReleaseLock(MutexLockName.Verdaccio);
+      await MutexService.forceReleaseLock();
     } catch {
       // Ignore errors if no lock exists or server wasn't running
     }
   });
 
   afterEach(async () => {
+    vi.restoreAllMocks();
     await TestProjectUtils.cleanupTestInstance();
     // Clean up mutex lock after each test
     try {
-      await MutexService.forceReleaseLock(MutexLockName.Verdaccio);
+      await MutexService.forceReleaseLock();
       await VerdaccioService.stop();
     } catch {
       // Ignore errors during cleanup
@@ -119,6 +122,45 @@ describe('Integration Tests', () => {
 
     // Verify success message was logged
     expect(DR.logger.info).toHaveBeenCalledWith('Successfully cleared all 2 package(s)');
+  });
+
+  it('should install once in a subscriber of two packages', async () => {
+    const firstName = `@test-${testId}/first-lib`;
+    const secondName = `@test-${testId}/second-lib`;
+
+    const firstPath = await TestProjectUtils.createTestPackage(firstName, '1.0.0');
+    const secondPath = await TestProjectUtils.createTestPackage(secondName, '1.0.0');
+    const subscriberPath = await TestProjectUtils.createTestPackage(
+      `@test-${testId}/two-package-subscriber`,
+      '1.0.0',
+      PackageManager.Npm,
+      { [firstName]: '^1.0.0' }
+    );
+
+    for (const publisherPath of [firstPath, secondPath]) {
+      TestProjectUtils.changeToProject(publisherPath);
+      await PublishCommand.execute();
+    }
+
+    // The second dependency can only be declared once the first one resolves,
+    // since a range never matches the prerelease a local publish produces
+    TestProjectUtils.changeToProject(subscriberPath);
+    await SubscribeCommand.execute(firstName);
+    await TestProjectUtils.addDependencyToProject(subscriberPath, secondName, '^1.0.0');
+    await SubscribeCommand.execute(secondName);
+
+    const runInstall = TestProjectUtils.stubInstallWithoutRegistry();
+
+    await ClearStoreCommand.execute();
+
+    const installsInSubscriber = runInstall.mock.calls.filter(
+      ([projectPath]) => projectPath === subscriberPath
+    );
+    expect(installsInSubscriber).toHaveLength(1);
+
+    const subscriberPackageJson = await TestProjectUtils.readPackageJson(subscriberPath);
+    expect(subscriberPackageJson.dependencies?.[firstName]).toBe('^1.0.0');
+    expect(subscriberPackageJson.dependencies?.[secondName]).toBe('^1.0.0');
   });
 
   it('should handle clearing an empty store gracefully', async () => {

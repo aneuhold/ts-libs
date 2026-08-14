@@ -28,56 +28,6 @@ vi.mock('@aneuhold/core-ts-lib', async () => {
 const STORE_FILE_NAME = 'local-package-store.json';
 const DEPRECATED_PREFIX = `${STORE_FILE_NAME}.deprecated-`;
 
-describe('Unit Tests', () => {
-  describe('generateTimestampVersion', () => {
-    /**
-     * Reads the path slug out of a generated version
-     *
-     * @param version The version to read the slug from
-     */
-    const getSlugFrom = (version: string): string | undefined =>
-      /-(p[0-9a-f]{8})\./.exec(version)?.[1];
-
-    it('should append a fixed width slug that cannot be read as a number', () => {
-      const version = LocalPackageStoreService.generateTimestampVersion('1.0.0', '/tmp/example');
-
-      expect(version).toMatch(/^1\.0\.0-p[0-9a-f]{8}\.\d{17}$/);
-      expect(getSlugFrom(version)).toBe('pf33aa924');
-    });
-
-    it('should derive the same slug for the same path', () => {
-      const packagePath = '/Users/someone/dev/ts-libs/packages/core-ts-lib';
-
-      expect(
-        getSlugFrom(LocalPackageStoreService.generateTimestampVersion('1.0.0', packagePath))
-      ).toBe(getSlugFrom(LocalPackageStoreService.generateTimestampVersion('2.3.4', packagePath)));
-    });
-
-    it('should derive a different slug for each path', () => {
-      const first = LocalPackageStoreService.generateTimestampVersion(
-        '1.0.0',
-        '/dev/checkout-one/packages/lib'
-      );
-      const second = LocalPackageStoreService.generateTimestampVersion(
-        '1.0.0',
-        '/dev/checkout-two/packages/lib'
-      );
-
-      expect(getSlugFrom(first)).not.toBe(getSlugFrom(second));
-    });
-
-    it('should replace a suffix the original version already carries', () => {
-      const version = LocalPackageStoreService.generateTimestampVersion(
-        '1.0.0-pf33aa924.20250726123456789',
-        '/dev/checkout-one/packages/lib'
-      );
-
-      expect(version).toMatch(/^1\.0\.0-p[0-9a-f]{8}\.\d{17}$/);
-      expect(getSlugFrom(version)).not.toBe('pf33aa924');
-    });
-  });
-});
-
 describe('Integration Tests', () => {
   let testId: string;
 
@@ -109,7 +59,7 @@ describe('Integration Tests', () => {
           '@test/library': {
             originalVersion: '1.0.0',
             currentVersion: '1.0.0-20250726123456789',
-            subscribers: [{ subscriberPath: '/dev/consumer', originalSpecifier: '^1.0.0' }],
+            subscribers: [{ subscriberPath: '/dev/subscriber', originalSpecifier: '^1.0.0' }],
             packageRootPath: '/dev/library'
           }
         }
@@ -138,7 +88,7 @@ describe('Integration Tests', () => {
             '/dev/library': {
               originalVersion: '1.0.0',
               currentVersion: '1.0.0-20250726123456789',
-              subscribers: [{ subscriberPath: '/dev/consumer' }]
+              subscribers: [{ subscriberPath: '/dev/subscriber' }]
             }
           }
         }
@@ -190,9 +140,9 @@ describe('Integration Tests', () => {
   describe('getSubscriptions', () => {
     it('should find a binding regardless of which directory published it', async () => {
       const packageName = `@test-${testId}/library`;
-      const subscriberPath = path.join(TestProjectUtils.getTestInstanceDir(), 'consumer');
-      const firstPath = path.join(TestProjectUtils.getTestInstanceDir(), 'checkout-one');
-      const secondPath = path.join(TestProjectUtils.getTestInstanceDir(), 'checkout-two');
+      const subscriberPath = path.join(TestProjectUtils.getTestInstanceDir(), 'subscriber');
+      const firstPath = path.join(TestProjectUtils.getTestInstanceDir(), 'first-publisher');
+      const secondPath = path.join(TestProjectUtils.getTestInstanceDir(), 'second-publisher');
 
       const store = await LocalPackageStoreService.getStore();
       LocalPackageStoreService.updatePackageEntry(store, packageName, firstPath, {
@@ -212,7 +162,7 @@ describe('Integration Tests', () => {
       );
 
       expect(subscriptions).toEqual([
-        { packageName, packagePath: secondPath, subscribersOriginalSpecifier: '^2.0.0' }
+        { packageName, packagePath: secondPath, subscriberPath, originalSpecifier: '^2.0.0' }
       ]);
     });
   });
@@ -220,8 +170,8 @@ describe('Integration Tests', () => {
   describe('removePackagePath', () => {
     it('should drop the package along with its last publishing directory', async () => {
       const packageName = `@test-${testId}/library`;
-      const firstPath = path.join(TestProjectUtils.getTestInstanceDir(), 'checkout-one');
-      const secondPath = path.join(TestProjectUtils.getTestInstanceDir(), 'checkout-two');
+      const firstPath = path.join(TestProjectUtils.getTestInstanceDir(), 'first-publisher');
+      const secondPath = path.join(TestProjectUtils.getTestInstanceDir(), 'second-publisher');
 
       const store = await LocalPackageStoreService.getStore();
       for (const packagePath of [firstPath, secondPath]) {

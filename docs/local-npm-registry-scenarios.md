@@ -1,11 +1,12 @@
 # Scenarios, simplest to most complex
 
-How the proposed system behaves, one new idea per scenario. Each one adds exactly one thing the
-previous one did not have.
+How the system behaves, one new idea per scenario. Each one adds exactly one thing the previous one
+did not have.
 
-Dependency edges come from each publishing package's `dependencies`, read at publish time rather than
-declared, so [subscriptions are for consumers](./local-npm-registry-hardening.md) and none of the
-scenarios below has one inside the monorepo.
+Dependency edges come from each publishing package's `dependencies`, read from its package.json at
+publish time rather than declared anywhere. `devDependencies` and `peerDependencies` are ignored,
+since neither is carried in a dependent's tarball. Subscriptions are therefore only ever for
+consumers, and none of the scenarios below has one inside the monorepo.
 
 A package has to publish once before anything can subscribe to it or the graph can reach it, which is
 what the watcher in its own folder does at startup. That is why the watcher lists grow faster than
@@ -59,7 +60,7 @@ local-npm subscribe @aneuhold/local-npm-registry
 flowchart TD
     E1["Edit in be-ts-db-lib 👁"]
     E2["Edit in local-npm-registry 👁"]
-    P1["publish be-ts-db-lib<br/>takes the Verdaccio lock"]
+    P1["publish be-ts-db-lib<br/>takes the lock"]
     P2["publish local-npm-registry<br/>queues on the lock"]
     I1["install in gcloud-backend"]
     I2["install in gcloud-backend<br/>a second time"]
@@ -72,8 +73,10 @@ flowchart TD
 ```
 
 Two edits at one moment produce **two full installs** in one consumer, back to back. They cannot
-overlap, since each publish holds the lock across its own install, so this is throughput cost rather
-than corruption risk. Nothing coalesces them: separate processes cannot see each other's work.
+overlap, since a single system-wide lock is held for the whole of each command, install included, so
+this is throughput cost rather than corruption risk. The second command waits however long the first
+takes rather than giving up, and logs how long it has waited while it does. Nothing coalesces them:
+separate processes cannot see each other's work.
 
 ## 3. The edit lands in a package nobody subscribed to
 
@@ -192,9 +195,9 @@ the five other watchers stay idle throughout and none of them is notified.
 
 `local-npm-registry` depends on `core-ts-lib` and is a genuine dependent, but nothing subscribes to
 it and nothing depends on it through `dependencies`, so the walk drops it. That leaves five publishes
-before the install starts, roughly 1.9 seconds of packing at ~370ms each, for one keystroke.
+before the install starts, for one keystroke.
 
-## 6. Two checkouts of ts-libs at once
+## 6. Two copies of ts-libs publishing at once
 
 **New here:** one package name published from two directories. This is a separate axis from the
 cascade, and composes with all of the above.
@@ -216,11 +219,11 @@ local-npm subscribe @aneuhold/core-ts-lib --path ~/dev/ts-libs-hotfix/packages/c
 flowchart TD
     subgraph MAIN["~/dev/ts-libs"]
         EA["edit in packages/core-ts-lib 👁"]
-        PA["publish 2.4.6-pa1b.T1<br/>tag local-pa1b"]
+        PA["publish 2.4.6-pa1b.T1"]
     end
     subgraph HOT["~/dev/ts-libs-hotfix"]
         EB["edit in packages/core-ts-lib 👁"]
-        PB["publish 2.4.6-pf7e.T2<br/>tag local-pf7e"]
+        PB["publish 2.4.6-pf7e.T2"]
     end
     V[("Verdaccio<br/>both versions coexist")]
     CA["app-main"]
@@ -236,11 +239,18 @@ flowchart TD
     PB -.->|"never touches"| CA
 ```
 
-Each directory gets its own slug, version namespace, dist tag, and subscriber list. A publish updates
-only the consumers bound to the directory it ran from, and pruning removes only that directory's old
-versions.
+Each directory gets its own slug, version namespace, and subscriber list. A publish updates only the
+consumers bound to the directory it ran from, and the sweep that follows it removes only that
+directory's old versions. Both versions carry the `local` dist-tag, which is never what a consumer
+resolves by, since every specifier this tool writes names an exact version.
 
-The two publishes still serialize on the Verdaccio lock, so the second waits rather than failing, but
-neither can overwrite or delete what the other produced. Each also runs its own cascade, over its own
-copy of the graph, resolved to its own checkout by
-[segment-wise path matching](./local-npm-registry-hardening.md).
+The two publishes still serialize on the lock, so the second waits rather than failing, but neither
+can overwrite or delete what the other produced. Each also runs its own cascade, over its own copy of
+the graph, resolved to its own publishing directory by segment-wise path matching: a dependency
+published from several directories resolves to whichever one shares the longest run of leading path
+segments with the package that depends on it. A tie is dropped with a warning rather than guessed at.
+
+Deleting one of these two checkouts leaves its entry in the store, its versions in the registry, and
+its consumer pinned to a version that can never resolve again, since nothing else visits a directory
+that is gone. `local-npm prune` is what reconciles that: it drops the entry, removes those versions,
+and resets the consumer to its original specifier.

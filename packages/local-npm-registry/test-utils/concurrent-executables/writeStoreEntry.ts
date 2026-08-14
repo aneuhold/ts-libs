@@ -1,7 +1,6 @@
 import { randomUUID } from 'crypto';
 import { LocalPackageStoreService } from '../../src/services/LocalPackageStore.service.js';
 import { MutexService } from '../../src/services/Mutex.service.js';
-import { MutexLockName } from '../../src/types/MutexLockName.js';
 import type { ConcurrentWorker } from '../ConcurrentWorker.js';
 
 /**
@@ -34,7 +33,7 @@ const writeStoreEntry: ConcurrentWorker = async (context) => {
 
   const packageName = `@test-${randomUUID().slice(0, 8)}/concurrent-writer-${workerIndex}`;
 
-  await MutexService.withLock(MutexLockName.Store, async () => {
+  await MutexService.withLock(async () => {
     const store = await LocalPackageStoreService.getStore();
 
     // Held so the workers genuinely overlap. Without this the read and the

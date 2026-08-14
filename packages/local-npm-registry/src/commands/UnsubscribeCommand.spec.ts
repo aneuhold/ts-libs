@@ -1,13 +1,15 @@
 import { DR } from '@aneuhold/core-ts-lib';
 import { randomUUID } from 'crypto';
+import fs from 'fs-extra';
+import path from 'path';
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TestProjectUtils } from '../../test-utils/TestProjectUtils.js';
 import { LocalPackageStoreService } from '../services/LocalPackageStore.service.js';
 import { MutexService } from '../services/Mutex.service.js';
 import { VerdaccioService } from '../services/Verdaccio.service.js';
-import { MutexLockName } from '../types/MutexLockName.js';
 import { PackageManager } from '../types/PackageManager.js';
 import { PublishCommand } from './PublishCommand.js';
+import { SubscribeCommand } from './SubscribeCommand.js';
 import { UnsubscribeCommand } from './UnsubscribeCommand.js';
 
 vi.mock('@aneuhold/core-ts-lib', async () => {
@@ -48,19 +50,21 @@ describe('Integration Tests', () => {
     vi.clearAllMocks();
     await TestProjectUtils.setupTestInstance();
     testId = randomUUID().slice(0, 8);
+    TestProjectUtils.stubInstallWithoutRegistry();
     // Ensure clean mutex state for each test
     try {
-      await MutexService.forceReleaseLock(MutexLockName.Verdaccio);
+      await MutexService.forceReleaseLock();
     } catch {
       // Ignore errors if no lock exists or server wasn't running
     }
   });
 
   afterEach(async () => {
+    vi.restoreAllMocks();
     await TestProjectUtils.cleanupTestInstance();
     // Clean up mutex lock after each test
     try {
-      await MutexService.forceReleaseLock(MutexLockName.Verdaccio);
+      await MutexService.forceReleaseLock();
       await VerdaccioService.stop();
     } catch {
       // Ignore errors during cleanup
@@ -81,6 +85,66 @@ describe('Integration Tests', () => {
 
   it('should unsubscribe from specific package with yarn4', async () => {
     await testUnsubscribeFromSpecificPackage(PackageManager.Yarn4, '1.3.0');
+  });
+
+  it('should keep a project installable when it stays subscribed to another package', async () => {
+    const droppedName = `@test-${testId}/dropped-lib`;
+    const keptName = `@test-${testId}/kept-lib`;
+
+    const droppedPath = await TestProjectUtils.createTestPackage(droppedName, '1.0.0');
+    const keptPath = await TestProjectUtils.createTestPackage(keptName, '1.0.0');
+    const subscriberPath = await TestProjectUtils.createTestPackage(
+      `@test-${testId}/two-package-subscriber`,
+      '1.0.0',
+      PackageManager.Npm,
+      { [droppedName]: '^1.0.0' }
+    );
+
+    // A plain 1.0.0 for the specifier the project is reset to, which outside a
+    // test comes from the public registry
+    await VerdaccioService.start();
+    await VerdaccioService.publishPackage(droppedPath);
+    await VerdaccioService.stop();
+
+    for (const publisherPath of [droppedPath, keptPath]) {
+      TestProjectUtils.changeToProject(publisherPath);
+      await PublishCommand.execute();
+    }
+
+    TestProjectUtils.changeToProject(subscriberPath);
+    await SubscribeCommand.execute(droppedName);
+    await TestProjectUtils.addDependencyToProject(subscriberPath, keptName, '^1.0.0');
+    await SubscribeCommand.execute(keptName);
+
+    const keptVersion = await TestProjectUtils.getCurrentVersion(keptName, keptPath);
+
+    await UnsubscribeCommand.execute(droppedName);
+
+    // The project is still pinned to a version only the local registry holds,
+    // so the install has to have gone through it, and resolving the specifier
+    // it was reset to at all is what says it did
+    expect(
+      (await TestProjectUtils.readInstalledPackageJson(subscriberPath, droppedName)).version
+    ).toBe('1.0.0');
+    expect(
+      (await TestProjectUtils.readInstalledPackageJson(subscriberPath, keptName)).version
+    ).toBe(keptVersion);
+  });
+
+  it('should reject when a subscriber cannot be reset', async () => {
+    const packageName = `@test-${testId}/failing-reset-lib`;
+    const { subscriberPath } = await TestProjectUtils.publishAndSubscribe(
+      packageName,
+      `@test-${testId}/failing-reset-subscriber`
+    );
+
+    // The project is still there and still pinned to a version the reset is
+    // what takes it off, so leaving it as it is has to be reported
+    await fs.remove(path.join(subscriberPath, 'package.json'));
+
+    TestProjectUtils.changeToProject(subscriberPath);
+
+    await expect(UnsubscribeCommand.execute(packageName)).rejects.toThrow(subscriberPath);
   });
 
   it('should handle unsubscribing from non-existent package', async () => {
@@ -141,10 +205,9 @@ describe('Integration Tests', () => {
 
     // Verify subscription is active (package has timestamp version)
     let subscriberPackageJson = await TestProjectUtils.readPackageJson(subscriberPath);
-    const timestampPattern = new RegExp(
-      `^${version.replace(/\./g, '\\.')}-p[0-9a-f]{8}\\.\\d{17}$`
+    expect(subscriberPackageJson.dependencies?.[packageName]).toMatch(
+      TestProjectUtils.getLocalVersionPattern(version, publisherPath)
     );
-    expect(subscriberPackageJson.dependencies?.[packageName]).toMatch(timestampPattern);
 
     // Unsubscribe from the package
     TestProjectUtils.changeToProject(subscriberPath);

@@ -45,10 +45,14 @@ program
   .command('subscribe')
   .description('Subscribe to a package and install its latest timestamp version')
   .argument('<package-name>', 'The name of the package to subscribe to')
-  .action(async (packageName: string) => {
+  .option(
+    '--path <path>',
+    'The directory the package is published from, which is required when it is published from several'
+  )
+  .action(async (packageName: string, options: { path?: string }) => {
     try {
       DR.logger.setVerboseLogging(Boolean(program.getOptionValue('verbose')));
-      await CommandService.subscribe(packageName);
+      await CommandService.subscribe(packageName, options.path);
     } catch (error) {
       DR.logger.error(`Failed to subscribe: ${String(error)}`);
       process.exit(1);
@@ -62,11 +66,32 @@ program
     '[package-name]',
     'The name of the package to unpublish (defaults to current directory package)'
   )
-  .action(async (packageName?: string) => {
+  .option(
+    '--path <path>',
+    'The directory to unpublish, which is required when the package is published from several and the current directory is not one of them'
+  )
+  .option('--all-paths', 'Unpublish every directory the package is published from')
+  .action(
+    async (packageName: string | undefined, options: { path?: string; allPaths?: boolean }) => {
+      try {
+        await CommandService.unpublish(packageName, options.path, options.allPaths);
+      } catch (error) {
+        DR.logger.error(`Failed to unpublish: ${String(error)}`);
+        process.exit(1);
+      }
+    }
+  );
+
+program
+  .command('prune')
+  .description(
+    'Reconcile the local registry with what is on disk, dropping packages whose publishing directory no longer exists and resetting their subscribers'
+  )
+  .action(async () => {
     try {
-      await CommandService.unpublish(packageName);
+      await CommandService.prune();
     } catch (error) {
-      DR.logger.error(`Failed to unpublish: ${String(error)}`);
+      DR.logger.error(`Failed to prune: ${String(error)}`);
       process.exit(1);
     }
   });

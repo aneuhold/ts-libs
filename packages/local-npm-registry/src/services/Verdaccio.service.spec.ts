@@ -1,11 +1,10 @@
+import { randomUUID } from 'crypto';
 import fs from 'fs-extra';
-import os from 'os';
 import path from 'path';
-import lockfile from 'proper-lockfile';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { MutexLockName } from '../types/MutexLockName.js';
-import { ConfigService } from './Config.service.js';
-import { MutexService } from './Mutex.service.js';
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { TestProjectUtils } from '../../test-utils/TestProjectUtils.js';
+import { LocalPackageStoreService } from './LocalPackageStore.service.js';
+import { LocalPackageVersionService } from './LocalPackageVersion.service.js';
 import { VerdaccioService } from './Verdaccio.service.js';
 
 vi.mock('@aneuhold/core-ts-lib', async () => {
@@ -26,111 +25,126 @@ vi.mock('@aneuhold/core-ts-lib', async () => {
 });
 
 describe('Integration Tests', () => {
+  let testId: string;
+
+  // Global setup/teardown for the tmp directory
+  beforeAll(async () => {
+    await TestProjectUtils.setupGlobalTempDir();
+  });
+
+  afterAll(async () => {
+    await TestProjectUtils.cleanupGlobalTempDir();
+    const testPackagePattern = /^@test-[a-fA-F0-9]{8}\//;
+    await TestProjectUtils.mutateStore((store) =>
+      LocalPackageStoreService.removePackagesByPattern(store, testPackagePattern)
+    );
+  });
+
   // Per-test setup/teardown for unique test instances
   beforeEach(async () => {
-    // Ensure clean mutex state for each test
-    try {
-      await VerdaccioService.stop();
-      await MutexService.forceReleaseLock(MutexLockName.Verdaccio);
-    } catch {
-      // Ignore errors if no lock exists or server wasn't running
-    }
+    await TestProjectUtils.setupTestInstance();
+    testId = randomUUID().slice(0, 8);
+    await VerdaccioService.stop();
   });
 
   afterEach(async () => {
-    // Clean up mutex lock and server after each test
     try {
       await VerdaccioService.stop();
-      await MutexService.forceReleaseLock(MutexLockName.Verdaccio);
     } catch {
       // Ignore errors during cleanup
     }
+    await TestProjectUtils.cleanupTestInstance();
   });
 
-  it('should acquire mutex lock when starting Verdaccio', async () => {
-    // Verify no lock exists initially
-    const initialLock = await MutexService.isLocked(MutexLockName.Verdaccio);
-    expect(initialLock).toBe(false);
+  describe('start', () => {
+    it('should leave the server running when called again', async () => {
+      await VerdaccioService.start();
 
-    // Start Verdaccio which should acquire the lock
-    await VerdaccioService.start();
+      await expect(VerdaccioService.start()).resolves.not.toThrow();
 
-    // Verify lock is now held
-    const lockAfterStart = await MutexService.isLocked(MutexLockName.Verdaccio);
-    expect(lockAfterStart).toBe(true);
+      // The second call returning early rather than starting a second server is
+      // what leaves this one able to stop it
+      await expect(VerdaccioService.stop()).resolves.not.toThrow();
+    });
   });
 
-  it('should release mutex lock when stopping Verdaccio', async () => {
-    // Start Verdaccio to acquire lock
-    await VerdaccioService.start();
+  describe('removeVersionsPublishedFrom', () => {
+    it('should keep the version it is told to and leave another directory alone', async () => {
+      const packageName = `@test-${testId}/registry-sweep`;
+      const { firstPublisherPath, secondPublisherPath } =
+        await TestProjectUtils.publishFromTwoDirectories(packageName);
+      const keptVersion = await TestProjectUtils.getCurrentVersion(packageName, firstPublisherPath);
+      const otherDirectoryVersion = await TestProjectUtils.getCurrentVersion(
+        packageName,
+        secondPublisherPath
+      );
 
-    // Verify lock is held
-    const lockAfterStart = await MutexService.isLocked(MutexLockName.Verdaccio);
-    expect(lockAfterStart).toBe(true);
+      // A publish killed before it writes the store leaves a version nothing
+      // names, which is what the sweep is by slug rather than by store for
+      const droppedTarball = TestProjectUtils.getRegistryTarballName(
+        packageName,
+        `1.0.0-${LocalPackageVersionService.getPathSlug(firstPublisherPath)}.00000000000000000`
+      );
+      const packageStorage = TestProjectUtils.getRegistryPackageStorage(packageName);
+      await fs.writeFile(path.join(packageStorage, droppedTarball), '');
 
-    // Stop Verdaccio which should release the lock
-    await VerdaccioService.stop();
+      // The server does not have to be running for a sweep, and is not here
+      await VerdaccioService.removeVersionsPublishedFrom(
+        packageName,
+        firstPublisherPath,
+        keptVersion
+      );
 
-    // Verify lock is released
-    const lockAfterStop = await MutexService.isLocked(MutexLockName.Verdaccio);
-    expect(lockAfterStop).toBe(false);
-  });
-
-  it('should handle multiple start calls gracefully', async () => {
-    // First start should succeed
-    await VerdaccioService.start();
-
-    // Verify lock is held
-    const lockAfterFirstStart = await MutexService.isLocked(MutexLockName.Verdaccio);
-    expect(lockAfterFirstStart).toBe(true);
-
-    // Second start should not throw an error (should return early)
-    await expect(VerdaccioService.start()).resolves.not.toThrow();
-
-    // Lock should still be held
-    const lockAfterSecondStart = await MutexService.isLocked(MutexLockName.Verdaccio);
-    expect(lockAfterSecondStart).toBe(true);
-  });
-
-  it('should wait for another process to release the lock instead of failing', async () => {
-    // Use lockfile directly to create a lock from "another process"
-    // We need to use the same path logic as MutexService
-
-    // Get the lock file path that MutexService would use
-    const config = await ConfigService.loadConfig();
-    const baseDirectory = config.dataDirectory || os.homedir();
-    const LOCK_DIR = path.join(baseDirectory, '.local-npm-registry');
-    const LOCK_FILE_PATH = path.join(LOCK_DIR, MutexLockName.Verdaccio);
-
-    // Ensure the lock file exists
-    await fs.ensureDir(LOCK_DIR);
-    await fs.ensureFile(LOCK_FILE_PATH);
-
-    // Acquire lock directly with lockfile (simulating another process)
-    const release = await lockfile.lock(LOCK_FILE_PATH, {
-      stale: 60000,
-      retries: 0
+      const tarballs = await fs.readdir(packageStorage);
+      expect(tarballs).toContain(TestProjectUtils.getRegistryTarballName(packageName, keptVersion));
+      expect(tarballs).not.toContain(droppedTarball);
+      expect(tarballs).toContain(
+        TestProjectUtils.getRegistryTarballName(packageName, otherDirectoryVersion)
+      );
     });
 
-    // Verify lock is held
-    const lockAfterAcquire = await MutexService.isLocked(MutexLockName.Verdaccio);
-    expect(lockAfterAcquire).toBe(true);
+    it('should drop the package once the last tarball of it goes', async () => {
+      const packageName = `@test-${testId}/registry-drain`;
+      const { firstPublisherPath, secondPublisherPath } =
+        await TestProjectUtils.publishFromTwoDirectories(packageName);
+      const packageStorage = TestProjectUtils.getRegistryPackageStorage(packageName);
 
-    // Now attempt to acquire the lock through MutexService (simulating this process),
-    // which queues behind the holder rather than giving up
-    let acquired = false;
-    const acquisition = MutexService.acquireLock(MutexLockName.Verdaccio).then(() => {
-      acquired = true;
+      await VerdaccioService.removeVersionsPublishedFrom(packageName, firstPublisherPath);
+
+      // The other directory still has a tarball, so what the registry serves it
+      // from has to survive
+      expect(await fs.pathExists(packageStorage)).toBe(true);
+      expect(await TestProjectUtils.getRegistryDbPackageNames()).toContain(packageName);
+
+      await VerdaccioService.removeVersionsPublishedFrom(packageName, secondPublisherPath);
+
+      // Otherwise the directory survives as a metadata document naming versions
+      // that have nothing behind them
+      expect(await fs.pathExists(packageStorage)).toBe(false);
+      expect(await TestProjectUtils.getRegistryDbPackageNames()).not.toContain(packageName);
     });
 
-    await new Promise((resolve) => setTimeout(resolve, 500));
-    expect(acquired).toBe(false);
+    it('should do nothing for a package the registry never held', async () => {
+      const packageName = `@test-${testId}/never-published`;
 
-    // Release the external lock, which lets the queued acquisition through
-    await release();
-    await acquisition;
+      await expect(
+        VerdaccioService.removeVersionsPublishedFrom(packageName, '/dev/nowhere')
+      ).resolves.not.toThrow();
 
-    expect(acquired).toBe(true);
-    expect(await MutexService.isLocked(MutexLockName.Verdaccio)).toBe(true);
+      expect(await fs.pathExists(TestProjectUtils.getRegistryPackageStorage(packageName))).toBe(
+        false
+      );
+    });
+  });
+
+  describe('clearStorage', () => {
+    it('should leave the registry holding nothing', async () => {
+      await TestProjectUtils.publishFromTwoDirectories(`@test-${testId}/storage-clear`);
+      const { storage } = VerdaccioService.verdaccioConfig;
+
+      await VerdaccioService.clearStorage();
+
+      expect(await fs.pathExists(storage)).toBe(false);
+    });
   });
 });

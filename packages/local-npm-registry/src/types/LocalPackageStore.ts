@@ -29,7 +29,7 @@ export type PackageEntry = {
   originalVersion: string;
   /** The current version with timestamp suffix */
   currentVersion: string;
-  /** List of subscribers to this package */
+  /** List of subscribers to the package published from this directory */
   subscribers: PackageSubscriber[];
   /** Additional arguments that were used when publishing this package */
   publishArgs?: string[];
@@ -46,6 +46,24 @@ export type PackageSubscriber = {
   subscriberPath: string;
   /** The original version specifier that existed for the package in the subscriber's dependencies */
   originalSpecifier: string;
+};
+
+/**
+ * One subscriber's subscription to one package, flattened out of the
+ * {@link LocalPackageStore} so that it names both ends of the binding rather
+ * than only the end a {@link PackageSubscriber} holds.
+ */
+export type PackageSubscription = PackageSubscriber & PublishedPackage;
+
+/**
+ * One package as it is published from one directory, which is what a
+ * {@link LocalPackageStore} is keyed by.
+ */
+export type PublishedPackage = {
+  /** The name of the package */
+  packageName: string;
+  /** The absolute path of the directory that publishes the package */
+  packagePath: string;
 };
 
 /**

@@ -7,9 +7,6 @@ export default mergeConfig(
     test: {
       exclude: ['tmp/**/*'],
       globalSetup: ['./test-utils/globalSetup.ts'],
-      // A lot of the tests in local-npm-registry depend on the entire system and configuration
-      // there, so we run them serially to avoid conflicts.
-      fileParallelism: false,
       env: {
         // Resolve yarn issues when running in CI
         YARN_ENABLE_HARDENED_MODE: '0',
