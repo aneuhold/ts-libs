@@ -1,7 +1,9 @@
 import { DR } from '@aneuhold/core-ts-lib';
 import { LocalPackageStoreService } from '../services/LocalPackageStore.service.js';
-import { PackageJsonService } from '../services/PackageJson.service.js';
-import { PackageManagerService } from '../services/PackageManagerService/PackageManager.service.js';
+import { LocalPackageSubscriberService } from '../services/LocalPackageSubscriber.service.js';
+import { MutexService } from '../services/Mutex.service.js';
+import { VerdaccioService } from '../services/Verdaccio.service.js';
+import type { PackageSubscription } from '../types/LocalPackageStore.js';
 
 /**
  * Implements the 'local-npm clear-store' command.
@@ -12,94 +14,47 @@ export class ClearStoreCommand {
    * Unpublishes all packages and unsubscribes all subscribers.
    */
   static async execute(): Promise<void> {
-    const store = await LocalPackageStoreService.getStore();
-    const packageNames = Object.keys(store.packages);
+    await MutexService.withLock(async () => {
+      const store = await LocalPackageStoreService.getStore();
+      const packageCount = Object.keys(store.packages).length;
 
-    if (packageNames.length === 0) {
-      DR.logger.info('No packages in local registry to clear');
-      return;
-    }
-
-    DR.logger.info(`Clearing ${packageNames.length} package(s) from local registry`);
-
-    // Collect all subscriber reset operations across all packages
-    const resetOperations: Array<{
-      subscriberPath: string;
-      packageName: string;
-      originalVersion: string;
-    }> = [];
-
-    // Collect all reset operations first
-    for (const packageName of packageNames) {
-      const entry = store.packages[packageName];
-      if (!entry) {
-        continue;
+      if (packageCount === 0) {
+        DR.logger.info('No packages in local registry to clear');
+        return;
       }
 
-      DR.logger.info(`Processing package: ${packageName}`);
+      DR.logger.info(`Clearing ${packageCount} package(s) from local registry`);
 
-      // Collect subscriber reset operations
-      if (entry.subscribers.length > 0) {
-        DR.logger.info(`  Adding ${entry.subscribers.length} subscriber reset operation(s)`);
-
-        for (const subscriber of entry.subscribers) {
-          resetOperations.push({
-            subscriberPath: subscriber.subscriberPath,
-            packageName,
-            originalVersion: subscriber.originalSpecifier
-          });
+      // Collected before the store is emptied, since the store is what says
+      // what each subscriber has to be put back to
+      const subscriptions: PackageSubscription[] = [];
+      for (const [packageName, pathEntries] of Object.entries(store.packages)) {
+        for (const [packagePath, entry] of Object.entries(pathEntries ?? {})) {
+          subscriptions.push(
+            ...(entry?.subscribers ?? []).map((subscriber) => ({
+              ...subscriber,
+              packageName,
+              packagePath
+            }))
+          );
         }
       }
-    }
 
-    // Execute all reset operations in parallel
-    if (resetOperations.length > 0) {
-      DR.logger.info(`Executing ${resetOperations.length} subscriber reset operations in parallel`);
+      LocalPackageStoreService.clearStore(store);
+      await LocalPackageStoreService.writeStore(store);
 
-      const resetPromises = resetOperations.map(async (operation) => {
-        try {
-          await PackageJsonService.updatePackageVersion(
-            operation.subscriberPath,
-            operation.packageName,
-            operation.originalVersion
-          );
-          await PackageManagerService.runInstall(operation.subscriberPath);
-          DR.logger.info(`✓ Reset ${operation.packageName} in ${operation.subscriberPath}`);
-          return { success: true, operation };
-        } catch (error) {
-          DR.logger.error(
-            `✗ Failed to reset ${operation.packageName} in ${operation.subscriberPath}: ${String(error)}`
-          );
-          return { success: false, operation, error };
-        }
-      });
-
-      const results = await Promise.allSettled(resetPromises);
-      const successCount = results.filter(
-        (result) => result.status === 'fulfilled' && result.value.success
-      ).length;
-      const errorCount = resetOperations.length - successCount;
-
-      DR.logger.info(
-        `Parallel reset completed: ${successCount}/${resetOperations.length} successful`
-      );
-
-      // Clear the entire store
-      await LocalPackageStoreService.clearStore();
-
-      if (errorCount > 0) {
-        DR.logger.warn(
-          `Cleared ${packageNames.length} package(s) with ${errorCount} subscriber reset error(s)`
-        );
-      } else {
-        DR.logger.info(
-          `Successfully cleared all ${packageNames.length} package(s) and reset all subscribers`
-        );
+      const subscriberCount = LocalPackageSubscriberService.countSubscribers(subscriptions);
+      if (subscriberCount > 0) {
+        DR.logger.info(`Resetting ${subscriberCount} subscriber(s)`);
       }
-    } else {
-      // No subscribers to reset, just clear the store
-      await LocalPackageStoreService.clearStore();
-      DR.logger.info(`Successfully cleared all ${packageNames.length} package(s)`);
-    }
+
+      await LocalPackageSubscriberService.resetPackageSubscriptions(store, subscriptions);
+
+      // Nothing points at anything the registry holds any more, which makes this
+      // where the versions every other command left behind are collected
+      await VerdaccioService.clearStorage();
+
+      DR.logger.info(`Successfully cleared all ${packageCount} package(s)`);
+    });
   }
 }

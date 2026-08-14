@@ -5,6 +5,33 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## 🔖 [1.0.0] (2026-08-13)
+
+### ✅ Added
+
+- Added `local-npm prune`, which drops packages whose publishing directory no longer exists, removes their versions from the registry, and resets their subscribers.
+- Added `--path` to `local-npm subscribe` and `local-npm unpublish`, and `--all-paths` to `local-npm unpublish`, for choosing which publishing directory to act on when a package is published from several.
+- Publishing a package now also republishes every locally published package that depends on it, in dependency order, so a project subscribed only to the far end of a chain still receives the edit. Packages nothing subscribes to are skipped.
+- Each publish pins the locally published packages it depends on into its tarball, so a subscriber installs the exact builds that publish produced rather than whatever the range resolves to.
+- A subscribing project installs once per publish no matter how many of the published packages it subscribes to.
+
+### 🏗️ Changed
+
+- *Breaking Change:* The local package store is keyed by publishing directory as well as package name, so one package can be published from several checkouts at once, each with its own versions and subscribers. Any existing store is renamed to a `.deprecated-<timestamp>` file next to it and replaced with an empty one, so every project has to subscribe again after upgrading.
+- Published versions take the form `<yourVersion>-<pathSlug>.<timestamp>` (for example `1.2.3-pa1b2c3d4.20250528123456789`) rather than `<yourVersion>-<timestamp>`. The slug identifies the publishing directory, which is what keeps two checkouts of one package off the same version.
+- Commands no longer write and restore `.npmrc` or `.yarnrc.yml` files in your projects. The local registry is passed to the package manager on each invocation instead.
+- Commands hold a single system-wide lock for their whole run and wait for whichever command holds it, reporting how long they have waited, rather than giving up after ten seconds.
+- Removing versions from the registry is scoped to one publishing directory. `local-npm unpublish` and the sweep that follows each publish both leave other directories' versions in place.
+- `local-npm list` prints each publishing directory under its package name and marks the current directory.
+- `local-npm clear-store` also empties the Verdaccio storage.
+
+### 🩹 Fixed
+
+- A publish killed before it recorded anything no longer compounds suffixes onto the version on the next run.
+- Subscribing to a package from a different publishing directory than the one a project is already subscribed to moves the subscription and keeps the original specifier, rather than leaving the project bound to both.
+- Subscribing while a project is left holding a local version no longer records that local version as the specifier to restore on unsubscribe, which left the project unresolvable.
+- A publish that fails partway restores every `package.json` it wrote, so no pinned specifier is left behind.
+
 ## 🔖 [0.2.34] (2026-06-19)
 
 ### 🏗️ Changed
@@ -207,6 +234,7 @@ No direct code changes; version bump for compatibility.
 - Updated workflow permissions to allow repository write access
 
 <!-- Link References -->
+[1.0.0]: https://github.com/aneuhold/ts-libs/compare/local-npm-registry-v0.2.34...local-npm-registry-v1.0.0
 [0.2.34]: https://github.com/aneuhold/ts-libs/compare/local-npm-registry-v0.2.33...local-npm-registry-v0.2.34
 [0.2.33]: https://github.com/aneuhold/ts-libs/compare/local-npm-registry-v0.2.32...local-npm-registry-v0.2.33
 [0.2.32]: https://github.com/aneuhold/ts-libs/compare/local-npm-registry-v0.2.30...local-npm-registry-v0.2.32

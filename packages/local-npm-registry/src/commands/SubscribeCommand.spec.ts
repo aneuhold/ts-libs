@@ -35,7 +35,9 @@ describe('Integration Tests', () => {
   afterAll(async () => {
     await TestProjectUtils.cleanupGlobalTempDir();
     const testPackagePattern = /^@test-[a-fA-F0-9]{8}\//;
-    await LocalPackageStoreService.removePackagesByPattern(testPackagePattern);
+    await TestProjectUtils.mutateStore((store) =>
+      LocalPackageStoreService.removePackagesByPattern(store, testPackagePattern)
+    );
   });
 
   // Per-test setup/teardown for unique test instances
@@ -85,11 +87,102 @@ describe('Integration Tests', () => {
     await SubscribeCommand.execute(`@test-${testId}/subscribe-target`);
 
     // Verify subscriber was added
-    const packageEntry = await TestProjectUtils.getPackageEntry(`@test-${testId}/subscribe-target`);
+    const store = await LocalPackageStoreService.getStore();
+    const packageEntry = LocalPackageStoreService.getPackageEntry(
+      store,
+      `@test-${testId}/subscribe-target`,
+      publisherPath
+    );
     expect(
       packageEntry?.subscribers.some(
         (s) => s.subscriberPath === subscriberPath && s.originalSpecifier === '^1.0.0'
       )
     ).toBe(true);
+  });
+
+  it('should not record a local version as what a subscriber is put back on', async () => {
+    const packageName = `@test-${testId}/reset-target`;
+    const { publisherPath, subscriberPath } = await TestProjectUtils.publishAndSubscribe(
+      packageName,
+      `${packageName}-subscriber`
+    );
+
+    // A reset that failed partway leaves the subscriber pinned to the local
+    // version while the store no longer holds the subscription
+    await TestProjectUtils.mutateStore((store) => {
+      LocalPackageStoreService.removeSubscriber(store, packageName, publisherPath, subscriberPath);
+    });
+
+    TestProjectUtils.changeToProject(subscriberPath);
+    await SubscribeCommand.execute(packageName);
+
+    const packageEntry = LocalPackageStoreService.getPackageEntry(
+      await LocalPackageStoreService.getStore(),
+      packageName,
+      publisherPath
+    );
+    const subscriber = packageEntry?.subscribers.find(
+      (candidate) => candidate.subscriberPath === subscriberPath
+    );
+    expect(subscriber?.originalSpecifier).toBe('1.0.0');
+  });
+
+  it('should refuse to bind when the package is published from several directories', async () => {
+    const packageName = `@test-${testId}/ambiguous-target`;
+    const { firstPublisherPath, secondPublisherPath } =
+      await TestProjectUtils.publishFromTwoDirectories(packageName);
+
+    const subscriberPath = await TestProjectUtils.createSubscriberProject(
+      `@test-${testId}/ambiguous-subscriber`,
+      packageName,
+      '^1.0.0'
+    );
+    TestProjectUtils.changeToProject(subscriberPath);
+
+    // Which directory the subscriber wants cannot be inferred from it, so both
+    // have to be reported rather than one of them guessed at
+    await expect(SubscribeCommand.execute(packageName)).rejects.toThrow(firstPublisherPath);
+    await expect(SubscribeCommand.execute(packageName)).rejects.toThrow(secondPublisherPath);
+    await expect(SubscribeCommand.execute(packageName)).rejects.toThrow('--path');
+  });
+
+  it('should move a subscriber between publishing directories and keep its original specifier', async () => {
+    const packageName = `@test-${testId}/move-target`;
+    const { firstPublisherPath, secondPublisherPath } =
+      await TestProjectUtils.publishFromTwoDirectories(packageName);
+
+    const subscriberPath = await TestProjectUtils.createSubscriberProject(
+      `@test-${testId}/move-subscriber`,
+      packageName,
+      '^1.0.0'
+    );
+
+    TestProjectUtils.changeToProject(subscriberPath);
+    await SubscribeCommand.execute(packageName, firstPublisherPath);
+    await SubscribeCommand.execute(packageName, secondPublisherPath);
+
+    // A subscriber has one specifier slot per dependency, so the binding moves
+    // rather than joins, and what it recorded before moving is what unsubscribe
+    // restores
+    const store = await LocalPackageStoreService.getStore();
+    const firstPublisherEntry = LocalPackageStoreService.getPackageEntry(
+      store,
+      packageName,
+      firstPublisherPath
+    );
+    const secondPublisherEntry = LocalPackageStoreService.getPackageEntry(
+      store,
+      packageName,
+      secondPublisherPath
+    );
+    expect(
+      firstPublisherEntry?.subscribers.some(
+        (subscriber) => subscriber.subscriberPath === subscriberPath
+      )
+    ).toBe(false);
+    expect(secondPublisherEntry?.subscribers).toContainEqual({
+      subscriberPath,
+      originalSpecifier: '^1.0.0'
+    });
   });
 });

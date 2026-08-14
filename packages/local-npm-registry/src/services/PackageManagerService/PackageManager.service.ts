@@ -1,12 +1,9 @@
-import { DR } from '@aneuhold/core-ts-lib';
-import { execa } from 'execa';
 import fs from 'fs-extra';
 import path from 'path';
-import { DEFAULT_CONFIG } from '../../types/LocalNpmConfig.js';
+import type { LocalPackageStore } from '../../types/LocalPackageStore.js';
 import { PACKAGE_MANAGER_INFO, PackageManager } from '../../types/PackageManager.js';
-import { ConfigService } from '../Config.service.js';
 import { PackageJsonService } from '../PackageJson.service.js';
-import { RegistryConfigService } from './RegistryConfigService/RegistryConfig.service.js';
+import { PackageManagerCliService } from './PackageManagerCli.service.js';
 
 /**
  * Utility service for various package managers.
@@ -73,65 +70,30 @@ export class PackageManagerService {
     // Detect the package manager based on lock files in the target project
     const packageManager = await PackageManagerService.detectPackageManager(projectPath);
 
-    const packageManagerInfo = PACKAGE_MANAGER_INFO[packageManager];
-
-    try {
-      DR.logger.info(`Running ${packageManagerInfo.displayName} install in ${projectPath}`);
-
-      // Create clean environment by removing npm_config_ variables that interfere with local registry.
-      // This is required because sometimes (like pnpm) the package manager will inject environment
-      // variables that point to the global npm registry, which we want to avoid
-      // when using a local registry.
-      const cleanEnv = { ...process.env };
-      Object.keys(cleanEnv).forEach((key) => {
-        if (key.startsWith('npm_config_')) {
-          // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
-          delete cleanEnv[key];
-        }
-      });
-      await execa(packageManagerInfo.command, ['install'], {
-        cwd: projectPath,
-        env: cleanEnv,
-        extendEnv: false
-      });
-
-      DR.logger.info(`${packageManagerInfo.displayName} install completed in ${projectPath}`);
-    } catch (error) {
-      DR.logger.error(`Error running install in ${projectPath}: ${String(error)}`);
-      throw error;
-    }
+    await PackageManagerCliService.runInstall(projectPath, packageManager);
   }
 
   /**
    * Runs install command in a project directory using the specified registry.
    *
    * @param projectPath - Path to the project directory
+   * @param store - The store to read the project's subscriptions from
    * @param registryUrl - The registry URL to use for installation
    */
-  static async runInstallWithRegistry(projectPath: string, registryUrl?: string): Promise<void> {
-    const config = await ConfigService.loadConfig();
-    const actualRegistryUrl = registryUrl || config.registryUrl || DEFAULT_CONFIG.registryUrl;
-
+  static async runInstallWithRegistry(
+    projectPath: string,
+    store: LocalPackageStore,
+    registryUrl?: string
+  ): Promise<void> {
     // Detect the package manager based on lock files in the target project
     const packageManager = await PackageManagerService.detectPackageManager(projectPath);
 
-    // Create registry configuration to ensure packages are installed from local registry
-    const configBackup = await RegistryConfigService.createRegistryConfig(
+    await PackageManagerCliService.runInstallWithRegistry(
+      projectPath,
       packageManager,
-      actualRegistryUrl,
-      projectPath
+      store,
+      registryUrl
     );
-
-    try {
-      // Use the base runInstall method to perform the actual installation
-      await this.runInstall(projectPath);
-    } catch (error) {
-      DR.logger.error(`Error running install with registry in ${projectPath}: ${String(error)}`);
-      throw error;
-    } finally {
-      // Always restore original configuration
-      await RegistryConfigService.restoreRegistryConfig(configBackup);
-    }
   }
 
   /**

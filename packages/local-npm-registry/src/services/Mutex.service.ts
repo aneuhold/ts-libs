@@ -5,96 +5,120 @@ import lockfile from 'proper-lockfile';
 import { ConfigService } from './Config.service.js';
 
 /**
- * Service to manage system-wide mutex locks for Verdaccio registry instances.
- * This ensures only one process can run Verdaccio at a time across the entire system.
+ * Service to manage the system-wide mutex lock, which is what makes one command
+ * at a time change anything.
+ 
+ * Commands therefore wait on each other for as long as an install takes, which
+ * is the intended cost: acquisition waits however long it takes and reports
+ * progress while it does.
  *
  * Note that cleanup is setup automatically via the proper-lockfile library if
  * the process exits unexpectedly.
  */
 export class MutexService {
-  static readonly #LOCK_FILE_NAME = 'verdaccio-lock';
+  static readonly #LOCK_FILE_NAME = 'local-npm-lock';
+
+  static readonly #LOCK_CHECK_INTERVAL = 100;
+
   /**
-   * Default timeout for acquiring the lock in milliseconds.
+   * Interval between the log lines that report how long the lock has been waited on.
    */
-  static readonly #LOCK_TIMEOUT = 10000;
-  static readonly #LOCK_CHECK_TIMEOUT = 500;
+  static readonly #WAIT_LOG_INTERVAL = 5000;
 
   static #lockRelease: (() => Promise<void>) | null = null;
 
   /**
-   * Acquires a system-wide mutex lock for the Verdaccio registry.
-   * This will block until the lock is available or timeout is reached.
+   * Runs an operation while holding the lock, releasing it however the
+   * operation ends.
    *
-   * @param timeoutMs - Maximum time to wait for lock in milliseconds (default: 30 seconds)
+   * @param operation - Runs while the lock is held
    */
-  static async acquireLock(timeoutMs: number = MutexService.#LOCK_TIMEOUT): Promise<void> {
+  static async withLock<TResult>(operation: () => Promise<TResult>): Promise<TResult> {
+    await MutexService.acquireLock();
+
+    try {
+      return await operation();
+    } finally {
+      await MutexService.releaseLock();
+    }
+  }
+
+  /**
+   * Acquires the lock, waiting until it is available.
+   */
+  static async acquireLock(): Promise<void> {
     if (MutexService.#lockRelease) {
       DR.logger.info('Lock already acquired by this process');
       return;
     }
 
+    // proper-lockfile exposes no per-retry hook, so progress while waiting is
+    // reported from here.
+    const waitStart = Date.now();
+    const waitLogInterval = setInterval(() => {
+      const elapsedSeconds = Math.round((Date.now() - waitStart) / 1000);
+      DR.logger.info(`Still waiting for the lock after ${elapsedSeconds}s...`);
+    }, MutexService.#WAIT_LOG_INTERVAL);
+
     try {
-      DR.logger.info('Attempting to acquire Verdaccio mutex lock...');
+      DR.logger.info('Attempting to acquire the mutex lock...');
 
-      // Ensure lock directory exists
-      await MutexService.#ensureLockFileExists();
-
-      const lockFilePath = await MutexService.#getLockFilePath();
-
-      // Use proper-lockfile's built-in retry mechanism
-      MutexService.#lockRelease = await lockfile.lock(lockFilePath, {
-        // Stale lock timeout - if a process crashes, the lock will be considered stale
-        // after this time.
-        stale: timeoutMs,
-        // Use built-in retry mechanism with custom options
+      // Use proper-lockfile's built-in retry mechanism. `stale` is left as the default which is
+      // 10 seconds.
+      MutexService.#lockRelease = await lockfile.lock(await MutexService.#ensureLockFilePath(), {
         retries: {
-          retries: Math.floor(timeoutMs / MutexService.#LOCK_CHECK_TIMEOUT), // Retry for the duration of timeout
+          // Wait for the holder however long it takes. Some installs can take a very long time.
+          forever: true,
           factor: 1, // No exponential backoff
-          minTimeout: MutexService.#LOCK_CHECK_TIMEOUT, // Wait between retries
-          maxTimeout: MutexService.#LOCK_CHECK_TIMEOUT, // Keep constant interval
+          minTimeout: MutexService.#LOCK_CHECK_INTERVAL, // Wait between retries
+          maxTimeout: MutexService.#LOCK_CHECK_INTERVAL, // Keep constant interval
           randomize: false // No jitter
         }
       });
 
-      DR.logger.info('Successfully acquired Verdaccio mutex lock');
+      DR.logger.info('Successfully acquired the mutex lock');
     } catch (error) {
-      const errorMessage = `Failed to acquire mutex lock: ${String(error)}`;
+      const errorMessage = `Failed to acquire the mutex lock: ${String(error)}`;
       DR.logger.error(errorMessage);
       throw new Error(errorMessage, { cause: error });
+    } finally {
+      clearInterval(waitLogInterval);
     }
   }
 
   /**
-   * Releases the system-wide mutex lock for the Verdaccio registry.
+   * Releases the lock held by this process.
    */
   static async releaseLock(): Promise<void> {
-    if (!MutexService.#lockRelease) {
+    const release = MutexService.#lockRelease;
+    if (!release) {
       DR.logger.info('No lock to release');
       return;
     }
 
+    DR.logger.info('Releasing the mutex lock...');
+    // Dropped before the release is attempted, so a failed release cannot leave
+    // this process believing it still holds the lock
+    MutexService.#lockRelease = null;
+
     try {
-      DR.logger.info('Releasing Verdaccio mutex lock...');
-      await MutexService.#lockRelease();
-      MutexService.#lockRelease = null;
-      DR.logger.info('Successfully released Verdaccio mutex lock');
+      await release();
     } catch (error) {
-      const errorMessage = `Failed to release mutex lock: ${String(error)}`;
-      DR.logger.error(errorMessage);
-      // Don't throw here as we want to continue cleanup even if lock release fails
+      throw new Error(
+        `Failed to release the mutex lock, which stays held until it goes stale: ${String(error)}`,
+        { cause: error }
+      );
     }
+
+    DR.logger.info('Successfully released the mutex lock');
   }
 
   /**
-   * Checks if a lock is currently held by any process.
+   * Checks if the lock is currently held by any process.
    */
   static async isLocked(): Promise<boolean> {
     try {
-      // Ensure lock directory exists before checking
-      await MutexService.#ensureLockFileExists();
-      const lockFilePath = await MutexService.#getLockFilePath();
-      const result = await lockfile.check(lockFilePath);
-      return result;
+      return await lockfile.check(await MutexService.#ensureLockFilePath());
     } catch {
       // If file doesn't exist or other error, assume not locked
       return false;
@@ -102,33 +126,31 @@ export class MutexService {
   }
 
   /**
-   * Forces removal of the lock file. Use with caution!
-   * This should only be used when you're certain no other process is using the lock.
+   * Forces removal of the lock file. Use with caution! This should only be used
+   * when you're certain no other process is using the lock, and generally only
+   * in tests.
    */
   static async forceReleaseLock(): Promise<void> {
-    // First check if the lock is already available
-    const isCurrentlyLocked = await MutexService.isLocked();
-    if (!isCurrentlyLocked) {
+    if (!(await MutexService.isLocked())) {
       DR.logger.info('Lock is already available, no need to force release');
       return;
     }
 
+    const lockFilePath = await MutexService.#ensureLockFilePath();
+
     try {
-      DR.logger.warn('Force releasing Verdaccio mutex lock...');
-      const lockFilePath = await MutexService.#getLockFilePath();
+      DR.logger.warn('Force releasing the mutex lock...');
       await lockfile.unlock(lockFilePath);
       MutexService.#lockRelease = null;
-      DR.logger.info('Successfully force released Verdaccio mutex lock');
+      DR.logger.info('Successfully force released the mutex lock');
     } catch (error) {
       // If lockfile.unlock fails, try to manually remove the lock file
       try {
-        const lockFilePath = await MutexService.#getLockFilePath();
-        const lockFileWithExt = `${lockFilePath}.lock`;
-        await fs.remove(lockFileWithExt);
+        await fs.remove(`${lockFilePath}.lock`);
         MutexService.#lockRelease = null;
-        DR.logger.info('Successfully manually removed Verdaccio mutex lock file');
+        DR.logger.info('Successfully manually removed the mutex lock file');
       } catch (manualRemovalError) {
-        const errorMessage = `Failed to force release mutex lock via both unlock and manual removal: ${String(error)}, manual removal error: ${String(manualRemovalError)}`;
+        const errorMessage = `Failed to force release the mutex lock via both unlock and manual removal: ${String(error)}, manual removal error: ${String(manualRemovalError)}`;
         DR.logger.error(errorMessage);
         throw new Error(errorMessage, { cause: manualRemovalError });
       }
@@ -136,31 +158,15 @@ export class MutexService {
   }
 
   /**
-   * Ensures the lock directory and file exist.
+   * The path of the file backing the lock, which proper-lockfile requires to
+   * exist before it can be locked.
    */
-  static async #ensureLockFileExists(): Promise<void> {
-    // Ensure the directory exists
-    const lockDir = await MutexService.#getLockDir();
-    await fs.ensureDir(lockDir);
-
-    // Ensure the lock file exists (proper-lockfile requires the file to exist)
-    // This creates an empty file if it doesn't exist, or does nothing if it already exists
-    const lockFilePath = await MutexService.#getLockFilePath();
+  static async #ensureLockFilePath(): Promise<string> {
+    const lockFilePath = path.join(
+      await ConfigService.getDataDirectoryPath(),
+      MutexService.#LOCK_FILE_NAME
+    );
     await fs.ensureFile(lockFilePath);
-  }
-
-  /**
-   * Gets the lock directory path from configuration.
-   */
-  static async #getLockDir(): Promise<string> {
-    return await ConfigService.getDataDirectoryPath();
-  }
-
-  /**
-   * Gets the lock file path from configuration.
-   */
-  static async #getLockFilePath(): Promise<string> {
-    const lockDir = await this.#getLockDir();
-    return path.join(lockDir, this.#LOCK_FILE_NAME);
+    return lockFilePath;
   }
 }

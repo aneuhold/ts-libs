@@ -65,50 +65,18 @@ export class NpmrcService {
    * @param configMap - The map to store key-value pairs
    */
   static #parseNpmrcContent(content: string, configMap: Map<string, string>): void {
-    // Use the enhanced parseKeyValueLines with preserveLines=false to get key-value pairs directly
-    this.#parseKeyValueLines(content, configMap, false);
-  }
-
-  /**
-   * Parses key-value lines and adds them to the provided map.
-   *
-   * @param content The content to parse
-   * @param configMap The map to store key-value pairs
-   * @param preserveLines Whether to store full lines (true) or just values (false)
-   */
-  static #parseKeyValueLines(
-    content: string,
-    configMap: Map<string, string>,
-    preserveLines = true
-  ): void {
-    const lines = content.split('\n').filter((line) => line.trim() !== '');
-
-    for (const line of lines) {
+    for (const line of content.split('\n')) {
       const trimmedLine = line.trim();
 
       if (!trimmedLine || trimmedLine.startsWith('#') || trimmedLine.startsWith(';')) {
-        if (preserveLines) {
-          // Preserve comments and empty lines with original content
-          configMap.set(trimmedLine || line, line);
-        }
         continue;
       }
 
       const separatorIndex = trimmedLine.indexOf('=');
       if (separatorIndex > 0) {
         const key = trimmedLine.substring(0, separatorIndex).trim();
-
-        if (preserveLines) {
-          // Store original line format (for config merging)
-          configMap.set(key, line);
-        } else {
-          // Store just the value (for npmrc parsing) - allow overwriting for precedence
-          const value = trimmedLine.substring(separatorIndex + 1).trim();
-          configMap.set(key, value);
-        }
-      } else if (preserveLines) {
-        // Non-key-value line, preserve as-is
-        configMap.set(trimmedLine, line);
+        const value = trimmedLine.substring(separatorIndex + 1).trim();
+        configMap.set(key, value);
       }
     }
   }

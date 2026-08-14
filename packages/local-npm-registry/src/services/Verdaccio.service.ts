@@ -4,18 +4,17 @@ import type {
   Config as VerdaccioConfig,
   PackageList as VerdaccioPackageList
 } from '@verdaccio/types';
-import { execa } from 'execa';
 import fs from 'fs-extra';
 import http from 'http';
 import path from 'path';
 import { runServer } from 'verdaccio';
 import { DEFAULT_CONFIG, type LocalNpmConfig } from '../types/LocalNpmConfig.js';
-import { PACKAGE_MANAGER_INFO, PackageManager } from '../types/PackageManager.js';
 import { VERDACCIO_DB_FILE_NAME, isVerdaccioDb } from '../types/VerdaccioDb.js';
 import { ConfigService } from './Config.service.js';
-import { MutexService } from './Mutex.service.js';
+import { LocalPackageVersionService } from './LocalPackageVersion.service.js';
 import { NpmrcService } from './Npmrc.service.js';
 import { PackageJsonService } from './PackageJson.service.js';
+import { PackageManagerCliService } from './PackageManagerService/PackageManagerCli.service.js';
 
 type StrictVerdaccioConfig = Partial<VerdaccioConfig> & {
   storage: string; // Ensure storage is always a string
@@ -51,6 +50,9 @@ export class VerdaccioService {
   /**
    * Starts the Verdaccio registry server.
    * This must be called before any npm publish commands can work.
+   *
+   * The caller holds the mutex lock, so only one process reaches this and the
+   * port is never contended.
    */
   static async start(): Promise<void> {
     await this.#loadVerdaccioConfig();
@@ -68,31 +70,17 @@ export class VerdaccioService {
     this.#isStarting = true;
 
     try {
-      // Acquire mutex lock before starting Verdaccio
-      await MutexService.acquireLock();
-
       const config = await ConfigService.loadConfig();
       const port = config.registryPort || DEFAULT_CONFIG.registryPort;
 
       DR.logger.info(`Starting Verdaccio on port ${port}...`);
 
-      // Start Verdaccio server
       await this.#startVerdaccio(config);
 
       DR.logger.info(`Verdaccio started successfully on http://localhost:${port}`);
     } catch (error) {
       DR.logger.error(`Failed to start Verdaccio: ${String(error)}`);
       this.#verdaccioServer = null;
-
-      // Release mutex lock if we acquired it but failed to start
-      try {
-        await MutexService.releaseLock();
-      } catch (releaseError) {
-        DR.logger.error(
-          `Failed to release mutex lock after startup failure: ${String(releaseError)}`
-        );
-      }
-
       throw error;
     } finally {
       this.#isStarting = false;
@@ -103,40 +91,24 @@ export class VerdaccioService {
    * Stops the Verdaccio registry server.
    */
   static async stop(): Promise<void> {
-    if (!this.#verdaccioServer) {
+    const server = this.#verdaccioServer;
+    if (!server) {
       DR.logger.info('Verdaccio server is not running');
       return;
     }
 
     return new Promise((resolve, reject) => {
-      const server = this.#verdaccioServer;
-      if (server) {
-        server.close((error) => {
-          if (error) {
-            DR.logger.error(`Failed to stop Verdaccio server: ${String(error)}`);
-            reject(error);
-          } else {
-            DR.logger.info('Verdaccio server stopped successfully');
-            this.#verdaccioServer = null;
+      server.close((error) => {
+        if (error) {
+          DR.logger.error(`Failed to stop Verdaccio server: ${String(error)}`);
+          reject(error);
+          return;
+        }
 
-            // Release mutex lock after stopping Verdaccio
-            MutexService.releaseLock()
-              .then(() => {
-                DR.logger.info('Verdaccio mutex lock released successfully');
-                resolve();
-              })
-              .catch((releaseError: unknown) => {
-                DR.logger.error(
-                  `Failed to release mutex lock after stopping: ${String(releaseError)}`
-                );
-                // Don't reject here, as the server was stopped successfully
-                resolve();
-              });
-          }
-        });
-      } else {
+        DR.logger.info('Verdaccio server stopped successfully');
+        this.#verdaccioServer = null;
         resolve();
-      }
+      });
     });
   }
 
@@ -151,8 +123,7 @@ export class VerdaccioService {
     packagePath: string,
     additionalPublishArgs: string[] = []
   ): Promise<void> {
-    const config = await ConfigService.loadConfig();
-    const registryUrl = config.registryUrl || DEFAULT_CONFIG.registryUrl;
+    const registryUrl = await ConfigService.getLocalRegistryUrl();
 
     try {
       if (!VerdaccioService.#verdaccioServer) {
@@ -166,27 +137,17 @@ export class VerdaccioService {
         );
       }
 
-      // Clear any previously published package with the same name
-      await VerdaccioService.#clearPublishedPackagesLocally(packageJson.name);
-
       DR.logger.info(`Publishing package from ${packagePath} to ${registryUrl}...`);
 
-      // Build npm publish arguments with direct registry and auth config
-      const publishArgs = this.#buildPublishArgs(
+      const publishOutput = await PackageManagerCliService.runNpmPublish(
+        packagePath,
         packageJson.name,
-        registryUrl,
-        additionalPublishArgs
+        ['--tag', 'local', ...additionalPublishArgs]
       );
 
-      const npmInfo = PACKAGE_MANAGER_INFO[PackageManager.Npm];
-      const result = await execa(npmInfo.command, publishArgs, {
-        cwd: packagePath,
-        stdio: 'pipe'
-      });
-
       DR.logger.info('Package published successfully');
-      if (result.stdout) {
-        DR.logger.info(result.stdout);
+      if (publishOutput) {
+        DR.logger.info(publishOutput);
       }
     } catch (error) {
       let errorMessage = String(error);
@@ -208,16 +169,79 @@ export class VerdaccioService {
   }
 
   /**
-   * Unpublishes a package from the local Verdaccio registry.
-   * This removes the package from the local Verdaccio storage.
+   * Deletes every version of a package that a directory published, other than
+   * one version to keep, then drops the package itself once no tarball of it is
+   * left.
    *
-   * @param packageName - The name of the package to unpublish
+   * The directory is addressed by the slug its versions carry rather than by
+   * the versions the store names, so a version the store lost track of is
+   * deleted too.
+   *
+   * @param packageName - The name of the package to remove versions of
+   * @param packagePath - The publishing directory whose versions to remove
+   * @param versionToKeep - The one version of that directory to leave in place
    */
-  static async unpublishPackage(packageName: string): Promise<void> {
-    // Ensure the config is created
+  static async removeVersionsPublishedFrom(
+    packageName: string,
+    packagePath: string,
+    versionToKeep?: string
+  ): Promise<void> {
     await this.#loadVerdaccioConfig();
 
-    await this.#clearPublishedPackagesLocally(packageName);
+    const packageStorage = path.join(this.verdaccioConfig.storage, ...packageName.split('/'));
+    if (!(await fs.pathExists(packageStorage))) {
+      return;
+    }
+
+    const tarballBaseName = packageName.split('/').pop() ?? packageName;
+    const keptTarball = versionToKeep ? `${tarballBaseName}-${versionToKeep}.tgz` : undefined;
+    const publishedFromPath = new RegExp(
+      `${LocalPackageVersionService.getSuffixRegex(packagePath).source}\\.tgz$`
+    );
+
+    for (const fileName of await fs.readdir(packageStorage)) {
+      if (fileName === keptTarball || !publishedFromPath.test(fileName)) {
+        continue;
+      }
+
+      try {
+        await fs.remove(path.join(packageStorage, fileName));
+        DR.logger.info(`Removed ${fileName} from the local registry`);
+      } catch (error) {
+        DR.logger.warn(`Could not remove ${fileName} from the local registry: ${String(error)}`);
+      }
+    }
+
+    // A directory holding no tarball survives as a metadata document naming
+    // versions that have nothing behind them, and the database goes on listing
+    // the package as one the registry holds, so both go with the last tarball.
+    // A tarball another directory published keeps them
+    try {
+      if (!(await fs.readdir(packageStorage)).some((fileName) => fileName.endsWith('.tgz'))) {
+        await fs.remove(packageStorage);
+        await this.#removePackageFromVerdaccioDb(packageName);
+        DR.logger.info(
+          `Removed ${packageName} from the local registry, which holds no version of it`
+        );
+      }
+    } catch (error) {
+      DR.logger.warn(`Could not remove ${packageName} from the local registry: ${String(error)}`);
+    }
+  }
+
+  /**
+   * Deletes everything the registry holds, which is what a command discarding
+   * the whole store uses to collect the versions every other command left
+   * behind. Proxied packages are re-fetched, since the storage is their cache.
+   *
+   * The server does not have to be running, and should not be.
+   */
+  static async clearStorage(): Promise<void> {
+    await this.#loadVerdaccioConfig();
+
+    await fs.remove(this.verdaccioConfig.storage);
+
+    DR.logger.info('Cleared the local registry storage');
   }
 
   /**
@@ -262,60 +286,6 @@ export class VerdaccioService {
           );
         });
     });
-  }
-
-  /**
-   * Clears a specific published package from the local Verdaccio storage.
-   * This removes the package from the .verdaccio-db.json file and deletes
-   * the package folder from the verdaccio directory.
-   *
-   * @param packageName - The name of the package to clear from local storage
-   */
-  static async #clearPublishedPackagesLocally(packageName: string): Promise<void> {
-    try {
-      const dbFilePath = path.join(this.verdaccioConfig.storage, VERDACCIO_DB_FILE_NAME);
-
-      DR.logger.info(`Clearing package "${packageName}" locally...`);
-
-      // Check if the database file exists
-      if (await fs.pathExists(dbFilePath)) {
-        // Read the current database
-        const dbContent: unknown = await fs.readJson(dbFilePath);
-        if (!isVerdaccioDb(dbContent)) {
-          DR.logger.warn(`Verdaccio database at ${dbFilePath} is not in the expected format`);
-          return;
-        }
-
-        // Remove the specific package from the list
-        if (dbContent.list.includes(packageName)) {
-          dbContent.list = dbContent.list.filter((pkg) => pkg !== packageName);
-          DR.logger.info(`Removed "${packageName}" from verdaccio database`);
-
-          // Write the updated database back
-          await fs.writeJson(dbFilePath, dbContent);
-        } else {
-          DR.logger.info(`Package "${packageName}" not found in verdaccio database`);
-        }
-      }
-
-      // Remove the specific package directory from verdaccio storage
-      const packagePath = path.join(this.verdaccioConfig.storage, ...packageName.split('/'));
-      if (await fs.pathExists(packagePath)) {
-        const stat = await fs.stat(packagePath).catch(() => null);
-
-        if (stat?.isDirectory()) {
-          await fs.remove(packagePath);
-          DR.logger.info(`Removed package directory: ${packageName}`);
-        }
-      } else {
-        DR.logger.info(`Package directory "${packageName}" not found in verdaccio storage`);
-      }
-
-      DR.logger.info(`Successfully cleared package "${packageName}" locally`);
-    } catch (error) {
-      DR.logger.error(`Failed to clear package "${packageName}" locally: ${String(error)}`);
-      throw error;
-    }
   }
 
   static async #loadVerdaccioConfig(): Promise<void> {
@@ -382,6 +352,33 @@ export class VerdaccioService {
     };
 
     return verdaccioConfig;
+  }
+
+  /**
+   * Drops a package name from the registry database, which is the list
+   * Verdaccio reads to know which packages it holds itself rather than proxies.
+   *
+   * @param packageName - The name of the package to drop
+   */
+  static async #removePackageFromVerdaccioDb(packageName: string): Promise<void> {
+    const dbFilePath = path.join(this.verdaccioConfig.storage, VERDACCIO_DB_FILE_NAME);
+
+    if (!(await fs.pathExists(dbFilePath))) {
+      return;
+    }
+
+    const dbContent: unknown = await fs.readJson(dbFilePath);
+    if (!isVerdaccioDb(dbContent)) {
+      DR.logger.warn(`Verdaccio database at ${dbFilePath} is not in the expected format`);
+      return;
+    }
+
+    if (!dbContent.list.includes(packageName)) {
+      return;
+    }
+
+    dbContent.list = dbContent.list.filter((name) => name !== packageName);
+    await fs.writeJson(dbFilePath, dbContent);
   }
 
   /**
@@ -469,45 +466,5 @@ export class VerdaccioService {
     }
 
     return name;
-  }
-
-  /**
-   * Builds npm publish arguments with direct registry and auth token configuration.
-   *
-   * @param packageName - The name of the package being published
-   * @param registryUrl - The registry URL to publish to
-   * @param additionalArgs - Additional arguments to pass to the npm publish command
-   */
-  static #buildPublishArgs(
-    packageName: string,
-    registryUrl: string,
-    additionalArgs: string[] = []
-  ): string[] {
-    const args = ['publish'];
-
-    // Extract organization from package name using PackageJsonService
-    const org = PackageJsonService.extractOrganization(packageName);
-
-    if (org) {
-      // Scoped package: use --@org:registry format
-      args.push(`--@${org}:registry=${registryUrl}`);
-    } else {
-      // Non-scoped package: use --registry format
-      args.push(`--registry=${registryUrl}`);
-    }
-
-    // Add auth token for the registry
-    const registryHost = registryUrl.replace(/^https?:\/\//, '');
-    args.push(`--//${registryHost}/:_authToken=fake`);
-
-    // Add other standard arguments
-    args.push('--tag', 'local');
-
-    // Add any additional arguments passed from the CLI
-    if (additionalArgs.length > 0) {
-      args.push(...additionalArgs);
-    }
-
-    return args;
   }
 }

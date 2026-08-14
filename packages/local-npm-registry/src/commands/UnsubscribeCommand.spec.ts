@@ -1,5 +1,7 @@
 import { DR } from '@aneuhold/core-ts-lib';
 import { randomUUID } from 'crypto';
+import fs from 'fs-extra';
+import path from 'path';
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TestProjectUtils } from '../../test-utils/TestProjectUtils.js';
 import { LocalPackageStoreService } from '../services/LocalPackageStore.service.js';
@@ -38,7 +40,9 @@ describe('Integration Tests', () => {
   afterAll(async () => {
     await TestProjectUtils.cleanupGlobalTempDir();
     const testPackagePattern = /^@test-[a-fA-F0-9]{8}\//;
-    await LocalPackageStoreService.removePackagesByPattern(testPackagePattern);
+    await TestProjectUtils.mutateStore((store) =>
+      LocalPackageStoreService.removePackagesByPattern(store, testPackagePattern)
+    );
   });
 
   // Per-test setup/teardown for unique test instances
@@ -46,6 +50,7 @@ describe('Integration Tests', () => {
     vi.clearAllMocks();
     await TestProjectUtils.setupTestInstance();
     testId = randomUUID().slice(0, 8);
+    TestProjectUtils.stubInstallWithoutRegistry();
     // Ensure clean mutex state for each test
     try {
       await MutexService.forceReleaseLock();
@@ -55,6 +60,7 @@ describe('Integration Tests', () => {
   });
 
   afterEach(async () => {
+    vi.restoreAllMocks();
     await TestProjectUtils.cleanupTestInstance();
     // Clean up mutex lock after each test
     try {
@@ -79,6 +85,66 @@ describe('Integration Tests', () => {
 
   it('should unsubscribe from specific package with yarn4', async () => {
     await testUnsubscribeFromSpecificPackage(PackageManager.Yarn4, '1.3.0');
+  });
+
+  it('should keep a project installable when it stays subscribed to another package', async () => {
+    const droppedName = `@test-${testId}/dropped-lib`;
+    const keptName = `@test-${testId}/kept-lib`;
+
+    const droppedPath = await TestProjectUtils.createTestPackage(droppedName, '1.0.0');
+    const keptPath = await TestProjectUtils.createTestPackage(keptName, '1.0.0');
+    const subscriberPath = await TestProjectUtils.createTestPackage(
+      `@test-${testId}/two-package-subscriber`,
+      '1.0.0',
+      PackageManager.Npm,
+      { [droppedName]: '^1.0.0' }
+    );
+
+    // A plain 1.0.0 for the specifier the project is reset to, which outside a
+    // test comes from the public registry
+    await VerdaccioService.start();
+    await VerdaccioService.publishPackage(droppedPath);
+    await VerdaccioService.stop();
+
+    for (const publisherPath of [droppedPath, keptPath]) {
+      TestProjectUtils.changeToProject(publisherPath);
+      await PublishCommand.execute();
+    }
+
+    TestProjectUtils.changeToProject(subscriberPath);
+    await SubscribeCommand.execute(droppedName);
+    await TestProjectUtils.addDependencyToProject(subscriberPath, keptName, '^1.0.0');
+    await SubscribeCommand.execute(keptName);
+
+    const keptVersion = await TestProjectUtils.getCurrentVersion(keptName, keptPath);
+
+    await UnsubscribeCommand.execute(droppedName);
+
+    // The project is still pinned to a version only the local registry holds,
+    // so the install has to have gone through it, and resolving the specifier
+    // it was reset to at all is what says it did
+    expect(
+      (await TestProjectUtils.readInstalledPackageJson(subscriberPath, droppedName)).version
+    ).toBe('1.0.0');
+    expect(
+      (await TestProjectUtils.readInstalledPackageJson(subscriberPath, keptName)).version
+    ).toBe(keptVersion);
+  });
+
+  it('should reject when a subscriber cannot be reset', async () => {
+    const packageName = `@test-${testId}/failing-reset-lib`;
+    const { subscriberPath } = await TestProjectUtils.publishAndSubscribe(
+      packageName,
+      `@test-${testId}/failing-reset-subscriber`
+    );
+
+    // The project is still there and still pinned to a version the reset is
+    // what takes it off, so leaving it as it is has to be reported
+    await fs.remove(path.join(subscriberPath, 'package.json'));
+
+    TestProjectUtils.changeToProject(subscriberPath);
+
+    await expect(UnsubscribeCommand.execute(packageName)).rejects.toThrow(subscriberPath);
   });
 
   it('should handle unsubscribing from non-existent package', async () => {
@@ -129,23 +195,31 @@ describe('Integration Tests', () => {
     version: string
   ) => {
     // Create and setup publisher and subscriber
-    const { subscriberPath, packageName } = await setupPublisherAndSubscriber(
+    const packageName = `@test-${testId}/${packageManager}-unsubscribe-specific`;
+    const { publisherPath, subscriberPath } = await TestProjectUtils.publishAndSubscribe(
+      packageName,
+      `${packageName}-subscriber`,
       packageManager,
-      version,
-      'unsubscribe-specific'
+      version
     );
 
     // Verify subscription is active (package has timestamp version)
     let subscriberPackageJson = await TestProjectUtils.readPackageJson(subscriberPath);
-    const timestampPattern = new RegExp(`^${version.replace(/\./g, '\\.')}-\\d{17}$`);
-    expect(subscriberPackageJson.dependencies?.[packageName]).toMatch(timestampPattern);
+    expect(subscriberPackageJson.dependencies?.[packageName]).toMatch(
+      TestProjectUtils.getLocalVersionPattern(version, publisherPath)
+    );
 
     // Unsubscribe from the package
     TestProjectUtils.changeToProject(subscriberPath);
     await UnsubscribeCommand.execute(packageName);
 
     // Verify package entry no longer has this subscriber
-    const packageEntry = await TestProjectUtils.getPackageEntry(packageName);
+    const store = await LocalPackageStoreService.getStore();
+    const packageEntry = LocalPackageStoreService.getPackageEntry(
+      store,
+      packageName,
+      publisherPath
+    );
     expect(packageEntry?.subscribers.some((s) => s.subscriberPath === subscriberPath)).toBe(false);
 
     // Verify subscriber's package.json was reset to original version
@@ -154,49 +228,5 @@ describe('Integration Tests', () => {
 
     // Verify success message was logged
     expect(DR.logger.info).toHaveBeenCalledWith(`Successfully unsubscribed from ${packageName}`);
-  };
-
-  /**
-   * Helper function to setup a publisher and subscriber for testing
-   *
-   * @param packageManager The package manager to use
-   * @param version The version for the packages
-   * @param testSuffix Suffix to make package names unique
-   */
-  const setupPublisherAndSubscriber = async (
-    packageManager: PackageManager,
-    version: string,
-    testSuffix: string
-  ) => {
-    const packageName = `@test-${testId}/${packageManager}-${testSuffix}`;
-
-    // Create publisher package
-    const publisherPath = await TestProjectUtils.createTestPackage(
-      packageName,
-      version,
-      packageManager
-    );
-
-    // Create subscriber package
-    const subscriberPath = await TestProjectUtils.createSubscriberProject(
-      `@test-${testId}/${packageManager}-${testSuffix}-subscriber`,
-      packageName,
-      version,
-      packageManager
-    );
-
-    // Publish the package
-    TestProjectUtils.changeToProject(publisherPath);
-    await PublishCommand.execute();
-
-    // Subscribe to the package
-    TestProjectUtils.changeToProject(subscriberPath);
-    await SubscribeCommand.execute(packageName);
-
-    return {
-      publisherPath,
-      subscriberPath,
-      packageName
-    };
   };
 });

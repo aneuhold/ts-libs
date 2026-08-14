@@ -45,10 +45,14 @@ program
   .command('subscribe')
   .description('Subscribe to a package and install its latest timestamp version')
   .argument('<package-name>', 'The name of the package to subscribe to')
-  .action(async (packageName: string) => {
+  .option(
+    '--path <path>',
+    'The directory the package is published from, which is required when it is published from several'
+  )
+  .action(async (packageName: string, options: { path?: string }) => {
     try {
       DR.logger.setVerboseLogging(Boolean(program.getOptionValue('verbose')));
-      await CommandService.subscribe(packageName);
+      await CommandService.subscribe(packageName, options.path);
     } catch (error) {
       DR.logger.error(`Failed to subscribe: ${String(error)}`);
       process.exit(1);
@@ -62,11 +66,32 @@ program
     '[package-name]',
     'The name of the package to unpublish (defaults to current directory package)'
   )
-  .action(async (packageName?: string) => {
+  .option(
+    '--path <path>',
+    'The directory to unpublish, which is required when the package is published from several and the current directory is not one of them'
+  )
+  .option('--all-paths', 'Unpublish every directory the package is published from')
+  .action(
+    async (packageName: string | undefined, options: { path?: string; allPaths?: boolean }) => {
+      try {
+        await CommandService.unpublish(packageName, options.path, options.allPaths);
+      } catch (error) {
+        DR.logger.error(`Failed to unpublish: ${String(error)}`);
+        process.exit(1);
+      }
+    }
+  );
+
+program
+  .command('prune')
+  .description(
+    'Reconcile the local registry with what is on disk, dropping packages whose publishing directory no longer exists and resetting their subscribers'
+  )
+  .action(async () => {
     try {
-      await CommandService.unpublish(packageName);
+      await CommandService.prune();
     } catch (error) {
-      DR.logger.error(`Failed to unpublish: ${String(error)}`);
+      DR.logger.error(`Failed to prune: ${String(error)}`);
       process.exit(1);
     }
   });
@@ -112,25 +137,31 @@ program
         return;
       }
 
+      const currentPath = process.cwd();
+
       DR.logger.info('Local Registry Packages:');
-      for (const [packageName, entry] of Object.entries(store.packages)) {
-        if (!entry) {
-          DR.logger.warn(`Package ${packageName} has no entry in the store`);
-          continue;
-        }
+      for (const [packageName, pathEntries] of Object.entries(store.packages)) {
         DR.logger.info(`${packageName}:`);
-        DR.logger.info(`  Original Version: ${entry.originalVersion}`);
-        DR.logger.info(`  Current Version: ${entry.currentVersion}`);
-        if (entry.publishArgs && entry.publishArgs.length > 0) {
-          DR.logger.info(`  Publish Args: ${entry.publishArgs.join(' ')}`);
-        }
-        DR.logger.info(`  Subscribers (${entry.subscribers.length}):`);
-        if (entry.subscribers.length === 0) {
-          DR.logger.info('    (none)');
-        } else {
-          entry.subscribers.forEach((sub) => {
-            DR.logger.info(`    - ${sub.subscriberPath}`);
-          });
+        for (const [packagePath, entry] of Object.entries(pathEntries ?? {})) {
+          if (!entry) {
+            DR.logger.warn(`  ${packagePath} has no entry in the store`);
+            continue;
+          }
+          const currentMarker = packagePath === currentPath ? ' (current directory)' : '';
+          DR.logger.info(`  ${packagePath}${currentMarker}`);
+          DR.logger.info(`    Original Version: ${entry.originalVersion}`);
+          DR.logger.info(`    Current Version: ${entry.currentVersion}`);
+          if (entry.publishArgs && entry.publishArgs.length > 0) {
+            DR.logger.info(`    Publish Args: ${entry.publishArgs.join(' ')}`);
+          }
+          DR.logger.info(`    Subscribers (${entry.subscribers.length}):`);
+          if (entry.subscribers.length === 0) {
+            DR.logger.info('      (none)');
+          } else {
+            entry.subscribers.forEach((sub) => {
+              DR.logger.info(`      - ${sub.subscriberPath}`);
+            });
+          }
         }
       }
     } catch (error) {

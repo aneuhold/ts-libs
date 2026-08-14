@@ -1,7 +1,8 @@
 import { DR } from '@aneuhold/core-ts-lib';
 import { LocalPackageStoreService } from '../services/LocalPackageStore.service.js';
-import { PackageJsonService } from '../services/PackageJson.service.js';
-import { PackageManagerService } from '../services/PackageManagerService/PackageManager.service.js';
+import { LocalPackageSubscriberService } from '../services/LocalPackageSubscriber.service.js';
+import { MutexService } from '../services/Mutex.service.js';
+import type { LocalPackageStore, PackageSubscription } from '../types/LocalPackageStore.js';
 
 /**
  * Implements the 'local-npm unsubscribe [<package-name>]' command.
@@ -15,131 +16,55 @@ export class UnsubscribeCommand {
   static async execute(packageName?: string): Promise<void> {
     const currentProjectPath = process.cwd();
 
-    if (packageName) {
-      // Unsubscribe from specific package
-      await this.#unsubscribeFromSpecificPackage(packageName, currentProjectPath);
-    } else {
-      // Unsubscribe from all packages
-      await this.#unsubscribeFromAllPackages(currentProjectPath);
-    }
+    await MutexService.withLock(async () => {
+      const store = await LocalPackageStoreService.getStore();
+      const subscriptions = packageName
+        ? [this.#getSubscriptionToPackage(store, currentProjectPath, packageName)]
+        : LocalPackageStoreService.getSubscriptionsForSubscriber(store, currentProjectPath);
+
+      if (subscriptions.length === 0) {
+        DR.logger.info('No packages to unsubscribe from');
+        return;
+      }
+
+      DR.logger.info(`Unsubscribing from ${subscriptions.length} package(s)`);
+
+      await LocalPackageSubscriberService.resetPackageSubscriptions(store, subscriptions);
+
+      DR.logger.info(
+        packageName
+          ? `Successfully unsubscribed from ${packageName}`
+          : 'Successfully unsubscribed from all packages'
+      );
+    });
   }
 
   /**
-   * Unsubscribes from a specific package.
+   * The project's subscription to a single package, which has to exist for
+   * there to be anything to undo.
    *
-   * @param packageName - Name of the package to unsubscribe from
-   * @param currentProjectPath - Path to the current project
+   * @param store - The store to read the subscription from
+   * @param subscriberPath - Path of the project holding the subscription
+   * @param packageName - Name of the package being unsubscribed from
    */
-  static async #unsubscribeFromSpecificPackage(
-    packageName: string,
-    currentProjectPath: string
-  ): Promise<void> {
-    const entry = await LocalPackageStoreService.getPackageEntry(packageName);
-    if (!entry) {
+  static #getSubscriptionToPackage(
+    store: LocalPackageStore,
+    subscriberPath: string,
+    packageName: string
+  ): PackageSubscription {
+    const subscription = LocalPackageStoreService.getSubscriptionsForSubscriber(
+      store,
+      subscriberPath
+    ).find((candidate) => candidate.packageName === packageName);
+
+    if (subscription) {
+      return subscription;
+    }
+
+    const pathEntries = LocalPackageStoreService.getPackagePathEntries(store, packageName);
+    if (Object.keys(pathEntries).length === 0) {
       throw new Error(`Package '${packageName}' not found in local registry`);
     }
-
-    const subscriber = entry.subscribers.find((sub) => sub.subscriberPath === currentProjectPath);
-    if (!subscriber) {
-      throw new Error(`Subscriber data not found for ${packageName}`);
-    }
-
-    // Remove current project from subscribers list
-    await LocalPackageStoreService.removeSubscriber(packageName, currentProjectPath);
-
-    // Reset to original version
-    await PackageJsonService.updatePackageVersion(
-      currentProjectPath,
-      packageName,
-      subscriber.originalSpecifier
-    );
-
-    try {
-      await PackageManagerService.runInstall(currentProjectPath);
-    } catch (error) {
-      DR.logger.warn(
-        `Install failed after unsubscribing from ${packageName}: ${String(error)}. The package.json has been reset successfully.`
-      );
-    }
-
-    DR.logger.info(`Successfully unsubscribed from ${packageName}`);
-  }
-
-  /**
-   * Unsubscribes from all packages.
-   *
-   * @param currentProjectPath - Path to the current project
-   */
-  static async #unsubscribeFromAllPackages(currentProjectPath: string): Promise<void> {
-    const subscribedPackages =
-      await LocalPackageStoreService.getSubscribedPackages(currentProjectPath);
-
-    if (subscribedPackages.length === 0) {
-      DR.logger.info('No packages to unsubscribe from');
-      return;
-    }
-
-    DR.logger.info(`Unsubscribing from ${subscribedPackages.length} package(s)`);
-
-    // Perform unsubscribe operations in parallel
-    const unsubscribePromises = subscribedPackages.map(async (pkgName) => {
-      try {
-        const entry = await LocalPackageStoreService.getPackageEntry(pkgName);
-        if (entry) {
-          // Find the subscriber to get their original specifier
-          const subscriber = entry.subscribers.find(
-            (sub) => sub.subscriberPath === currentProjectPath
-          );
-          if (!subscriber) {
-            return {
-              packageName: pkgName,
-              success: false,
-              error: 'Subscriber data not found'
-            };
-          }
-
-          // Remove current project from subscribers list
-          await LocalPackageStoreService.removeSubscriber(pkgName, currentProjectPath);
-
-          // Reset to original version using subscriber's original specifier
-          await PackageJsonService.updatePackageVersion(
-            currentProjectPath,
-            pkgName,
-            subscriber.originalSpecifier
-          );
-
-          return { packageName: pkgName, success: true };
-        }
-        return {
-          packageName: pkgName,
-          success: false,
-          error: 'Entry not found'
-        };
-      } catch (error) {
-        DR.logger.error(`Failed to unsubscribe from ${pkgName}: ${String(error)}`);
-        return { packageName: pkgName, success: false, error };
-      }
-    });
-
-    // Wait for all unsubscribe operations to complete
-    const results = await Promise.allSettled(unsubscribePromises);
-    const successCount = results.filter(
-      (result) => result.status === 'fulfilled' && result.value.success
-    ).length;
-
-    DR.logger.info(
-      `Parallel unsubscribe completed: ${successCount}/${subscribedPackages.length} successful`
-    );
-
-    // Run install once after all updates
-    try {
-      await PackageManagerService.runInstall(currentProjectPath);
-    } catch (error) {
-      DR.logger.warn(
-        `Install failed after unsubscribing from all packages: ${String(error)}. The package.json files have been reset successfully.`
-      );
-    }
-
-    DR.logger.info(`Successfully unsubscribed from all packages`);
+    throw new Error(`Subscriber data not found for ${packageName}`);
   }
 }

@@ -3,12 +3,16 @@ import { randomUUID } from 'crypto';
 import fs from 'fs-extra';
 import path from 'path';
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { ConcurrentTestProjectUtils } from '../../test-utils/ConcurrentTestProjectUtils.js';
 import { TestProjectUtils } from '../../test-utils/TestProjectUtils.js';
 import { LocalPackageStoreService } from '../services/LocalPackageStore.service.js';
+import { LocalPackageVersionService } from '../services/LocalPackageVersion.service.js';
 import { MutexService } from '../services/Mutex.service.js';
+import { PackageManagerService } from '../services/PackageManagerService/PackageManager.service.js';
 import { VerdaccioService } from '../services/Verdaccio.service.js';
 import { PackageManager } from '../types/PackageManager.js';
 import { PublishCommand } from './PublishCommand.js';
+import { SubscribeCommand } from './SubscribeCommand.js';
 
 vi.mock('@aneuhold/core-ts-lib', async () => {
   const actual = await vi.importActual('@aneuhold/core-ts-lib');
@@ -38,7 +42,9 @@ describe('Integration Tests', () => {
   afterAll(async () => {
     await TestProjectUtils.cleanupGlobalTempDir();
     const testPackagePattern = /^@test-[a-fA-F0-9]{8}\//;
-    await LocalPackageStoreService.removePackagesByPattern(testPackagePattern);
+    await TestProjectUtils.mutateStore((store) =>
+      LocalPackageStoreService.removePackagesByPattern(store, testPackagePattern)
+    );
   });
 
   // Per-test setup/teardown for unique test instances
@@ -55,6 +61,7 @@ describe('Integration Tests', () => {
   });
 
   afterEach(async () => {
+    vi.restoreAllMocks();
     await TestProjectUtils.cleanupTestInstance();
     // Clean up mutex lock after each test
     try {
@@ -78,13 +85,19 @@ describe('Integration Tests', () => {
     // Run publish command
     await PublishCommand.execute();
 
-    // Verify the package entry was created in the local store
-    const packageEntry = await TestProjectUtils.getPackageEntry(`@test-${testId}/my-package`);
+    // Verify the package entry was created in the local store under its path
+    const store = await LocalPackageStoreService.getStore();
+    const packageEntry = LocalPackageStoreService.getPackageEntry(
+      store,
+      `@test-${testId}/my-package`,
+      packagePath
+    );
     expect(packageEntry).toBeTruthy();
     expect(packageEntry?.originalVersion).toBe('1.0.0');
-    expect(packageEntry?.currentVersion).toMatch(/^1\.0\.0-\d{17}$/);
+    expect(packageEntry?.currentVersion).toMatch(
+      TestProjectUtils.getLocalVersionPattern('1.0.0', packagePath)
+    );
     expect(packageEntry?.subscribers).toEqual([]);
-    expect(packageEntry?.packageRootPath).toBe(packagePath);
 
     // Verify the package.json was restored to original version
     const finalPackageJson = await TestProjectUtils.readPackageJson(packagePath);
@@ -93,7 +106,9 @@ describe('Integration Tests', () => {
     // Verify success was logged
     expect(DR.logger.info).toHaveBeenCalledWith(
       expect.stringMatching(
-        new RegExp(`Successfully published @test-${testId}/my-package@1\\.0\\.0-\\d{17}`)
+        new RegExp(
+          `Successfully published @test-${testId}/my-package@1\\.0\\.0${LocalPackageVersionService.getSuffixRegex(packagePath).source}`
+        )
       )
     );
   });
@@ -161,30 +176,67 @@ describe('Integration Tests', () => {
     TestProjectUtils.changeToProject(subscriberPath);
     // Note: We would need to import SubscribeCommand here for a complete test
     // For now, we manually add the subscriber to test republishing functionality
-    await LocalPackageStoreService.updatePackageEntry(`@test-${testId}/republish-test`, {
-      originalVersion: '1.0.0',
-      currentVersion: '1.0.0-000000000000000001', // Mock timestamp version
-      subscribers: [{ subscriberPath, originalSpecifier: '1.0.0' }],
-      packageRootPath: publisherPath
+    await TestProjectUtils.mutateStore((store) => {
+      LocalPackageStoreService.updatePackageEntry(
+        store,
+        `@test-${testId}/republish-test`,
+        publisherPath,
+        {
+          originalVersion: '1.0.0',
+          currentVersion: '1.0.0-000000000000000001', // Mock timestamp version
+          subscribers: [{ subscriberPath, originalSpecifier: '1.0.0' }]
+        }
+      );
     });
 
     TestProjectUtils.changeToProject(publisherPath);
     await PublishCommand.execute();
 
     // Verify subscriber was added
-    let packageEntry = await TestProjectUtils.getPackageEntry(`@test-${testId}/republish-test`);
+    let store = await LocalPackageStoreService.getStore();
+    let packageEntry = LocalPackageStoreService.getPackageEntry(
+      store,
+      `@test-${testId}/republish-test`,
+      publisherPath
+    );
     expect(packageEntry?.subscribers.some((s) => s.subscriberPath === subscriberPath)).toBe(true);
 
     // Publish again
     await PublishCommand.execute();
 
     // Verify subscriber is still there
-    packageEntry = await TestProjectUtils.getPackageEntry(`@test-${testId}/republish-test`);
+    store = await LocalPackageStoreService.getStore();
+    packageEntry = LocalPackageStoreService.getPackageEntry(
+      store,
+      `@test-${testId}/republish-test`,
+      publisherPath
+    );
     expect(packageEntry?.subscribers.some((s) => s.subscriberPath === subscriberPath)).toBe(true);
     expect(packageEntry?.subscribers).toHaveLength(1);
   });
 
-  it('should handle subscriber update failures gracefully', async () => {
+  it('should record the version a killed publish left in package.json without its suffix', async () => {
+    const packageName = `@test-${testId}/leftover-version`;
+    const packagePath = await TestProjectUtils.createTestPackage(
+      packageName,
+      '1.0.0-pdeadbeef.20250726123456789'
+    );
+
+    TestProjectUtils.changeToProject(packagePath);
+    await PublishCommand.execute();
+
+    // Nothing else names the version this directory publishes under once the
+    // store has no entry for it, so the suffix would otherwise be baked in
+    const packageEntry = LocalPackageStoreService.getPackageEntry(
+      await LocalPackageStoreService.getStore(),
+      packageName,
+      packagePath
+    );
+    expect(packageEntry?.originalVersion).toBe('1.0.0');
+    expect((await TestProjectUtils.readPackageJson(packagePath)).version).toBe('1.0.0');
+  });
+
+  it('should throw when a subscriber cannot be updated', async () => {
     // Create publisher package
     const publisherPath = await TestProjectUtils.createTestPackage(
       `@test-${testId}/error-test`,
@@ -197,27 +249,174 @@ describe('Integration Tests', () => {
     // Don't create a package.json - this will cause read errors
 
     // Manually add the bad subscriber to the package entry
-    await LocalPackageStoreService.updatePackageEntry(`@test-${testId}/error-test`, {
-      originalVersion: '1.0.0',
-      currentVersion: '1.0.0',
-      subscribers: [{ subscriberPath: badSubscriberPath, originalSpecifier: '1.0.0' }],
-      packageRootPath: publisherPath
+    await TestProjectUtils.mutateStore((store) => {
+      LocalPackageStoreService.updatePackageEntry(
+        store,
+        `@test-${testId}/error-test`,
+        publisherPath,
+        {
+          originalVersion: '1.0.0',
+          currentVersion: '1.0.0',
+          subscribers: [{ subscriberPath: badSubscriberPath, originalSpecifier: '1.0.0' }]
+        }
+      );
     });
 
     TestProjectUtils.changeToProject(publisherPath);
-    await PublishCommand.execute();
 
-    // Verify error was logged but publish continued
-    expect(DR.logger.error).toHaveBeenCalledWith(
-      expect.stringContaining(`Failed to update subscriber ${badSubscriberPath}`)
+    // The package reached the registry, but the subscriber never got it, so the
+    // failure has to surface rather than be counted and logged
+    await expect(PublishCommand.execute()).rejects.toThrow(badSubscriberPath);
+  });
+
+  it('should collect versions the store never named and leave the other directory alone', async () => {
+    const packageName = `@test-${testId}/orphan-retention`;
+    const { firstPublisherPath, secondPublisherPath } =
+      await TestProjectUtils.publishFromTwoDirectories(packageName);
+
+    const packageStorage = TestProjectUtils.getRegistryPackageStorage(packageName);
+    const firstPublisherSlug = LocalPackageVersionService.getPathSlug(firstPublisherPath);
+
+    const secondPublisherVersion = await TestProjectUtils.getCurrentVersion(
+      packageName,
+      secondPublisherPath
     );
 
-    // Verify main publish still completed
-    expect(DR.logger.info).toHaveBeenCalledWith(
-      expect.stringMatching(
-        new RegExp(`Successfully published @test-${testId}/error-test@1\\.0\\.0-\\d{17}`)
+    // A publish killed before it writes the store leaves a version nothing names
+    const orphanTarball = path.join(
+      packageStorage,
+      TestProjectUtils.getRegistryTarballName(
+        packageName,
+        `1.0.0-${firstPublisherSlug}.00000000000000000`
       )
     );
+    await fs.writeFile(orphanTarball, '');
+
+    TestProjectUtils.changeToProject(firstPublisherPath);
+    await PublishCommand.execute();
+
+    // The directory that published keeps exactly the version it just published
+    const tarballs = await fs.readdir(packageStorage);
+    expect(
+      tarballs.filter((fileName) => fileName.includes(`-${firstPublisherSlug}.`))
+    ).toHaveLength(1);
+    expect(await fs.pathExists(orphanTarball)).toBe(false);
+    expect(tarballs).toContain(
+      TestProjectUtils.getRegistryTarballName(packageName, secondPublisherVersion)
+    );
+  });
+
+  it('should keep two publishing directories of one package resolvable at the same time', async () => {
+    const packageName = `@test-${testId}/two-publishers`;
+    const { firstPublisherPath, secondPublisherPath } =
+      await TestProjectUtils.publishFromTwoDirectories(packageName);
+    const subscriberAPath = await TestProjectUtils.createSubscriberProject(
+      `@test-${testId}/subscriber-a`,
+      packageName,
+      '^1.0.0'
+    );
+    const subscriberBPath = await TestProjectUtils.createSubscriberProject(
+      `@test-${testId}/subscriber-b`,
+      packageName,
+      '^1.0.0'
+    );
+
+    // Each subscriber states the directory it wants
+    TestProjectUtils.changeToProject(subscriberAPath);
+    await SubscribeCommand.execute(packageName, firstPublisherPath);
+    TestProjectUtils.changeToProject(subscriberBPath);
+    await SubscribeCommand.execute(packageName, secondPublisherPath);
+
+    const secondPublisherVersion = await TestProjectUtils.getCurrentVersion(
+      packageName,
+      secondPublisherPath
+    );
+
+    // Publishing from one directory has to leave the other directory's subscriber
+    // on the build it subscribed to
+    TestProjectUtils.changeToProject(firstPublisherPath);
+    await PublishCommand.execute();
+
+    const store = await LocalPackageStoreService.getStore();
+    const firstPublisherVersion = await TestProjectUtils.getCurrentVersion(
+      packageName,
+      firstPublisherPath
+    );
+    expect(firstPublisherVersion).not.toBe(secondPublisherVersion);
+
+    const subscriberAPackageJson = await TestProjectUtils.readPackageJson(subscriberAPath);
+    const subscriberBPackageJson = await TestProjectUtils.readPackageJson(subscriberBPath);
+    expect(subscriberAPackageJson.dependencies?.[packageName]).toBe(firstPublisherVersion);
+    expect(subscriberBPackageJson.dependencies?.[packageName]).toBe(secondPublisherVersion);
+
+    // Each subscriber resolves the build of the directory it is bound to
+    const installedForSubscriberA = await TestProjectUtils.readInstalledPackageJson(
+      subscriberAPath,
+      packageName
+    );
+    const installedForSubscriberB = await TestProjectUtils.readInstalledPackageJson(
+      subscriberBPath,
+      packageName
+    );
+    expect(installedForSubscriberA.version).toBe(firstPublisherVersion);
+    expect(installedForSubscriberB.version).toBe(secondPublisherVersion);
+
+    // Retention runs on every publish, so what the first directory removed has
+    // to be its own version and nothing else: the second directory's subscriber
+    // installs again from scratch and still gets what it is pinned to
+    await fs.remove(path.join(subscriberBPath, 'node_modules'));
+
+    await VerdaccioService.start();
+    try {
+      await PackageManagerService.runInstallWithRegistry(subscriberBPath, store);
+    } finally {
+      await VerdaccioService.stop();
+    }
+
+    expect(
+      (await TestProjectUtils.readInstalledPackageJson(subscriberBPath, packageName)).version
+    ).toBe(secondPublisherVersion);
+  });
+
+  it('should drop a subscriber whose directory is gone and keep one whose update failed', async () => {
+    const packageName = `@test-${testId}/subscriber-retention`;
+    const publisherPath = await TestProjectUtils.createTestPackage(packageName, '1.0.0');
+
+    // A directory that was never there, against one that is there but cannot
+    // be updated because it holds no package.json
+    const removedSubscriberPath = path.join(
+      TestProjectUtils.getTestInstanceDir(),
+      'removed-subscriber'
+    );
+    const failingSubscriberPath = path.join(
+      TestProjectUtils.getTestInstanceDir(),
+      'failing-subscriber'
+    );
+    await fs.ensureDir(failingSubscriberPath);
+
+    await TestProjectUtils.mutateStore((store) => {
+      LocalPackageStoreService.updatePackageEntry(store, packageName, publisherPath, {
+        originalVersion: '1.0.0',
+        currentVersion: '1.0.0',
+        subscribers: [
+          { subscriberPath: removedSubscriberPath, originalSpecifier: '1.0.0' },
+          { subscriberPath: failingSubscriberPath, originalSpecifier: '1.0.0' }
+        ]
+      });
+    });
+
+    TestProjectUtils.changeToProject(publisherPath);
+    await expect(PublishCommand.execute()).rejects.toThrow(failingSubscriberPath);
+
+    const store = await LocalPackageStoreService.getStore();
+    const packageEntry = LocalPackageStoreService.getPackageEntry(
+      store,
+      packageName,
+      publisherPath
+    );
+    expect(packageEntry?.subscribers.map((subscriber) => subscriber.subscriberPath)).toEqual([
+      failingSubscriberPath
+    ]);
   });
 
   it('should publish locally even with existing .npmrc org-specific registry setting', async () => {
@@ -240,14 +439,18 @@ describe('Integration Tests', () => {
     await PublishCommand.execute();
 
     // Verify the package entry was created in the local store
-    const packageEntry = await TestProjectUtils.getPackageEntry(
-      `@test-${testId}/npmrc-override-test`
+    const store = await LocalPackageStoreService.getStore();
+    const packageEntry = LocalPackageStoreService.getPackageEntry(
+      store,
+      `@test-${testId}/npmrc-override-test`,
+      packagePath
     );
     expect(packageEntry).toBeTruthy();
     expect(packageEntry?.originalVersion).toBe('1.0.0');
-    expect(packageEntry?.currentVersion).toMatch(/^1\.0\.0-\d{17}$/);
+    expect(packageEntry?.currentVersion).toMatch(
+      TestProjectUtils.getLocalVersionPattern('1.0.0', packagePath)
+    );
     expect(packageEntry?.subscribers).toEqual([]);
-    expect(packageEntry?.packageRootPath).toBe(packagePath);
 
     // Verify the .npmrc file is still there and unchanged
     const finalNpmrcContent = await fs.readFile(npmrcPath, 'utf8');
@@ -260,15 +463,241 @@ describe('Integration Tests', () => {
     // Verify success was logged
     expect(DR.logger.info).toHaveBeenCalledWith(
       expect.stringMatching(
-        new RegExp(`Successfully published @test-${testId}/npmrc-override-test@1\\.0\\.0-\\d{17}`)
+        new RegExp(
+          `Successfully published @test-${testId}/npmrc-override-test@1\\.0\\.0${LocalPackageVersionService.getSuffixRegex(packagePath).source}`
+        )
       )
     );
 
     // Verify the publish was done to local registry, not npm
     // We can check this by verifying that the command used the correct registry arguments
     expect(DR.logger.info).toHaveBeenCalledWith(expect.stringContaining('Publishing package from'));
-    expect(DR.logger.info).toHaveBeenCalledWith(expect.stringContaining('http://localhost:4873'));
+    expect(DR.logger.info).toHaveBeenCalledWith(
+      expect.stringContaining(await TestProjectUtils.getRegistryUrl())
+    );
   });
+
+  it('should re-publish a dependent so its consumer resolves one copy of the package', async () => {
+    const libName = `@test-${testId}/chain-lib`;
+    const midLibName = `@test-${testId}/chain-mid-lib`;
+
+    const libPath = await TestProjectUtils.createTestPackage(libName, '1.0.0');
+    const midLibPath = await TestProjectUtils.createTestPackage(
+      midLibName,
+      '1.0.0',
+      PackageManager.Npm,
+      { [libName]: '^1.0.0' }
+    );
+    const consumerPath = await TestProjectUtils.createTestPackage(
+      `@test-${testId}/chain-consumer`,
+      '1.0.0',
+      PackageManager.Npm,
+      { [midLibName]: '^1.0.0' }
+    );
+
+    for (const publisherPath of [libPath, midLibPath]) {
+      TestProjectUtils.changeToProject(publisherPath);
+      await PublishCommand.execute();
+    }
+
+    // The consumer subscribes to what it declares, which is the package in
+    // between and not the library underneath it
+    TestProjectUtils.changeToProject(consumerPath);
+    await SubscribeCommand.execute(midLibName);
+
+    const midLibVersionBeforeCascade = await TestProjectUtils.getCurrentVersion(
+      midLibName,
+      midLibPath
+    );
+
+    TestProjectUtils.changeToProject(libPath);
+    await PublishCommand.execute();
+
+    const libVersion = await TestProjectUtils.getCurrentVersion(libName, libPath);
+    const midLibVersion = await TestProjectUtils.getCurrentVersion(midLibName, midLibPath);
+
+    // The package in between carries the library in its tarball, so it is
+    // published again rather than only installed again
+    expect(midLibVersion).not.toBe(midLibVersionBeforeCascade);
+    expect((await TestProjectUtils.readPackageJson(consumerPath)).dependencies?.[midLibName]).toBe(
+      midLibVersion
+    );
+    expect((await TestProjectUtils.readInstalledPackageJson(consumerPath, libName)).version).toBe(
+      libVersion
+    );
+    await expectSingleInstalledCopy(consumerPath, midLibName, libName);
+
+    // What the sweep took is what nothing is pinned to any more, so the
+    // consumer installs from scratch against the registry as it stands
+    await fs.remove(path.join(consumerPath, 'node_modules'));
+    await VerdaccioService.start();
+    try {
+      await PackageManagerService.runInstallWithRegistry(
+        consumerPath,
+        await LocalPackageStoreService.getStore()
+      );
+    } finally {
+      await VerdaccioService.stop();
+    }
+
+    expect((await TestProjectUtils.readInstalledPackageJson(consumerPath, libName)).version).toBe(
+      libVersion
+    );
+  });
+
+  it('should keep the published version of a package an unpinned range would have missed', async () => {
+    const { libName, libPath, midLibName, consumerPath } = await publishChainToSubscribedConsumer();
+
+    // The range the package in between commits is what a real registry answers
+    // with the real package, which is the second copy the pin exists to prevent
+    await VerdaccioService.start();
+    await VerdaccioService.publishPackage(libPath);
+    await VerdaccioService.stop();
+
+    TestProjectUtils.changeToProject(libPath);
+    await PublishCommand.execute();
+
+    const libVersion = await TestProjectUtils.getCurrentVersion(libName, libPath);
+
+    expect((await TestProjectUtils.readInstalledPackageJson(consumerPath, libName)).version).toBe(
+      libVersion
+    );
+    await expectSingleInstalledCopy(consumerPath, midLibName, libName);
+  });
+
+  it('should install once in a consumer subscribed to two packages of one cascade', async () => {
+    const { libPath, consumerPath } = await publishChainToSubscribedConsumer();
+
+    const runInstallWithRegistry = vi.spyOn(PackageManagerService, 'runInstallWithRegistry');
+
+    TestProjectUtils.changeToProject(libPath);
+    await PublishCommand.execute();
+
+    const installsInConsumer = runInstallWithRegistry.mock.calls.filter(
+      ([projectPath]) => projectPath === consumerPath
+    );
+    expect(installsInConsumer).toHaveLength(1);
+  });
+
+  it('should leave a shared subscriber correct when two packages publish at once', async () => {
+    const firstLibName = `@test-${testId}/concurrent-first-lib`;
+    const secondLibName = `@test-${testId}/concurrent-second-lib`;
+
+    const firstLibPath = await TestProjectUtils.createTestPackage(firstLibName, '1.0.0');
+    const secondLibPath = await TestProjectUtils.createTestPackage(secondLibName, '1.0.0');
+    const consumerPath = await TestProjectUtils.createTestPackage(
+      `@test-${testId}/concurrent-consumer`,
+      '1.0.0',
+      PackageManager.Npm,
+      { [firstLibName]: '^1.0.0' }
+    );
+
+    for (const publisherPath of [firstLibPath, secondLibPath]) {
+      TestProjectUtils.changeToProject(publisherPath);
+      await PublishCommand.execute();
+    }
+
+    TestProjectUtils.changeToProject(consumerPath);
+    await SubscribeCommand.execute(firstLibName);
+    await TestProjectUtils.addDependencyToProject(consumerPath, secondLibName, '^1.0.0');
+    await SubscribeCommand.execute(secondLibName);
+
+    const supersededVersions = [
+      await TestProjectUtils.getCurrentVersion(firstLibName, firstLibPath),
+      await TestProjectUtils.getCurrentVersion(secondLibName, secondLibPath)
+    ];
+
+    await ConcurrentTestProjectUtils.runConcurrently('publishPackage.ts', 2, [
+      firstLibPath,
+      secondLibPath
+    ]);
+
+    const firstLibVersion = await TestProjectUtils.getCurrentVersion(firstLibName, firstLibPath);
+    const secondLibVersion = await TestProjectUtils.getCurrentVersion(secondLibName, secondLibPath);
+    const consumerPackageJson = await TestProjectUtils.readPackageJson(consumerPath);
+
+    expect(consumerPackageJson.dependencies?.[firstLibName]).toBe(firstLibVersion);
+    expect(consumerPackageJson.dependencies?.[secondLibName]).toBe(secondLibVersion);
+
+    // Whichever publish installed last has to have carried both, since a lock
+    // file naming a version the other publish swept can never be installed again
+    const lockFile = await fs.readFile(
+      TestProjectUtils.getLockFilePath(consumerPath, PackageManager.Npm),
+      'utf8'
+    );
+    expect(lockFile).toContain(firstLibVersion);
+    expect(lockFile).toContain(secondLibVersion);
+    for (const supersededVersion of supersededVersions) {
+      expect(lockFile).not.toContain(supersededVersion);
+    }
+  });
+
+  /**
+   * Creates a library, a package that depends on it, and a consumer subscribed
+   * to both of them, with every one of them published.
+   */
+  const publishChainToSubscribedConsumer = async (): Promise<{
+    libName: string;
+    libPath: string;
+    midLibName: string;
+    midLibPath: string;
+    consumerPath: string;
+  }> => {
+    const libName = `@test-${testId}/diamond-lib`;
+    const midLibName = `@test-${testId}/diamond-mid-lib`;
+
+    const libPath = await TestProjectUtils.createTestPackage(libName, '1.0.0');
+    const midLibPath = await TestProjectUtils.createTestPackage(
+      midLibName,
+      '1.0.0',
+      PackageManager.Npm,
+      { [libName]: '^1.0.0' }
+    );
+    const consumerPath = await TestProjectUtils.createTestPackage(
+      `@test-${testId}/diamond-consumer`,
+      '1.0.0',
+      PackageManager.Npm,
+      { [libName]: '^1.0.0' }
+    );
+
+    for (const publisherPath of [libPath, midLibPath]) {
+      TestProjectUtils.changeToProject(publisherPath);
+      await PublishCommand.execute();
+    }
+
+    // The second dependency can only be declared once the first one resolves,
+    // since a range never matches the prerelease a local publish produces
+    TestProjectUtils.changeToProject(consumerPath);
+    await SubscribeCommand.execute(libName);
+    await TestProjectUtils.addDependencyToProject(consumerPath, midLibName, '^1.0.0');
+    await SubscribeCommand.execute(midLibName);
+
+    return { libName, libPath, midLibName, midLibPath, consumerPath };
+  };
+
+  /**
+   * Asserts that a project resolves one copy of a package rather than one of
+   * its own and another underneath the dependency that carries it.
+   *
+   * @param projectPath - Path to the project directory
+   * @param dependentName - Name of the installed package that also depends on it
+   * @param packageName - Name of the package there can only be one copy of
+   */
+  const expectSingleInstalledCopy = async (
+    projectPath: string,
+    dependentName: string,
+    packageName: string
+  ): Promise<void> => {
+    const nestedCopy = path.join(
+      projectPath,
+      'node_modules',
+      ...dependentName.split('/'),
+      'node_modules',
+      ...packageName.split('/')
+    );
+
+    expect(await fs.pathExists(nestedCopy)).toBe(false);
+  };
 
   /**
    * Helper function to test publish with subscribers functionality for different package managers
@@ -317,12 +746,15 @@ describe('Integration Tests', () => {
     await PublishCommand.execute();
 
     // Verify package entry exists
-    const packageEntry = await TestProjectUtils.getPackageEntry(
-      `@test-${testId}/${packageManager}-publisher`
+    const store = await LocalPackageStoreService.getStore();
+    const packageEntry = LocalPackageStoreService.getPackageEntry(
+      store,
+      `@test-${testId}/${packageManager}-publisher`,
+      publisherPath
     );
     expect(packageEntry?.originalVersion).toBe(version);
     expect(packageEntry?.currentVersion).toMatch(
-      new RegExp(`^${version.replace(/\./g, '\\.')}-\\d{17}$`)
+      TestProjectUtils.getLocalVersionPattern(version, publisherPath)
     );
   };
 });

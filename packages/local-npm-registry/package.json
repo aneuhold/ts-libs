@@ -2,7 +2,7 @@
   "name": "@aneuhold/local-npm-registry",
   "author": "Anton G. Neuhold Jr.",
   "license": "MIT",
-  "version": "0.2.34",
+  "version": "1.0.0",
   "description": "Manages local npm package installations and updates across your machine.",
   "packageManager": "pnpm@10.25.0",
   "type": "module",
@@ -10,7 +10,7 @@
     "refresh": "pnpm build && npm uninstall -g @aneuhold/local-npm-registry && npm install -g .",
     "reset:global": "npm uninstall -g @aneuhold/local-npm-registry && npm install -g @aneuhold/local-npm-registry",
     "build": "rimraf lib && pnpm build:withoutClean",
-    "build:withoutClean": "tsc -p tsconfig.build.json && tsx scripts/copyTsFiles.ts && pnpm propagateVersion",
+    "build:withoutClean": "tsc -p tsconfig.build.json && tsx scripts/copyTsFiles.ts",
     "propagateVersion": "tsx ../../scripts/propagateVersion.ts",
     "watch": "nodemon --ignore lib/ -e ts --exec \"pnpm build:withoutClean\"",
     "lint": "eslint",
@@ -54,7 +54,7 @@
     "registry"
   ],
   "dependencies": {
-    "@aneuhold/core-ts-lib": "^2.4.6",
+    "@aneuhold/core-ts-lib": "^2.4.7",
     "commander": "^14.0.2",
     "execa": "^9.6.1",
     "fs-extra": "^11.3.2",
