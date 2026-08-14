@@ -9,10 +9,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### 🏗️ Changed
 
-- Set `packageManager` to `pnpm@11.21.0`.
-- Updated ESLint to `^10.8.0`, Vitest to `^4.1.10`, Prettier to `^3.9.6`, `tsx` to `^4.23.9`, `jsr` to `^0.14.3`, `rimraf` to `^6.1.3`, and `nodemon` to `^3.1.14`.
-- Moved `@types/node` to the Node 24 line at `^24.13.3`.
-- TypeScript stays on `~6.0.3`, since `typescript-eslint` rejects any TypeScript 7 release.
+- No direct code changes; version bump for compatibility.
 
 ## 🔖 [2.4.7] (2026-08-13)
 

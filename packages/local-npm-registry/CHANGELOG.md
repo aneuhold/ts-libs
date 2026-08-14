@@ -10,16 +10,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### 🏗️ Changed
 
 - Updated `commander` to `^15.0.0`, `execa` to `^10.0.1`, `js-yaml` to `^5.2.3`, `fs-extra` to `^11.4.0`, and `verdaccio` to `^6.9.2`.
-- Import `load` from `js-yaml` as a named export, which is the only form `js-yaml` 5 provides.
 - Updated `@aneuhold/core-ts-lib` to `^2.4.8`.
-- Set `packageManager` to `pnpm@11.21.0`.
-- Updated ESLint to `^10.8.0`, Vitest to `^4.1.10`, Prettier to `^3.9.6`, `tsx` to `^4.23.9`, `jsr` to `^0.14.3`, and `rimraf` to `^6.1.3`.
-- Moved `@types/node` to the Node 24 line at `^24.13.3`.
-- `@verdaccio/types` stays on `^10.8.0`, the last line that ships compiled declarations rather than raw TypeScript source.
-
-### 🔥 Removed
-
-- `@types/js-yaml`, since `js-yaml` 5 ships its own type declarations.
 
 ## 🔖 [1.0.0] (2026-08-13)
 

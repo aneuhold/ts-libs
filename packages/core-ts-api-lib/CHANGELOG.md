@@ -11,9 +11,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - Updated `bson` to `^7.3.1`.
 - Updated `@aneuhold/core-ts-db-lib` to `^5.0.12` and `@aneuhold/core-ts-lib` to `^2.4.8`.
-- Set `packageManager` to `pnpm@11.21.0`.
-- Updated ESLint to `^10.8.0`, Vitest to `^4.1.10`, Prettier to `^3.9.6`, `tsx` to `^4.23.9`, `jsr` to `^0.14.3`, and `rimraf` to `^6.1.3`.
-- Moved `@types/node` to the Node 24 line at `^24.13.3`.
 
 ## 🔖 [3.0.42] (2026-08-13)
 
