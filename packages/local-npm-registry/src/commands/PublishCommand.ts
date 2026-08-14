@@ -45,20 +45,22 @@ export class PublishCommand {
       // Start Verdaccio server
       await VerdaccioService.start();
 
-      // Publish the package, along with every locally published package that
-      // depends on it, and update the subscribers of all of them
-      await LocalPackagePublisherService.publishWithDependentsAndUpdateSubscribers(
-        store,
-        { packageName, packagePath },
-        originalVersion,
-        { additionalPublishArgs: additionalArgs }
-      );
+      try {
+        // Publish the package, along with every locally published package that
+        // depends on it, and update the subscribers of all of them
+        await LocalPackagePublisherService.publishWithDependentsAndUpdateSubscribers(
+          store,
+          { packageName, packagePath },
+          originalVersion,
+          { additionalPublishArgs: additionalArgs }
+        );
 
-      if ((existingEntry?.subscribers ?? []).length === 0) {
-        DR.logger.info('No subscribers to update');
+        if ((existingEntry?.subscribers ?? []).length === 0) {
+          DR.logger.info('No subscribers to update');
+        }
+      } finally {
+        await VerdaccioService.stop();
       }
-
-      await VerdaccioService.stop();
     });
   }
 }

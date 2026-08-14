@@ -90,9 +90,9 @@ export class SubscribeCommand {
       // Start Verdaccio server
       await VerdaccioService.start();
 
-      // Publish package and update subscribers
-      const publishedVersion =
-        await LocalPackagePublisherService.publishWithDependentsAndUpdateSubscribers(
+      try {
+        // Publish package and update subscribers
+        return await LocalPackagePublisherService.publishWithDependentsAndUpdateSubscribers(
           store,
           { packageName, packagePath: resolvedPackagePath },
           entry.originalVersion,
@@ -105,10 +105,9 @@ export class SubscribeCommand {
             additionalPublishArgs: entry.publishArgs ?? []
           }
         );
-
-      await VerdaccioService.stop();
-
-      return publishedVersion;
+      } finally {
+        await VerdaccioService.stop();
+      }
     });
 
     DR.logger.info(`Successfully subscribed to ${packageName}@${freshVersion}`);
