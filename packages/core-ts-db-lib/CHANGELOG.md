@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## 🔖 [5.0.12] (2026-08-14)
+
+### 🏗️ Changed
+
+- Updated `uuid` to `^14.0.1` and `zod` to `^4.4.3`.
+- Updated `@aneuhold/core-ts-lib` to `^2.4.8`.
+- Set `packageManager` to `pnpm@11.21.0`.
+- Updated ESLint to `^10.8.0`, Vitest to `^4.1.10`, Prettier to `^3.9.6`, `tsx` to `^4.23.9`, `jsr` to `^0.14.3`, and `rimraf` to `^6.1.3`.
+- Moved `@types/node` to the Node 24 line at `^24.13.3`.
+
 ## 🔖 [5.0.11] (2026-08-13)
 
 ### 🏗️ Changed
@@ -487,6 +497,7 @@ Updated dependency: now requires `@aneuhold/core-ts-lib@^2.3.11`.
 - Updated workflow permissions to allow repository write access
 
 <!-- Link References -->
+[5.0.12]: https://github.com/aneuhold/ts-libs/compare/core-ts-db-lib-v5.0.11...core-ts-db-lib-v5.0.12
 [5.0.11]: https://github.com/aneuhold/ts-libs/compare/core-ts-db-lib-v5.0.10...core-ts-db-lib-v5.0.11
 [5.0.10]: https://github.com/aneuhold/ts-libs/compare/core-ts-db-lib-v5.0.9...core-ts-db-lib-v5.0.10
 [5.0.9]: https://github.com/aneuhold/ts-libs/compare/core-ts-db-lib-v5.0.8...core-ts-db-lib-v5.0.9

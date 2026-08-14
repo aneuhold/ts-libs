@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## 🔖 [2.4.8] (2026-08-14)
+
+### 🏗️ Changed
+
+- Set `packageManager` to `pnpm@11.21.0`.
+- Updated ESLint to `^10.8.0`, Vitest to `^4.1.10`, Prettier to `^3.9.6`, `tsx` to `^4.23.9`, `jsr` to `^0.14.3`, `rimraf` to `^6.1.3`, and `nodemon` to `^3.1.14`.
+- Moved `@types/node` to the Node 24 line at `^24.13.3`.
+- TypeScript stays on `~6.0.3`, since `typescript-eslint` rejects any TypeScript 7 release.
+
 ## 🔖 [2.4.7] (2026-08-13)
 
 ### 🏗️ Changed
@@ -257,6 +266,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Updated workflow permissions to allow repository write access
 
 <!-- Link References -->
+[2.4.8]: https://github.com/aneuhold/ts-libs/compare/core-ts-lib-v2.4.7...core-ts-lib-v2.4.8
 [2.4.7]: https://github.com/aneuhold/ts-libs/compare/core-ts-lib-v2.4.6...core-ts-lib-v2.4.7
 [2.4.6]: https://github.com/aneuhold/ts-libs/compare/core-ts-lib-v2.4.5...core-ts-lib-v2.4.6
 [2.4.5]: https://github.com/aneuhold/ts-libs/compare/core-ts-lib-v2.4.4...core-ts-lib-v2.4.5

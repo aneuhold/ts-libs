@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## 🔖 [4.2.34] (2026-08-14)
+
+### 🏗️ Changed
+
+- Updated `google-auth-library` to `^11.0.0`, `mongodb` to `^7.5.0`, `uuid` to `^14.0.1`, `bson` to `^7.3.1`, and `zod` to `^4.4.3`.
+- Updated `@aneuhold/be-ts-lib` to `^3.1.20`, `@aneuhold/core-ts-db-lib` to `^5.0.12`, and `@aneuhold/core-ts-lib` to `^2.4.8`.
+- Set `packageManager` to `pnpm@11.21.0`.
+- Updated ESLint to `^10.8.0`, Vitest and `@vitest/coverage-v8` to `^4.1.10`, Prettier to `^3.9.6`, `tsx` to `^4.23.9`, `dotenv` to `^17.4.2`, `jsr` to `^0.14.3`, and `rimraf` to `^6.1.3`.
+- Moved `@types/node` to the Node 24 line at `^24.13.3`.
+
 ## 🔖 [4.2.33] (2026-08-13)
 
 ### 🏗️ Changed
@@ -457,6 +467,7 @@ Updated dependencies: now requires `@aneuhold/core-ts-db-lib@^3.0.0`, `@aneuhold
 - Updated workflow permissions to allow repository write access
 
 <!-- Link References -->
+[4.2.34]: https://github.com/aneuhold/ts-libs/compare/be-ts-db-lib-v4.2.33...be-ts-db-lib-v4.2.34
 [4.2.33]: https://github.com/aneuhold/ts-libs/compare/be-ts-db-lib-v4.2.32...be-ts-db-lib-v4.2.33
 [4.2.32]: https://github.com/aneuhold/ts-libs/compare/be-ts-db-lib-v4.2.31...be-ts-db-lib-v4.2.32
 [4.2.31]: https://github.com/aneuhold/ts-libs/compare/be-ts-db-lib-v4.2.30...be-ts-db-lib-v4.2.31

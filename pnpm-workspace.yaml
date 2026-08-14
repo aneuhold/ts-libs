@@ -8,3 +8,17 @@ linkWorkspacePackages: true
 # Makes it so that workspace packages are preferred instead of the ones from
 # the npm registry, even if the registry has a newer version.
 preferWorkspacePackages: true
+# Only install versions that have been on the registry for at least 7 days, so
+# that a compromised or broken release has time to be pulled before it lands
+# here. Measured in minutes.
+minimumReleaseAge: 10080
+# The packages in this monorepo are consumed by each other right after they are
+# published, so they cannot wait out the release age above.
+minimumReleaseAgeExclude:
+  - '@aneuhold/*'
+# Neither of these needs its install script to run. `esbuild` resolves its
+# platform binary through its optional dependencies, and `better-sqlite3` is
+# only reached through an optional `verdaccio` search plugin.
+allowBuilds:
+  better-sqlite3: false
+  esbuild: false

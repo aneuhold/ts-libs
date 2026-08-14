@@ -1,7 +1,7 @@
 import { DR } from '@aneuhold/core-ts-lib';
 import { execa } from 'execa';
 import fs from 'fs-extra';
-import yaml from 'js-yaml';
+import { load as loadYaml } from 'js-yaml';
 import path from 'path';
 import type { LocalPackageStore } from '../../types/LocalPackageStore.js';
 import {
@@ -179,7 +179,7 @@ export class PackageManagerCliService {
 
     let npmScopes: unknown;
     try {
-      const parsedConfig: unknown = yaml.load(await fs.readFile(configPath, 'utf8'));
+      const parsedConfig: unknown = loadYaml(await fs.readFile(configPath, 'utf8'));
       if (typeof parsedConfig !== 'object' || parsedConfig === null) {
         return;
       }
