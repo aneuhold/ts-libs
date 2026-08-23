@@ -11,6 +11,9 @@ importers:
       '@aneuhold/eslint-config':
         specifier: ^3.0.2
         version: 3.0.2(@angular/cli@21.0.3(@types/node@24.13.3)(supports-color@5.5.0))(@types/eslint@9.6.1)(eslint@10.8.0(jiti@2.4.2)(supports-color@5.5.0))(prettier@3.9.6)(supports-color@5.5.0)(svelte@5.28.2)(typescript@6.0.3)
+      '@aneuhold/robot-instructions':
+        specifier: ^0.1.2
+        version: 0.1.2
       '@types/node':
         specifier: ^24.13.3
         version: 24.13.3
@@ -418,6 +421,9 @@ packages:
   '@aneuhold/main-scripts@2.10.3':
     resolution: {integrity: sha512-sNqoJtbK2fOxzzUfouxFSVFpPN/Wz0abp54saNaEJ1/ntvWBD/htJFRepNhjS6j9y2LmBb3TCk2RUp9ipYrkKw==}
     hasBin: true
+
+  '@aneuhold/robot-instructions@0.1.2':
+    resolution: {integrity: sha512-eUA5qaSJTPKY9PRKSmYQLL4U2uGb1bLs+VjF5irXGpchyg4R8Ku5LBs401xh/F3bhmEFt9jnCVkqVNpUAojJmA==}
 
   '@angular-devkit/architect@0.2100.3':
     resolution: {integrity: sha512-PcruWF0+IxXOTZd9MN/3y4A5aTfblALzT/+zWym26PtisaBgWQ3tRPQsf/CgT8EdmZl8eUOAWlNBSkbUj/S/lQ==}
@@ -5565,6 +5571,8 @@ snapshots:
     transitivePeerDependencies:
       - '@types/node'
       - typescript
+
+  '@aneuhold/robot-instructions@0.1.2': {}
 
   '@angular-devkit/architect@0.2100.3':
     dependencies:
