@@ -1,1 +1,1 @@
-Follow the instructions in CLAUDE.md
+Follow the instructions in .claude/CLAUDE.md

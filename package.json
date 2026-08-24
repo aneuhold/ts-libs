@@ -17,6 +17,7 @@
   },
   "devDependencies": {
     "@aneuhold/eslint-config": "^3.0.2",
+    "@aneuhold/robot-instructions": "^0.1.2",
     "@types/node": "^24.13.3",
     "concurrently": "^10.0.4",
     "eslint": "^10.8.0",

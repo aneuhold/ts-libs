@@ -42,19 +42,19 @@ Follow this general flow when making updates to any package in the monorepo:
    git commit -m "Your commit message"
    ```
 
-1. **Push your branch** and create a pull request (it helps to do this first for Copilot):
+1. **Push your branch** and create a pull request:
 
    ```bash
    git push
    ```
 
-1. **Generate changelogs** using the Copilot Agent named "Changelog Updater" just tell it:
+1. **Generate changelogs** with the `changelog` skill:
 
    ```
-   start
+   /changelog
    ```
 
-   This will automatically populate the changelog entries for all modified packages. You can do this in a normal chat window or as a background agent.
+   This populates the changelog entries for all modified packages.
 
 1. **Merge the PR** once all checks pass. Updated packages will automatically publish to NPM and JSR registries.
 
