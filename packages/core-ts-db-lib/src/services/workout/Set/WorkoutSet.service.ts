@@ -114,87 +114,39 @@ export default class WorkoutSetService {
   }
 
   /**
-   * Finds all sets from the previous microcycle's session exercise to use for autoregulation.
+   * Finds the sets an exercise was last programmed for, to use for autoregulation.
    * Returns all sets in order so surplus can be averaged across the full exercise performance.
    *
-   * Uses the mesocycle's fixed exercise-to-session mapping to go directly to the
-   * correct session and exercise position rather than iterating all sessions.
+   * Walks backward from the microcycle before `microcycleIndex` and returns the first
+   * non-recovery entry for the exercise, so an exercise missing from the immediately preceding
+   * microcycle progresses from the most recent microcycle that has it rather than resetting.
+   * Recovery entries are skipped so a deliberate volume reduction does not ratchet progression down.
    *
-   * Returns an empty array if the previous microcycle doesn't exist or has no sessions
-   * (the context may not have full history). Throws if the structure is present but
-   * inconsistent with the mesocycle plan.
+   * Returns an empty array when the exercise has no non-recovery history earlier in the mesocycle,
+   * which puts the caller on the calibration path.
    *
-   * @throws {Error} If the session/exercise structure doesn't match the plan.
+   * @throws {Error} If a set referenced by the session exercise is missing from the context.
    */
   static #findPreviousSets(
     context: WorkoutMesocyclePlanContext,
     exerciseId: UUID,
     microcycleIndex: number
   ): WorkoutSet[] {
-    if (microcycleIndex <= 0) {
-      return [];
+    for (let index = microcycleIndex - 1; index >= 0; index--) {
+      const sessionExercise =
+        context.microcyclesInOrder[index]?.exerciseToSessionExercise.get(exerciseId);
+      if (!sessionExercise || sessionExercise.isRecoveryExercise) continue;
+
+      return sessionExercise.setOrder.map((setId) => {
+        const set = context.setMap.get(setId);
+        if (!set) {
+          throw new Error(`Set ${setId} not found in context`);
+        }
+        return set;
+      });
     }
 
-    const previousMicrocycle = context.microcyclesInOrder[microcycleIndex - 1];
-    if (!previousMicrocycle || previousMicrocycle.sessionOrder.length === 0) {
-      return [];
-    }
-
-    // Exercise-to-session mapping is fixed for the mesocycle — look up directly
-    const sessionIndex = context.exerciseIdToSessionIndex?.get(exerciseId);
-    if (sessionIndex == null) {
-      throw new Error(`Exercise ${exerciseId} has no session mapping in the mesocycle plan`);
-    }
-
-    const sessionId = previousMicrocycle.sessionOrder[sessionIndex];
-    if (!sessionId) {
-      // The previous microcycle may have fewer sessions than the plan (e.g. pruned
-      // during early deload). Treat as missing history rather than a structural error.
-      return [];
-    }
-
-    const session = context.sessionMap.get(sessionId);
-    if (!session) {
-      throw new Error(`Session ${sessionId} not found in context`);
-    }
-
-    // Exercise order within a session is consistent — find the index from the plan
-    const plannedCTOs = context.plannedSessionExerciseCTOs?.[sessionIndex];
-    if (!plannedCTOs) {
-      throw new Error(`No planned CTOs for session index ${sessionIndex}`);
-    }
-
-    const exerciseIndex = plannedCTOs.findIndex((cto) => cto._id === exerciseId);
-    if (exerciseIndex === -1) {
-      throw new Error(
-        `Exercise ${exerciseId} not found in planned CTOs for session ${sessionIndex}`
-      );
-    }
-
-    const seId = session.sessionExerciseOrder[exerciseIndex];
-    if (!seId) {
-      throw new Error(`No session exercise at index ${exerciseIndex} in session ${sessionId}`);
-    }
-
-    const sessionExercise = context.sessionExerciseMap.get(seId);
-    if (!sessionExercise) {
-      throw new Error(`Session exercise ${seId} not found in context`);
-    }
-
-    if (sessionExercise.setOrder.length === 0) {
-      throw new Error(`Session exercise ${seId} for exercise ${exerciseId} has no sets`);
-    }
-
-    // Return all sets in order
-    const sets: WorkoutSet[] = [];
-    for (const setId of sessionExercise.setOrder) {
-      const set = context.setMap.get(setId);
-      if (!set) {
-        throw new Error(`Set ${setId} not found in context`);
-      }
-      sets.push(set);
-    }
-    return sets;
+    return [];
   }
 
   /**

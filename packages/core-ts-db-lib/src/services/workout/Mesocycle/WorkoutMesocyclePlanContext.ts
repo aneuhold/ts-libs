@@ -54,12 +54,20 @@ export default class WorkoutMesocyclePlanContext {
 
   public readonly microcyclesToCreate: WorkoutMicrocycle[] = [];
   /**
-   * All microcycles for this mesocycle in chronological order.
+   * All microcycles for this mesocycle in chronological order, each with the exercises it holds.
    *
    * This includes any existing microcycles (filtered to the target mesocycle) and
    * all newly generated microcycles.
+   *
+   * `exerciseToSessionExercise` maps exercise ID to the session exercise that exercise was given
+   * in the microcycle. It holds nothing for an exercise the microcycle skips, stays empty until
+   * the microcycle's sessions exist, and includes recovery entries since consumers differ on how
+   * they treat them.
    */
-  public readonly microcyclesInOrder: WorkoutMicrocycle[] = [];
+  public readonly microcyclesInOrder: {
+    microcycle: WorkoutMicrocycle;
+    exerciseToSessionExercise: Map<UUID, WorkoutSessionExercise>;
+  }[] = [];
   public readonly sessionsToCreate: WorkoutSession[] = [];
   public readonly sessionExercisesToCreate: WorkoutSessionExercise[] = [];
   public readonly setsToCreate: WorkoutSet[] = [];
@@ -135,7 +143,12 @@ export default class WorkoutMesocyclePlanContext {
     const existingMicrocyclesForMesocycle = existingMicrocycles
       .filter((m) => m.workoutMesocycleId === mesocycle._id)
       .sort((a, b) => a.startDate.getTime() - b.startDate.getTime());
-    this.microcyclesInOrder.push(...existingMicrocyclesForMesocycle);
+    for (const microcycle of existingMicrocyclesForMesocycle) {
+      this.microcyclesInOrder.push({
+        microcycle,
+        exerciseToSessionExercise: this.#mapExercisesToSessionExercises(microcycle)
+      });
+    }
   }
 
   /**
@@ -143,7 +156,20 @@ export default class WorkoutMesocyclePlanContext {
    */
   public addMicrocycle(toCreate: WorkoutMicrocycle): void {
     this.microcyclesToCreate.push(toCreate);
-    this.microcyclesInOrder.push(toCreate);
+    this.microcyclesInOrder.push({ microcycle: toCreate, exerciseToSessionExercise: new Map() });
+  }
+
+  /**
+   * Fills in the exercises a microcycle ended up holding.
+   *
+   * Call this once every session of the microcycle has been generated, since until then the
+   * microcycle holds nothing to record.
+   */
+  public recordMicrocycleExercises(microcycleIndex: number): void {
+    const orderedMicrocycle = this.microcyclesInOrder[microcycleIndex];
+    orderedMicrocycle.exerciseToSessionExercise = this.#mapExercisesToSessionExercises(
+      orderedMicrocycle.microcycle
+    );
   }
 
   /**
@@ -179,6 +205,32 @@ export default class WorkoutMesocyclePlanContext {
   public setPlannedSessionExerciseCTOs(plannedSessionExerciseCTOs: WorkoutExerciseCTO[][]): void {
     this.plannedSessionExerciseCTOs = plannedSessionExerciseCTOs;
     this.#buildSessionCTOMaps(plannedSessionExerciseCTOs);
+  }
+
+  /**
+   * Builds a microcycle's exercise ID -> session exercise lookup.
+   *
+   * A microcycle's `sessionOrder` is what it holds, so a session no longer listed there is left
+   * out. An exercise appearing in more than one session keeps its earliest occurrence.
+   */
+  #mapExercisesToSessionExercises(
+    microcycle: WorkoutMicrocycle
+  ): Map<UUID, WorkoutSessionExercise> {
+    const exerciseToSessionExercise = new Map<UUID, WorkoutSessionExercise>();
+
+    for (const sessionId of microcycle.sessionOrder) {
+      const session = this.sessionMap.get(sessionId);
+      if (!session) continue;
+
+      for (const sessionExerciseId of session.sessionExerciseOrder) {
+        const sessionExercise = this.sessionExerciseMap.get(sessionExerciseId);
+        if (!sessionExercise) continue;
+        if (exerciseToSessionExercise.has(sessionExercise.workoutExerciseId)) continue;
+        exerciseToSessionExercise.set(sessionExercise.workoutExerciseId, sessionExercise);
+      }
+    }
+
+    return exerciseToSessionExercise;
   }
 
   /**

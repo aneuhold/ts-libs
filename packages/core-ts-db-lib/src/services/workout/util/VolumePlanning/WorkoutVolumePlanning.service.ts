@@ -417,47 +417,37 @@ export default class WorkoutVolumePlanningService {
     exerciseIdToPrevSessionExercise: Map<UUID, WorkoutSessionExercise>;
     exercisesThatWerePreviouslyInRecovery: Set<UUID>;
   } | null {
-    let previousMicrocycleIndex = microcycleIndex - 1;
-    let previousMicrocycle = context.microcyclesInOrder[previousMicrocycleIndex];
-    if (!previousMicrocycle) return null;
-
     const exerciseIdToPrevSessionExercise = new Map<UUID, WorkoutSessionExercise>();
-    const foundExerciseIds = new Set<UUID>();
     const exercisesThatWerePreviouslyInRecovery = new Set<UUID>();
 
-    // Loop through each previous microcycle until we find all exercises or run out of microcycles
-    while (exerciseIdToPrevSessionExercise.size < exerciseIds.size && previousMicrocycle) {
-      // Check if the previous microcycle is complete; if not, we cannot use its data
-      const lastSessionId =
-        previousMicrocycle.sessionOrder[previousMicrocycle.sessionOrder.length - 1];
-      const microcycleIsComplete = context.sessionMap.get(lastSessionId)?.complete;
-      if (!microcycleIsComplete) {
+    // Walk backward until every exercise is found or the history runs out
+    for (
+      let previousMicrocycleIndex = microcycleIndex - 1;
+      previousMicrocycleIndex >= 0 && exerciseIdToPrevSessionExercise.size < exerciseIds.size;
+      previousMicrocycleIndex--
+    ) {
+      const previousMicrocycle = context.microcyclesInOrder[previousMicrocycleIndex];
+      if (!previousMicrocycle) break;
+      const { microcycle, exerciseToSessionExercise } = previousMicrocycle;
+
+      // Set counts need logged data, so an incomplete microcycle stops the walk
+      const lastSessionId = microcycle.sessionOrder[microcycle.sessionOrder.length - 1];
+      if (!context.sessionMap.get(lastSessionId)?.complete) {
         break;
       }
 
-      // Scan all session exercises in this microcycle for matching non-recovery exercises
-      for (const sessionId of previousMicrocycle.sessionOrder) {
-        const session = context.sessionMap.get(sessionId);
-        if (!session) continue;
-        for (const sessionExerciseId of session.sessionExerciseOrder) {
-          const sessionExercise = context.sessionExerciseMap.get(sessionExerciseId);
-          if (
-            sessionExercise &&
-            exerciseIds.has(sessionExercise.workoutExerciseId) &&
-            !foundExerciseIds.has(sessionExercise.workoutExerciseId) &&
-            !sessionExercise.isRecoveryExercise
-          ) {
-            exerciseIdToPrevSessionExercise.set(sessionExercise.workoutExerciseId, sessionExercise);
-            foundExerciseIds.add(sessionExercise.workoutExerciseId);
-            // If we had to go back more than one microcycle, the exercise was in recovery
-            if (previousMicrocycleIndex < microcycleIndex - 1) {
-              exercisesThatWerePreviouslyInRecovery.add(sessionExercise.workoutExerciseId);
-            }
-          }
+      for (const exerciseId of exerciseIds) {
+        if (exerciseIdToPrevSessionExercise.has(exerciseId)) continue;
+
+        const sessionExercise = exerciseToSessionExercise.get(exerciseId);
+        if (!sessionExercise || sessionExercise.isRecoveryExercise) continue;
+
+        exerciseIdToPrevSessionExercise.set(exerciseId, sessionExercise);
+        // Found further back than one microcycle, so the exercise was in recovery
+        if (previousMicrocycleIndex < microcycleIndex - 1) {
+          exercisesThatWerePreviouslyInRecovery.add(exerciseId);
         }
       }
-      previousMicrocycleIndex = previousMicrocycleIndex - 1;
-      previousMicrocycle = context.microcyclesInOrder[previousMicrocycleIndex];
     }
 
     if (exerciseIdToPrevSessionExercise.size === 0) return null;

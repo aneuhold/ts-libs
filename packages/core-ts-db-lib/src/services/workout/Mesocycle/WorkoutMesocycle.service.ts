@@ -149,7 +149,7 @@ export default class WorkoutMesocycleService {
     } else {
       // Continue from where the last existing microcycle ended
       const lastExistingMicrocycle = context.microcyclesInOrder[startMicrocycleIndex - 1];
-      currentDate = lastExistingMicrocycle.endDate;
+      currentDate = lastExistingMicrocycle.microcycle.endDate;
     }
 
     const { firstMicrocycleRir } = context;
@@ -391,7 +391,7 @@ export default class WorkoutMesocycleService {
 
     // Find current microcycle index
     const currentMicrocycleIndex = context.microcyclesInOrder.findIndex(
-      (mc) => mc._id === currentMicrocycleId
+      ({ microcycle }) => microcycle._id === currentMicrocycleId
     );
 
     // Guard: don't trigger before enough microcycles have been completed
@@ -411,7 +411,7 @@ export default class WorkoutMesocycleService {
       startIndex,
       currentMicrocycleIndex + 1
     );
-    const recentMicrocycleIds = new Set(recentMicrocycles.map((mc) => mc._id));
+    const recentMicrocycleIds = new Set(recentMicrocycles.map(({ microcycle }) => microcycle._id));
 
     const recentSessionExercises = [...context.sessionExerciseMap.values()].filter((se) => {
       const session = context.sessionMap.get(se.workoutSessionId);
