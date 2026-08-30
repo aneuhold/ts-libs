@@ -1,5 +1,5 @@
 ---
-name: create-pr
+name: pr-create-ts-libs
 description: Creates a PR and asks the user any needed questions before running the process.
 ---
 
