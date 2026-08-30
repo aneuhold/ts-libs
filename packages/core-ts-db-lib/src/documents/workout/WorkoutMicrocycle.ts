@@ -34,11 +34,13 @@ export const WorkoutMicrocycleSchema = z.object({
    */
   endDate: z.date(),
   /**
-   * The order of sessions in this microcycle, represented as an array of
-   * WorkoutSession IDs.
+   * The sessions that exist in this microcycle, in the order they are
+   * performed, represented as an array of WorkoutSession IDs.
    *
-   * This makes it easier to reason about the order of sessions before dates
-   * are assigned.
+   * This holds the sessions that actually exist, not a layout of the days a
+   * mesocycle planned. A position in this array therefore means nothing beyond ordering, and the
+   * count can differ from the mesocycle's planned session count. This also makes it easier to
+   * reason about the order of sessions before dates are assigned.
    */
   sessionOrder: z.array(UUIDSchema).default([]),
   /**

@@ -45,10 +45,10 @@ importers:
   packages/be-ts-db-lib:
     dependencies:
       '@aneuhold/be-ts-lib':
-        specifier: ^3.1.20
+        specifier: ^3.1.21
         version: link:../be-ts-lib
       '@aneuhold/core-ts-db-lib':
-        specifier: ^5.0.12
+        specifier: ^5.0.13
         version: link:../core-ts-db-lib
       '@aneuhold/core-ts-lib':
         specifier: ^2.4.8
@@ -115,7 +115,7 @@ importers:
   packages/be-ts-lib:
     dependencies:
       '@aneuhold/core-ts-api-lib':
-        specifier: ^3.0.43
+        specifier: ^3.0.44
         version: link:../core-ts-api-lib
       '@aneuhold/core-ts-lib':
         specifier: ^2.4.8
@@ -173,7 +173,7 @@ importers:
   packages/core-ts-api-lib:
     dependencies:
       '@aneuhold/core-ts-db-lib':
-        specifier: ^5.0.12
+        specifier: ^5.0.13
         version: link:../core-ts-db-lib
       '@aneuhold/core-ts-lib':
         specifier: ^2.4.8

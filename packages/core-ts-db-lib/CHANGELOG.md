@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## 🔖 [5.0.13] (2026-08-30)
+
+### 🩹 Fixed
+
+- Fixed workout mesocycle planning resolving a previous microcycle's sets by session position, which could read the wrong exercise's history when a microcycle's session count or order didn't match the mesocycle plan (e.g. after a deleted or reordered session). Previous sets are now resolved by exercise ID, walking backward across microcycles and skipping recovery entries.
+
 ## 🔖 [5.0.12] (2026-08-14)
 
 ### 🏗️ Changed
@@ -494,6 +500,7 @@ Updated dependency: now requires `@aneuhold/core-ts-lib@^2.3.11`.
 - Updated workflow permissions to allow repository write access
 
 <!-- Link References -->
+[5.0.13]: https://github.com/aneuhold/ts-libs/compare/core-ts-db-lib-v5.0.12...core-ts-db-lib-v5.0.13
 [5.0.12]: https://github.com/aneuhold/ts-libs/compare/core-ts-db-lib-v5.0.11...core-ts-db-lib-v5.0.12
 [5.0.11]: https://github.com/aneuhold/ts-libs/compare/core-ts-db-lib-v5.0.10...core-ts-db-lib-v5.0.11
 [5.0.10]: https://github.com/aneuhold/ts-libs/compare/core-ts-db-lib-v5.0.9...core-ts-db-lib-v5.0.10

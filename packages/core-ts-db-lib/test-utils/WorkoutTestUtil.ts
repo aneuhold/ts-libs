@@ -28,8 +28,8 @@ import type { Fatigue } from '../src/embedded-types/workout/Fatigue.js';
 import { MesocycleVolumeSummarySchema } from '../src/embedded-types/workout/MesocycleVolumeSummary.js';
 import type { RSM } from '../src/embedded-types/workout/Rsm.js';
 import DocumentService from '../src/services/Document.service.js';
-import WorkoutMesocyclePlanContext from '../src/services/workout/Mesocycle/WorkoutMesocyclePlanContext.js';
 import WorkoutMesocycleService from '../src/services/workout/Mesocycle/WorkoutMesocycle.service.js';
+import WorkoutMesocyclePlanContext from '../src/services/workout/Mesocycle/WorkoutMesocyclePlanContext.js';
 import WorkoutMicrocycleService from '../src/services/workout/Microcycle/WorkoutMicrocycle.service.js';
 
 /**
@@ -484,6 +484,15 @@ class WorkoutTestUtil {
   }
 
   /**
+   * Collects the calibration IDs of exercise CTOs, for a mesocycle's `calibratedExercises`.
+   *
+   * CTOs without a calibration are skipped.
+   */
+  getCalibrationIds(exerciseCTOs: WorkoutExerciseCTO[]): UUID[] {
+    return exerciseCTOs.map((cto) => cto.bestCalibration?._id).filter((id) => id !== undefined);
+  }
+
+  /**
    * Creates a workout mesocycle with sensible defaults.
    *
    * @param overrides Optional partial to override default values.
@@ -749,6 +758,60 @@ class WorkoutTestUtil {
   }
 
   /**
+   * Deletes a session from a microcycle, matching what deleting one in the app leaves behind: the
+   * session drops out of its microcycle's `sessionOrder`, and the session, its exercises, and
+   * their sets are all removed.
+   */
+  deleteSessionFromMicrocycle(options: {
+    context: WorkoutMesocyclePlanContext;
+    microcycle: WorkoutMicrocycle;
+    sessionId: UUID;
+  }): void {
+    const { context, microcycle, sessionId } = options;
+
+    microcycle.sessionOrder = microcycle.sessionOrder.filter((id) => id !== sessionId);
+
+    const session = context.sessionMap.get(sessionId);
+    if (!session) return;
+
+    for (const sessionExerciseId of session.sessionExerciseOrder) {
+      const sessionExercise = context.sessionExerciseMap.get(sessionExerciseId);
+      if (!sessionExercise) continue;
+
+      for (const setId of sessionExercise.setOrder) {
+        context.setMap.delete(setId);
+      }
+      context.sessionExerciseMap.delete(sessionExerciseId);
+    }
+    context.sessionMap.delete(sessionId);
+  }
+
+  /**
+   * Rebuilds a planning context from the documents an existing context generated, the way
+   * planning resumes from a mesocycle's history read out of the database.
+   *
+   * What the context derives from CTOs rather than from documents (exercises, volume landmarks)
+   * comes from the arguments, since documents alone cannot supply it.
+   */
+  reloadMesocyclePlanContext(options: {
+    context: WorkoutMesocyclePlanContext;
+    exerciseCTOs: WorkoutExerciseCTO[];
+    volumeCTOs?: WorkoutMuscleGroupVolumeCTO[];
+  }): WorkoutMesocyclePlanContext {
+    const { context, exerciseCTOs, volumeCTOs = [] } = options;
+
+    return new WorkoutMesocyclePlanContext(
+      context.mesocycle,
+      exerciseCTOs,
+      volumeCTOs,
+      context.microcyclesInOrder.map(({ microcycle }) => microcycle),
+      [...context.sessionMap.values()],
+      [...context.sessionExerciseMap.values()],
+      [...context.setMap.values()]
+    );
+  }
+
+  /**
    * Creates a complete historical microcycle with all necessary documents and adds them to the context.
    *
    * Uses the actual service code to generate sessions, session exercises, and sets.
@@ -806,7 +869,7 @@ class WorkoutTestUtil {
     context.setPlannedSessionExerciseCTOs(exerciseCTOs);
 
     // Use the actual service to generate all sessions, exercises, and sets
-    const microcycleIndex = context.microcyclesToCreate.length - 1;
+    const microcycleIndex = context.microcyclesInOrder.length - 1;
     const setsCountBefore = context.setsToCreate.length;
     WorkoutMicrocycleService.generateSessionsForMicrocycle({
       context,

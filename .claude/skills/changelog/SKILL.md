@@ -21,6 +21,7 @@ For each package in the monorepo (`packages/*/CHANGELOG.md`) that has had a vers
 - For each set of bullets, try to keep them concise and easy to read. At most, there should be 7 bullets per section (Added, Changed, etc.).
 - For any breaking changes, prefix it with `*Breaking Change:*`.
 - Every changelog MUST have at least one non-header item listed under it.
+- For each bullet, it should be something that will impact consumers, not information that is internal to the library and doesn't impact behavior for external users.
 
 To see the differences, run `git fetch origin main && git diff origin/main...HEAD`. If you prefer to see the diffs in a file, create the file in the root directory of the repo, then delete it when you are done.
 

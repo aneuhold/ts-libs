@@ -44,8 +44,8 @@ export const WorkoutSessionSchema = z.object({
    */
   complete: z.boolean().default(false),
   /**
-   * The order of exercises in this session, represented as an array of
-   * WorkoutSessionExercise IDs.
+   * The exercises that exist in this session, in the order they are performed,
+   * represented as an array of WorkoutSessionExercise IDs.
    *
    * This was chosen as a compromise for querying efficiency in order to quickly
    * get metrics like "Last time you did this exercise when it was preceded by
