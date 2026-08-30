@@ -38,9 +38,9 @@ export const WorkoutMicrocycleSchema = z.object({
    * performed, represented as an array of WorkoutSession IDs.
    *
    * This holds the sessions that actually exist, not a layout of the days a
-   * mesocycle planned. A position in this array therefore means nothing beyond ordering. It could
-   * be different than the original planned number of sessions in a microcycle if the user
-   * deleted a session part-way through.
+   * mesocycle planned. A position in this array therefore means nothing beyond ordering, and the
+   * count can differ from the mesocycle's planned session count. This also makes it easier to
+   * reason about the order of sessions before dates are assigned.
    */
   sessionOrder: z.array(UUIDSchema).default([]),
   /**

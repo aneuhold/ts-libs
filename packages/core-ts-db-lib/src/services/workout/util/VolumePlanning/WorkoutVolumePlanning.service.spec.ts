@@ -727,6 +727,63 @@ describe('WorkoutVolumePlanningService', () => {
       expect(result2.exerciseIdToSetCount.get(inclineId)).toBe(3);
     });
 
+    it("should resolve an exercise's set count from its own history when the previous microcycle is missing its first session", () => {
+      const benchCTO = workoutTestUtil.createExerciseCTO({
+        exercise: workoutTestUtil.STANDARD_EXERCISES.barbellBenchPress,
+        calibration: workoutTestUtil.STANDARD_CALIBRATIONS.barbellBenchPress,
+        equipmentType: workoutTestUtil.STANDARD_EQUIPMENT_TYPES.barbell
+      });
+      const inclineCTO = workoutTestUtil.createExerciseCTO({
+        exercise: workoutTestUtil.STANDARD_EXERCISES.inclineBenchPress,
+        calibration: workoutTestUtil.STANDARD_CALIBRATIONS.inclineBenchPress,
+        equipmentType: workoutTestUtil.STANDARD_EQUIPMENT_TYPES.barbell
+      });
+      const sessionExerciseCTOs = [[benchCTO], [inclineCTO]];
+
+      /**
+       * Plans the microcycle after one completed microcycle, optionally without that
+       * microcycle's first session.
+       */
+      const planSecondMicrocycle = (dropFirstSession: boolean) => {
+        const mesocycle = workoutTestUtil.createMesocycle({
+          plannedSessionCountPerMicrocycle: sessionExerciseCTOs.length,
+          calibratedExercises: workoutTestUtil.getCalibrationIds([benchCTO, inclineCTO])
+        });
+        const context = workoutTestUtil.createContext({
+          mesocycle,
+          exerciseCTOs: [benchCTO, inclineCTO]
+        });
+
+        workoutTestUtil.createHistoricalMicrocycle({
+          context,
+          exerciseCTOs: sessionExerciseCTOs,
+          sessionExerciseOverrides: [[{ setCount: 4 }], [{ setCount: 2 }]]
+        });
+
+        if (dropFirstSession) {
+          const { microcycle } = context.microcyclesInOrder[0];
+          workoutTestUtil.deleteSessionFromMicrocycle({
+            context,
+            microcycle,
+            sessionId: microcycle.sessionOrder[0]
+          });
+        }
+
+        context.addMicrocycle(workoutTestUtil.createMicrocycle({ mesocycle }));
+        context.setPlannedSessionExerciseCTOs(sessionExerciseCTOs);
+
+        return WorkoutVolumePlanningService.calculateSetPlanForMicrocycle(context, 1, false);
+      };
+
+      const intact = planSecondMicrocycle(false);
+      const missingSession = planSecondMicrocycle(true);
+
+      // Losing the bench session must not change what the incline press is planned for
+      expect(missingSession.exerciseIdToSetCount.get(inclineCTO._id)).toBe(
+        intact.exerciseIdToSetCount.get(inclineCTO._id)
+      );
+    });
+
     /**
      * Helper to set up context and call calculateSetPlanForMicrocycle
      */

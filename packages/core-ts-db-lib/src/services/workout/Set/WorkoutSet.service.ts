@@ -117,9 +117,9 @@ export default class WorkoutSetService {
    * Finds the sets an exercise was last programmed for, to use for autoregulation.
    * Returns all sets in order so surplus can be averaged across the full exercise performance.
    *
-   * Walks backward from the microcycle before `microcycleIndex` and returns the first
-   * non-recovery entry for the exercise, so an exercise missing from the immediately preceding
-   * microcycle progresses from the most recent microcycle that has it rather than resetting.
+   * Walks backward from the microcycle before `microcycleIndex` and returns the first entry for
+   * the exercise that holds sets, so an exercise missing from the immediately preceding microcycle
+   * progresses from the most recent microcycle that has it rather than resetting.
    * Recovery entries are skipped so a deliberate volume reduction does not ratchet progression down.
    *
    * Returns an empty array when the exercise has no non-recovery history earlier in the mesocycle,
@@ -135,7 +135,13 @@ export default class WorkoutSetService {
     for (let index = microcycleIndex - 1; index >= 0; index--) {
       const sessionExercise =
         context.microcyclesInOrder[index]?.exerciseToSessionExercise.get(exerciseId);
-      if (!sessionExercise || sessionExercise.isRecoveryExercise) continue;
+      if (
+        !sessionExercise ||
+        sessionExercise.isRecoveryExercise ||
+        sessionExercise.setOrder.length === 0
+      ) {
+        continue;
+      }
 
       return sessionExercise.setOrder.map((setId) => {
         const set = context.setMap.get(setId);

@@ -1202,6 +1202,128 @@ describe('Unit Tests', () => {
         }).toThrow(/no bestCalibration/i);
       });
     });
+
+    describe('progression after a microcycle loses a session', () => {
+      const squatCTO = workoutTestUtil.createExerciseCTO({
+        exercise: workoutTestUtil.STANDARD_EXERCISES.barbellSquat,
+        calibration: workoutTestUtil.STANDARD_CALIBRATIONS.barbellSquat,
+        equipmentType: workoutTestUtil.STANDARD_EQUIPMENT_TYPES.barbell
+      });
+      const benchCTO = workoutTestUtil.createExerciseCTO({
+        exercise: workoutTestUtil.STANDARD_EXERCISES.barbellBenchPress,
+        calibration: workoutTestUtil.STANDARD_CALIBRATIONS.barbellBenchPress,
+        equipmentType: workoutTestUtil.STANDARD_EQUIPMENT_TYPES.barbell
+      });
+      const overheadPressCTO = workoutTestUtil.createExerciseCTO({
+        exercise: workoutTestUtil.STANDARD_EXERCISES.barbellOverheadPress,
+        calibration: workoutTestUtil.STANDARD_CALIBRATIONS.barbellOverheadPress,
+        equipmentType: workoutTestUtil.STANDARD_EQUIPMENT_TYPES.barbell
+      });
+      const exerciseCTOs = [squatCTO, benchCTO, overheadPressCTO];
+
+      /**
+       * Maps each exercise to the first set it was given in a microcycle, following the
+       * microcycle's `sessionOrder` so a session no longer listed there is left out.
+       */
+      const firstSetPerExercise = (options: {
+        microcycle: WorkoutMicrocycle;
+        sessionExercises: WorkoutSessionExercise[];
+        sets: WorkoutSet[];
+      }) => {
+        const { microcycle, sessionExercises, sets } = options;
+
+        return new Map(
+          exerciseCTOs.map((cto) => {
+            for (const sessionId of microcycle.sessionOrder) {
+              const sessionExercise = sessionExercises.find(
+                (se) => se.workoutSessionId === sessionId && se.workoutExerciseId === cto._id
+              );
+              if (sessionExercise) {
+                return [cto._id, sets.find((s) => s._id === sessionExercise.setOrder[0])];
+              }
+            }
+            return [cto._id, undefined];
+          })
+        );
+      };
+
+      /**
+       * Plans a mesocycle giving each exercise its own session, completes the first microcycle,
+       * then drops that microcycle's first session and replans the rest.
+       */
+      const replanWithoutTheSquatSession = () => {
+        const mesocycle = WorkoutMesocycleSchema.parse({
+          userId: workoutTestUtil.userId,
+          cycleType: CycleType.MuscleGain,
+          plannedSessionCountPerMicrocycle: exerciseCTOs.length,
+          plannedMicrocycleLengthInDays: 7,
+          plannedMicrocycleRestDays: [],
+          plannedMicrocycleCount: 3,
+          calibratedExercises: workoutTestUtil.getCalibrationIds(exerciseCTOs)
+        });
+
+        const planned = WorkoutMesocycleService.generateOrUpdateMesocycle(mesocycle, exerciseCTOs);
+        const microcycles = planned.microcycles?.create ?? [];
+        const sessionExercises = planned.sessionExercises?.create ?? [];
+        const sets = planned.sets?.create ?? [];
+        const sessions = (planned.sessions?.create ?? []).map((session) => ({
+          ...session,
+          complete: session.workoutMicrocycleId === microcycles[0]._id
+        }));
+
+        const completed = firstSetPerExercise({
+          microcycle: microcycles[0],
+          sessionExercises,
+          sets
+        });
+        const original = firstSetPerExercise({
+          microcycle: microcycles[1],
+          sessionExercises,
+          sets
+        });
+
+        // Whatever dropped the session left the completed microcycle one short of the plan
+        microcycles[0].sessionOrder = microcycles[0].sessionOrder.slice(1);
+
+        const replanned = WorkoutMesocycleService.generateOrUpdateMesocycle(
+          mesocycle,
+          exerciseCTOs,
+          [],
+          microcycles,
+          sessions,
+          sessionExercises,
+          sets
+        );
+
+        return {
+          completed,
+          original,
+          replanned: firstSetPerExercise({
+            microcycle: (replanned.microcycles?.create ?? [])[0],
+            sessionExercises: replanned.sessionExercises?.create ?? [],
+            sets: replanned.sets?.create ?? []
+          })
+        };
+      };
+
+      it('should leave the surviving exercises progressing exactly as they would have', () => {
+        const { original, replanned } = replanWithoutTheSquatSession();
+
+        for (const { _id } of [benchCTO, overheadPressCTO]) {
+          expect(replanned.get(_id)?.plannedWeight).toBe(original.get(_id)?.plannedWeight);
+          expect(replanned.get(_id)?.plannedReps).toBe(original.get(_id)?.plannedReps);
+        }
+      });
+
+      it('should fall back to calibration for the exercise whose session was dropped', () => {
+        const { completed, replanned } = replanWithoutTheSquatSession();
+
+        // The squat has no history left in the mesocycle, so it restarts where it began
+        expect(replanned.get(squatCTO._id)?.plannedWeight).toBe(
+          completed.get(squatCTO._id)?.plannedWeight
+        );
+      });
+    });
   });
 
   describe('getProjectedEndDate', () => {

@@ -869,7 +869,7 @@ class WorkoutTestUtil {
     context.setPlannedSessionExerciseCTOs(exerciseCTOs);
 
     // Use the actual service to generate all sessions, exercises, and sets
-    const microcycleIndex = context.microcyclesToCreate.length - 1;
+    const microcycleIndex = context.microcyclesInOrder.length - 1;
     const setsCountBefore = context.setsToCreate.length;
     WorkoutMicrocycleService.generateSessionsForMicrocycle({
       context,

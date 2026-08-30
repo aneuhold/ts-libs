@@ -84,8 +84,6 @@ export default class WorkoutMicrocycleService {
         sessionIndex++;
       }
     }
-
-    context.recordMicrocycleExercises(microcycleIndex);
   }
 
   /**

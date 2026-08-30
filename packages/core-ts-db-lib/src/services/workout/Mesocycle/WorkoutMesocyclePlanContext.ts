@@ -60,9 +60,9 @@ export default class WorkoutMesocyclePlanContext {
    * all newly generated microcycles.
    *
    * `exerciseToSessionExercise` maps exercise ID to the session exercise that exercise was given
-   * in the microcycle. It holds nothing for an exercise the microcycle skips, stays empty until
-   * the microcycle's sessions exist, and includes recovery entries since consumers differ on how
-   * they treat them.
+   * in the microcycle, and is kept current as sessions are added. It holds nothing for an exercise
+   * the microcycle skips, and includes recovery entries since consumers differ on how they treat
+   * them.
    */
   public readonly microcyclesInOrder: {
     microcycle: WorkoutMicrocycle;
@@ -160,24 +160,23 @@ export default class WorkoutMesocyclePlanContext {
   }
 
   /**
-   * Fills in the exercises a microcycle ended up holding.
-   *
-   * Call this once every session of the microcycle has been generated, since until then the
-   * microcycle holds nothing to record.
-   */
-  public recordMicrocycleExercises(microcycleIndex: number): void {
-    const orderedMicrocycle = this.microcyclesInOrder[microcycleIndex];
-    orderedMicrocycle.exerciseToSessionExercise = this.#mapExercisesToSessionExercises(
-      orderedMicrocycle.microcycle
-    );
-  }
-
-  /**
    * Adds a session to the context and updates internal maps.
+   *
+   * Call this once the session's `sessionExerciseOrder` is filled and its session exercises have
+   * been added, since the owning microcycle's exercise lookup is rebuilt from them here.
    */
   public addSession(session: WorkoutSession): void {
     this.sessionsToCreate.push(session);
     this.sessionMap.set(session._id, session);
+
+    const orderedMicrocycle = this.microcyclesInOrder.find(
+      ({ microcycle }) => microcycle._id === session.workoutMicrocycleId
+    );
+    if (orderedMicrocycle) {
+      orderedMicrocycle.exerciseToSessionExercise = this.#mapExercisesToSessionExercises(
+        orderedMicrocycle.microcycle
+      );
+    }
   }
 
   /**
