@@ -7,13 +7,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## 🔖 [5.0.13] (2026-08-30)
 
-### ✅ Added
-
-### 🏗️ Changed
-
 ### 🩹 Fixed
 
-### 🔥 Removed
+- Fixed workout mesocycle planning resolving a previous microcycle's sets by session position, which could read the wrong exercise's history when a microcycle's session count or order didn't match the mesocycle plan (e.g. after a deleted or reordered session). Previous sets are now resolved by exercise ID, walking backward across microcycles and skipping recovery entries.
 
 ## 🔖 [5.0.12] (2026-08-14)
 
