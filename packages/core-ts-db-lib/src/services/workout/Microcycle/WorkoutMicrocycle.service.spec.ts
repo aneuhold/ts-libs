@@ -26,9 +26,7 @@ describe('WorkoutMicrocycleService', () => {
       })
     ];
 
-    const calibrationIds = exerciseCTOs
-      .map((cto) => cto.bestCalibration?._id)
-      .filter((id): id is NonNullable<typeof id> => id != null);
+    const calibrationIds = workoutTestUtil.getCalibrationIds(exerciseCTOs);
 
     const mesocycle = workoutTestUtil.createMesocycle({
       plannedSessionCountPerMicrocycle: 3,

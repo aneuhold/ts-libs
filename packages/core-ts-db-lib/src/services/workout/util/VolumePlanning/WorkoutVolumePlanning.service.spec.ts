@@ -694,9 +694,7 @@ describe('WorkoutVolumePlanningService', () => {
       const mesocycle = workoutTestUtil.createMesocycle({
         plannedSessionCountPerMicrocycle: 1,
         plannedMicrocycleCount: 6,
-        calibratedExercises: exerciseCTOs
-          .map((cto) => cto.bestCalibration?._id)
-          .filter((id): id is NonNullable<typeof id> => id != null)
+        calibratedExercises: workoutTestUtil.getCalibrationIds(exerciseCTOs)
       });
 
       const context = workoutTestUtil.createContext({
@@ -763,9 +761,7 @@ describe('WorkoutVolumePlanningService', () => {
       // Create default mesocycle if not provided, with session count matching sessionStructure
       const mesocycle = workoutTestUtil.createMesocycle({
         plannedSessionCountPerMicrocycle: sessionStructure.length,
-        calibratedExercises: exerciseCTOs
-          .map((cto) => cto.bestCalibration?._id)
-          .filter((id): id is NonNullable<typeof id> => id != null)
+        calibratedExercises: workoutTestUtil.getCalibrationIds(exerciseCTOs)
       });
 
       const context = workoutTestUtil.createContext({
@@ -931,7 +927,7 @@ describe('WorkoutVolumePlanningService', () => {
 
       const mesocycle = workoutTestUtil.createMesocycle({
         plannedSessionCountPerMicrocycle: 1,
-        calibratedExercises: chestCTO.bestCalibration ? [chestCTO.bestCalibration._id] : []
+        calibratedExercises: workoutTestUtil.getCalibrationIds([chestCTO])
       });
 
       const context = workoutTestUtil.createContext({
@@ -1146,9 +1142,7 @@ describe('WorkoutVolumePlanningService', () => {
         cycleType: CycleType.Resensitization,
         plannedSessionCountPerMicrocycle: 1,
         plannedMicrocycleCount: 4,
-        calibratedExercises: exerciseCTOs
-          .map((cto) => cto.bestCalibration?._id)
-          .filter((id): id is NonNullable<typeof id> => id != null)
+        calibratedExercises: workoutTestUtil.getCalibrationIds(exerciseCTOs)
       });
 
       const context = workoutTestUtil.createContext({ mesocycle, exerciseCTOs });
@@ -1194,9 +1188,7 @@ describe('WorkoutVolumePlanningService', () => {
         cycleType: CycleType.Resensitization,
         plannedSessionCountPerMicrocycle: 1,
         plannedMicrocycleCount: 4,
-        calibratedExercises: exerciseCTOs
-          .map((cto) => cto.bestCalibration?._id)
-          .filter((id): id is NonNullable<typeof id> => id != null)
+        calibratedExercises: workoutTestUtil.getCalibrationIds(exerciseCTOs)
       });
 
       const context = workoutTestUtil.createContext({
@@ -1232,9 +1224,7 @@ describe('WorkoutVolumePlanningService', () => {
       const mesocycle = workoutTestUtil.createMesocycle({
         cycleType: CycleType.Cut,
         plannedSessionCountPerMicrocycle: 1,
-        calibratedExercises: exerciseCTOs
-          .map((cto) => cto.bestCalibration?._id)
-          .filter((id): id is NonNullable<typeof id> => id != null)
+        calibratedExercises: workoutTestUtil.getCalibrationIds(exerciseCTOs)
       });
 
       const context = workoutTestUtil.createContext({ mesocycle, exerciseCTOs });
@@ -1285,9 +1275,7 @@ describe('WorkoutVolumePlanningService', () => {
       const mesocycle = workoutTestUtil.createMesocycle({
         cycleType: CycleType.MuscleGain,
         plannedSessionCountPerMicrocycle: 1,
-        calibratedExercises: exerciseCTOs
-          .map((cto) => cto.bestCalibration?._id)
-          .filter((id): id is NonNullable<typeof id> => id != null)
+        calibratedExercises: workoutTestUtil.getCalibrationIds(exerciseCTOs)
       });
 
       const context = workoutTestUtil.createContext({ mesocycle, exerciseCTOs });
@@ -1336,9 +1324,7 @@ describe('WorkoutVolumePlanningService', () => {
         cycleType: CycleType.MuscleGain,
         plannedSessionCountPerMicrocycle: 1,
         plannedMicrocycleCount: 6,
-        calibratedExercises: exerciseCTOs
-          .map((cto) => cto.bestCalibration?._id)
-          .filter((id): id is NonNullable<typeof id> => id != null)
+        calibratedExercises: workoutTestUtil.getCalibrationIds(exerciseCTOs)
       });
 
       const context = workoutTestUtil.createContext({ mesocycle, exerciseCTOs });
@@ -1373,9 +1359,7 @@ describe('WorkoutVolumePlanningService', () => {
         cycleType: CycleType.MuscleGain,
         plannedSessionCountPerMicrocycle: 1,
         plannedMicrocycleCount: 6,
-        calibratedExercises: exerciseCTOs
-          .map((cto) => cto.bestCalibration?._id)
-          .filter((id): id is NonNullable<typeof id> => id != null)
+        calibratedExercises: workoutTestUtil.getCalibrationIds(exerciseCTOs)
       });
 
       const context = workoutTestUtil.createContext({ mesocycle, exerciseCTOs });
@@ -1414,9 +1398,7 @@ describe('WorkoutVolumePlanningService', () => {
         cycleType: CycleType.MuscleGain,
         plannedSessionCountPerMicrocycle: 1,
         plannedMicrocycleCount: 6,
-        calibratedExercises: exerciseCTOs
-          .map((cto) => cto.bestCalibration?._id)
-          .filter((id): id is NonNullable<typeof id> => id != null)
+        calibratedExercises: workoutTestUtil.getCalibrationIds(exerciseCTOs)
       });
 
       const context = workoutTestUtil.createContext({
@@ -1461,9 +1443,7 @@ describe('WorkoutVolumePlanningService', () => {
         cycleType: CycleType.Cut,
         plannedSessionCountPerMicrocycle: 1,
         plannedMicrocycleCount: 6,
-        calibratedExercises: exerciseCTOs
-          .map((cto) => cto.bestCalibration?._id)
-          .filter((id): id is NonNullable<typeof id> => id != null)
+        calibratedExercises: workoutTestUtil.getCalibrationIds(exerciseCTOs)
       });
 
       const context = workoutTestUtil.createContext({ mesocycle, exerciseCTOs });
@@ -1503,9 +1483,7 @@ describe('WorkoutVolumePlanningService', () => {
         cycleType: CycleType.Resensitization,
         plannedSessionCountPerMicrocycle: 1,
         plannedMicrocycleCount: 4,
-        calibratedExercises: exerciseCTOs
-          .map((cto) => cto.bestCalibration?._id)
-          .filter((id): id is NonNullable<typeof id> => id != null)
+        calibratedExercises: workoutTestUtil.getCalibrationIds(exerciseCTOs)
       });
 
       const context = workoutTestUtil.createContext({ mesocycle, exerciseCTOs });
@@ -1541,9 +1519,7 @@ describe('WorkoutVolumePlanningService', () => {
         cycleType: CycleType.MuscleGain,
         plannedSessionCountPerMicrocycle: 1,
         plannedMicrocycleCount: 2,
-        calibratedExercises: exerciseCTOs
-          .map((cto) => cto.bestCalibration?._id)
-          .filter((id): id is NonNullable<typeof id> => id != null)
+        calibratedExercises: workoutTestUtil.getCalibrationIds(exerciseCTOs)
       });
 
       const context = workoutTestUtil.createContext({ mesocycle, exerciseCTOs });
