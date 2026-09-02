@@ -2,7 +2,7 @@
   "name": "@aneuhold/core-ts-api-lib",
   "author": "Anton G. Neuhold Jr.",
   "license": "MIT",
-  "version": "3.0.44",
+  "version": "3.0.45",
   "description": "A library for interacting with the backend and defining the backend API for personal projects.",
   "packageManager": "pnpm@11.21.0",
   "type": "module",
@@ -72,12 +72,12 @@
     "TypeScript"
   ],
   "dependencies": {
-    "@aneuhold/core-ts-db-lib": "^5.0.13",
+    "@aneuhold/core-ts-db-lib": "^5.0.14",
     "@aneuhold/core-ts-lib": "^2.4.8",
     "bson": "^7.3.1"
   },
   "devDependencies": {
-    "@aneuhold/local-npm-registry": "^1.0.1",
+    "@aneuhold/local-npm-registry": "^1.0.2",
     "@aneuhold/main-scripts": "^2.10.3",
     "@types/node": "^24.13.3",
     "eslint": "^10.8.0",

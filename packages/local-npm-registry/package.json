@@ -2,7 +2,7 @@
   "name": "@aneuhold/local-npm-registry",
   "author": "Anton G. Neuhold Jr.",
   "license": "MIT",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Manages local npm package installations and updates across your machine.",
   "packageManager": "pnpm@11.21.0",
   "type": "module",
