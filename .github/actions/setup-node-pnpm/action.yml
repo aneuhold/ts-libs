@@ -33,3 +33,23 @@ runs:
         cd ~
         yarn set version classic
         cd $GITHUB_WORKSPACE
+
+    - name: TEMP diagnostics
+      shell: bash
+      run: |
+        echo "=== HOME=$HOME  PWD=$PWD"
+        echo "=== ~/.npmrc ==="; cat ~/.npmrc 2>&1 || true
+        echo "=== ~/.yarnrc ==="; cat ~/.yarnrc 2>&1 || true
+        echo "=== ~/.yarnrc.yml ==="; cat ~/.yarnrc.yml 2>&1 || true
+        echo "=== NPM_CONFIG_USERCONFIG file ==="; cat "$NPM_CONFIG_USERCONFIG" 2>&1 || true
+        echo "=== ls $PNPM_HOME/bin ==="; ls -la "$PNPM_HOME/bin" 2>&1 || true
+        echo "=== env (npm/yarn/node/pnpm related) ==="; env | grep -iE "npm|yarn|node|pnpm|corepack" | sort || true
+        d=$(mktemp -d); cd "$d"
+        printf '{"name":"probe","version":"1.0.0","dependencies":{"@fakescope/nothing":"1.0.0"}}' > package.json
+        printf '@fakescope:registry=https://registry.npmjs.org/\n' > .npmrc
+        echo "=== yarn config list ==="
+        env "npm_config_@fakescope:registry=http://localhost:9999" yarn config list 2>&1 | grep -iE "registry|fakescope" | head -20 || true
+        echo "=== yarn probe (expect localhost:9999) ==="
+        env "npm_config_@fakescope:registry=http://localhost:9999" yarn install --registry=http://localhost:9999 2>&1 | grep -iE "^error|localhost:9999|registry.npmjs" | head -3 || true
+        cd "$GITHUB_WORKSPACE"
+
