@@ -4,7 +4,7 @@
   "license": "MIT",
   "version": "3.1.21",
   "description": "A backend TypeScript library used for common functionality in personal backend projects.",
-  "packageManager": "pnpm@11.21.0",
+  "packageManager": "pnpm@12.2.1",
   "type": "module",
   "scripts": {
     "build": "rimraf lib && pnpm build:withoutClean",
@@ -64,7 +64,7 @@
   },
   "devDependencies": {
     "@aneuhold/local-npm-registry": "^1.0.1",
-    "@aneuhold/main-scripts": "^2.10.3",
+    "@aneuhold/main-scripts": "^2.11.1",
     "@types/node": "^24.13.3",
     "@types/node-fetch": "^2.6.13",
     "eslint": "^10.8.0",

@@ -4,7 +4,7 @@
   "license": "MIT",
   "version": "1.0.1",
   "description": "Manages local npm package installations and updates across your machine.",
-  "packageManager": "pnpm@11.21.0",
+  "packageManager": "pnpm@12.2.1",
   "type": "module",
   "scripts": {
     "refresh": "pnpm build && npm uninstall -g @aneuhold/local-npm-registry && npm install -g .",
@@ -63,7 +63,7 @@
     "verdaccio": "^6.9.2"
   },
   "devDependencies": {
-    "@aneuhold/main-scripts": "^2.10.3",
+    "@aneuhold/main-scripts": "^2.11.1",
     "@types/fs-extra": "^11.0.4",
     "@types/node": "^24.13.3",
     "@types/proper-lockfile": "^4.1.4",

@@ -63,12 +63,14 @@ export const PACKAGE_MANAGER_INFO: Record<PackageManager, PackageManagerInfo> = 
   [PackageManager.Pnpm]: {
     command: 'pnpm',
     lockFile: 'pnpm-lock.yaml',
-    // pnpm accepts the npm style scoped flag directly, with no `--config.` prefix
+    // pnpm rejects unknown flags, so npm style scoped keys have to travel under
+    // the `--config.` prefix. Its environment variables are ignored for these
+    // keys, which leaves the prefix as the only way through.
     getRegistryOverrideCliOptions: (registryUrl, organizations) => ({
       args: [
         `--registry=${registryUrl}`,
-        ...organizations.map((organization) => `--@${organization}:registry=${registryUrl}`),
-        `--//${registryUrl.replace(/^https?:\/\//, '')}/:_authToken=fake`
+        ...organizations.map((organization) => `--config.@${organization}:registry=${registryUrl}`),
+        `--config.//${registryUrl.replace(/^https?:\/\//, '')}/:_authToken=fake`
       ],
       env: {}
     }),

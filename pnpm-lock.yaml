@@ -1,3 +1,104 @@
+---
+lockfileVersion: '9.0'
+
+importers:
+
+  .:
+    configDependencies: {}
+    packageManagerDependencies:
+      pnpm:
+        specifier: 12.2.1
+        version: 12.2.1
+
+packages:
+
+  '@pnpm/exe.darwin-arm64@12.2.1':
+    resolution: {integrity: sha512-efC1yfz2xbyHiMLrQAYtnoo5XP20LeAiYYcyL1962qQagZrMXIB0BoQYeZoPTLggLh0Q4MD7jpZUInU5fWxCgQ==}
+    cpu: [arm64]
+    os: [darwin]
+
+  '@pnpm/exe.darwin-x64@12.2.1':
+    resolution: {integrity: sha512-0bloFmxrvYY5LYex5V6SZySwg+egBk0pOW+YUeOm9fiG2U1wv+qRVLBOUvIzLAeJE7vBlAzxUwXkQAYtr12n+Q==}
+    cpu: [x64]
+    os: [darwin]
+
+  '@pnpm/exe.linux-arm64-musl@12.2.1':
+    resolution: {integrity: sha512-AZl7apVZC4TV1/vTp/bS16XUsHeqx9AHsU4V55joiGR+iR6vl+WF0WlGvGCTjqjICS4q/kThpgNrtG8aqQ9seQ==}
+    cpu: [arm64]
+    os: [linux]
+    libc: [musl]
+
+  '@pnpm/exe.linux-arm64@12.2.1':
+    resolution: {integrity: sha512-S36+tMEGrPz3nwtfFU9kYxbHoi8sV7WJfMO9njEL4jRaShTNaLRERMAqyI2DUCiA5QCr6/a50lt4+pKCV2mCvw==}
+    cpu: [arm64]
+    os: [linux]
+    libc: [glibc]
+
+  '@pnpm/exe.linux-x64-musl@12.2.1':
+    resolution: {integrity: sha512-4MQClkAk1em55LFZJpeIqb7j+gEqCgX8yC42j9DFWL42q1uMX1e1tvTy2Dtd4NoWQqgdkLxOStZ+D9CYC+28ow==}
+    cpu: [x64]
+    os: [linux]
+    libc: [musl]
+
+  '@pnpm/exe.linux-x64@12.2.1':
+    resolution: {integrity: sha512-A/AlR71Leph7qgB3ThSU9yU/vLfre4HmP6nbt3/qt51fzAjQ0xuq7j+cw0f1yDskzOsGzmo5uD6ruefCwLK5uQ==}
+    cpu: [x64]
+    os: [linux]
+    libc: [glibc]
+
+  '@pnpm/exe.win32-arm64@12.2.1':
+    resolution: {integrity: sha512-TEGUmroT6NGfo2O2+tHK9Zr1lhP1zLzpwx+QAQV19l8V4ljUoMfz8Os5V9zzNCtIpzyKcK7SuG7fkVbxFgRMzg==}
+    cpu: [arm64]
+    os: [win32]
+
+  '@pnpm/exe.win32-x64@12.2.1':
+    resolution: {integrity: sha512-V2Q+AF8fCsw8/CC3bWF8kopOmH0aAjgk9m7H7uAQNulOYIJs9YJBiAlgByswmt+igV9axc4dBI//ZlK2NKpDcw==}
+    cpu: [x64]
+    os: [win32]
+
+  pnpm@12.2.1:
+    resolution: {integrity: sha512-9Vymiqy561q2nGb4KKmK+JoyKGcDrvH42hMcp+q01nfzS/qF4YZGepGcB5nfi29KokD33CkZszsycxkBBBYmFg==}
+    engines: {node: '>=18.*'}
+    hasBin: true
+
+snapshots:
+
+  '@pnpm/exe.darwin-arm64@12.2.1':
+    optional: true
+
+  '@pnpm/exe.darwin-x64@12.2.1':
+    optional: true
+
+  '@pnpm/exe.linux-arm64-musl@12.2.1':
+    optional: true
+
+  '@pnpm/exe.linux-arm64@12.2.1':
+    optional: true
+
+  '@pnpm/exe.linux-x64-musl@12.2.1':
+    optional: true
+
+  '@pnpm/exe.linux-x64@12.2.1':
+    optional: true
+
+  '@pnpm/exe.win32-arm64@12.2.1':
+    optional: true
+
+  '@pnpm/exe.win32-x64@12.2.1':
+    optional: true
+
+  pnpm@12.2.1:
+    optionalDependencies:
+      '@pnpm/exe.darwin-arm64': 12.2.1
+      '@pnpm/exe.darwin-x64': 12.2.1
+      '@pnpm/exe.linux-arm64': 12.2.1
+      '@pnpm/exe.linux-arm64-musl': 12.2.1
+      '@pnpm/exe.linux-x64': 12.2.1
+      '@pnpm/exe.linux-x64-musl': 12.2.1
+      '@pnpm/exe.win32-arm64': 12.2.1
+      '@pnpm/exe.win32-x64': 12.2.1
+
+---
 lockfileVersion: '9.0'
 
 settings:
@@ -9,11 +110,11 @@ importers:
   .:
     devDependencies:
       '@aneuhold/eslint-config':
-        specifier: ^3.0.2
-        version: 3.0.2(@angular/cli@21.0.3(@types/node@24.13.3)(supports-color@5.5.0))(@types/eslint@9.6.1)(eslint@10.8.0(jiti@2.4.2)(supports-color@5.5.0))(prettier@3.9.6)(supports-color@5.5.0)(svelte@5.28.2)(typescript@6.0.3)
+        specifier: ^3.0.3
+        version: 3.0.3(@angular/cli@21.0.3(@types/node@24.13.3)(supports-color@5.5.0))(@types/eslint@9.6.1)(eslint@10.8.0(jiti@2.4.2)(supports-color@5.5.0))(prettier@3.9.6)(supports-color@5.5.0)(svelte@5.28.2)(typescript@6.0.3)
       '@aneuhold/robot-instructions':
-        specifier: ^0.1.2
-        version: 0.1.2
+        specifier: ^0.1.4
+        version: 0.1.4
       '@types/node':
         specifier: ^24.13.3
         version: 24.13.3
@@ -73,8 +174,8 @@ importers:
         specifier: ^1.0.1
         version: link:../local-npm-registry
       '@aneuhold/main-scripts':
-        specifier: ^2.10.3
-        version: 2.10.3(@types/node@24.13.3)(typescript@6.0.3)
+        specifier: ^2.11.1
+        version: 2.11.1(@types/node@24.13.3)(typescript@6.0.3)
       '@types/node':
         specifier: ^24.13.3
         version: 24.13.3
@@ -140,8 +241,8 @@ importers:
         specifier: ^1.0.1
         version: link:../local-npm-registry
       '@aneuhold/main-scripts':
-        specifier: ^2.10.3
-        version: 2.10.3(@types/node@24.13.3)(typescript@6.0.3)
+        specifier: ^2.11.1
+        version: 2.11.1(@types/node@24.13.3)(typescript@6.0.3)
       '@types/node':
         specifier: ^24.13.3
         version: 24.13.3
@@ -186,8 +287,8 @@ importers:
         specifier: ^1.0.1
         version: link:../local-npm-registry
       '@aneuhold/main-scripts':
-        specifier: ^2.10.3
-        version: 2.10.3(@types/node@24.13.3)(typescript@6.0.3)
+        specifier: ^2.11.1
+        version: 2.11.1(@types/node@24.13.3)(typescript@6.0.3)
       '@types/node':
         specifier: ^24.13.3
         version: 24.13.3
@@ -229,8 +330,8 @@ importers:
         specifier: ^1.0.1
         version: link:../local-npm-registry
       '@aneuhold/main-scripts':
-        specifier: ^2.10.3
-        version: 2.10.3(@types/node@24.13.3)(typescript@6.0.3)
+        specifier: ^2.11.1
+        version: 2.11.1(@types/node@24.13.3)(typescript@6.0.3)
       '@types/node':
         specifier: ^24.13.3
         version: 24.13.3
@@ -311,8 +412,8 @@ importers:
         version: 6.9.2(encoding@0.1.13)(supports-color@10.2.2)(typanion@3.14.0)
     devDependencies:
       '@aneuhold/main-scripts':
-        specifier: ^2.10.3
-        version: 2.10.3(@types/node@24.13.3)(typescript@6.0.3)
+        specifier: ^2.11.1
+        version: 2.11.1(@types/node@24.13.3)(typescript@6.0.3)
       '@types/fs-extra':
         specifier: ^11.0.4
         version: 11.0.4
@@ -409,21 +510,18 @@ packages:
     resolution: {integrity: sha512-30iZtAPgz+LTIYoeivqYo853f02jBYSd5uGnGpkFV0M3xOt9aN73erkgYAmZU43x4VfqcnLxW9Kpg3R5LC4YYw==}
     engines: {node: '>=6.0.0'}
 
-  '@aneuhold/core-ts-lib@2.4.7':
-    resolution: {integrity: sha512-vCiPMPZyDYMrhYezN7iTM73/B5IXv4U7L/ASKUdXTY8aOEnFLKoQbtRrAe1T0WgA6CLxUN5/R2hzMZqg21L17A==}
-
-  '@aneuhold/eslint-config@3.0.2':
-    resolution: {integrity: sha512-pKkM6GXZS4gVrH4iJQlyZEO27jPYeDWXGUTiTRfPxuKeIO7xrNsStxgB7Fhj+r/sQtGvYV960ld8ZCPIM5jnLw==}
+  '@aneuhold/eslint-config@3.0.3':
+    resolution: {integrity: sha512-jfjaXO5iC4VZGDtCKTBm1hHf6dn2nNeqa+aHe6o7sUo81+tQXnIlv65S3PScGwh2VIDCAaj8ACpPO11vu/sLLQ==}
     peerDependencies:
       eslint: '>= 10.2.1'
       prettier: '>= 3.8.3'
 
-  '@aneuhold/main-scripts@2.10.3':
-    resolution: {integrity: sha512-sNqoJtbK2fOxzzUfouxFSVFpPN/Wz0abp54saNaEJ1/ntvWBD/htJFRepNhjS6j9y2LmBb3TCk2RUp9ipYrkKw==}
+  '@aneuhold/main-scripts@2.11.1':
+    resolution: {integrity: sha512-F0D4bltmEK8vQ46Q2SIJ/aB3aFZgGfaMgFLxaa2QsxwwNzArucW5C9T1jSDhA+mtmmGsKPGXkI64O+VTxvI/ig==}
     hasBin: true
 
-  '@aneuhold/robot-instructions@0.1.2':
-    resolution: {integrity: sha512-eUA5qaSJTPKY9PRKSmYQLL4U2uGb1bLs+VjF5irXGpchyg4R8Ku5LBs401xh/F3bhmEFt9jnCVkqVNpUAojJmA==}
+  '@aneuhold/robot-instructions@0.1.4':
+    resolution: {integrity: sha512-E+6BAo9GiPPKFW+RTzmY82D37b/ulUAlejKWMTXS4/FKGY/UZQ2Abxz+58ruNGO6JBEz5r8vkmWdFa01/RLsoA==}
 
   '@angular-devkit/architect@0.2100.3':
     resolution: {integrity: sha512-PcruWF0+IxXOTZd9MN/3y4A5aTfblALzT/+zWym26PtisaBgWQ3tRPQsf/CgT8EdmZl8eUOAWlNBSkbUj/S/lQ==}
@@ -5399,10 +5497,6 @@ packages:
     resolution: {integrity: sha512-U/PBtDf35ff0D8X8D0jfdzHYEPFxAI7jJlxZXwCSez5M3190m+QobIfh+sWDWSHMCWWJN2AWamkegn6vr6YBTw==}
     engines: {node: '>=18'}
 
-  yoctocolors@2.1.2:
-    resolution: {integrity: sha512-CzhO+pFNo8ajLM2d2IW/R93ipy99LWjtwblvC1RsoSUMZgyLbYFr221TnSNT7GjGdYui6P459mw9JH/g/zW2ug==}
-    engines: {node: '>=18'}
-
   yoctocolors@2.2.0:
     resolution: {integrity: sha512-xYqdZFUK/VYazNl/oCDYN+3WloWQwMfZxBoiNt6qNyk+xfOdi598muWE42rNZFp1kNOiqW936q5RhUdnpqElSg==}
     engines: {node: '>=18'}
@@ -5518,9 +5612,7 @@ snapshots:
       '@jridgewell/gen-mapping': 0.3.13
       '@jridgewell/trace-mapping': 0.3.31
 
-  '@aneuhold/core-ts-lib@2.4.7': {}
-
-  '@aneuhold/eslint-config@3.0.2(@angular/cli@21.0.3(@types/node@24.13.3)(supports-color@5.5.0))(@types/eslint@9.6.1)(eslint@10.8.0(jiti@2.4.2)(supports-color@5.5.0))(prettier@3.9.6)(supports-color@5.5.0)(svelte@5.28.2)(typescript@6.0.3)':
+  '@aneuhold/eslint-config@3.0.3(@angular/cli@21.0.3(@types/node@24.13.3)(supports-color@5.5.0))(@types/eslint@9.6.1)(eslint@10.8.0(jiti@2.4.2)(supports-color@5.5.0))(prettier@3.9.6)(supports-color@5.5.0)(svelte@5.28.2)(typescript@6.0.3)':
     dependencies:
       '@eslint/js': 10.0.1(eslint@10.8.0(jiti@2.4.2)(supports-color@5.5.0))
       '@next/eslint-plugin-next': 16.3.0(eslint@10.8.0(jiti@2.4.2)(supports-color@5.5.0))
@@ -5556,9 +5648,9 @@ snapshots:
       - ts-node
       - typescript
 
-  '@aneuhold/main-scripts@2.10.3(@types/node@24.13.3)(typescript@6.0.3)':
+  '@aneuhold/main-scripts@2.11.1(@types/node@24.13.3)(typescript@6.0.3)':
     dependencies:
-      '@aneuhold/core-ts-lib': 2.4.7
+      '@aneuhold/core-ts-lib': link:packages/core-ts-lib
       '@aws-sdk/client-s3': 3.1105.0
       '@inquirer/prompts': 8.5.2(@types/node@24.13.3)
       better-sqlite3: 12.11.1
@@ -5572,7 +5664,7 @@ snapshots:
       - '@types/node'
       - typescript
 
-  '@aneuhold/robot-instructions@0.1.2': {}
+  '@aneuhold/robot-instructions@0.1.4': {}
 
   '@angular-devkit/architect@0.2100.3':
     dependencies:
@@ -8533,7 +8625,7 @@ snapshots:
       pretty-ms: 9.3.0
       signal-exit: 4.1.0
       strip-final-newline: 4.0.0
-      yoctocolors: 2.1.2
+      yoctocolors: 2.2.0
 
   expand-template@2.0.3: {}
 
@@ -11212,8 +11304,6 @@ snapshots:
   yocto-queue@0.1.0: {}
 
   yoctocolors-cjs@2.1.3: {}
-
-  yoctocolors@2.1.2: {}
 
   yoctocolors@2.2.0: {}
 

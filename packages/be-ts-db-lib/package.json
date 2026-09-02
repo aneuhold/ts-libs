@@ -4,7 +4,7 @@
   "license": "MIT",
   "version": "4.2.35",
   "description": "A backend database library meant to actually interact with various databases in personal projects",
-  "packageManager": "pnpm@11.21.0",
+  "packageManager": "pnpm@12.2.1",
   "type": "module",
   "scripts": {
     "build": "rimraf lib && pnpm build:withoutClean",
@@ -71,7 +71,7 @@
   },
   "devDependencies": {
     "@aneuhold/local-npm-registry": "^1.0.1",
-    "@aneuhold/main-scripts": "^2.10.3",
+    "@aneuhold/main-scripts": "^2.11.1",
     "@types/node": "^24.13.3",
     "@types/node-fetch": "^2.6.13",
     "@vitest/coverage-v8": "^4.1.10",
