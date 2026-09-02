@@ -4,12 +4,15 @@ description: 'Setup Node.js, pnpm, and install dependencies with caching'
 runs:
   using: 'composite'
   steps:
-    - name: Configure the npm registry
-      # Writes the .npmrc that `npm publish` reads, which npm requires for OIDC:
-      # https://docs.npmjs.com/trusted-publishers. No node-version is given
-      # because pnpm/setup below installs the runtime.
+    - name: Setup Node.js and configure the npm registry
+      # pnpm/setup below installs the runtime that pnpm and the scripts use.
+      # This step is still here for two things it cannot do: the .npmrc that
+      # `npm publish` reads for OIDC
+      # (https://docs.npmjs.com/trusted-publishers), and a Node whose corepack
+      # runs the Yarn the local-npm-registry tests drive.
       uses: actions/setup-node@v6
       with:
+        node-version: 'lts/*'
         registry-url: 'https://registry.npmjs.org'
 
     - name: Setup pnpm, Node.js, and install dependencies
