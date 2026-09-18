@@ -62,6 +62,8 @@ cd my-frontend-project
 npm run sub:my-library
 ```
 
+> **Note:** For any project that has release age verficiation (pnpm, npm v12, others), make sure to exclude the library you are subscribing to locally, as it's release age will be seconds ago.
+
 That's it! Your frontend project will now automatically receive updates whenever you make changes to your library.
 
 ## 🛠️ Core Commands

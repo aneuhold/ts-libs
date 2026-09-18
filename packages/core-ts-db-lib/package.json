@@ -2,9 +2,9 @@
   "name": "@aneuhold/core-ts-db-lib",
   "author": "Anton G. Neuhold Jr.",
   "license": "MIT",
-  "version": "5.0.13",
+  "version": "5.0.14",
   "description": "A core database library used for personal projects",
-  "packageManager": "pnpm@11.21.0",
+  "packageManager": "pnpm@12.4.1",
   "type": "module",
   "scripts": {
     "build": "rimraf lib && pnpm build:withoutClean",
@@ -72,13 +72,13 @@
     "Node.js"
   ],
   "dependencies": {
-    "@aneuhold/core-ts-lib": "^2.4.8",
+    "@aneuhold/core-ts-lib": "^2.4.9",
     "uuid": "^14.0.1",
     "zod": "^4.4.3"
   },
   "devDependencies": {
-    "@aneuhold/local-npm-registry": "^1.0.1",
-    "@aneuhold/main-scripts": "^2.10.3",
+    "@aneuhold/local-npm-registry": "^1.0.2",
+    "@aneuhold/main-scripts": "^2.11.2",
     "@types/node": "^24.13.3",
     "eslint": "^10.8.0",
     "jsr": "^0.14.3",

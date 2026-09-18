@@ -2,9 +2,9 @@
   "name": "@aneuhold/core-ts-lib",
   "author": "Anton G. Neuhold Jr.",
   "license": "MIT",
-  "version": "2.4.8",
+  "version": "2.4.9",
   "description": "A core library for all of my TypeScript projects",
-  "packageManager": "pnpm@11.21.0",
+  "packageManager": "pnpm@12.4.1",
   "type": "module",
   "scripts": {
     "build": "rimraf lib && pnpm build:withoutClean",

@@ -155,6 +155,9 @@ export class TestProjectUtils {
       }),
       ...(packageManager === PackageManager.Yarn && {
         packageManager: 'yarn@1.22.22'
+      }),
+      ...(packageManager === PackageManager.Pnpm && {
+        packageManager: 'pnpm@12.4.1'
       })
     };
 

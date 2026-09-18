@@ -32,6 +32,7 @@ describe('Unit Tests', () => {
   let testId: string;
   let registryUrl: string;
   let authTokenArg: string;
+  let pnpmAuthTokenArg: string;
 
   beforeAll(async () => {
     await TestProjectUtils.setupGlobalTempDir();
@@ -39,7 +40,9 @@ describe('Unit Tests', () => {
     // The registry a worker's tests run against carries a port of its own, so
     // what it is has to be read rather than assumed
     registryUrl = await TestProjectUtils.getRegistryUrl();
-    authTokenArg = `--//${registryUrl.replace(/^https?:\/\//, '')}/:_authToken=fake`;
+    const authTokenKey = `//${registryUrl.replace(/^https?:\/\//, '')}/:_authToken=fake`;
+    authTokenArg = `--${authTokenKey}`;
+    pnpmAuthTokenArg = `--config.${authTokenKey}`;
   });
 
   afterAll(async () => {
@@ -129,7 +132,7 @@ describe('Unit Tests', () => {
       });
     });
 
-    it('should pass the same flags for pnpm as for npm', async () => {
+    it('should pass pnpm scoped registry flags with the config prefix', async () => {
       const { subscriberPath, organization } = await createSubscription(PackageManager.Pnpm);
       const runInstall = mockRunInstall();
 
@@ -143,8 +146,8 @@ describe('Unit Tests', () => {
       expect(runInstall).toHaveBeenCalledWith(subscriberPath, PackageManager.Pnpm, {
         args: [
           `--registry=${registryUrl}`,
-          `--@${organization}:registry=${registryUrl}`,
-          authTokenArg
+          `--config.@${organization}:registry=${registryUrl}`,
+          pnpmAuthTokenArg
         ],
         env: {}
       });
