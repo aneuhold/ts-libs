@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## 🔖 [1.0.2] (2026-09-18)
+
+### 🏗️ Changed
+
+- Updated `@aneuhold/core-ts-lib` to `^2.4.9`.
+
+### 🩹 Fixed
+
+- Installs into pnpm 12 projects no longer fail with `unexpected argument '--@<scope>:registry'`. The scoped registry and auth token are passed to pnpm as `--config.` flags, which pnpm 10 through 12 accept.
+
 ## 🔖 [1.0.1] (2026-08-14)
 
 ### 🏗️ Changed
@@ -24,7 +34,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### 🏗️ Changed
 
-- *Breaking Change:* The local package store is keyed by publishing directory as well as package name, so one package can be published from several checkouts at once, each with its own versions and subscribers. Any existing store is renamed to a `.deprecated-<timestamp>` file next to it and replaced with an empty one, so every project has to subscribe again after upgrading.
+- _Breaking Change:_ The local package store is keyed by publishing directory as well as package name, so one package can be published from several checkouts at once, each with its own versions and subscribers. Any existing store is renamed to a `.deprecated-<timestamp>` file next to it and replaced with an empty one, so every project has to subscribe again after upgrading.
 - Published versions take the form `<yourVersion>-<pathSlug>.<timestamp>` (for example `1.2.3-pa1b2c3d4.20250528123456789`) rather than `<yourVersion>-<timestamp>`. The slug identifies the publishing directory, which is what keeps two checkouts of one package off the same version.
 - Commands no longer write and restore `.npmrc` or `.yarnrc.yml` files in your projects. The local registry is passed to the package manager on each invocation instead.
 - Commands hold a single system-wide lock for their whole run and wait for whichever command holds it, reporting how long they have waited, rather than giving up after ten seconds.
@@ -241,6 +251,8 @@ No direct code changes; version bump for compatibility.
 - Updated workflow permissions to allow repository write access
 
 <!-- Link References -->
+
+[1.0.2]: https://github.com/aneuhold/ts-libs/compare/local-npm-registry-v1.0.1...local-npm-registry-v1.0.2
 [1.0.1]: https://github.com/aneuhold/ts-libs/compare/local-npm-registry-v1.0.0...local-npm-registry-v1.0.1
 [1.0.0]: https://github.com/aneuhold/ts-libs/compare/local-npm-registry-v0.2.34...local-npm-registry-v1.0.0
 [0.2.34]: https://github.com/aneuhold/ts-libs/compare/local-npm-registry-v0.2.33...local-npm-registry-v0.2.34
