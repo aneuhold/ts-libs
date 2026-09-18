@@ -63,7 +63,7 @@
     "verdaccio": "^6.9.2"
   },
   "devDependencies": {
-    "@aneuhold/main-scripts": "^2.10.3",
+    "@aneuhold/main-scripts": "^2.11.2",
     "@types/fs-extra": "^11.0.4",
     "@types/node": "^24.13.3",
     "@types/proper-lockfile": "^4.1.4",
