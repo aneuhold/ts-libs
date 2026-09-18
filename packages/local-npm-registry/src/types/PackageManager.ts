@@ -48,30 +48,18 @@ export const PACKAGE_MANAGER_INFO: Record<PackageManager, PackageManagerInfo> = 
   [PackageManager.Npm]: {
     command: 'npm',
     lockFile: 'package-lock.json',
-    // The scoped flags are load bearing. `--registry` alone sits below a project
-    // `.npmrc` for any scope that file configures explicitly.
-    getRegistryOverrideCliOptions: (registryUrl, organizations) => ({
-      args: [
-        `--registry=${registryUrl}`,
-        ...organizations.map((organization) => `--@${organization}:registry=${registryUrl}`),
-        `--//${registryUrl.replace(/^https?:\/\//, '')}/:_authToken=fake`
-      ],
-      env: {}
-    }),
+    getRegistryOverrideCliOptions: (registryUrl, organizations) =>
+      getNpmrcRegistryOverrideCliOptions('--', registryUrl, organizations),
     displayName: 'npm'
   },
   [PackageManager.Pnpm]: {
     command: 'pnpm',
     lockFile: 'pnpm-lock.yaml',
-    // pnpm accepts the npm style scoped flag directly, with no `--config.` prefix
-    getRegistryOverrideCliOptions: (registryUrl, organizations) => ({
-      args: [
-        `--registry=${registryUrl}`,
-        ...organizations.map((organization) => `--@${organization}:registry=${registryUrl}`),
-        `--//${registryUrl.replace(/^https?:\/\//, '')}/:_authToken=fake`
-      ],
-      env: {}
-    }),
+    // pnpm 12 rejects any flag it does not define, which includes the npm style
+    // scoped registry and auth token flags. The `--config.` form of those keys
+    // works on pnpm 10 through 12 and takes priority over a project `.npmrc`.
+    getRegistryOverrideCliOptions: (registryUrl, organizations) =>
+      getNpmrcRegistryOverrideCliOptions('--config.', registryUrl, organizations),
     displayName: 'pnpm'
   },
   [PackageManager.Yarn]: {
@@ -102,3 +90,29 @@ export const PACKAGE_MANAGER_INFO: Record<PackageManager, PackageManagerInfo> = 
     displayName: 'Yarn Berry'
   }
 };
+
+/**
+ * Builds the registry redirection for a package manager that reads `.npmrc`
+ * style keys from its command line. The scoped flags are load bearing:
+ * `--registry` alone sits below a project `.npmrc` for any scope that file
+ * configures explicitly.
+ *
+ * @param keyFlagPrefix The prefix the package manager expects in front of an
+ * `.npmrc` key, applied to the scoped registry and auth token flags
+ * @param registryUrl The registry to redirect to
+ * @param organizations The scopes that have to resolve from that registry
+ */
+const getNpmrcRegistryOverrideCliOptions = (
+  keyFlagPrefix: string,
+  registryUrl: string,
+  organizations: string[]
+): PackageManagerRegistryOverride => ({
+  args: [
+    `--registry=${registryUrl}`,
+    ...organizations.map(
+      (organization) => `${keyFlagPrefix}@${organization}:registry=${registryUrl}`
+    ),
+    `${keyFlagPrefix}//${registryUrl.replace(/^https?:\/\//, '')}/:_authToken=fake`
+  ],
+  env: {}
+});
