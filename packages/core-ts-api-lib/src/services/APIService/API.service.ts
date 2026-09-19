@@ -18,12 +18,25 @@ import type {
   ProjectWorkoutPrimaryOutput
 } from '../../types/project/workout/ProjectWorkout.js';
 import GCloudAPIService from '../GCloudAPIService/GCloudAPI.service.js';
+import type { IAPIBackend } from './IAPIBackend.js';
 
 /**
- * A service for making calls to the backend API for personal projects. This is
- * abstracted so that the backend implementation can change over time.
+ * A service for making calls to the backend API for personal projects. Every
+ * call is delegated to the installed {@link IAPIBackend}, which defaults to
+ * {@link GCloudAPIService}.
  */
 export default class APIService {
+  static #backend: IAPIBackend = GCloudAPIService;
+
+  /**
+   * Replaces the backend that every call is delegated to.
+   *
+   * @param backend - The backend to delegate to.
+   */
+  static setBackend(backend: IAPIBackend): void {
+    APIService.#backend = backend;
+  }
+
   /**
    * Validates the provided credentials against the database and returns the
    * user's information if successful. Supports both password and Google
@@ -34,7 +47,7 @@ export default class APIService {
   static async validateUser(
     input: AuthValidateUserInput
   ): Promise<APIResponse<AuthValidateUserOutput>> {
-    return GCloudAPIService.authValidateUser(input);
+    return APIService.#backend.authValidateUser(input);
   }
 
   /**
@@ -42,7 +55,7 @@ export default class APIService {
    * server-side.
    */
   static async logout(): Promise<APIResponse<undefined>> {
-    return GCloudAPIService.authLogout();
+    return APIService.#backend.authLogout();
   }
 
   /**
@@ -50,7 +63,7 @@ export default class APIService {
    * per-user document tied to them.
    */
   static async deleteAccount(): Promise<APIResponse<AuthDeleteAccountOutput>> {
-    return GCloudAPIService.authDeleteAccount();
+    return APIService.#backend.authDeleteAccount();
   }
 
   /**
@@ -59,7 +72,7 @@ export default class APIService {
    * @param token - The access token.
    */
   static setAccessToken(token: string): void {
-    GCloudAPIService.setAccessToken(token);
+    APIService.#backend.setAccessToken(token);
   }
 
   /**
@@ -68,7 +81,7 @@ export default class APIService {
    * @param token - The refresh token string.
    */
   static setRefreshTokenString(token: string): void {
-    GCloudAPIService.setRefreshTokenString(token);
+    APIService.#backend.setRefreshTokenString(token);
   }
 
   /**
@@ -78,7 +91,7 @@ export default class APIService {
    * @param callback - The callback receiving the new accessToken and refreshTokenString.
    */
   static setOnTokensRefreshed(callback: OnTokensRefreshedCallback | null): void {
-    GCloudAPIService.setOnTokensRefreshed(callback);
+    APIService.#backend.setOnTokensRefreshed(callback);
   }
 
   /**
@@ -90,7 +103,7 @@ export default class APIService {
    * @param callback - The callback invoked when auth has expired.
    */
   static setOnAuthExpired(callback: OnAuthExpiredCallback | null): void {
-    GCloudAPIService.setOnAuthExpired(callback);
+    APIService.#backend.setOnAuthExpired(callback);
   }
 
   /**
@@ -101,7 +114,7 @@ export default class APIService {
   static async callDashboardAPI(
     input: ProjectDashboardInput
   ): Promise<APIResponse<ProjectDashboardOutput>> {
-    return GCloudAPIService.projectDashboard(input);
+    return APIService.#backend.projectDashboard(input);
   }
 
   /**
@@ -110,7 +123,7 @@ export default class APIService {
    * @param input - The input for the admin API call.
    */
   static async callAdminAPI(input: AdminInput): Promise<APIResponse<AdminOutput>> {
-    return GCloudAPIService.admin(input);
+    return APIService.#backend.admin(input);
   }
 
   /**
@@ -121,14 +134,14 @@ export default class APIService {
   static async callWorkoutAPI(
     input: ProjectWorkoutPrimaryInput
   ): Promise<APIResponse<ProjectWorkoutPrimaryOutput>> {
-    return GCloudAPIService.projectWorkout(input);
+    return APIService.#backend.projectWorkout(input);
   }
 
   /**
    * Gets the current base URL for the API.
    */
   static getCurrentAPIUrl(): string {
-    return GCloudAPIService.getUrl();
+    return APIService.#backend.getUrl();
   }
 
   /**
@@ -137,13 +150,13 @@ export default class APIService {
    * @param url - The URL to be set for the API. This should include a trailing slash.
    */
   static setAPIUrl(url: string): void {
-    GCloudAPIService.setUrl(url);
+    APIService.#backend.setUrl(url);
   }
 
   /**
    * Gets the default base URL for the API.
    */
   static getDefaultAPIUrl(): string {
-    return GCloudAPIService.defaultUrl;
+    return APIService.#backend.defaultUrl;
   }
 }
