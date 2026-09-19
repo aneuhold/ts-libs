@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## 🔖 [3.1.24] (2026-09-19)
+
+### 🏗️ Changed
+
+- Updated `@aneuhold/core-ts-api-lib` to `^3.0.47`.
+
 ## 🔖 [3.1.23] (2026-09-18)
 
 ### 🏗️ Changed
@@ -376,6 +382,7 @@ No direct code changes; version bump for compatibility with new major versions o
 - Updated workflow permissions to allow repository write access
 
 <!-- Link References -->
+[3.1.24]: https://github.com/aneuhold/ts-libs/compare/be-ts-lib-v3.1.23...be-ts-lib-v3.1.24
 [3.1.23]: https://github.com/aneuhold/ts-libs/compare/be-ts-lib-v3.1.21...be-ts-lib-v3.1.23
 [3.1.21]: https://github.com/aneuhold/ts-libs/compare/be-ts-lib-v3.1.20...be-ts-lib-v3.1.21
 [3.1.20]: https://github.com/aneuhold/ts-libs/compare/be-ts-lib-v3.1.19...be-ts-lib-v3.1.20

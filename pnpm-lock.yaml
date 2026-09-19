@@ -203,7 +203,7 @@ importers:
   packages/be-ts-db-lib:
     dependencies:
       '@aneuhold/be-ts-lib':
-        specifier: ^3.1.23
+        specifier: ^3.1.24
         version: link:../be-ts-lib
       '@aneuhold/core-ts-db-lib':
         specifier: ^5.0.15
@@ -273,7 +273,7 @@ importers:
   packages/be-ts-lib:
     dependencies:
       '@aneuhold/core-ts-api-lib':
-        specifier: ^3.0.46
+        specifier: ^3.0.47
         version: link:../core-ts-api-lib
       '@aneuhold/core-ts-lib':
         specifier: ^2.4.10

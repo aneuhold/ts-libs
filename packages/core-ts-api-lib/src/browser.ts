@@ -1,4 +1,5 @@
 import APIService from './services/APIService/API.service.js';
+import type { IAPIBackend } from './services/APIService/IAPIBackend.js';
 import type {
   AdminInput,
   AdminOutput,
@@ -48,6 +49,7 @@ export type {
   DashboardConfig,
   DashboardWebSocketClientToServerEvents,
   DashboardWebSocketServerToClientEvents,
+  IAPIBackend,
   ProjectDashboardInput,
   ProjectDashboardOptions,
   ProjectDashboardOutput,
