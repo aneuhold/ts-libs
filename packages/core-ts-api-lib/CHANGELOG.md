@@ -9,11 +9,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### ✅ Added
 
-### 🏗️ Changed
-
-### 🩹 Fixed
-
-### 🔥 Removed
+- Added the `IAPIBackend` interface, describing the backend that `APIService` delegates its calls to.
+- Added `APIService.setBackend()` static method to install a custom `IAPIBackend`, replacing the default `GCloudAPIService` backend.
 
 ## 🔖 [3.0.46] (2026-09-18)
 
