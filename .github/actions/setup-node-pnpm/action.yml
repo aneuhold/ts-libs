@@ -12,10 +12,14 @@ runs:
         runtime: node@lts
         cache: true
 
+    # npm needs to be 11.5.1 or later for OIDC support. `pnpm/setup` only links
+    # `node` onto the PATH, so `npm` otherwise resolves to the runner image's
+    # copy.
     - name: Update NPM to latest
-      # This needs to be 11.5.1 or later for OIDC support
       shell: bash
-      run: npm install -g npm@latest
+      run: |
+        pnpm add -g npm@latest
+        npm --version
 
     # Only the yarn shim is enabled, so the pnpm that `pnpm/setup` installed stays
     # the one on the PATH
