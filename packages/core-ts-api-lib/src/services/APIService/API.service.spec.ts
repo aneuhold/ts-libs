@@ -24,7 +24,8 @@ describe('Unit Tests', () => {
     const validateUserResponse: APIResponse<AuthValidateUserOutput> = {
       success: true,
       data: {},
-      errors: []
+      errors: [],
+      statusCode: 200
     };
 
     afterEach(() => {
@@ -103,7 +104,8 @@ describe('Unit Tests', () => {
         const mockResponse: APIResponse<ProjectDashboardOutput> = {
           success: true,
           data: {},
-          errors: []
+          errors: [],
+          statusCode: 200
         };
 
         const spy: MockInstance = vi.spyOn(GCloudAPIService, 'projectDashboard');

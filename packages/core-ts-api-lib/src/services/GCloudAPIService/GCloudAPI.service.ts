@@ -1,5 +1,6 @@
 import { DateService, ErrorUtils } from '@aneuhold/core-ts-lib';
 import type { AdminInput, AdminOutput } from '../../types/Admin.js';
+import { APIErrorCode } from '../../types/APIErrorCode.js';
 import type { APIResponse } from '../../types/APIResponse.js';
 import type {
   AuthDeleteAccountInput,
@@ -29,6 +30,7 @@ import type {
  */
 export default class GCloudAPIService {
   static readonly defaultUrl: string = 'https://api.antonneuhold.com/';
+  static readonly #requestTimeoutMs = 30_000;
 
   /**
    * The base URL of the Google Cloud API. For example, `something.com/api/`. It will include
@@ -123,15 +125,11 @@ export default class GCloudAPIService {
    */
   static async authLogout(): Promise<APIResponse<undefined>> {
     if (!this.#refreshTokenString) {
-      return { success: true, errors: [], data: undefined };
+      return { success: true, errors: [], data: undefined, statusCode: 200 };
     }
-    const { decoded } = await this.#fetchAndDecode<AuthRefreshTokenInput, undefined>(
-      'auth/logout',
-      {
-        refreshTokenString: this.#refreshTokenString
-      }
-    );
-    return decoded;
+    return this.#fetchAndDecode<AuthRefreshTokenInput, undefined>('auth/logout', {
+      refreshTokenString: this.#refreshTokenString
+    });
   }
 
   /**
@@ -193,25 +191,24 @@ export default class GCloudAPIService {
     urlPath: string,
     input: TInput
   ): Promise<APIResponse<TOutput>> {
-    let { response, decoded } = await this.#fetchAndDecode<TInput, TOutput>(urlPath, input);
+    let result = await this.#fetchAndDecode<TInput, TOutput>(urlPath, input);
 
     // On a 401, try once to recover by refreshing the tokens and retrying.
     // #tryRefreshTokens returns false when there is no refresh token to use.
-    if (response.status === 401 && (await this.#tryRefreshTokens())) {
-      // Fancy destructure into pre-existing variables
-      ({ response, decoded } = await this.#fetchAndDecode<TInput, TOutput>(urlPath, input));
+    if (result.statusCode === 401 && (await this.#tryRefreshTokens())) {
+      result = await this.#fetchAndDecode<TInput, TOutput>(urlPath, input);
     }
 
     // Still a 401 after any recovery attempt means the session cannot be
     // recovered, so drop the dead tokens and notify the frontend to prompt
     // re-login.
-    if (response.status === 401) {
+    if (result.statusCode === 401) {
       this.#accessToken = undefined;
       this.#refreshTokenString = undefined;
       this.#onAuthExpired?.();
     }
 
-    return decoded;
+    return result;
   }
 
   /**
@@ -242,7 +239,7 @@ export default class GCloudAPIService {
       return false;
     }
 
-    const { decoded } = await this.#fetchAndDecode<AuthRefreshTokenInput, AuthRefreshTokenOutput>(
+    const decoded = await this.#fetchAndDecode<AuthRefreshTokenInput, AuthRefreshTokenOutput>(
       'auth/refresh',
       { refreshTokenString: this.#refreshTokenString }
     );
@@ -263,7 +260,9 @@ export default class GCloudAPIService {
   }
 
   /**
-   * Performs a POST request and decodes the JSON response.
+   * Performs a POST request and decodes the JSON response. Rejects when the
+   * request fails at the transport level or takes longer than
+   * {@link #requestTimeoutMs}.
    *
    * @param urlPath - The path to the endpoint.
    * @param input - The input to the endpoint.
@@ -271,7 +270,7 @@ export default class GCloudAPIService {
   static async #fetchAndDecode<TInput, TOutput>(
     urlPath: string,
     input: TInput
-  ): Promise<{ response: Response; decoded: APIResponse<TOutput> }> {
+  ): Promise<APIResponse<TOutput>> {
     const headers = new Headers({
       Connection: 'keep-alive',
       'Content-Type': 'application/json',
@@ -282,41 +281,54 @@ export default class GCloudAPIService {
       headers.set('Authorization', `Bearer ${this.#accessToken}`);
     }
 
-    const response = await fetch(this.#baseUrl + urlPath, {
-      method: 'POST',
-      headers,
-      body: JSON.stringify(input)
-    });
-    const decoded = await this.#decodeResponse<TOutput>(response);
-    return { response, decoded };
+    const abortController = new AbortController();
+    const timeout = setTimeout(() => {
+      abortController.abort(new Error(`Request to ${urlPath} timed out`));
+    }, this.#requestTimeoutMs);
+    try {
+      const response = await fetch(this.#baseUrl + urlPath, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(input),
+        signal: abortController.signal
+      });
+      const result = await this.#decodeResponse<TOutput>(response);
+      // A body read cut off by the timeout is a transport failure, not a bad response
+      abortController.signal.throwIfAborted();
+      return result;
+    } finally {
+      clearTimeout(timeout);
+    }
   }
 
   /**
-   * Decodes a fetch Response into an APIResponse.
+   * Decodes a fetch Response into an APIResponse. A valid body is returned
+   * unchanged. A body that can't be read or decoded, isn't JSON, or isn't a
+   * valid APIResponse decodes to an unsuccessful one carrying the HTTP status
+   * and {@link APIErrorCode.InvalidAPIResponseShape}.
    *
    * @param response - The fetch response to decode.
    */
   static async #decodeResponse<TOutput>(response: Response): Promise<APIResponse<TOutput>> {
+    let errors: string[];
     try {
       const text = await response.text();
       const parsed: unknown = JSON.parse(text, DateService.dateReviver);
-      if (!this.#isAPIResponseShape<TOutput>(parsed)) {
-        return {
-          success: false,
-          errors: ['Response did not match the expected APIResponse shape'],
-          // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-          data: {} as TOutput
-        };
+      if (this.#isAPIResponseShape<TOutput>(parsed)) {
+        return parsed;
       }
-      return parsed;
+      errors = ['Response did not match the expected APIResponse shape'];
     } catch (error) {
-      return {
-        success: false,
-        errors: ['Failed to parse response', ErrorUtils.getErrorString(error)],
-        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-        data: {} as TOutput
-      };
+      errors = ['Failed to decode response', ErrorUtils.getErrorString(error)];
     }
+    return {
+      success: false,
+      errors,
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+      data: {} as TOutput,
+      statusCode: response.status,
+      errorCode: APIErrorCode.InvalidAPIResponseShape
+    };
   }
 
   /**
@@ -337,6 +349,14 @@ export default class GCloudAPIService {
       return false;
     }
     if (!value.errors.every((err) => typeof err === 'string')) {
+      return false;
+    }
+    if (!('statusCode' in value) || typeof value.statusCode !== 'number') {
+      return false;
+    }
+    // The code is not checked against the enum, so a code added by a newer
+    // backend still decodes.
+    if ('errorCode' in value && typeof value.errorCode !== 'string') {
       return false;
     }
     return 'data' in value;
