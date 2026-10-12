@@ -5,26 +5,26 @@ import type { AuthValidateUserInput } from '../../types/AuthValidateUser.js';
 import type { ProjectDashboardInput } from '../../types/project/dashboard/ProjectDashboard.js';
 import GCloudAPIService from './GCloudAPI.service.js';
 
-/**
- * Creates a promise that never settles on its own and rejects with the abort
- * reason once the signal aborts, the way fetch and body reads behave.
- *
- * @param signal - The abort signal of the request.
- */
-const rejectOnAbort = (signal: AbortSignal | null | undefined): Promise<never> =>
-  new Promise((_resolve, reject) => {
-    signal?.addEventListener('abort', () => {
-      const reason: unknown = signal.reason;
-      reject(reason instanceof Error ? reason : new Error('Aborted'));
-    });
-  });
-
 describe('Unit Tests', () => {
   describe('GCloudAPIService', () => {
     /**
      * Can be used to work with the global fetch mock
      */
     const mockFetch = vi.fn();
+
+    /**
+     * Creates a promise that never settles on its own and rejects with the
+     * abort reason once the signal aborts, the way fetch and body reads behave.
+     *
+     * @param signal - The abort signal of the request.
+     */
+    const rejectOnAbort = (signal: AbortSignal | null | undefined): Promise<never> =>
+      new Promise((_resolve, reject) => {
+        signal?.addEventListener('abort', () => {
+          const reason: unknown = signal.reason;
+          reject(reason instanceof Error ? reason : new Error('Aborted'));
+        });
+      });
 
     beforeEach(() => {
       vi.stubGlobal('fetch', mockFetch);
@@ -214,7 +214,7 @@ describe('Unit Tests', () => {
           expect(result.errorCode).toBe(APIErrorCode.InvalidAPIResponseShape);
         });
 
-        it('still decodes an errorCode outside the enum', async () => {
+        it('fails the shape check for an errorCode outside the enum', async () => {
           const body = {
             success: false,
             errors: ['Something new'],
@@ -229,7 +229,9 @@ describe('Unit Tests', () => {
 
           const result = await GCloudAPIService.projectDashboard(input);
 
-          expect(result).toEqual(body);
+          expect(result.success).toBe(false);
+          expect(result.statusCode).toBe(400);
+          expect(result.errorCode).toBe(APIErrorCode.InvalidAPIResponseShape);
         });
       });
 

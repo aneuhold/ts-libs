@@ -1,8 +1,6 @@
 /**
  * Codes naming the specific failure behind an unsuccessful {@link APIResponse},
  * shared by every project. Each code documents the HTTP status it is sent with.
- *
- * A project's own codes go in their own enum export (e.g. `WorkoutAPIErrorCode`).
  */
 export enum APIErrorCode {
   /** 401: The access token is missing, invalid, or expired. */

@@ -54,7 +54,7 @@
     "TypeScript"
   ],
   "dependencies": {
-    "@aneuhold/core-ts-api-lib": "^3.0.48",
+    "@aneuhold/core-ts-api-lib": "^4.0.0",
     "@aneuhold/core-ts-lib": "^2.4.10",
     "dotenv": "^17.4.2",
     "jsonc-parser": "^3.3.1",

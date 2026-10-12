@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### ✅ Added
 
 - `BaseRepository.insertManyIfAbsent` inserts only documents whose `_id` is not already present, leaves existing documents unchanged, and returns only the newly inserted documents, so repeating the same insert is safe. Insert subscribers run for the inserted documents only.
-- The workout repositories record touched doc types and affected user IDs for `insertManyIfAbsent`.
+- The workout and dashboard repositories record touched doc types and affected user IDs for `insertManyIfAbsent`. `DashboardTaskRepository` also records `sharedWith` users, and `DashboardUserConfigRepository` adds the config's user to each collaborator's config.
 
 ### 🏗️ Changed
 

@@ -354,9 +354,7 @@ export default class GCloudAPIService {
     if (!('statusCode' in value) || typeof value.statusCode !== 'number') {
       return false;
     }
-    // The code is not checked against the enum, so a code added by a newer
-    // backend still decodes.
-    if ('errorCode' in value && typeof value.errorCode !== 'string') {
+    if ('errorCode' in value && !Object.values<unknown>(APIErrorCode).includes(value.errorCode)) {
       return false;
     }
     return 'data' in value;
