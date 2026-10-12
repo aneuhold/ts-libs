@@ -61,6 +61,15 @@ export default abstract class WorkoutBaseWithUserIdRepository<
     return result;
   }
 
+  override async insertManyIfAbsent(
+    newDocs: TBaseType[],
+    meta?: DbOperationMetaData
+  ): Promise<TBaseType[]> {
+    const result = await super.insertManyIfAbsent(newDocs, meta);
+    meta?.addAffectedUserIds(result.map((d) => d.userId));
+    return result;
+  }
+
   override async update(
     updatedDoc: Partial<TBaseType>,
     meta?: DbOperationMetaData

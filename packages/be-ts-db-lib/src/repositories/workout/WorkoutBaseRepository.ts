@@ -49,6 +49,14 @@ export default abstract class WorkoutBaseRepository<
     return super.insertMany(newDocs, meta);
   }
 
+  override async insertManyIfAbsent(
+    newDocs: TBaseType[],
+    meta?: DbOperationMetaData
+  ): Promise<TBaseType[]> {
+    meta?.recordDocTypeTouched(this.docType);
+    return super.insertManyIfAbsent(newDocs, meta);
+  }
+
   override async update(
     updatedDoc: Partial<TBaseType>,
     meta?: DbOperationMetaData

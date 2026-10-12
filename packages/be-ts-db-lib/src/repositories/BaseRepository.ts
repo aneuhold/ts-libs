@@ -131,6 +131,47 @@ export default abstract class BaseRepository<TBaseType extends BaseDocument> {
   }
 
   /**
+   * Inserts the documents whose `_id` is not already in this repository and
+   * leaves existing documents unchanged, so repeating the same insert is
+   * safe. Each insert is an atomic upsert that only sets fields on insert.
+   *
+   * @param newDocs - The documents to insert.
+   * @param meta - Tracks database operation metadata for a single request.
+   * @returns Only the documents that were inserted. Insert subscribers run for
+   * these documents only.
+   */
+  async insertManyIfAbsent(newDocs: TBaseType[], meta?: DbOperationMetaData): Promise<TBaseType[]> {
+    if (newDocs.length === 0) {
+      return [];
+    }
+    const collection = await this.getCollection();
+    await Promise.all(newDocs.map((doc) => this.validator.validateNewObject(doc, meta)));
+
+    const bulkOps: AnyBulkWriteOperation<TBaseType>[] = newDocs.map((doc) => {
+      const idFilter: Filter<BaseDocument> = { _id: doc._id };
+      // This makes it so that it only inserts if the doc is in the ids provided, and
+      // it is a full "insert", which is what setOnInsert does.
+      return {
+        updateOne: {
+          filter: this.getFilterWithDefault(idFilter),
+          update: { $setOnInsert: doc },
+          upsert: true
+        }
+      };
+    });
+    const result = await collection.bulkWrite(bulkOps);
+
+    // Only trigger subscribers for the docs that were newly inserted.
+    const insertedDocs = newDocs.filter((_doc, index) => index in result.upsertedIds);
+    if (insertedDocs.length > 0) {
+      await Promise.all(
+        this.subscribers.insertMany.map((subscriber) => subscriber(insertedDocs, meta))
+      );
+    }
+    return insertedDocs;
+  }
+
+  /**
    * Retrieves a document matching the given filter.
    *
    * @param filter - The filter to apply.

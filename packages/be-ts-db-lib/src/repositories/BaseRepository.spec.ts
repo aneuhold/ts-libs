@@ -5,13 +5,15 @@ import {
   UserSchema
 } from '@aneuhold/core-ts-db-lib';
 import crypto from 'crypto';
-import { afterAll, expect, it } from 'vitest';
+import { afterAll, describe, expect, it } from 'vitest';
+import workoutTestUtil from '../../test-util/projects/workout/workoutTestUtil.js';
 import { getTestUserName } from '../../test-util/testsUtil.js';
 import DemoAccountsService from '../services/DemoAccountsService/DemoAccounts.service.js';
 import DocumentDb from '../util/DocumentDb.js';
 import UserRepository from './common/UserRepository.js';
 import DashboardTaskRepository from './dashboard/DashboardTaskRepository.js';
 import DashboardUserConfigRepository from './dashboard/DashboardUserConfigRepository.js';
+import WorkoutEquipmentTypeRepository from './workout/WorkoutEquipmentTypeRepository.js';
 
 it('can create a new document and delete it', async () => {
   const userRepository = UserRepository.getRepo();
@@ -19,6 +21,42 @@ it('can create a new document and delete it', async () => {
   const createResult = await userRepository.insertNew(newUser);
   expect(createResult).toBeTruthy();
 }, 10000);
+
+describe('insertManyIfAbsent', () => {
+  const repo = WorkoutEquipmentTypeRepository.getRepo();
+
+  it('inserts only the new documents, returns them, and leaves existing ones unchanged', async () => {
+    const testUser = await workoutTestUtil.insertUser('insertManyIfAbsent');
+    const existing = await workoutTestUtil.insertEquipmentType(testUser._id, 'Existing');
+    const newDoc = workoutTestUtil.createEquipmentType(testUser._id, 'New');
+
+    const result = await repo.insertManyIfAbsent([{ ...existing, title: 'Changed' }, newDoc]);
+
+    expect(result.map((doc) => doc._id)).toEqual([newDoc._id]);
+    const stored = await repo.getList([existing._id, newDoc._id]);
+    expect(stored.find((doc) => doc._id === existing._id)?.title).toBe('Existing');
+    expect(stored.find((doc) => doc._id === newDoc._id)?.title).toBe('New');
+  });
+
+  it('can repeat the same insert without creating duplicates', async () => {
+    const testUser = await workoutTestUtil.insertUser('insertManyIfAbsent');
+    const doc = workoutTestUtil.createEquipmentType(testUser._id);
+
+    await repo.insertManyIfAbsent([doc]);
+    const retryResult = await repo.insertManyIfAbsent([doc]);
+
+    expect(retryResult).toEqual([]);
+    expect(await repo.getList([doc._id])).toHaveLength(1);
+  });
+
+  it('fails when the _id belongs to a document of another type', async () => {
+    const testUser = await workoutTestUtil.insertUser('insertManyIfAbsent');
+    const muscleGroup = await workoutTestUtil.insertMuscleGroup(testUser._id);
+    const doc = { ...workoutTestUtil.createEquipmentType(testUser._id), _id: muscleGroup._id };
+
+    await expect(repo.insertManyIfAbsent([doc])).rejects.toThrow(/duplicate key/);
+  });
+});
 
 // -- Manual Database Operations Section -- //
 
