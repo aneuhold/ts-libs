@@ -149,8 +149,9 @@ export default abstract class BaseRepository<TBaseType extends BaseDocument> {
 
     const bulkOps: AnyBulkWriteOperation<TBaseType>[] = newDocs.map((doc) => {
       const idFilter: Filter<BaseDocument> = { _id: doc._id };
-      // This makes it so that it only inserts if the doc is in the ids provided, and
-      // it is a full "insert", which is what setOnInsert does.
+      // The default filter (e.g. docType) is part of the match, so an _id that
+      // belongs to a document of another type fails with a duplicate key error
+      // instead of matching it. $setOnInsert writes the full doc only on insert.
       return {
         updateOne: {
           filter: this.getFilterWithDefault(idFilter),

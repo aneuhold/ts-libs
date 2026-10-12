@@ -5,6 +5,20 @@ import type { AuthValidateUserInput } from '../../types/AuthValidateUser.js';
 import type { ProjectDashboardInput } from '../../types/project/dashboard/ProjectDashboard.js';
 import GCloudAPIService from './GCloudAPI.service.js';
 
+/**
+ * Creates a promise that never settles on its own and rejects with the abort
+ * reason once the signal aborts, the way fetch and body reads behave.
+ *
+ * @param signal - The abort signal of the request.
+ */
+const rejectOnAbort = (signal: AbortSignal | null | undefined): Promise<never> =>
+  new Promise((_resolve, reject) => {
+    signal?.addEventListener('abort', () => {
+      const reason: unknown = signal.reason;
+      reject(reason instanceof Error ? reason : new Error('Aborted'));
+    });
+  });
+
 describe('Unit Tests', () => {
   describe('GCloudAPIService', () => {
     /**
@@ -125,9 +139,6 @@ describe('Unit Tests', () => {
             text: () => Promise.resolve(JSON.stringify(mockResponse))
           });
 
-          const input: ProjectDashboardInput = {
-            options: {}
-          };
           const result = await GCloudAPIService.projectDashboard(input);
           // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
           const data = result.data as unknown as { createdAt: Date; name: string };
@@ -140,12 +151,10 @@ describe('Unit Tests', () => {
 
         it('should handle JSON parse errors gracefully', async () => {
           mockFetch.mockResolvedValue({
+            status: 200,
             text: () => Promise.resolve('Invalid JSON')
           });
 
-          const input: ProjectDashboardInput = {
-            options: {}
-          };
           const result = await GCloudAPIService.projectDashboard(input);
 
           expect(result.success).toBe(false);
@@ -240,15 +249,8 @@ describe('Unit Tests', () => {
 
         it('rejects a request that never resolves', async () => {
           vi.useFakeTimers();
-          // Behaves like fetch: never settles on its own, rejects when aborted.
-          mockFetch.mockImplementation(
-            (_url: string, init: RequestInit) =>
-              new Promise((_resolve, reject) => {
-                init.signal?.addEventListener('abort', () => {
-                  const reason: unknown = init.signal?.reason;
-                  reject(reason instanceof Error ? reason : new Error('Aborted'));
-                });
-              })
+          mockFetch.mockImplementation((_url: string, init: RequestInit) =>
+            rejectOnAbort(init.signal)
           );
 
           const resultPromise = GCloudAPIService.projectDashboard({ options: {} });
@@ -260,17 +262,10 @@ describe('Unit Tests', () => {
 
         it('rejects a request whose body never finishes', async () => {
           vi.useFakeTimers();
-          // Behaves like a body read: never settles on its own, rejects when aborted.
           mockFetch.mockImplementation((_url: string, init: RequestInit) =>
             Promise.resolve({
               status: 200,
-              text: () =>
-                new Promise((_resolve, reject) => {
-                  init.signal?.addEventListener('abort', () => {
-                    const reason: unknown = init.signal?.reason;
-                    reject(reason instanceof Error ? reason : new Error('Aborted'));
-                  });
-                })
+              text: () => rejectOnAbort(init.signal)
             })
           );
 
@@ -300,6 +295,48 @@ describe('Unit Tests', () => {
 
       afterEach(() => {
         GCloudAPIService.setOnAuthExpired(null);
+        vi.useRealTimers();
+      });
+
+      it('treats a 401 whose body is not an APIResponse as unauthorized', async () => {
+        mockFetch.mockResolvedValue({
+          status: 401,
+          text: () => Promise.resolve('<html>Unauthorized</html>')
+        });
+
+        const result = await GCloudAPIService.projectDashboard(input);
+
+        expect(onAuthExpired).toHaveBeenCalledTimes(1);
+        expect(result.statusCode).toBe(401);
+        expect(result.errorCode).toBe(APIErrorCode.InvalidAPIResponseShape);
+      });
+
+      it('rejects when the refresh times out and starts a fresh refresh on the next 401', async () => {
+        vi.useFakeTimers();
+        GCloudAPIService.setRefreshTokenString('refresh-token');
+        mockFetch
+          .mockResolvedValueOnce({
+            status: 401,
+            text: () => Promise.resolve(JSON.stringify(unauthorizedBody))
+          })
+          .mockImplementationOnce((_url: string, init: RequestInit) => rejectOnAbort(init.signal))
+          .mockResolvedValue({
+            status: 401,
+            text: () => Promise.resolve(JSON.stringify(unauthorizedBody))
+          });
+
+        const resultPromise = GCloudAPIService.projectDashboard(input);
+        const assertion = expect(resultPromise).rejects.toThrow('timed out');
+        await vi.advanceTimersByTimeAsync(30_000);
+        await assertion;
+
+        // The second call gets a 401, then a new refresh attempt (also 401).
+        await GCloudAPIService.projectDashboard(input);
+        expect(mockFetch).toHaveBeenCalledTimes(4);
+        expect(mockFetch).toHaveBeenLastCalledWith(
+          'https://test-url.com/auth/refresh',
+          expect.any(Object)
+        );
       });
 
       it('fires the callback and returns the decoded 401 when there is no refresh token', async () => {
