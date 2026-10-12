@@ -34,6 +34,9 @@ The `local-npm` tool is used to simulate an NPM registry locally.
 
 - When a package is built in watch mode, it is "published" to this local registry.
 - Other packages in the monorepo (or external projects configured to use `local-npm`) can then consume these "published" versions immediately without waiting for a real NPM release.
+- An external project subscribes to a package once with its `sub:<package>` script. Each later publish installs the new version into every subscriber automatically, so re-running `sub` to pick up a change is unnecessary.
+- After an edit, wait a few seconds for the rebuild and publish to finish before relying on the change, in this repo or in a consumer.
+- Run subscribes one at a time. Concurrent or repeated subscribes collide with in-progress publishes.
 
 ## Dependency Management
 

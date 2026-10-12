@@ -17,6 +17,7 @@ import WorkoutMuscleGroupRepository from './repositories/workout/WorkoutMuscleGr
 import WorkoutSessionExerciseRepository from './repositories/workout/WorkoutSessionExerciseRepository.js';
 import WorkoutSessionRepository from './repositories/workout/WorkoutSessionRepository.js';
 import WorkoutSetRepository from './repositories/workout/WorkoutSetRepository.js';
+import WorkoutUserConfigRepository from './repositories/workout/WorkoutUserConfigRepository.js';
 import GoogleAuthService from './services/GoogleAuth.service.js';
 import DbOperationMetaData from './util/DbOperationMetaData.js';
 import DocumentDb from './util/DocumentDb.js';
@@ -44,7 +45,8 @@ export {
   WorkoutMuscleGroupRepository,
   WorkoutSessionExerciseRepository,
   WorkoutSessionRepository,
-  WorkoutSetRepository
+  WorkoutSetRepository,
+  WorkoutUserConfigRepository
 };
 
 // Export TypeScript types where needed
