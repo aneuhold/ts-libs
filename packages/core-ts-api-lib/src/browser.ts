@@ -6,6 +6,7 @@ import type {
   AdminOutputUserDetail,
   AdminOutputUserDocumentCounts
 } from './types/Admin.js';
+import { APIErrorCode } from './types/APIErrorCode.js';
 import type { APIResponse } from './types/APIResponse.js';
 import type { AuthCheckPasswordInput, AuthCheckPasswordOutput } from './types/AuthCheckPassword.js';
 import type { AuthDeleteAccountInput, AuthDeleteAccountOutput } from './types/AuthDeleteAccount.js';
@@ -31,7 +32,7 @@ import type {
 } from './types/WebSocket.js';
 
 // Export all browser-safe functions and classes from this library
-export { APIService };
+export { APIErrorCode, APIService };
 
 // Export TypeScript types where needed
 export type {

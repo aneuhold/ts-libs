@@ -81,12 +81,7 @@ export default class DashboardUserConfigRepository extends DashboardBaseWithUser
   ): Promise<DashboardUserConfig | null> {
     const result = await super.insertNew(newDoc, meta);
     if (newDoc.collaborators.length > 0) {
-      await this.#updateCollaboratorsIfNeeded([
-        {
-          originalDoc: DashboardUserConfigSchema.parse({ userId: newDoc.userId }),
-          updatedDoc: newDoc
-        }
-      ]);
+      await this.#addToCollaboratorsOfNewConfigs([newDoc]);
     }
     return result;
   }
@@ -105,13 +100,24 @@ export default class DashboardUserConfigRepository extends DashboardBaseWithUser
     meta?: DbOperationMetaData
   ): Promise<DashboardUserConfig[]> {
     const result = await super.insertMany(newDocs, meta);
-    // Simulate having no collaborators originally.
-    await this.#updateCollaboratorsIfNeeded(
-      newDocs.map((doc) => ({
-        originalDoc: DashboardUserConfigSchema.parse({ userId: doc.userId }),
-        updatedDoc: doc
-      }))
-    );
+    await this.#addToCollaboratorsOfNewConfigs(newDocs);
+    return result;
+  }
+
+  /**
+   * Inserts the configs that are not already present. Collaborators of the
+   * inserted configs have the config's user added to their collaborators list.
+   *
+   * @param newDocs The {@link DashboardUserConfig} documents to insert.
+   * @param meta Tracks database operation metadata for a single request.
+   * @returns Only the inserted documents.
+   */
+  override async insertManyIfAbsent(
+    newDocs: DashboardUserConfig[],
+    meta?: DbOperationMetaData
+  ): Promise<DashboardUserConfig[]> {
+    const result = await super.insertManyIfAbsent(newDocs, meta);
+    await this.#addToCollaboratorsOfNewConfigs(result);
     return result;
   }
 
@@ -175,6 +181,22 @@ export default class DashboardUserConfigRepository extends DashboardBaseWithUser
     const collection = await this.getCollection();
     const result = await collection.findOne(this.getFilterWithDefault({ userId }));
     return result;
+  }
+
+  /**
+   * Adds the user of each new config to the collaborators list of every
+   * collaborator on that config.
+   *
+   * @param newDocs The newly inserted {@link DashboardUserConfig} documents.
+   */
+  async #addToCollaboratorsOfNewConfigs(newDocs: DashboardUserConfig[]) {
+    // Simulate having no collaborators originally.
+    await this.#updateCollaboratorsIfNeeded(
+      newDocs.map((doc) => ({
+        originalDoc: DashboardUserConfigSchema.parse({ userId: doc.userId }),
+        updatedDoc: doc
+      }))
+    );
   }
 
   /**

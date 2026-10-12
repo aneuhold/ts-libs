@@ -75,10 +75,16 @@ export default class DashboardTaskRepository extends DashboardBaseWithUserIdRepo
     meta?: DbOperationMetaData
   ): Promise<DashboardTask[]> {
     const result = await super.insertMany(newDocs, meta);
-    if (meta && result.length > 0) {
-      const sharedWithUsers = result.flatMap((task) => task.sharedWith);
-      meta.addAffectedUserIds(sharedWithUsers);
-    }
+    meta?.addAffectedUserIds(result.flatMap((task) => task.sharedWith));
+    return result;
+  }
+
+  override async insertManyIfAbsent(
+    newDocs: DashboardTask[],
+    meta?: DbOperationMetaData
+  ): Promise<DashboardTask[]> {
+    const result = await super.insertManyIfAbsent(newDocs, meta);
+    meta?.addAffectedUserIds(result.flatMap((task) => task.sharedWith));
     return result;
   }
 

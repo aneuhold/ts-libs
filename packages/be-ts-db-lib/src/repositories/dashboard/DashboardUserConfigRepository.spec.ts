@@ -1,4 +1,4 @@
-import { UserSchema } from '@aneuhold/core-ts-db-lib';
+import { DashboardUserConfigSchema, UserSchema } from '@aneuhold/core-ts-db-lib';
 import { describe, expect, it } from 'vitest';
 import { getTestUserName } from '../../../test-util/testsUtil.js';
 import UserRepository from '../common/UserRepository.js';
@@ -16,6 +16,25 @@ describe('Create operations', () => {
     if (!newConfig) {
       return;
     }
+  });
+
+  it('adds the user to collaborator configs when insertManyIfAbsent inserts a config', async () => {
+    const newUser = await createNewTestUser();
+    const collaborator = await createNewTestUser();
+    const autoCreatedConfig = await configRepo.get({ userId: newUser._id });
+    if (autoCreatedConfig) {
+      await configRepo.delete(autoCreatedConfig._id);
+    }
+    const newConfig = DashboardUserConfigSchema.parse({
+      userId: newUser._id,
+      collaborators: [collaborator._id]
+    });
+
+    const result = await configRepo.insertManyIfAbsent([newConfig]);
+
+    expect(result.map((doc) => doc._id)).toEqual([newConfig._id]);
+    const collaboratorConfig = await configRepo.get({ userId: collaborator._id });
+    expect(collaboratorConfig?.collaborators).toContain(newUser._id);
   });
 });
 

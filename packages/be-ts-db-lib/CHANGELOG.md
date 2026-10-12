@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## 🔖 [4.2.39] (2026-10-12)
+
+### ✅ Added
+
+- `BaseRepository.insertManyIfAbsent` inserts only documents whose `_id` is not already present, leaves existing documents unchanged, and returns only the newly inserted documents, so repeating the same insert is safe. Insert subscribers run for the inserted documents only.
+- The workout and dashboard repositories record touched doc types and affected user IDs for `insertManyIfAbsent`. `DashboardTaskRepository` also records `sharedWith` users, and `DashboardUserConfigRepository` adds the config's user to each collaborator's config.
+
+### 🏗️ Changed
+
+- Updated `@aneuhold/be-ts-lib` dependency to the latest version.
+
 ## 🔖 [4.2.38] (2026-09-19)
 
 ### 🏗️ Changed
@@ -482,6 +493,7 @@ Updated dependencies: now requires `@aneuhold/core-ts-db-lib@^3.0.0`, `@aneuhold
 - Updated workflow permissions to allow repository write access
 
 <!-- Link References -->
+[4.2.39]: https://github.com/aneuhold/ts-libs/compare/be-ts-db-lib-v4.2.38...be-ts-db-lib-v4.2.39
 [4.2.38]: https://github.com/aneuhold/ts-libs/compare/be-ts-db-lib-v4.2.37...be-ts-db-lib-v4.2.38
 [4.2.37]: https://github.com/aneuhold/ts-libs/compare/be-ts-db-lib-v4.2.35...be-ts-db-lib-v4.2.37
 [4.2.35]: https://github.com/aneuhold/ts-libs/compare/be-ts-db-lib-v4.2.34...be-ts-db-lib-v4.2.35
