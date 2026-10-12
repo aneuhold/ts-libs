@@ -84,6 +84,11 @@ import {
 } from './documents/workout/WorkoutSessionExercise.js';
 import type { WorkoutSet } from './documents/workout/WorkoutSet.js';
 import { WorkoutSet_docType, WorkoutSetSchema } from './documents/workout/WorkoutSet.js';
+import type { WorkoutUserConfig } from './documents/workout/WorkoutUserConfig.js';
+import {
+  WorkoutUserConfig_docType,
+  WorkoutUserConfigSchema
+} from './documents/workout/WorkoutUserConfig.js';
 import NonogramKatanaItemName, {
   NonogramKatanaItemNameSchema
 } from './embedded-types/dashboard/nonogramKatanaItem/ItemName.js';
@@ -263,6 +268,8 @@ export {
   WorkoutSetSchema,
   WorkoutSetService,
   WorkoutSFRService,
+  WorkoutUserConfig_docType,
+  WorkoutUserConfigSchema,
   WorkoutVolumePlanningService
 };
 
@@ -311,5 +318,6 @@ export type {
   WorkoutSession,
   WorkoutSessionExercise,
   WorkoutSet,
+  WorkoutUserConfig,
   WorkoutVolumeLandmarkEstimate
 };

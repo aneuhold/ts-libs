@@ -11,6 +11,8 @@ export const ConfigSchema = z.object({
   mongoUrl: z.string(),
   /** Secret used to sign JWT access tokens. */
   jwtAccessSecret: z.string(),
+  revenueCatGCloudBackendWebhookAuthHeader: z.string(),
+  revenueCatGCloudBackendSecretApiKey: z.string(),
   /** Test user credentials for e2e tests. */
   testUserInfo: z.object({
     userName: z.string(),
