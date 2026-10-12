@@ -9,11 +9,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### ✅ Added
 
+- `APIErrorCode` enum (exported from the browser entry point) naming the specific failure behind an unsuccessful `APIResponse`.
+- `APIResponse` has a required `statusCode` field and an optional `errorCode` field.
+
 ### 🏗️ Changed
 
-### 🩹 Fixed
-
-### 🔥 Removed
+- *Breaking Change:* `APIResponse` now requires `statusCode`, and `GCloudAPIService` treats responses without a numeric `statusCode` as invalid.
+- `GCloudAPIService` requests time out after 30 seconds and reject on timeout or transport failure.
+- A response body that cannot be read, decoded, or validated now decodes to an unsuccessful `APIResponse` with the HTTP status and `APIErrorCode.InvalidAPIResponseShape`.
 
 ## 🔖 [3.0.47] (2026-09-19)
 

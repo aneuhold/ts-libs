@@ -9,11 +9,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### ✅ Added
 
+- `BaseRepository.insertManyIfAbsent` inserts only documents whose `_id` is not already present, leaves existing documents unchanged, and returns only the newly inserted documents, so repeating the same insert is safe. Insert subscribers run for the inserted documents only.
+- The workout repositories record touched doc types and affected user IDs for `insertManyIfAbsent`.
+
 ### 🏗️ Changed
 
-### 🩹 Fixed
-
-### 🔥 Removed
+- Updated `@aneuhold/be-ts-lib` dependency to the latest version.
 
 ## 🔖 [4.2.38] (2026-09-19)
 
