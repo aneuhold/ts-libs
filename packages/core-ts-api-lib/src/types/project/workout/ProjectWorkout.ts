@@ -10,7 +10,8 @@ import type {
   WorkoutMuscleGroupVolumeCTO,
   WorkoutSession,
   WorkoutSessionExercise,
-  WorkoutSet
+  WorkoutSet,
+  WorkoutUserConfig
 } from '@aneuhold/core-ts-db-lib';
 import type { UUID } from 'crypto';
 
@@ -145,6 +146,10 @@ export interface ProjectWorkoutPrimaryEndpointOptions {
      */
     equipmentTypes?: GetOptionsBase<WorkoutEquipmentType>;
     /**
+     * Get the requesting user's workout config.
+     */
+    userConfig?: boolean;
+    /**
      * Get exercise CTOs (bundled exercise + equipment + calibration + set data).
      */
     exerciseCTOs?: {
@@ -232,6 +237,10 @@ export interface ProjectWorkoutPrimaryEndpointOptions {
      * Equipment types to be updated.
      */
     equipmentTypes?: WorkoutEquipmentType[];
+    /**
+     * The requesting user's workout config to be updated.
+     */
+    userConfig?: WorkoutUserConfig;
   };
   delete?: {
     /**
@@ -294,6 +303,7 @@ export interface ProjectWorkoutPrimaryOutput {
   exerciseCalibrations?: WorkoutExerciseCalibration[];
   muscleGroups?: WorkoutMuscleGroup[];
   equipmentTypes?: WorkoutEquipmentType[];
+  userConfig?: WorkoutUserConfig;
   exerciseCTOs?: WorkoutExerciseCTO[];
   muscleGroupVolumeCTOs?: WorkoutMuscleGroupVolumeCTO[];
 }
