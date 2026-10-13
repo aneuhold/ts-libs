@@ -27,7 +27,7 @@ export const WorkoutUserConfigSchema = z.object({
        * When the user's supporter entitlement expires. Null or missing means
        * the user is not a supporter.
        */
-      supporterEntitlementExpiresAt: z.date().nullish()
+      supporterExpiresAt: z.date().nullish()
     })
     .default({})
 });

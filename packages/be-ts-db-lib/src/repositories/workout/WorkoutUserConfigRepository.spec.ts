@@ -61,11 +61,11 @@ describe('WorkoutUserConfigRepository', () => {
 
       await repo.update({
         _id: config._id,
-        entitlements: { supporterEntitlementExpiresAt: expiresAt }
+        entitlements: { supporterExpiresAt: expiresAt }
       });
 
       const updated = await repo.getForUser(testUser._id);
-      expect(updated?.entitlements.supporterEntitlementExpiresAt).toEqual(expiresAt);
+      expect(updated?.entitlements.supporterExpiresAt).toEqual(expiresAt);
     });
   });
 
@@ -80,7 +80,7 @@ describe('WorkoutUserConfigRepository', () => {
 
     it('rejects update without _id', async () => {
       await expect(
-        repo.update({ entitlements: { supporterEntitlementExpiresAt: new Date() } })
+        repo.update({ entitlements: { supporterExpiresAt: new Date() } })
       ).rejects.toThrow('No _id defined for WorkoutUserConfig update');
     });
   });
