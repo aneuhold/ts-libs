@@ -1,4 +1,4 @@
-import { ProjectName, WorkoutUserConfigSchema } from '@aneuhold/core-ts-db-lib';
+import { ProjectName, WorkoutEntitlement, WorkoutUserConfigSchema } from '@aneuhold/core-ts-db-lib';
 import { describe, expect, it } from 'vitest';
 import workoutTestUtil from '../../../test-util/projects/workout/workoutTestUtil.js';
 import UserRepository from '../common/UserRepository.js';
@@ -61,11 +61,11 @@ describe('WorkoutUserConfigRepository', () => {
 
       await repo.update({
         _id: config._id,
-        entitlements: { supporterExpiresAt: expiresAt }
+        entitlements: { [WorkoutEntitlement.Supporter]: { expiresAt } }
       });
 
       const updated = await repo.getForUser(testUser._id);
-      expect(updated?.entitlements.supporterExpiresAt).toEqual(expiresAt);
+      expect(updated?.entitlements[WorkoutEntitlement.Supporter]?.expiresAt).toEqual(expiresAt);
     });
   });
 
@@ -80,7 +80,7 @@ describe('WorkoutUserConfigRepository', () => {
 
     it('rejects update without _id', async () => {
       await expect(
-        repo.update({ entitlements: { supporterExpiresAt: new Date() } })
+        repo.update({ entitlements: { [WorkoutEntitlement.Supporter]: { expiresAt: new Date() } } })
       ).rejects.toThrow('No _id defined for WorkoutUserConfig update');
     });
   });

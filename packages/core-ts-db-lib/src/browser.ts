@@ -86,6 +86,7 @@ import type { WorkoutSet } from './documents/workout/WorkoutSet.js';
 import { WorkoutSet_docType, WorkoutSetSchema } from './documents/workout/WorkoutSet.js';
 import type { WorkoutUserConfig } from './documents/workout/WorkoutUserConfig.js';
 import {
+  WorkoutEntitlement,
   WorkoutUserConfig_docType,
   WorkoutUserConfigSchema
 } from './documents/workout/WorkoutUserConfig.js';
@@ -178,6 +179,7 @@ import WorkoutSetService from './services/workout/Set/WorkoutSet.service.js';
 import WorkoutSFRService from './services/workout/util/SFR/WorkoutSFR.service.js';
 import WorkoutVolumePlanningService from './services/workout/util/VolumePlanning/WorkoutVolumePlanning.service.js';
 import { GOOGLE_CLIENT_ID } from './constants/googleClientId.js';
+import { workoutEntitlementDefinitions } from './constants/workoutEntitlementDefinitions.js';
 
 // Export all browser-safe functions and classes from this library
 export {
@@ -268,6 +270,8 @@ export {
   WorkoutSetSchema,
   WorkoutSetService,
   WorkoutSFRService,
+  WorkoutEntitlement,
+  workoutEntitlementDefinitions,
   WorkoutUserConfig_docType,
   WorkoutUserConfigSchema,
   WorkoutVolumePlanningService

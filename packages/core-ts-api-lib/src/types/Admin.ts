@@ -1,4 +1,9 @@
-import type { DashboardUserConfig, User, WorkoutUserConfig } from '@aneuhold/core-ts-db-lib';
+import type {
+  DashboardUserConfig,
+  User,
+  WorkoutEntitlement,
+  WorkoutUserConfig
+} from '@aneuhold/core-ts-db-lib';
 import type { UUID } from 'crypto';
 
 /**
@@ -28,10 +33,8 @@ export interface AdminInput {
     sync?: {
       [userId: UUID]: {
         workoutUserConfig?: {
-          entitlements?: {
-            /** Synced from the RevenueCat `supporter` entitlement. */
-            supporterExpiresAt?: boolean;
-          };
+          /** Entitlements to sync from the purchase provider. */
+          entitlements?: Partial<Record<WorkoutEntitlement, boolean>>;
         };
       };
     };
