@@ -28,13 +28,13 @@ export interface AdminInput {
     workoutUserConfigs?: WorkoutUserConfig[];
     /**
      * Fields to overwrite with their current value from the external system
-     * that owns them, keyed by user ID. A field set to `true` is synced.
+     * that owns them, keyed by user ID.
      */
     sync?: {
       [userId: UUID]: {
         workoutUserConfig?: {
           /** Entitlements to sync from the purchase provider. */
-          entitlements?: Partial<Record<WorkoutEntitlement, boolean>>;
+          entitlements?: WorkoutEntitlement[];
         };
       };
     };

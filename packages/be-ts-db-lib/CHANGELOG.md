@@ -19,6 +19,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### 🩹 Fixed
 
 - `BaseRepository` no longer sets up subscribers or creates multiple collection connections when `getCollection` is called concurrently.
+- `BaseRepository.insertMany` returns an empty array for an empty list instead of throwing, so user insert listeners no longer fail when no inserted user needs a config.
+- `runStandardValidationForRepository` only logs missing document results for validators that check for missing documents.
 
 ## 🔖 [4.2.39] (2026-10-12)
 

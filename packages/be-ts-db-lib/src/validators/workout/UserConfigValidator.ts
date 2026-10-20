@@ -6,15 +6,16 @@ import UserRepository from '../../repositories/common/UserRepository.js';
 import WorkoutUserConfigRepository from '../../repositories/workout/WorkoutUserConfigRepository.js';
 import IValidator from '../BaseValidator.js';
 
+/**
+ * Validates {@link WorkoutUserConfig} documents.
+ */
 export default class WorkoutUserConfigValidator extends IValidator<WorkoutUserConfig> {
   constructor() {
     super(WorkoutUserConfigSchema, WorkoutUserConfigSchema.partial());
   }
 
   /**
-   * Rejects a new config unless its user exists and has no config yet. Every
-   * user gets a config when the user is created, so this rejects any other
-   * insert.
+   * Rejects a new config if its user does not exist or already has a config.
    *
    * @param newUserConfig The new config to validate.
    */
@@ -34,6 +35,11 @@ export default class WorkoutUserConfigValidator extends IValidator<WorkoutUserCo
     }
   }
 
+  /**
+   * Rejects an update that has no `_id`.
+   *
+   * @param updatedUserConfig The partial config update to validate.
+   */
   protected validateUpdateObjectBusinessLogic(
     updatedUserConfig: Partial<WorkoutUserConfig>
   ): Promise<void> {
@@ -43,6 +49,12 @@ export default class WorkoutUserConfigValidator extends IValidator<WorkoutUserCo
     return Promise.resolve();
   }
 
+  /**
+   * Deletes configs whose user no longer exists and inserts a config for each
+   * user with workout access that has none.
+   *
+   * @param dryRun Whether to only log the changes instead of applying them.
+   */
   async validateRepositoryInDb(dryRun: boolean): Promise<void> {
     const userConfigRepo = WorkoutUserConfigRepository.getRepo();
     const allUserConfigs = await userConfigRepo.getAll();

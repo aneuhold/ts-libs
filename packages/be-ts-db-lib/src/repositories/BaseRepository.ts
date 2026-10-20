@@ -123,6 +123,9 @@ export default abstract class BaseRepository<TBaseType extends BaseDocument> {
    * @returns The inserted documents or an empty array if the insertion failed.
    */
   async insertMany(newDocs: TBaseType[], meta?: DbOperationMetaData): Promise<TBaseType[]> {
+    if (newDocs.length === 0) {
+      return [];
+    }
     const collection = await this.getCollection();
     await Promise.all(newDocs.map((doc) => this.validator.validateNewObject(doc, meta)));
     const insertResult = await collection.insertMany(

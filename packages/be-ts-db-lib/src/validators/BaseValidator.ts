@@ -202,12 +202,14 @@ export default abstract class IValidator<TBaseType extends BaseDocument> {
       } else {
         DR.logger.info(`Would delete ${docIdsToDelete.length} ${docName}s in the database.`);
       }
-      if (missingDocs && missingDocs.docs.length !== 0) {
-        DR.logger.info(
-          `Would insert ${missingDocs.docs.length} missing ${docName}s in the database.`
-        );
-      } else {
-        DR.logger.success(`No missing ${docName}s found.`);
+      if (missingDocs) {
+        if (missingDocs.docs.length !== 0) {
+          DR.logger.info(
+            `Would insert ${missingDocs.docs.length} missing ${docName}s in the database.`
+          );
+        } else {
+          DR.logger.success(`No missing ${docName}s found.`);
+        }
       }
       return;
     }
@@ -226,11 +228,13 @@ export default abstract class IValidator<TBaseType extends BaseDocument> {
       DR.logger.success(`No ${docName}s to update found.`);
     }
     // Insert all that are missing
-    if (missingDocs && missingDocs.docs.length !== 0) {
-      DR.logger.info(`Inserting ${missingDocs.docs.length} missing ${docName}s in the database.`);
-      await missingDocs.insertionFunction(missingDocs.docs);
-    } else {
-      DR.logger.success(`No missing ${docName}s found.`);
+    if (missingDocs) {
+      if (missingDocs.docs.length !== 0) {
+        DR.logger.info(`Inserting ${missingDocs.docs.length} missing ${docName}s in the database.`);
+        await missingDocs.insertionFunction(missingDocs.docs);
+      } else {
+        DR.logger.success(`No missing ${docName}s found.`);
+      }
     }
   }
 
