@@ -11,8 +11,10 @@ export const ConfigSchema = z.object({
   mongoUrl: z.string(),
   /** Secret used to sign JWT access tokens. */
   jwtAccessSecret: z.string(),
-  revenueCatGCloudBackendWebhookAuthHeader: z.string(),
-  revenueCatGCloudBackendSecretApiKey: z.string(),
+  /** `Authorization` header value the workout RevenueCat project's webhook sends. */
+  revenueCatWorkoutWebhookAuthHeader: z.string(),
+  /** Secret API key for the workout RevenueCat project's REST API. */
+  revenueCatWorkoutSecretApiKey: z.string(),
   /** Test user credentials for e2e tests. */
   testUserInfo: z.object({
     userName: z.string(),
