@@ -120,6 +120,9 @@ export default abstract class IValidator<TBaseType extends BaseDocument> {
    * @param input.additionalValidation - Optional additional validation logic beyond schema validation.
    * @param input.deletionFunction - Function to delete documents.
    * @param input.updateFunction - Function to update documents.
+   * @param input.missingDocs - Optional documents that are missing from the database, and how to insert them.
+   * @param input.missingDocs.docs - The documents to insert.
+   * @param input.missingDocs.insertionFunction - Function to insert documents.
    */
   protected async runStandardValidationForRepository(input: {
     dryRun: boolean;
@@ -129,6 +132,10 @@ export default abstract class IValidator<TBaseType extends BaseDocument> {
     additionalValidation?: (doc: TBaseType) => { updatedDoc: TBaseType; errors: string[] };
     deletionFunction: (docIdsToDelete: UUID[]) => Promise<void>;
     updateFunction: (docsToUpdate: TBaseType[]) => Promise<void>;
+    missingDocs?: {
+      docs: TBaseType[];
+      insertionFunction: (docsToInsert: TBaseType[]) => Promise<void>;
+    };
   }) {
     const {
       dryRun,
@@ -137,7 +144,8 @@ export default abstract class IValidator<TBaseType extends BaseDocument> {
       shouldDelete,
       additionalValidation,
       deletionFunction,
-      updateFunction
+      updateFunction,
+      missingDocs
     } = input;
     const docIdsToDelete: Array<UUID> = [];
     const docsToValidate: Array<TBaseType> = [];
@@ -194,6 +202,15 @@ export default abstract class IValidator<TBaseType extends BaseDocument> {
       } else {
         DR.logger.info(`Would delete ${docIdsToDelete.length} ${docName}s in the database.`);
       }
+      if (missingDocs) {
+        if (missingDocs.docs.length !== 0) {
+          DR.logger.info(
+            `Would insert ${missingDocs.docs.length} missing ${docName}s in the database.`
+          );
+        } else {
+          DR.logger.success(`No missing ${docName}s found.`);
+        }
+      }
       return;
     }
     // Delete all invalid
@@ -209,6 +226,15 @@ export default abstract class IValidator<TBaseType extends BaseDocument> {
       await updateFunction(docsToUpdate);
     } else {
       DR.logger.success(`No ${docName}s to update found.`);
+    }
+    // Insert all that are missing
+    if (missingDocs) {
+      if (missingDocs.docs.length !== 0) {
+        DR.logger.info(`Inserting ${missingDocs.docs.length} missing ${docName}s in the database.`);
+        await missingDocs.insertionFunction(missingDocs.docs);
+      } else {
+        DR.logger.success(`No missing ${docName}s found.`);
+      }
     }
   }
 

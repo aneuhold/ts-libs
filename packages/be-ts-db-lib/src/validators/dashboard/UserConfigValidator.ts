@@ -72,14 +72,16 @@ export default class DashboardUserConfigValidator extends IValidator<DashboardUs
   async validateRepositoryInDb(dryRun: boolean): Promise<void> {
     const userConfigRepo = DashboardUserConfigRepository.getRepo();
     const allUserConfigs = await userConfigRepo.getAll();
-    const allUserIds = await UserRepository.getRepo().getAllIdsAsHash();
+    const allUsers = await UserRepository.getRepo().getAll();
+    const allUserIds = new Set(allUsers.map((user) => user._id));
+    const userIdsWithConfig = new Set(allUserConfigs.map((userConfig) => userConfig.userId));
 
     await this.runStandardValidationForRepository({
       dryRun,
       docName: 'Dashboard User Config',
       allDocs: allUserConfigs,
       shouldDelete: (userConfig: DashboardUserConfig) => {
-        if (!allUserIds[userConfig.userId]) {
+        if (!allUserIds.has(userConfig.userId)) {
           DR.logger.error(
             `Dashboard User Config with ID: ${userConfig._id} has no valid associated user.`
           );
@@ -92,7 +94,7 @@ export default class DashboardUserConfigValidator extends IValidator<DashboardUs
         const errors: string[] = [];
         const collaboratorIds = [...userConfig.collaborators];
         collaboratorIds.forEach((userId) => {
-          if (!allUserIds[userId]) {
+          if (!allUserIds.has(userId)) {
             errors.push(
               `User with ID: ${userId} does not exist in collaborators property of Dashboard User Config with ID: ${userConfig._id}.`
             );
@@ -107,6 +109,14 @@ export default class DashboardUserConfigValidator extends IValidator<DashboardUs
       },
       updateFunction: async (docsToUpdate: DashboardUserConfig[]) => {
         await userConfigRepo.updateMany(docsToUpdate);
+      },
+      missingDocs: {
+        docs: allUsers
+          .filter((user) => user.projectAccess.dashboard && !userIdsWithConfig.has(user._id))
+          .map((user) => DashboardUserConfigSchema.parse({ userId: user._id })),
+        insertionFunction: async (docsToInsert: DashboardUserConfig[]) => {
+          await userConfigRepo.insertMany(docsToInsert);
+        }
       }
     });
   }

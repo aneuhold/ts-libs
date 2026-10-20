@@ -1,4 +1,9 @@
-import type { DashboardUserConfig, User } from '@aneuhold/core-ts-db-lib';
+import type {
+  DashboardUserConfig,
+  User,
+  WorkoutEntitlement,
+  WorkoutUserConfig
+} from '@aneuhold/core-ts-db-lib';
 import type { UUID } from 'crypto';
 
 /**
@@ -19,6 +24,20 @@ export interface AdminInput {
   update?: {
     /** Full user documents to update. */
     users?: User[];
+    /** Full workout user config documents to update. */
+    workoutUserConfigs?: WorkoutUserConfig[];
+    /**
+     * Fields to overwrite with their current value from the external system
+     * that owns them, keyed by user ID.
+     */
+    sync?: {
+      [userId: UUID]: {
+        workoutUserConfig?: {
+          /** Entitlements to sync from the purchase provider. */
+          entitlements?: WorkoutEntitlement[];
+        };
+      };
+    };
   };
   delete?: {
     /** User IDs to delete. */
@@ -37,12 +56,12 @@ export interface AdminOutput {
 }
 
 /**
- * Detailed information about a single user, including their dashboard
- * configuration and document counts.
+ * Detailed information about a single user.
  */
 export interface AdminOutputUserDetail {
   user: User;
   userConfig?: DashboardUserConfig;
+  workoutUserConfig?: WorkoutUserConfig;
   documentCounts?: AdminOutputUserDocumentCounts;
 }
 

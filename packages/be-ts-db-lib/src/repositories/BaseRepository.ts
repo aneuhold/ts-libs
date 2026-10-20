@@ -28,7 +28,7 @@ import type IValidator from '../validators/BaseValidator.js';
 export default abstract class BaseRepository<TBaseType extends BaseDocument> {
   protected collectionName: string;
 
-  #collection?: Collection<TBaseType>;
+  #getCollectionPromise?: Promise<Collection<TBaseType>>;
 
   protected subscribers: RepoSubscribers<TBaseType> =
     RepoSubscriptionService.getDefaultSubscribers<TBaseType>();
@@ -56,11 +56,17 @@ export default abstract class BaseRepository<TBaseType extends BaseDocument> {
    * @returns The collection.
    */
   protected async getCollection(): Promise<Collection<TBaseType>> {
-    if (!this.#collection) {
-      this.#collection = await DocumentDb.getCollection(this.collectionName);
+    if (!this.#getCollectionPromise) {
+      this.#getCollectionPromise = DocumentDb.getCollection(this.collectionName);
+      try {
+        await this.#getCollectionPromise;
+      } catch (e) {
+        this.#getCollectionPromise = undefined;
+        throw e;
+      }
       this.setupSubscribers();
     }
-    return this.#collection;
+    return this.#getCollectionPromise;
   }
 
   protected abstract setupSubscribers(): void;
@@ -117,6 +123,9 @@ export default abstract class BaseRepository<TBaseType extends BaseDocument> {
    * @returns The inserted documents or an empty array if the insertion failed.
    */
   async insertMany(newDocs: TBaseType[], meta?: DbOperationMetaData): Promise<TBaseType[]> {
+    if (newDocs.length === 0) {
+      return [];
+    }
     const collection = await this.getCollection();
     await Promise.all(newDocs.map((doc) => this.validator.validateNewObject(doc, meta)));
     const insertResult = await collection.insertMany(

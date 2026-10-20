@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## 🔖 [3.1.26] (2026-10-20)
+
+### ✅ Added
+
+- `revenueCatWorkoutWebhookAuthHeader` and `revenueCatWorkoutSecretApiKey` fields in `ConfigSchema` for the workout RevenueCat project.
+
 ## 🔖 [3.1.25] (2026-10-12)
 
 ### 🏗️ Changed
@@ -388,6 +394,7 @@ No direct code changes; version bump for compatibility with new major versions o
 - Updated workflow permissions to allow repository write access
 
 <!-- Link References -->
+[3.1.26]: https://github.com/aneuhold/ts-libs/compare/be-ts-lib-v3.1.25...be-ts-lib-v3.1.26
 [3.1.25]: https://github.com/aneuhold/ts-libs/compare/be-ts-lib-v3.1.24...be-ts-lib-v3.1.25
 [3.1.24]: https://github.com/aneuhold/ts-libs/compare/be-ts-lib-v3.1.23...be-ts-lib-v3.1.24
 [3.1.23]: https://github.com/aneuhold/ts-libs/compare/be-ts-lib-v3.1.21...be-ts-lib-v3.1.23
