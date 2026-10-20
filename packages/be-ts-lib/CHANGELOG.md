@@ -9,11 +9,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### ✅ Added
 
-### 🏗️ Changed
-
-### 🩹 Fixed
-
-### 🔥 Removed
+- `revenueCatWorkoutWebhookAuthHeader` and `revenueCatWorkoutSecretApiKey` fields in `ConfigSchema` for the workout RevenueCat project.
 
 ## 🔖 [3.1.25] (2026-10-12)
 

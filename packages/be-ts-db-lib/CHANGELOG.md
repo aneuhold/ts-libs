@@ -9,11 +9,16 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### ✅ Added
 
+- `WorkoutUserConfigRepository` for `WorkoutUserConfig` documents, with `getForUser`. A config is created for each new user with workout access and deleted with the user.
+- `WorkoutUserConfigValidator`, included in `DbSchemaUpdater`. It deletes configs without a valid user and inserts missing configs for users with workout access.
+
 ### 🏗️ Changed
+
+- The Dashboard user config validation now also inserts missing configs for users with dashboard access.
 
 ### 🩹 Fixed
 
-### 🔥 Removed
+- `BaseRepository` no longer sets up subscribers or creates multiple collection connections when `getCollection` is called concurrently.
 
 ## 🔖 [4.2.39] (2026-10-12)
 

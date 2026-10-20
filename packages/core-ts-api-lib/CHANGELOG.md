@@ -9,11 +9,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### ✅ Added
 
-### 🏗️ Changed
-
-### 🩹 Fixed
-
-### 🔥 Removed
+- `userConfig` option on the workout primary endpoint for getting and updating the requesting user's `WorkoutUserConfig`, and `userConfig` in its output.
+- `AdminInput.update.workoutUserConfigs` for updating workout user configs.
+- `AdminInput.update.sync` for syncing a user's workout entitlements from the purchase provider.
+- `workoutUserConfig` in `AdminOutputUserDetail`.
 
 ## 🔖 [4.0.0] (2026-10-12)
 

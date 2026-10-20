@@ -9,11 +9,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### ✅ Added
 
-### 🏗️ Changed
-
-### 🩹 Fixed
-
-### 🔥 Removed
+- `WorkoutUserConfig` document type with `WorkoutUserConfigSchema` and `WorkoutUserConfig_docType`, holding a user's entitlements.
+- `WorkoutEntitlement` enum, starting with `Supporter`.
+- `workoutEntitlementDefinitions` constant with the RevenueCat identifiers for each entitlement.
+- All of the above are exported from the browser entry point.
 
 ## 🔖 [5.0.15] (2026-09-18)
 
