@@ -61,7 +61,7 @@ export default class WorkoutMesocycleService {
    * @param existingSessions Existing session documents.
    * @param existingSessionExercises Existing session exercise documents.
    * @param existingSets Existing set documents.
-   * @param startDate Optional start date for the first microcycle. Defaults to the current date when not provided.
+   * @param startDate Optional start date for the first microcycle. Defaults to the mesocycle's `startDate`, then to the current date.
    */
   static generateOrUpdateMesocycle(
     mesocycle: WorkoutMesocycle,
@@ -145,7 +145,7 @@ export default class WorkoutMesocycleService {
     let currentDate: Date;
 
     if (startMicrocycleIndex === 0) {
-      currentDate = startDate ?? new Date();
+      currentDate = startDate ?? mesocycle.startDate ?? new Date();
     } else {
       // Continue from where the last existing microcycle ended
       const lastExistingMicrocycle = context.microcyclesInOrder[startMicrocycleIndex - 1];

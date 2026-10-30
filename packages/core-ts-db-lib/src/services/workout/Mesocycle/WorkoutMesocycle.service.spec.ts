@@ -689,6 +689,36 @@ describe('Unit Tests', () => {
       }
     });
 
+    it('should use the mesocycle startDate for the first microcycle when no startDate is given', () => {
+      const exerciseCTOs = [
+        workoutTestUtil.createExerciseCTO({
+          exercise: workoutTestUtil.STANDARD_EXERCISES.barbellSquat,
+          calibration: workoutTestUtil.STANDARD_CALIBRATIONS.barbellSquat,
+          equipmentType: workoutTestUtil.STANDARD_EQUIPMENT_TYPES.barbell
+        })
+      ];
+
+      const mesocycleStartDate = new Date('2026-02-02T00:00:00.000Z');
+      const mesocycle = WorkoutMesocycleSchema.parse({
+        userId: workoutTestUtil.userId,
+        cycleType: CycleType.MuscleGain,
+        plannedSessionCountPerMicrocycle: 1,
+        plannedMicrocycleLengthInDays: 7,
+        plannedMicrocycleRestDays: [],
+        plannedMicrocycleCount: 2,
+        calibratedExercises: exerciseCTOs.flatMap((c) =>
+          c.bestCalibration ? [c.bestCalibration._id] : []
+        ),
+        startDate: mesocycleStartDate
+      });
+
+      const result = WorkoutMesocycleService.generateOrUpdateMesocycle(mesocycle, exerciseCTOs);
+
+      const microcycles = result.microcycles?.create ?? [];
+      expect(microcycles).toHaveLength(2);
+      expect(new Date(microcycles[0].startDate).getTime()).toBe(mesocycleStartDate.getTime());
+    });
+
     it('should default to current date when startDate is not provided', () => {
       const exerciseCTOs = [
         workoutTestUtil.createExerciseCTO({
