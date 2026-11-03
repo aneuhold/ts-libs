@@ -26,9 +26,7 @@ export default class WorkoutSetService {
     sessionExercise,
     microcycleIndex,
     sessionIndex,
-    setCount,
-    targetRir,
-    isDeloadMicrocycle
+    setCount
   }: {
     context: WorkoutMesocyclePlanContext;
     exerciseCTO: WorkoutExerciseCTO;
@@ -37,8 +35,6 @@ export default class WorkoutSetService {
     microcycleIndex: number;
     sessionIndex: number;
     setCount: number;
-    targetRir: number | null;
-    isDeloadMicrocycle: boolean;
   }): void {
     const { equipmentType, bestCalibration } = exerciseCTO;
     if (!bestCalibration) {
@@ -48,6 +44,8 @@ export default class WorkoutSetService {
     }
 
     const sets: WorkoutSet[] = [];
+    const isDeloadMicrocycle = microcycleIndex === context.deloadMicrocycleIndex;
+    const plannedRir = context.getTargetRir(microcycleIndex);
 
     // For the first microcycle, use the CTO's previous accumulation performance
     // data. For subsequent microcycles, look up all previous sets from the context.
@@ -101,7 +99,7 @@ export default class WorkoutSetService {
         workoutSessionExerciseId: sessionExercise._id,
         plannedReps,
         plannedWeight,
-        plannedRir: targetRir,
+        plannedRir,
         exerciseProperties: bestCalibration.exerciseProperties
       });
 

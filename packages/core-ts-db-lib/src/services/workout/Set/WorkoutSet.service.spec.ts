@@ -91,27 +91,35 @@ describe('WorkoutSetService', () => {
       calibration: workoutTestUtil.STANDARD_CALIBRATIONS.dumbbellLateralRaise,
       equipmentType: workoutTestUtil.STANDARD_EQUIPMENT_TYPES.dumbbell
     });
-    const plannedSessions = [[curlCTO], [lateralRaiseCTO]];
+    const sessionLayout = [[curlCTO], [lateralRaiseCTO]];
+    // Not in the session layout, so the generated history never includes it
+    const calfRaiseCTO = workoutTestUtil.createExerciseCTO({
+      exercise: workoutTestUtil.STANDARD_EXERCISES.dumbbellCalfRaise,
+      calibration: workoutTestUtil.STANDARD_CALIBRATIONS.dumbbellCalfRaise,
+      equipmentType: workoutTestUtil.STANDARD_EQUIPMENT_TYPES.dumbbell
+    });
 
     /**
-     * Generates completed history for the planned sessions, one microcycle per week. A count of 0
-     * gives a mesocycle with no history, so planning falls back to calibration.
+     * Generates completed history from the session layout, one microcycle per week. With no
+     * `microcycleCount`, the mesocycle has no history, so planning falls back to calibration. The microcycle
+     * after the history is the mesocycle's deload when `nextIsDeload` is set.
      */
-    const generateHistory = (microcycleCount: number) => {
+    const generateHistory = ({ microcycleCount = 0, nextIsDeload = false } = {}) => {
       const historyContext = workoutTestUtil.createContext({
         mesocycle: workoutTestUtil.createMesocycle({
-          plannedSessionCountPerMicrocycle: plannedSessions.length,
-          // The history plus the microcycle being planned, within the schema's two-microcycle minimum
-          plannedMicrocycleCount: Math.max(microcycleCount + 1, 2),
-          calibratedExercises: workoutTestUtil.getCalibrationIds(plannedSessions.flat())
+          plannedSessionCountPerMicrocycle: sessionLayout.length,
+          // The history and the microcycle being planned, followed by the deload unless the
+          // microcycle being planned is the deload
+          plannedMicrocycleCount: microcycleCount + (nextIsDeload ? 1 : 2),
+          calibratedExercises: workoutTestUtil.getCalibrationIds(sessionLayout.flat())
         }),
-        exerciseCTOs: plannedSessions.flat()
+        exerciseCTOs: sessionLayout.flat()
       });
 
       for (let index = 0; index < microcycleCount; index++) {
         workoutTestUtil.createHistoricalMicrocycle({
           context: historyContext,
-          exerciseCTOs: plannedSessions,
+          exerciseCTOs: sessionLayout,
           microcycleStartDate: new Date(2025, 0, 1 + index * 7)
         });
       }
@@ -126,14 +134,14 @@ describe('WorkoutSetService', () => {
     const planNextSets = (
       historyContext: WorkoutMesocyclePlanContext,
       exerciseCTO: WorkoutExerciseCTO,
-      { setCount = 1, isDeloadMicrocycle = false, sessionIndex = 0 } = {}
+      { setCount = 1, sessionIndex = 0 } = {}
     ) => {
       const context = workoutTestUtil.reloadMesocyclePlanContext({
         context: historyContext,
-        exerciseCTOs: plannedSessions.flat()
+        exerciseCTOs: sessionLayout.flat()
       });
       // Mesocycle generation lays out the sessions again before planning any microcycle
-      context.setPlannedSessionExerciseCTOs(plannedSessions);
+      context.setPlannedSessionExerciseCTOs(sessionLayout);
       const nextSession = workoutTestUtil.createSession({ title: 'Next Session' });
 
       WorkoutSetService.generateSetsForSessionExercise({
@@ -146,9 +154,7 @@ describe('WorkoutSetService', () => {
         }),
         microcycleIndex: historyContext.microcyclesInOrder.length,
         sessionIndex,
-        setCount,
-        targetRir: isDeloadMicrocycle ? null : 2,
-        isDeloadMicrocycle
+        setCount
       });
 
       return context.setsToCreate;
@@ -175,14 +181,14 @@ describe('WorkoutSetService', () => {
 
     describe('within a session', () => {
       it('should drop reps by 2 for each subsequent set if theres room', () => {
-        const sets = planNextSets(generateHistory(0), curlCTO, { setCount: 3 });
+        const sets = planNextSets(generateHistory(), curlCTO, { setCount: 3 });
 
         const reps = sets.map((set) => set.plannedReps ?? 0);
         expect(reps).toEqual([reps[0], reps[0] - 2, reps[0] - 4]);
       });
 
       it('should drop weight and hold reps at the rep range floor if theres no room', () => {
-        const sets = planNextSets(generateHistory(0), curlCTO, { setCount: 6 });
+        const sets = planNextSets(generateHistory(), curlCTO, { setCount: 6 });
 
         const { plannedWeight: firstWeight } = sets[0];
         const { plannedWeight: lastWeight, plannedReps: lastReps } = sets[5];
@@ -222,7 +228,7 @@ describe('WorkoutSetService', () => {
       };
 
       it("should progress from an exercise's own sets when the previous microcycle is missing its first session", () => {
-        const historyContext = generateHistory(2);
+        const historyContext = generateHistory({ microcycleCount: 2 });
         const { microcycle } = historyContext.microcyclesInOrder[1];
         const lateralRaisePreviousSet = findFirstSet(historyContext, 1, lateralRaiseCTO._id);
         deleteFirstSession(historyContext, microcycle);
@@ -233,7 +239,7 @@ describe('WorkoutSetService', () => {
       });
 
       it("should progress from an exercise's own sets when the previous microcycle's sessions are out of plan order", () => {
-        const historyContext = generateHistory(1);
+        const historyContext = generateHistory({ microcycleCount: 1 });
         const { microcycle } = historyContext.microcyclesInOrder[0];
         microcycle.sessionOrder.reverse();
 
@@ -248,7 +254,7 @@ describe('WorkoutSetService', () => {
       });
 
       it('should progress from the most recent microcycle that has the exercise', () => {
-        const historyContext = generateHistory(2);
+        const historyContext = generateHistory({ microcycleCount: 2 });
         const { microcycle } = historyContext.microcyclesInOrder[1];
         const curlSetBeforeRemoval = findFirstSet(historyContext, 1, curlCTO._id);
         deleteFirstSession(historyContext, microcycle);
@@ -261,7 +267,7 @@ describe('WorkoutSetService', () => {
       });
 
       it('should skip a recovery entry and progress from the microcycle before it', () => {
-        const historyContext = generateHistory(2);
+        const historyContext = generateHistory({ microcycleCount: 2 });
         const recoveryEntry = historyContext.microcyclesInOrder[1]?.exerciseToSessionExercise.get(
           curlCTO._id
         );
@@ -276,15 +282,9 @@ describe('WorkoutSetService', () => {
       });
 
       it('should fall back to calibration for an exercise with no history in the mesocycle', () => {
-        const calfRaiseCTO = workoutTestUtil.createExerciseCTO({
-          exercise: workoutTestUtil.STANDARD_EXERCISES.dumbbellCalfRaise,
-          calibration: workoutTestUtil.STANDARD_CALIBRATIONS.dumbbellCalfRaise,
-          equipmentType: workoutTestUtil.STANDARD_EQUIPMENT_TYPES.dumbbell
-        });
+        const [plannedSet] = planNextSets(generateHistory({ microcycleCount: 2 }), calfRaiseCTO);
 
-        const [plannedSet] = planNextSets(generateHistory(2), calfRaiseCTO);
-
-        const [calibrationSet] = planNextSets(generateHistory(0), calfRaiseCTO);
+        const [calibrationSet] = planNextSets(generateHistory(), calfRaiseCTO);
         expect(plannedSet.plannedWeight).toBe(calibrationSet.plannedWeight);
         expect(plannedSet.plannedReps).toBe(calibrationSet.plannedReps);
       });
@@ -304,13 +304,10 @@ describe('WorkoutSetService', () => {
       };
 
       it("should repeat the previous microcycle's first set at half the reps in the first half", () => {
-        const historyContext = generateHistory(2);
+        const historyContext = generateHistory({ microcycleCount: 2, nextIsDeload: true });
         const previousSet = findFirstSet(historyContext, 1, curlCTO._id);
 
-        const plannedSets = planNextSets(historyContext, curlCTO, {
-          setCount: 2,
-          isDeloadMicrocycle: true
-        });
+        const plannedSets = planNextSets(historyContext, curlCTO, { setCount: 2 });
 
         expectStraightSets(plannedSets, {
           plannedReps: Math.floor((previousSet.actualReps ?? 0) / 2),
@@ -319,12 +316,11 @@ describe('WorkoutSetService', () => {
       });
 
       it("should halve the previous microcycle's first set weight in the second half", () => {
-        const historyContext = generateHistory(2);
+        const historyContext = generateHistory({ microcycleCount: 2, nextIsDeload: true });
         const previousSet = findFirstSet(historyContext, 1, lateralRaiseCTO._id);
 
         const plannedSets = planNextSets(historyContext, lateralRaiseCTO, {
           setCount: 2,
-          isDeloadMicrocycle: true,
           sessionIndex: 1
         });
 
@@ -337,13 +333,14 @@ describe('WorkoutSetService', () => {
       });
 
       it('should halve the progressed first set when the exercise has no history in the mesocycle', () => {
-        const historyContext = generateHistory(0);
-
-        const [progressedSet] = planNextSets(historyContext, curlCTO);
-        const deloadSets = planNextSets(historyContext, curlCTO, {
-          setCount: 2,
-          isDeloadMicrocycle: true
-        });
+        const [progressedSet] = planNextSets(generateHistory({ microcycleCount: 2 }), calfRaiseCTO);
+        const deloadSets = planNextSets(
+          generateHistory({ microcycleCount: 2, nextIsDeload: true }),
+          calfRaiseCTO,
+          {
+            setCount: 2
+          }
+        );
 
         expectStraightSets(deloadSets, {
           plannedReps: Math.floor((progressedSet.plannedReps ?? 0) / 2),

@@ -820,8 +820,6 @@ class WorkoutTestUtil {
     context: WorkoutMesocyclePlanContext;
     exerciseCTOs: WorkoutExerciseCTO[][];
     microcycleStartDate?: Date;
-    targetRir?: number;
-    isDeloadMicrocycle?: boolean;
     /**
      * Optional overrides for each session's exercise.
      * Array indices correspond to sessions, with each session containing exercise overrides.
@@ -847,8 +845,6 @@ class WorkoutTestUtil {
       context,
       exerciseCTOs,
       microcycleStartDate = new Date(),
-      targetRir = 2,
-      isDeloadMicrocycle = false,
       sessionExerciseOverrides
     } = options;
 
@@ -871,12 +867,7 @@ class WorkoutTestUtil {
     // Use the actual service to generate all sessions, exercises, and sets
     const microcycleIndex = context.microcyclesInOrder.length - 1;
     const setsCountBefore = context.setsToCreate.length;
-    WorkoutMicrocycleService.generateSessionsForMicrocycle({
-      context,
-      microcycleIndex,
-      targetRir,
-      isDeloadMicrocycle
-    });
+    WorkoutMicrocycleService.generateSessionsForMicrocycle({ context, microcycleIndex });
 
     // Mark only the newly generated sets as completed with actual performance data
     const newSets = context.setsToCreate.slice(setsCountBefore);
@@ -888,6 +879,7 @@ class WorkoutTestUtil {
 
     // Apply session exercise overrides if provided
     if (sessionExerciseOverrides) {
+      const targetRir = context.getTargetRir(microcycleIndex);
       const sessions = context.sessionsToCreate.filter(
         (s) => s.workoutMicrocycleId === microcycle._id
       );

@@ -133,8 +133,6 @@ export default class WorkoutSessionService {
     sessionIndex,
     sessionStartDate,
     sessionExerciseList,
-    targetRir,
-    isDeloadMicrocycle,
     setPlan
   }: {
     context: WorkoutMesocyclePlanContext;
@@ -142,8 +140,6 @@ export default class WorkoutSessionService {
     sessionIndex: number;
     sessionStartDate: Date;
     sessionExerciseList: WorkoutExerciseCTO[];
-    targetRir: number | null;
-    isDeloadMicrocycle: boolean;
     setPlan: { exerciseIdToSetCount: Map<UUID, number>; recoveryExerciseIds: Set<UUID> };
   }): void {
     const mesocycle = context.mesocycle;
@@ -184,9 +180,7 @@ export default class WorkoutSessionService {
         sessionExercise,
         microcycleIndex,
         sessionIndex,
-        setCount: setCountFromPlan,
-        targetRir,
-        isDeloadMicrocycle
+        setCount: setCountFromPlan
       });
 
       const setsForThisExercise = context.setsToCreate.slice(-setCountFromPlan);

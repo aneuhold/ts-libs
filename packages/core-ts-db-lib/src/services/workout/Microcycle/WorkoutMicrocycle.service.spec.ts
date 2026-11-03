@@ -57,9 +57,7 @@ describe('WorkoutMicrocycleService', () => {
 
       WorkoutMicrocycleService.generateSessionsForMicrocycle({
         context,
-        microcycleIndex: 0,
-        targetRir: 3,
-        isDeloadMicrocycle: false
+        microcycleIndex: 0
       });
 
       return {
@@ -121,9 +119,7 @@ describe('WorkoutMicrocycleService', () => {
 
       WorkoutMicrocycleService.generateSessionsForMicrocycle({
         context: ctx,
-        microcycleIndex: 0,
-        targetRir: 3,
-        isDeloadMicrocycle: false
+        microcycleIndex: 0
       });
 
       // All 6 sessions should be created

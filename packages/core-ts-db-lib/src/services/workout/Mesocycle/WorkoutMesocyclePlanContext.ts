@@ -41,10 +41,22 @@ export default class WorkoutMesocyclePlanContext {
   public readonly skipDeload: boolean;
 
   /**
+   * Total number of microcycles in this mesocycle, including the deload. Defaults to 6
+   * (5 accumulation + 1 deload) when the mesocycle does not specify a count.
+   */
+  public readonly plannedMicrocycleCount: number;
+
+  /**
    * Number of accumulation (non-deload) microcycles in this mesocycle.
    * Equal to the total planned count when deload is skipped, or total minus one otherwise.
    */
   public readonly accumulationMicrocycleCount: number;
+
+  /**
+   * Index of the deload microcycle (the last one), or undefined when this mesocycle type skips
+   * the deload.
+   */
+  public readonly deloadMicrocycleIndex: number | undefined;
 
   public readonly exerciseMap: Map<UUID, WorkoutExercise>;
   public readonly equipmentMap: Map<UUID, WorkoutEquipmentType>;
@@ -120,8 +132,11 @@ export default class WorkoutMesocyclePlanContext {
       this.skipDeload = false;
     }
 
-    const totalMicrocycles = mesocycle.plannedMicrocycleCount ?? 6;
-    this.accumulationMicrocycleCount = this.skipDeload ? totalMicrocycles : totalMicrocycles - 1;
+    this.plannedMicrocycleCount = mesocycle.plannedMicrocycleCount ?? 6;
+    this.accumulationMicrocycleCount = this.skipDeload
+      ? this.plannedMicrocycleCount
+      : this.plannedMicrocycleCount - 1;
+    this.deloadMicrocycleIndex = this.skipDeload ? undefined : this.accumulationMicrocycleCount;
 
     // Build volume landmark estimates from historical CTOs
     this.muscleGroupToVolumeLandmarkMap = new Map(
@@ -149,6 +164,19 @@ export default class WorkoutMesocyclePlanContext {
         exerciseToSessionExercise: this.#mapExercisesToSessionExercises(microcycle)
       });
     }
+  }
+
+  /**
+   * Returns the target RIR for a microcycle, or null for the deload microcycle.
+   *
+   * Tapers down by 1 per microcycle from {@link firstMicrocycleRir} (e.g. MuscleGain
+   * 4 -> 3 -> 2 -> 1 -> 0, Cut 3 -> 2 -> 1 -> 0 -> 0), and stays flat when
+   * {@link progressionInterval} is 0.
+   */
+  public getTargetRir(microcycleIndex: number): number | null {
+    if (microcycleIndex === this.deloadMicrocycleIndex) return null;
+    if (this.progressionInterval === 0) return this.firstMicrocycleRir;
+    return Math.max(this.firstMicrocycleRir - microcycleIndex, 0);
   }
 
   /**

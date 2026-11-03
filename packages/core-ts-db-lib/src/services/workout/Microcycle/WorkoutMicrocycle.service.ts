@@ -16,14 +16,10 @@ export default class WorkoutMicrocycleService {
    */
   static generateSessionsForMicrocycle({
     context,
-    microcycleIndex,
-    targetRir,
-    isDeloadMicrocycle
+    microcycleIndex
   }: {
     context: WorkoutMesocyclePlanContext;
     microcycleIndex: number;
-    targetRir: number | null;
-    isDeloadMicrocycle: boolean;
   }): void {
     const mesocycle = context.mesocycle;
     const { microcycle } = context.microcyclesInOrder[microcycleIndex];
@@ -43,8 +39,7 @@ export default class WorkoutMicrocycleService {
 
     const setPlan = WorkoutVolumePlanningService.calculateSetPlanForMicrocycle(
       context,
-      microcycleIndex,
-      isDeloadMicrocycle
+      microcycleIndex
     );
 
     // Build list of non-rest day dates
@@ -76,8 +71,6 @@ export default class WorkoutMicrocycleService {
           sessionIndex,
           sessionStartDate: nonRestDayDates[dayIndex],
           sessionExerciseList,
-          targetRir,
-          isDeloadMicrocycle,
           setPlan
         });
 

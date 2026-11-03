@@ -136,10 +136,6 @@ export default class WorkoutMesocycleService {
       )
     );
 
-    // Determine number of microcycles (default to 6 if not specified: 5 accumulation + 1 deload)
-    const totalMicrocycles = mesocycle.plannedMicrocycleCount ?? 6;
-    const deloadMicrocycleIndex = context.skipDeload ? -1 : totalMicrocycles - 1;
-
     // Determine starting point for generation
     const startMicrocycleIndex = context.microcyclesInOrder.length;
     let currentDate: Date;
@@ -152,25 +148,12 @@ export default class WorkoutMesocycleService {
       currentDate = lastExistingMicrocycle.microcycle.endDate;
     }
 
-    const { firstMicrocycleRir } = context;
-
     // Generate remaining microcycles
     for (
       let microcycleIndex = startMicrocycleIndex;
-      microcycleIndex < totalMicrocycles;
+      microcycleIndex < context.plannedMicrocycleCount;
       microcycleIndex++
     ) {
-      const isDeloadMicrocycle = microcycleIndex === deloadMicrocycleIndex;
-
-      // Calculate RIR for this microcycle. Uses the cycle-type-specific starting RIR
-      // and tapers down by 1 per microcycle: e.g. MuscleGain 4->3->2->1->0, Cut 3->2->1->0->0.
-      // If progression is still, keep RIR flat
-      const rirForMicrocycle =
-        context.progressionInterval === 0
-          ? firstMicrocycleRir
-          : Math.max(firstMicrocycleRir - microcycleIndex, 0);
-      const targetRir = isDeloadMicrocycle ? null : rirForMicrocycle;
-
       // Create microcycle
       const microcycle = WorkoutMicrocycleSchema.parse({
         userId: mesocycle.userId,
@@ -180,12 +163,7 @@ export default class WorkoutMesocycleService {
       });
       context.addMicrocycle(microcycle);
 
-      WorkoutMicrocycleService.generateSessionsForMicrocycle({
-        context,
-        microcycleIndex,
-        targetRir,
-        isDeloadMicrocycle
-      });
+      WorkoutMicrocycleService.generateSessionsForMicrocycle({ context, microcycleIndex });
 
       // Move to next microcycle
       currentDate = microcycle.endDate;

@@ -78,8 +78,7 @@ export default class WorkoutVolumePlanningService {
    */
   static calculateSetPlanForMicrocycle(
     context: WorkoutMesocyclePlanContext,
-    microcycleIndex: number,
-    isDeloadMicrocycle: boolean
+    microcycleIndex: number
   ): { exerciseIdToSetCount: Map<UUID, number>; recoveryExerciseIds: Set<UUID> } {
     if (!context.muscleGroupToExerciseCTOsMap) {
       throw new Error(
@@ -94,8 +93,7 @@ export default class WorkoutVolumePlanningService {
       const result = this.#calculateSetCountForEachExerciseInMuscleGroup(
         context,
         microcycleIndex,
-        muscleGroupExerciseCTOs,
-        isDeloadMicrocycle
+        muscleGroupExerciseCTOs
       );
       for (const [workoutExerciseId, setCount] of result.exerciseIdToSetCount) {
         exerciseIdToSetCount.set(workoutExerciseId, setCount);
@@ -180,9 +178,9 @@ export default class WorkoutVolumePlanningService {
   static #calculateSetCountForEachExerciseInMuscleGroup(
     context: WorkoutMesocyclePlanContext,
     microcycleIndex: number,
-    muscleGroupExerciseCTOs: WorkoutExerciseCTO[],
-    isDeloadMicrocycle: boolean
+    muscleGroupExerciseCTOs: WorkoutExerciseCTO[]
   ): { exerciseIdToSetCount: Map<UUID, number>; recoveryExerciseIds: Set<UUID> } {
+    const isDeloadMicrocycle = microcycleIndex === context.deloadMicrocycleIndex;
     const exerciseIdToSetCount = new Map<UUID, number>();
     const recoveryExerciseIds = new Set<UUID>();
     const sessionIndexToExerciseIds = new Map<number, UUID[]>();

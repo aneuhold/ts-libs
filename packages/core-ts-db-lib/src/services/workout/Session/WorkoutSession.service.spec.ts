@@ -168,8 +168,10 @@ describe('WorkoutSessionService', () => {
     });
   });
 
+  // Microcycle index 5 is the deload
   const mesocycle = workoutTestUtil.createMesocycle({
     plannedSessionCountPerMicrocycle: 4,
+    plannedMicrocycleCount: 6,
     calibratedExercises: [
       workoutTestUtil.STANDARD_CALIBRATIONS.barbellSquat._id,
       workoutTestUtil.STANDARD_CALIBRATIONS.barbellBenchPress._id,
@@ -212,11 +214,7 @@ describe('WorkoutSessionService', () => {
     );
 
   // Helper to generate a session and inspect set counts
-  const getSetsPerExercise = (
-    microcycleIndex: number,
-    isDeload: boolean = false,
-    inputExerciseCTOs = defaultExerciseCTOs
-  ) => {
+  const getSetsPerExercise = (microcycleIndex: number, inputExerciseCTOs = defaultExerciseCTOs) => {
     const context = workoutTestUtil.createContext({
       mesocycle,
       exerciseCTOs: inputExerciseCTOs
@@ -240,8 +238,7 @@ describe('WorkoutSessionService', () => {
 
     const setPlan = WorkoutVolumePlanningService.calculateSetPlanForMicrocycle(
       context,
-      microcycleIndex,
-      isDeload
+      microcycleIndex
     );
 
     WorkoutSessionService.generateSession({
@@ -250,8 +247,6 @@ describe('WorkoutSessionService', () => {
       sessionIndex: 0,
       sessionStartDate: new Date(),
       sessionExerciseList: inputExerciseCTOs,
-      targetRir: 2,
-      isDeloadMicrocycle: isDeload,
       setPlan
     });
 
@@ -295,12 +290,12 @@ describe('WorkoutSessionService', () => {
 
       // Micro 1: total sets for chest group = (2 * 2) + 1 = 5.
       // Distribution: first gets 3, second gets 2.
-      const { setsGeneratedPerExercise: summary } = getSetsPerExercise(1, false, chestCTOs);
+      const { setsGeneratedPerExercise: summary } = getSetsPerExercise(1, chestCTOs);
       expect(summary[chestCTOs[0]._id].count).toBe(3);
       expect(summary[chestCTOs[1]._id].count).toBe(2);
 
       // Micro 2: total sets = (2 * 2) + 2 = 6 -> 3 and 3.
-      const { setsGeneratedPerExercise: sum2 } = getSetsPerExercise(2, false, chestCTOs);
+      const { setsGeneratedPerExercise: sum2 } = getSetsPerExercise(2, chestCTOs);
       expect(sum2[chestCTOs[0]._id].count).toBe(3);
       expect(sum2[chestCTOs[1]._id].count).toBe(3);
     });
@@ -314,11 +309,7 @@ describe('WorkoutSessionService', () => {
       ]);
 
       // Deload: baseline is previous microcycle's set count, then halved (min 1).
-      const { setsGeneratedPerExercise: summary, totalSets } = getSetsPerExercise(
-        5,
-        true,
-        chestCTOs
-      );
+      const { setsGeneratedPerExercise: summary, totalSets } = getSetsPerExercise(5, chestCTOs);
 
       // Check total reduction
       expect(totalSets).toBeLessThan(10); // Definitely less than normal
