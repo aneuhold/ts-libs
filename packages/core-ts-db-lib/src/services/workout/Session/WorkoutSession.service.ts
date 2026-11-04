@@ -47,8 +47,10 @@ export default class WorkoutSessionService {
 
   /**
    * Finds the in-progress session and the next-up session in a single pass.
-   * - In-progress: complete === false, at least one set has actualReps != null
-   * - Next-up: first complete === false session with no logged sets (after any in-progress)
+   * At most one of them is returned, since nothing is next up while a session
+   * is in progress.
+   * - In-progress: first complete === false session where at least one set has actualReps != null
+   * - Next-up: first complete === false session with no logged sets, when no session is in progress
    *
    * Sessions should be in microcycle order (as returned by getAssociatedDocsForMesocycle).
    * Only checks sets for incomplete sessions, skipping completed ones entirely.
@@ -62,21 +64,18 @@ export default class WorkoutSessionService {
     sessionExerciseMap: Map<UUID, WorkoutSessionExercise>,
     setMap: Map<UUID, WorkoutSet>
   ): { inProgressSession: WorkoutSession | null; nextUpSession: WorkoutSession | null } {
-    let inProgressSession: WorkoutSession | null = null;
     let nextUpSession: WorkoutSession | null = null;
 
     for (const session of sessions) {
       if (session.complete) continue;
 
       if (this.#sessionHasLoggedSets(session, sessionExerciseMap, setMap)) {
-        if (!inProgressSession) inProgressSession = session;
-      } else {
-        if (!nextUpSession) nextUpSession = session;
+        return { inProgressSession: session, nextUpSession: null };
       }
-      if (inProgressSession && nextUpSession) break;
+      if (!nextUpSession) nextUpSession = session;
     }
 
-    return { inProgressSession, nextUpSession };
+    return { inProgressSession: null, nextUpSession };
   }
 
   /**

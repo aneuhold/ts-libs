@@ -4,12 +4,14 @@ import { describe, expect, it } from 'vitest';
 import workoutTestUtil from '../../../../test-utils/WorkoutTestUtil.js';
 import { CycleType, WorkoutMesocycleSchema } from '../../../documents/workout/WorkoutMesocycle.js';
 import type { WorkoutMicrocycle } from '../../../documents/workout/WorkoutMicrocycle.js';
+import type { WorkoutSession } from '../../../documents/workout/WorkoutSession.js';
 import type { WorkoutSessionExercise } from '../../../documents/workout/WorkoutSessionExercise.js';
 import type { WorkoutSet } from '../../../documents/workout/WorkoutSet.js';
 import WorkoutMesocycleService from './WorkoutMesocycle.service.js';
 import {
   WorkoutDeloadSeverity,
-  WorkoutDeloadTriggerRule
+  WorkoutDeloadTriggerRule,
+  WorkoutSessionLockReason
 } from './WorkoutMesocycleService.types.js';
 
 describe('Unit Tests', () => {
@@ -1636,6 +1638,112 @@ describe('Unit Tests', () => {
       // Should return approximately today since projected end is in the past
       expect(result.getTime()).toBeGreaterThanOrEqual(before.getTime());
       expect(result.getTime()).toBeLessThanOrEqual(after.getTime());
+    });
+  });
+
+  describe('getCurrentMicrocycle', () => {
+    it('should return the first microcycle without a completedDate', () => {
+      const completed = workoutTestUtil.createMicrocycle({
+        overrides: { completedDate: new Date() }
+      });
+      const current = workoutTestUtil.createMicrocycle({});
+      const upcoming = workoutTestUtil.createMicrocycle({});
+
+      expect(WorkoutMesocycleService.getCurrentMicrocycle([completed, current, upcoming])).toBe(
+        current
+      );
+    });
+
+    it('should return undefined when every microcycle is completed', () => {
+      const microcycles = [0, 1].map(() =>
+        workoutTestUtil.createMicrocycle({ overrides: { completedDate: new Date() } })
+      );
+
+      expect(WorkoutMesocycleService.getCurrentMicrocycle(microcycles)).toBeUndefined();
+    });
+  });
+
+  describe('getSessionLockReason', () => {
+    /**
+     * Plans a started three-microcycle mesocycle and marks its first
+     * `completedMicrocycleCount` microcycles as completed.
+     *
+     * @param completedMicrocycleCount How many microcycles, from the start, are completed.
+     */
+    const planStartedMesocycle = (completedMicrocycleCount: number) => {
+      const mesocycle = workoutTestUtil.createMesocycle({ startDate: new Date() });
+      const result = WorkoutMesocycleService.generateOrUpdateMesocycle(
+        mesocycle,
+        workoutTestUtil.STANDARD_EXERCISE_CTOS
+      );
+      const microcycles = result.microcycles?.create ?? [];
+      for (const microcycle of microcycles.slice(0, completedMicrocycleCount)) {
+        microcycle.completedDate = new Date();
+      }
+      const sessions = result.sessions?.create ?? [];
+      const getSession = (microcycleIndex: number, sessionIndex: number): WorkoutSession => {
+        const sessionId = microcycles[microcycleIndex].sessionOrder[sessionIndex];
+        const session = sessions.find((s) => s._id === sessionId);
+        if (!session) throw new Error(`No session at ${microcycleIndex}/${sessionIndex}`);
+        return session;
+      };
+      return { mesocycle, microcycles, getSession };
+    };
+
+    it('should return MesocycleNotStarted when the mesocycle has no startDate', () => {
+      const { mesocycle, microcycles, getSession } = planStartedMesocycle(0);
+      mesocycle.startDate = null;
+
+      expect(
+        WorkoutMesocycleService.getSessionLockReason(mesocycle, microcycles, getSession(0, 0), null)
+      ).toBe(WorkoutSessionLockReason.MesocycleNotStarted);
+    });
+
+    it('should return PreviousMicrocycleNotCompleted for a session after the current microcycle', () => {
+      const { mesocycle, microcycles, getSession } = planStartedMesocycle(1);
+
+      expect(
+        WorkoutMesocycleService.getSessionLockReason(mesocycle, microcycles, getSession(2, 0), null)
+      ).toBe(WorkoutSessionLockReason.PreviousMicrocycleNotCompleted);
+    });
+
+    it('should return PreviousSessionNotCompleted when the previous session is incomplete', () => {
+      const { mesocycle, microcycles, getSession } = planStartedMesocycle(1);
+
+      expect(
+        WorkoutMesocycleService.getSessionLockReason(
+          mesocycle,
+          microcycles,
+          getSession(1, 1),
+          getSession(1, 0)
+        )
+      ).toBe(WorkoutSessionLockReason.PreviousSessionNotCompleted);
+    });
+
+    it('should return null for sessions in the current or a completed microcycle', () => {
+      const { mesocycle, microcycles, getSession } = planStartedMesocycle(1);
+      const previousSession = getSession(1, 0);
+      previousSession.complete = true;
+
+      expect(
+        WorkoutMesocycleService.getSessionLockReason(mesocycle, microcycles, getSession(0, 1), null)
+      ).toBeNull();
+      expect(
+        WorkoutMesocycleService.getSessionLockReason(
+          mesocycle,
+          microcycles,
+          getSession(1, 1),
+          previousSession
+        )
+      ).toBeNull();
+    });
+
+    it('should return null for every session when all microcycles are completed', () => {
+      const { mesocycle, microcycles, getSession } = planStartedMesocycle(3);
+
+      expect(
+        WorkoutMesocycleService.getSessionLockReason(mesocycle, microcycles, getSession(2, 0), null)
+      ).toBeNull();
     });
   });
 
