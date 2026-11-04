@@ -16,7 +16,8 @@ import WorkoutMesocyclePlanContext from './WorkoutMesocyclePlanContext.js';
 import type { WorkoutDeloadRecommendation } from './WorkoutMesocycleService.types.js';
 import {
   WorkoutDeloadSeverity,
-  WorkoutDeloadTriggerRule
+  WorkoutDeloadTriggerRule,
+  WorkoutSessionLockReason
 } from './WorkoutMesocycleService.types.js';
 
 /**
@@ -331,6 +332,56 @@ export default class WorkoutMesocycleService {
     }
 
     return latestEnd;
+  }
+
+  /**
+   * Returns the microcycle the user is currently working through: the first
+   * microcycle that has not been completed (advanced past). Returns `undefined`
+   * when every microcycle is completed.
+   *
+   * @param orderedMicrocycles The mesocycle's microcycles, sorted by start date.
+   */
+  static getCurrentMicrocycle(
+    orderedMicrocycles: WorkoutMicrocycle[]
+  ): WorkoutMicrocycle | undefined {
+    return orderedMicrocycles.find((microcycle) => microcycle.completedDate == null);
+  }
+
+  /**
+   * Returns the reason a session in this mesocycle cannot be logged yet, or
+   * `null` if it can. A session is unlocked when the mesocycle has been
+   * started, its microcycle is not after the current microcycle (see
+   * {@link getCurrentMicrocycle}), and the previous session in its microcycle
+   * (if any) is complete.
+   *
+   * @param mesocycle The session's mesocycle.
+   * @param orderedMicrocycles The mesocycle's microcycles, sorted by start date.
+   * @param session The session to check.
+   * @param previousSessionInMicrocycle The session before this one in the same microcycle, or null/undefined if first.
+   */
+  static getSessionLockReason(
+    mesocycle: WorkoutMesocycle,
+    orderedMicrocycles: WorkoutMicrocycle[],
+    session: WorkoutSession,
+    previousSessionInMicrocycle: WorkoutSession | null | undefined
+  ): WorkoutSessionLockReason | null {
+    if (mesocycle.startDate == null) return WorkoutSessionLockReason.MesocycleNotStarted;
+
+    const currentMicrocycle = this.getCurrentMicrocycle(orderedMicrocycles);
+    const currentMicrocycleIndex = currentMicrocycle
+      ? orderedMicrocycles.indexOf(currentMicrocycle)
+      : orderedMicrocycles.length;
+    const sessionMicrocycleIndex = orderedMicrocycles.findIndex(
+      (microcycle) => microcycle._id === session.workoutMicrocycleId
+    );
+    if (sessionMicrocycleIndex > currentMicrocycleIndex) {
+      return WorkoutSessionLockReason.PreviousMicrocycleNotCompleted;
+    }
+
+    if (previousSessionInMicrocycle && !previousSessionInMicrocycle.complete) {
+      return WorkoutSessionLockReason.PreviousSessionNotCompleted;
+    }
+    return null;
   }
 
   /**

@@ -22,6 +22,19 @@ export enum WorkoutDeloadTriggerRule {
 }
 
 /**
+ * Why a session in a mesocycle cannot be logged yet. Stated here because it has
+ * more to do with the state of the mesocycle than the session alone for the most part.
+ */
+export enum WorkoutSessionLockReason {
+  /** The mesocycle has not been started. */
+  MesocycleNotStarted = 'MesocycleNotStarted',
+  /** The session belongs to a microcycle after the current microcycle. */
+  PreviousMicrocycleNotCompleted = 'PreviousMicrocycleNotCompleted',
+  /** The session before it in the same microcycle is not complete. */
+  PreviousSessionNotCompleted = 'PreviousSessionNotCompleted'
+}
+
+/**
  * Result of evaluating whether a mesocycle should trigger an early deload.
  */
 export type WorkoutDeloadRecommendation = {
