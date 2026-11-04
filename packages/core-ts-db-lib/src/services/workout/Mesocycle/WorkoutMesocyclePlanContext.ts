@@ -12,6 +12,7 @@ import type { WorkoutMicrocycle } from '../../../documents/workout/WorkoutMicroc
 import type { WorkoutSession } from '../../../documents/workout/WorkoutSession.js';
 import type { WorkoutSessionExercise } from '../../../documents/workout/WorkoutSessionExercise.js';
 import type { WorkoutSet } from '../../../documents/workout/WorkoutSet.js';
+import WorkoutMicrocycleService from '../Microcycle/WorkoutMicrocycle.service.js';
 import WorkoutVolumePlanningService from '../util/VolumePlanning/WorkoutVolumePlanning.service.js';
 
 /**
@@ -121,22 +122,23 @@ export default class WorkoutMesocyclePlanContext {
     if (cycleType === CycleType.Cut) {
       this.firstMicrocycleRir = 3;
       this.progressionInterval = 2;
-      this.skipDeload = false;
     } else if (cycleType === CycleType.Resensitization) {
       this.firstMicrocycleRir = 3;
       this.progressionInterval = 0;
-      this.skipDeload = true;
     } else {
       this.firstMicrocycleRir = 4;
       this.progressionInterval = 1;
-      this.skipDeload = false;
     }
 
     this.plannedMicrocycleCount = mesocycle.plannedMicrocycleCount ?? 6;
+    this.deloadMicrocycleIndex = WorkoutMicrocycleService.getDeloadMicrocycleIndex(
+      cycleType,
+      this.plannedMicrocycleCount
+    );
+    this.skipDeload = this.deloadMicrocycleIndex === undefined;
     this.accumulationMicrocycleCount = this.skipDeload
       ? this.plannedMicrocycleCount
       : this.plannedMicrocycleCount - 1;
-    this.deloadMicrocycleIndex = this.skipDeload ? undefined : this.accumulationMicrocycleCount;
 
     // Build volume landmark estimates from historical CTOs
     this.muscleGroupToVolumeLandmarkMap = new Map(

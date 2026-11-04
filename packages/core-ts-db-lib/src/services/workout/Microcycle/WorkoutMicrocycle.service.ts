@@ -2,6 +2,7 @@ import { DateService } from '@aneuhold/core-ts-lib';
 import type { UUID } from 'crypto';
 import type { WorkoutExerciseCTO } from '../../../ctos/workout/WorkoutExerciseCTO.js';
 import { ExerciseRepRange } from '../../../documents/workout/WorkoutExercise.js';
+import { CycleType } from '../../../documents/workout/WorkoutMesocycle.js';
 import WorkoutExerciseService from '../Exercise/WorkoutExercise.service.js';
 import type WorkoutMesocyclePlanContext from '../Mesocycle/WorkoutMesocyclePlanContext.js';
 import WorkoutSessionService from '../Session/WorkoutSession.service.js';
@@ -209,5 +210,19 @@ export default class WorkoutMicrocycleService {
     }
 
     return sessions;
+  }
+
+  /**
+   * Returns the index of the deload microcycle (the last one), or undefined when the cycle type
+   * skips the deload (Resensitization).
+   *
+   * @param cycleType The mesocycle's cycle type.
+   * @param microcycleCount Total number of microcycles in the mesocycle, including the deload.
+   */
+  static getDeloadMicrocycleIndex(
+    cycleType: CycleType,
+    microcycleCount: number
+  ): number | undefined {
+    return cycleType === CycleType.Resensitization ? undefined : microcycleCount - 1;
   }
 }
