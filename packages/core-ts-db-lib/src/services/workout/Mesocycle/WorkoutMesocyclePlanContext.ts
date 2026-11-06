@@ -130,7 +130,7 @@ export default class WorkoutMesocyclePlanContext {
       this.progressionInterval = 1;
     }
 
-    this.plannedMicrocycleCount = WorkoutMicrocycleService.getPlannedMicrocycleCount(mesocycle);
+    this.plannedMicrocycleCount = mesocycle.plannedMicrocycleCount ?? 6;
     this.deloadMicrocycleIndex = WorkoutMicrocycleService.getDeloadMicrocycleIndex(
       cycleType,
       this.plannedMicrocycleCount
@@ -176,16 +176,9 @@ export default class WorkoutMesocyclePlanContext {
    * {@link progressionInterval} is 0.
    */
   public getTargetRir(microcycleIndex: number): number | null {
-    if (this.isDeloadMicrocycle(microcycleIndex)) return null;
+    if (microcycleIndex === this.deloadMicrocycleIndex) return null;
     if (this.progressionInterval === 0) return this.firstMicrocycleRir;
     return Math.max(this.firstMicrocycleRir - microcycleIndex, 0);
-  }
-
-  /**
-   * Returns true when the microcycle at the given index is this mesocycle's deload.
-   */
-  public isDeloadMicrocycle(microcycleIndex: number): boolean {
-    return microcycleIndex === this.deloadMicrocycleIndex;
   }
 
   /**

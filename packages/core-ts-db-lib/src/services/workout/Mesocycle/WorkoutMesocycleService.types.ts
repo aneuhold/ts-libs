@@ -22,7 +22,8 @@ export enum WorkoutDeloadTriggerRule {
 }
 
 /**
- * Why a session in a mesocycle cannot be logged yet.
+ * Why a session in a mesocycle cannot be logged yet. Stated here because it has
+ * more to do with the state of the mesocycle than the session alone for the most part.
  */
 export enum WorkoutSessionLockReason {
   /** The mesocycle has not been started. */

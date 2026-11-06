@@ -44,7 +44,7 @@ export default class WorkoutSetService {
     }
 
     const sets: WorkoutSet[] = [];
-    const isDeloadMicrocycle = context.isDeloadMicrocycle(microcycleIndex);
+    const isDeloadMicrocycle = microcycleIndex === context.deloadMicrocycleIndex;
     const plannedRir = context.getTargetRir(microcycleIndex);
 
     // For the first microcycle, use the CTO's previous accumulation performance
@@ -58,7 +58,7 @@ export default class WorkoutSetService {
     // Autoregulation/forecasting handles progression from the previous sets' data.
     // Surplus is averaged across all sets for a holistic performance signal.
     // Calibration is only used when no previous set exists (first microcycle ever).
-    const { targetReps: progressedReps, targetWeight: progressedWeight } =
+    let { targetReps: firstSetReps, targetWeight: firstSetWeight } =
       WorkoutExerciseService.calculateTargetRepsAndWeightForFirstSet({
         exercise: exerciseCTO,
         calibration: bestCalibration,
@@ -69,11 +69,12 @@ export default class WorkoutSetService {
 
     // A deload starts from the previous microcycle's first set as performed (or as planned when
     // not logged) instead of progressing from it.
-    const deloadSourceSet = isDeloadMicrocycle ? previousSets.at(0) : undefined;
-    const firstSetReps =
-      deloadSourceSet?.actualReps ?? deloadSourceSet?.plannedReps ?? progressedReps;
-    const firstSetWeight =
-      deloadSourceSet?.actualWeight ?? deloadSourceSet?.plannedWeight ?? progressedWeight;
+    const previousFirstSet = previousSets.at(0);
+    if (isDeloadMicrocycle && previousFirstSet) {
+      firstSetReps = previousFirstSet.actualReps ?? previousFirstSet.plannedReps ?? firstSetReps;
+      firstSetWeight =
+        previousFirstSet.actualWeight ?? previousFirstSet.plannedWeight ?? firstSetWeight;
+    }
 
     for (let setIndex = 0; setIndex < setCount; setIndex++) {
       // Deload sets are straight sets, so each one derives from the first set
@@ -184,6 +185,8 @@ export default class WorkoutSetService {
   ) {
     // Deload sets halve the first set's reps and skip the per-set drop.
     // First half of deload microcycle: same weight. Second half: half weight too.
+    // This is hard to figure out from the book. This was changed
+    // 11/2/2026 to be just a flat drop and then consistent over sets.
     if (deloadInfo.isDeloadMicrocycle) {
       const isSecondHalf =
         deloadInfo.sessionIndex >= Math.floor(deloadInfo.plannedSessionCountPerMicrocycle / 2);

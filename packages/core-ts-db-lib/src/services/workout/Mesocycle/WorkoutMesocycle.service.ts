@@ -233,7 +233,7 @@ export default class WorkoutMesocycleService {
       return null;
     }
 
-    const totalMicrocycles = WorkoutMicrocycleService.getPlannedMicrocycleCount(mesocycle);
+    const totalMicrocycles = mesocycle.plannedMicrocycleCount ?? 6;
     const totalDays = totalMicrocycles * mesocycle.plannedMicrocycleLengthInDays;
     return DateService.addDays(startDate, totalDays);
   }

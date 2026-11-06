@@ -100,9 +100,10 @@ export default class WorkoutSessionService {
     const { microcycle } = context.microcyclesInOrder[microcycleIndex];
 
     const resolvedSetPlan = setPlan;
-    const microcycleLabel = context.isDeloadMicrocycle(microcycleIndex)
-      ? 'Deload'
-      : `Microcycle ${microcycleIndex + 1}`;
+    const microcycleLabel =
+      microcycleIndex === context.deloadMicrocycleIndex
+        ? 'Deload'
+        : `Microcycle ${microcycleIndex + 1}`;
 
     // Create session
     const session = WorkoutSessionSchema.parse({
