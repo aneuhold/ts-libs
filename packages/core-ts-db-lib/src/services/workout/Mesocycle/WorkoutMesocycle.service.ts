@@ -16,7 +16,8 @@ import WorkoutMesocyclePlanContext from './WorkoutMesocyclePlanContext.js';
 import type { WorkoutDeloadRecommendation } from './WorkoutMesocycleService.types.js';
 import {
   WorkoutDeloadSeverity,
-  WorkoutDeloadTriggerRule
+  WorkoutDeloadTriggerRule,
+  WorkoutSessionLockReason
 } from './WorkoutMesocycleService.types.js';
 
 /**
@@ -61,7 +62,7 @@ export default class WorkoutMesocycleService {
    * @param existingSessions Existing session documents.
    * @param existingSessionExercises Existing session exercise documents.
    * @param existingSets Existing set documents.
-   * @param startDate Optional start date for the first microcycle. Defaults to the current date when not provided.
+   * @param startDate Optional start date for the first microcycle. Defaults to the mesocycle's `startDate`, then to the current date.
    */
   static generateOrUpdateMesocycle(
     mesocycle: WorkoutMesocycle,
@@ -136,41 +137,24 @@ export default class WorkoutMesocycleService {
       )
     );
 
-    // Determine number of microcycles (default to 6 if not specified: 5 accumulation + 1 deload)
-    const totalMicrocycles = mesocycle.plannedMicrocycleCount ?? 6;
-    const deloadMicrocycleIndex = context.skipDeload ? -1 : totalMicrocycles - 1;
-
     // Determine starting point for generation
     const startMicrocycleIndex = context.microcyclesInOrder.length;
     let currentDate: Date;
 
     if (startMicrocycleIndex === 0) {
-      currentDate = startDate ?? new Date();
+      currentDate = startDate ?? mesocycle.startDate ?? new Date();
     } else {
       // Continue from where the last existing microcycle ended
       const lastExistingMicrocycle = context.microcyclesInOrder[startMicrocycleIndex - 1];
       currentDate = lastExistingMicrocycle.microcycle.endDate;
     }
 
-    const { firstMicrocycleRir } = context;
-
     // Generate remaining microcycles
     for (
       let microcycleIndex = startMicrocycleIndex;
-      microcycleIndex < totalMicrocycles;
+      microcycleIndex < context.plannedMicrocycleCount;
       microcycleIndex++
     ) {
-      const isDeloadMicrocycle = microcycleIndex === deloadMicrocycleIndex;
-
-      // Calculate RIR for this microcycle. Uses the cycle-type-specific starting RIR
-      // and tapers down by 1 per microcycle: e.g. MuscleGain 4->3->2->1->0, Cut 3->2->1->0->0.
-      // If progression is still, keep RIR flat
-      const rirForMicrocycle =
-        context.progressionInterval === 0
-          ? firstMicrocycleRir
-          : Math.max(firstMicrocycleRir - microcycleIndex, 0);
-      const targetRir = isDeloadMicrocycle ? null : rirForMicrocycle;
-
       // Create microcycle
       const microcycle = WorkoutMicrocycleSchema.parse({
         userId: mesocycle.userId,
@@ -180,12 +164,7 @@ export default class WorkoutMesocycleService {
       });
       context.addMicrocycle(microcycle);
 
-      WorkoutMicrocycleService.generateSessionsForMicrocycle({
-        context,
-        microcycleIndex,
-        targetRir,
-        isDeloadMicrocycle
-      });
+      WorkoutMicrocycleService.generateSessionsForMicrocycle({ context, microcycleIndex });
 
       // Move to next microcycle
       currentDate = microcycle.endDate;
@@ -353,6 +332,56 @@ export default class WorkoutMesocycleService {
     }
 
     return latestEnd;
+  }
+
+  /**
+   * Returns the microcycle the user is currently working through: the first
+   * microcycle that has not been completed (advanced past). Returns `undefined`
+   * when every microcycle is completed.
+   *
+   * @param orderedMicrocycles The mesocycle's microcycles, sorted by start date.
+   */
+  static getCurrentMicrocycle(
+    orderedMicrocycles: WorkoutMicrocycle[]
+  ): WorkoutMicrocycle | undefined {
+    return orderedMicrocycles.find((microcycle) => microcycle.completedDate == null);
+  }
+
+  /**
+   * Returns the reason a session in this mesocycle cannot be logged yet, or
+   * `null` if it can. A session is unlocked when the mesocycle has been
+   * started, its microcycle is not after the current microcycle (see
+   * {@link getCurrentMicrocycle}), and the previous session in its microcycle
+   * (if any) is complete.
+   *
+   * @param mesocycle The session's mesocycle.
+   * @param orderedMicrocycles The mesocycle's microcycles, sorted by start date.
+   * @param session The session to check.
+   * @param previousSessionInMicrocycle The session before this one in the same microcycle, or null/undefined if first.
+   */
+  static getSessionLockReason(
+    mesocycle: WorkoutMesocycle,
+    orderedMicrocycles: WorkoutMicrocycle[],
+    session: WorkoutSession,
+    previousSessionInMicrocycle: WorkoutSession | null | undefined
+  ): WorkoutSessionLockReason | null {
+    if (mesocycle.startDate == null) return WorkoutSessionLockReason.MesocycleNotStarted;
+
+    const currentMicrocycle = this.getCurrentMicrocycle(orderedMicrocycles);
+    const currentMicrocycleIndex = currentMicrocycle
+      ? orderedMicrocycles.indexOf(currentMicrocycle)
+      : orderedMicrocycles.length;
+    const sessionMicrocycleIndex = orderedMicrocycles.findIndex(
+      (microcycle) => microcycle._id === session.workoutMicrocycleId
+    );
+    if (sessionMicrocycleIndex > currentMicrocycleIndex) {
+      return WorkoutSessionLockReason.PreviousMicrocycleNotCompleted;
+    }
+
+    if (previousSessionInMicrocycle && !previousSessionInMicrocycle.complete) {
+      return WorkoutSessionLockReason.PreviousSessionNotCompleted;
+    }
+    return null;
   }
 
   /**

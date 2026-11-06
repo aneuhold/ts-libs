@@ -1,7 +1,5 @@
 import type { UUID } from 'crypto';
 import type { WorkoutExerciseCTO } from '../../../ctos/workout/WorkoutExerciseCTO.js';
-import type { WorkoutMesocycle } from '../../../documents/workout/WorkoutMesocycle.js';
-import type { WorkoutMicrocycle } from '../../../documents/workout/WorkoutMicrocycle.js';
 import type { WorkoutSession } from '../../../documents/workout/WorkoutSession.js';
 import { WorkoutSessionSchema } from '../../../documents/workout/WorkoutSession.js';
 import type { WorkoutSessionExercise } from '../../../documents/workout/WorkoutSessionExercise.js';
@@ -10,15 +8,6 @@ import type { WorkoutSet } from '../../../documents/workout/WorkoutSet.js';
 import type WorkoutMesocyclePlanContext from '../Mesocycle/WorkoutMesocyclePlanContext.js';
 import WorkoutSetService from '../Set/WorkoutSet.service.js';
 import WorkoutSFRService from '../util/SFR/WorkoutSFR.service.js';
-
-/**
- * Describes why a session is locked and cannot be interacted with.
- */
-export enum WorkoutSessionLockReason {
-  MesocycleNotStarted = 'MesocycleNotStarted',
-  PreviousMicrocycleNotCompleted = 'PreviousMicrocycleNotCompleted',
-  PreviousSessionNotCompleted = 'PreviousSessionNotCompleted'
-}
 
 /**
  * A service for handling operations related to {@link WorkoutSession}s.
@@ -57,43 +46,11 @@ export default class WorkoutSessionService {
   }
 
   /**
-   * Returns the reason a session is locked, or `null` if the session is
-   * unlocked and can be interacted with.
-   *
-   * A session is unlocked when:
-   * - It has no microcycle (free-form session)
-   * - It has no mesocycle (free-form microcycle)
-   * - Its mesocycle has been started, the previous microcycle (if any) is
-   *   completed, and the previous session in the same microcycle (if any)
-   *   is complete.
-   *
-   * @param microcycle The session's parent microcycle, or null/undefined for free-form sessions.
-   * @param mesocycle The session's parent mesocycle, or null/undefined for free-form microcycles.
-   * @param previousMicrocycle The microcycle preceding the session's microcycle, or null/undefined if first.
-   * @param previousSessionInMicrocycle The session before this one in the same microcycle, or null/undefined if first.
-   */
-  static getSessionLockReason(
-    microcycle: WorkoutMicrocycle | null | undefined,
-    mesocycle: WorkoutMesocycle | null | undefined,
-    previousMicrocycle: WorkoutMicrocycle | null | undefined,
-    previousSessionInMicrocycle: WorkoutSession | null | undefined
-  ): WorkoutSessionLockReason | null {
-    if (!microcycle) return null;
-    if (!mesocycle) return null;
-    if (mesocycle.startDate == null) return WorkoutSessionLockReason.MesocycleNotStarted;
-    if (previousMicrocycle && previousMicrocycle.completedDate == null) {
-      return WorkoutSessionLockReason.PreviousMicrocycleNotCompleted;
-    }
-    if (previousSessionInMicrocycle && !previousSessionInMicrocycle.complete) {
-      return WorkoutSessionLockReason.PreviousSessionNotCompleted;
-    }
-    return null;
-  }
-
-  /**
    * Finds the in-progress session and the next-up session in a single pass.
-   * - In-progress: complete === false, at least one set has actualReps != null
-   * - Next-up: first complete === false session with no logged sets (after any in-progress)
+   * At most one of them is returned, since nothing is next up while a session
+   * is in progress.
+   * - In-progress: first complete === false session where at least one set has actualReps != null
+   * - Next-up: first complete === false session with no logged sets, when no session is in progress
    *
    * Sessions should be in microcycle order (as returned by getAssociatedDocsForMesocycle).
    * Only checks sets for incomplete sessions, skipping completed ones entirely.
@@ -107,21 +64,18 @@ export default class WorkoutSessionService {
     sessionExerciseMap: Map<UUID, WorkoutSessionExercise>,
     setMap: Map<UUID, WorkoutSet>
   ): { inProgressSession: WorkoutSession | null; nextUpSession: WorkoutSession | null } {
-    let inProgressSession: WorkoutSession | null = null;
     let nextUpSession: WorkoutSession | null = null;
 
     for (const session of sessions) {
       if (session.complete) continue;
 
       if (this.#sessionHasLoggedSets(session, sessionExerciseMap, setMap)) {
-        if (!inProgressSession) inProgressSession = session;
-      } else {
-        if (!nextUpSession) nextUpSession = session;
+        return { inProgressSession: session, nextUpSession: null };
       }
-      if (inProgressSession && nextUpSession) break;
+      if (!nextUpSession) nextUpSession = session;
     }
 
-    return { inProgressSession, nextUpSession };
+    return { inProgressSession: null, nextUpSession };
   }
 
   /**
@@ -133,8 +87,6 @@ export default class WorkoutSessionService {
     sessionIndex,
     sessionStartDate,
     sessionExerciseList,
-    targetRir,
-    isDeloadMicrocycle,
     setPlan
   }: {
     context: WorkoutMesocyclePlanContext;
@@ -142,20 +94,22 @@ export default class WorkoutSessionService {
     sessionIndex: number;
     sessionStartDate: Date;
     sessionExerciseList: WorkoutExerciseCTO[];
-    targetRir: number | null;
-    isDeloadMicrocycle: boolean;
     setPlan: { exerciseIdToSetCount: Map<UUID, number>; recoveryExerciseIds: Set<UUID> };
   }): void {
     const mesocycle = context.mesocycle;
     const { microcycle } = context.microcyclesInOrder[microcycleIndex];
 
     const resolvedSetPlan = setPlan;
+    const microcycleLabel =
+      microcycleIndex === context.deloadMicrocycleIndex
+        ? 'Deload'
+        : `Microcycle ${microcycleIndex + 1}`;
 
     // Create session
     const session = WorkoutSessionSchema.parse({
       userId: mesocycle.userId,
       workoutMicrocycleId: microcycle._id,
-      title: `Microcycle ${microcycleIndex + 1} - Session ${sessionIndex + 1}`,
+      title: `${microcycleLabel} - Session ${sessionIndex + 1}`,
       startTime: sessionStartDate
     });
 
@@ -184,9 +138,7 @@ export default class WorkoutSessionService {
         sessionExercise,
         microcycleIndex,
         sessionIndex,
-        setCount: setCountFromPlan,
-        targetRir,
-        isDeloadMicrocycle
+        setCount: setCountFromPlan
       });
 
       const setsForThisExercise = context.setsToCreate.slice(-setCountFromPlan);

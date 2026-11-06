@@ -5,7 +5,7 @@ import type { WorkoutExercise } from '../../../documents/workout/WorkoutExercise
 import type { WorkoutSessionExercise } from '../../../documents/workout/WorkoutSessionExercise.js';
 import type { WorkoutSet } from '../../../documents/workout/WorkoutSet.js';
 import WorkoutVolumePlanningService from '../util/VolumePlanning/WorkoutVolumePlanning.service.js';
-import WorkoutSessionService, { WorkoutSessionLockReason } from './WorkoutSession.service.js';
+import WorkoutSessionService from './WorkoutSession.service.js';
 
 describe('WorkoutSessionService', () => {
   describe('getActiveAndNextSessions', () => {
@@ -31,7 +31,7 @@ describe('WorkoutSessionService', () => {
       expect(result.nextUpSession).toBeNull();
     });
 
-    it('should return in-progress session when it has logged sets', () => {
+    it('should return the in-progress session and no next-up session when one has logged sets', () => {
       const s1 = workoutTestUtil.createSession({ overrides: { complete: true } });
       const s2 = workoutTestUtil.createSession({ overrides: { complete: false } });
       const s3 = workoutTestUtil.createSession({ overrides: { complete: false } });
@@ -50,7 +50,7 @@ describe('WorkoutSessionService', () => {
 
       const result = WorkoutSessionService.getActiveAndNextSessions([s1, s2, s3], seMap, setMap);
       expect(result.inProgressSession?._id).toBe(s2._id);
-      expect(result.nextUpSession?._id).toBe(s3._id);
+      expect(result.nextUpSession).toBeNull();
     });
 
     it('should return nextUp when no in-progress session exists', () => {
@@ -65,111 +65,12 @@ describe('WorkoutSessionService', () => {
       expect(result.inProgressSession).toBeNull();
       expect(result.nextUpSession?._id).toBe(s2._id);
     });
-
-    it('should return only inProgress when all remaining incomplete sessions have logged sets', () => {
-      const s1 = workoutTestUtil.createSession({ overrides: { complete: false } });
-
-      const se1 = workoutTestUtil.createSessionExercise({ session: s1 });
-      const loggedSet = workoutTestUtil.createSet({
-        session: s1,
-        sessionExercise: se1,
-        overrides: { actualReps: 8 }
-      });
-      se1.setOrder = [loggedSet._id];
-      s1.sessionExerciseOrder = [se1._id];
-
-      const seMap = new Map<UUID, WorkoutSessionExercise>([[se1._id, se1]]);
-      const setMap = new Map<UUID, WorkoutSet>([[loggedSet._id, loggedSet]]);
-
-      const result = WorkoutSessionService.getActiveAndNextSessions([s1], seMap, setMap);
-      expect(result.inProgressSession?._id).toBe(s1._id);
-      expect(result.nextUpSession).toBeNull();
-    });
   });
 
-  describe('getSessionLockReason', () => {
-    it('should return null for free-form sessions (no microcycle)', () => {
-      const result = WorkoutSessionService.getSessionLockReason(null, null, null, null);
-      expect(result).toBeNull();
-    });
-
-    it('should return null for free-form microcycles (no mesocycle)', () => {
-      const microcycle = workoutTestUtil.createMicrocycle({});
-      const result = WorkoutSessionService.getSessionLockReason(microcycle, null, null, null);
-      expect(result).toBeNull();
-    });
-
-    it('should return MesocycleNotStarted when mesocycle has no startDate', () => {
-      const mesocycle = workoutTestUtil.createMesocycle({ startDate: undefined });
-      const microcycle = workoutTestUtil.createMicrocycle({ mesocycle });
-
-      const result = WorkoutSessionService.getSessionLockReason(microcycle, mesocycle, null, null);
-      expect(result).toBe(WorkoutSessionLockReason.MesocycleNotStarted);
-    });
-
-    it('should return PreviousMicrocycleNotCompleted when previous microcycle has no completedDate', () => {
-      const mesocycle = workoutTestUtil.createMesocycle({ startDate: new Date() });
-      const microcycle = workoutTestUtil.createMicrocycle({ mesocycle });
-      const previousMicrocycle = workoutTestUtil.createMicrocycle({ mesocycle });
-
-      const result = WorkoutSessionService.getSessionLockReason(
-        microcycle,
-        mesocycle,
-        previousMicrocycle,
-        null
-      );
-      expect(result).toBe(WorkoutSessionLockReason.PreviousMicrocycleNotCompleted);
-    });
-
-    it('should return PreviousSessionNotCompleted when previous session is incomplete', () => {
-      const mesocycle = workoutTestUtil.createMesocycle({ startDate: new Date() });
-      const microcycle = workoutTestUtil.createMicrocycle({ mesocycle });
-      const previousSession = workoutTestUtil.createSession({
-        microcycle,
-        overrides: { complete: false }
-      });
-
-      const result = WorkoutSessionService.getSessionLockReason(
-        microcycle,
-        mesocycle,
-        null,
-        previousSession
-      );
-      expect(result).toBe(WorkoutSessionLockReason.PreviousSessionNotCompleted);
-    });
-
-    it('should return null when all conditions are met (first session, first microcycle, started mesocycle)', () => {
-      const mesocycle = workoutTestUtil.createMesocycle({ startDate: new Date() });
-      const microcycle = workoutTestUtil.createMicrocycle({ mesocycle });
-
-      const result = WorkoutSessionService.getSessionLockReason(microcycle, mesocycle, null, null);
-      expect(result).toBeNull();
-    });
-
-    it('should return null when previous microcycle is completed and previous session is complete', () => {
-      const mesocycle = workoutTestUtil.createMesocycle({ startDate: new Date() });
-      const microcycle = workoutTestUtil.createMicrocycle({ mesocycle });
-      const previousMicrocycle = workoutTestUtil.createMicrocycle({
-        mesocycle,
-        overrides: { completedDate: new Date() }
-      });
-      const previousSession = workoutTestUtil.createSession({
-        microcycle,
-        overrides: { complete: true }
-      });
-
-      const result = WorkoutSessionService.getSessionLockReason(
-        microcycle,
-        mesocycle,
-        previousMicrocycle,
-        previousSession
-      );
-      expect(result).toBeNull();
-    });
-  });
-
+  // Microcycle index 5 is the deload
   const mesocycle = workoutTestUtil.createMesocycle({
     plannedSessionCountPerMicrocycle: 4,
+    plannedMicrocycleCount: 6,
     calibratedExercises: [
       workoutTestUtil.STANDARD_CALIBRATIONS.barbellSquat._id,
       workoutTestUtil.STANDARD_CALIBRATIONS.barbellBenchPress._id,
@@ -212,11 +113,7 @@ describe('WorkoutSessionService', () => {
     );
 
   // Helper to generate a session and inspect set counts
-  const getSetsPerExercise = (
-    microcycleIndex: number,
-    isDeload: boolean = false,
-    inputExerciseCTOs = defaultExerciseCTOs
-  ) => {
+  const getSetsPerExercise = (microcycleIndex: number, inputExerciseCTOs = defaultExerciseCTOs) => {
     const context = workoutTestUtil.createContext({
       mesocycle,
       exerciseCTOs: inputExerciseCTOs
@@ -240,8 +137,7 @@ describe('WorkoutSessionService', () => {
 
     const setPlan = WorkoutVolumePlanningService.calculateSetPlanForMicrocycle(
       context,
-      microcycleIndex,
-      isDeload
+      microcycleIndex
     );
 
     WorkoutSessionService.generateSession({
@@ -250,8 +146,6 @@ describe('WorkoutSessionService', () => {
       sessionIndex: 0,
       sessionStartDate: new Date(),
       sessionExerciseList: inputExerciseCTOs,
-      targetRir: 2,
-      isDeloadMicrocycle: isDeload,
       setPlan
     });
 
@@ -295,12 +189,12 @@ describe('WorkoutSessionService', () => {
 
       // Micro 1: total sets for chest group = (2 * 2) + 1 = 5.
       // Distribution: first gets 3, second gets 2.
-      const { setsGeneratedPerExercise: summary } = getSetsPerExercise(1, false, chestCTOs);
+      const { setsGeneratedPerExercise: summary } = getSetsPerExercise(1, chestCTOs);
       expect(summary[chestCTOs[0]._id].count).toBe(3);
       expect(summary[chestCTOs[1]._id].count).toBe(2);
 
       // Micro 2: total sets = (2 * 2) + 2 = 6 -> 3 and 3.
-      const { setsGeneratedPerExercise: sum2 } = getSetsPerExercise(2, false, chestCTOs);
+      const { setsGeneratedPerExercise: sum2 } = getSetsPerExercise(2, chestCTOs);
       expect(sum2[chestCTOs[0]._id].count).toBe(3);
       expect(sum2[chestCTOs[1]._id].count).toBe(3);
     });
@@ -314,11 +208,7 @@ describe('WorkoutSessionService', () => {
       ]);
 
       // Deload: baseline is previous microcycle's set count, then halved (min 1).
-      const { setsGeneratedPerExercise: summary, totalSets } = getSetsPerExercise(
-        5,
-        true,
-        chestCTOs
-      );
+      const { setsGeneratedPerExercise: summary, totalSets } = getSetsPerExercise(5, chestCTOs);
 
       // Check total reduction
       expect(totalSets).toBeLessThan(10); // Definitely less than normal

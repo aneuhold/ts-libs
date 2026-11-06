@@ -5,6 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## 🔖 [5.1.0] (2026-11-06)
+
+### ✅ Added
+
+- `WorkoutMesocycleService.getCurrentMicrocycle` for getting the first microcycle that has not been completed.
+- `WorkoutMicrocycleService.getDeloadMicrocycleIndex` for getting the deload microcycle index of a cycle type.
+
+### 🏗️ Changed
+
+- _Breaking Change:_ `getSessionLockReason` moved from `WorkoutSessionService` to `WorkoutMesocycleService` and now takes `(mesocycle, orderedMicrocycles, session, previousSessionInMicrocycle)`. A session is locked when its microcycle is after the current microcycle.
+- _Breaking Change:_ `WorkoutSessionLockReason` moved to `WorkoutMesocycleService.types.ts`. It is still exported from the browser entry point.
+- _Breaking Change:_ `targetRir` and `isDeloadMicrocycle` parameters removed from `WorkoutMicrocycleService.generateSessionsForMicrocycle` and `WorkoutSetService` set generation. They are derived from `WorkoutMesocyclePlanContext`, which now has `plannedMicrocycleCount`, `deloadMicrocycleIndex`, and `getTargetRir`.
+- Generated mesocycles use the mesocycle's `startDate` for the first microcycle when no start date is passed.
+- Deload sessions are titled `Deload - Session N` instead of `Microcycle N - Session N`.
+- Deload sets are straight sets derived from the previous microcycle's first set as performed, with halved reps and a flat weight (halved in the second half of the deload).
+
+### 🩹 Fixed
+
+- `WorkoutSessionService` current and next session lookup returns only an in-progress session when one exists, instead of also returning a next-up session.
+
 ## 🔖 [5.0.16] (2026-10-20)
 
 ### ✅ Added
@@ -515,6 +535,7 @@ Updated dependency: now requires `@aneuhold/core-ts-lib@^2.3.11`.
 - Updated workflow permissions to allow repository write access
 
 <!-- Link References -->
+[5.1.0]: https://github.com/aneuhold/ts-libs/compare/core-ts-db-lib-v5.0.16...core-ts-db-lib-v5.1.0
 [5.0.16]: https://github.com/aneuhold/ts-libs/compare/core-ts-db-lib-v5.0.15...core-ts-db-lib-v5.0.16
 [5.0.15]: https://github.com/aneuhold/ts-libs/compare/core-ts-db-lib-v5.0.13...core-ts-db-lib-v5.0.15
 [5.0.13]: https://github.com/aneuhold/ts-libs/compare/core-ts-db-lib-v5.0.12...core-ts-db-lib-v5.0.13

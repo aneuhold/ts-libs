@@ -26,9 +26,7 @@ export default class WorkoutSetService {
     sessionExercise,
     microcycleIndex,
     sessionIndex,
-    setCount,
-    targetRir,
-    isDeloadMicrocycle
+    setCount
   }: {
     context: WorkoutMesocyclePlanContext;
     exerciseCTO: WorkoutExerciseCTO;
@@ -37,8 +35,6 @@ export default class WorkoutSetService {
     microcycleIndex: number;
     sessionIndex: number;
     setCount: number;
-    targetRir: number | null;
-    isDeloadMicrocycle: boolean;
   }): void {
     const { equipmentType, bestCalibration } = exerciseCTO;
     if (!bestCalibration) {
@@ -48,6 +44,8 @@ export default class WorkoutSetService {
     }
 
     const sets: WorkoutSet[] = [];
+    const isDeloadMicrocycle = microcycleIndex === context.deloadMicrocycleIndex;
+    const plannedRir = context.getTargetRir(microcycleIndex);
 
     // For the first microcycle, use the CTO's previous accumulation performance
     // data. For subsequent microcycles, look up all previous sets from the context.
@@ -60,7 +58,7 @@ export default class WorkoutSetService {
     // Autoregulation/forecasting handles progression from the previous sets' data.
     // Surplus is averaged across all sets for a holistic performance signal.
     // Calibration is only used when no previous set exists (first microcycle ever).
-    const { targetReps: firstSetReps, targetWeight: firstSetWeight } =
+    let { targetReps: firstSetReps, targetWeight: firstSetWeight } =
       WorkoutExerciseService.calculateTargetRepsAndWeightForFirstSet({
         exercise: exerciseCTO,
         calibration: bestCalibration,
@@ -69,10 +67,21 @@ export default class WorkoutSetService {
         previousSets
       });
 
+    // A deload starts from the previous microcycle's first set as performed (or as planned when
+    // not logged) instead of progressing from it.
+    const previousFirstSet = previousSets.at(0);
+    if (isDeloadMicrocycle && previousFirstSet) {
+      firstSetReps = previousFirstSet.actualReps ?? previousFirstSet.plannedReps ?? firstSetReps;
+      firstSetWeight =
+        previousFirstSet.actualWeight ?? previousFirstSet.plannedWeight ?? firstSetWeight;
+    }
+
     for (let setIndex = 0; setIndex < setCount; setIndex++) {
+      // Deload sets are straight sets, so each one derives from the first set
+      const previousSet = isDeloadMicrocycle ? undefined : sets[setIndex - 1];
       const { plannedReps, plannedWeight } = this.#generateSetRepsAndWeight(
-        sets[setIndex - 1]?.plannedReps || firstSetReps,
-        sets[setIndex - 1]?.plannedWeight || firstSetWeight,
+        previousSet?.plannedReps || firstSetReps,
+        previousSet?.plannedWeight || firstSetWeight,
         setIndex,
         exerciseCTO.repRange,
         equipmentType,
@@ -90,7 +99,7 @@ export default class WorkoutSetService {
         workoutSessionExerciseId: sessionExercise._id,
         plannedReps,
         plannedWeight,
-        plannedRir: targetRir,
+        plannedRir,
         exerciseProperties: bestCalibration.exerciseProperties
       });
 
@@ -174,6 +183,26 @@ export default class WorkoutSetService {
       plannedSessionCountPerMicrocycle: number;
     }
   ) {
+    // Deload sets halve the first set's reps and skip the per-set drop.
+    // First half of deload microcycle: same weight. Second half: half weight too.
+    // This is hard to figure out from the book. This was changed
+    // 11/2/2026 to be just a flat drop and then consistent over sets.
+    if (deloadInfo.isDeloadMicrocycle) {
+      const isSecondHalf =
+        deloadInfo.sessionIndex >= Math.floor(deloadInfo.plannedSessionCountPerMicrocycle / 2);
+      const halvedWeight = firstSetOrPreviousSetWeight / 2;
+      return {
+        plannedReps: Math.floor(firstSetOrPreviousSetReps / 2),
+        plannedWeight: isSecondHalf
+          ? (WorkoutEquipmentTypeService.findNearestWeight(
+              equipment,
+              halvedWeight,
+              'prefer-down'
+            ) ?? Math.floor(halvedWeight))
+          : firstSetOrPreviousSetWeight
+      };
+    }
+
     const repRangeValues = WorkoutExerciseService.getRepRangeValues(repRange);
     let currentReps = firstSetOrPreviousSetReps;
     let currentWeight = firstSetOrPreviousSetWeight;
@@ -197,22 +226,6 @@ export default class WorkoutSetService {
       }
     } else if (setIndex > 0) {
       currentReps = firstSetOrPreviousSetReps - 2;
-    }
-
-    // Apply deload modifications, but only if the set is the first in the session
-    if (deloadInfo.isDeloadMicrocycle && setIndex === 0) {
-      currentReps = Math.floor(firstSetOrPreviousSetReps / 2);
-      // First half of deload microcycle: same weight, half reps/sets
-      // Second half: half weight too
-      if (deloadInfo.sessionIndex >= Math.floor(deloadInfo.plannedSessionCountPerMicrocycle / 2)) {
-        const halvedWeight = currentWeight / 2;
-        const nearestWeight = WorkoutEquipmentTypeService.findNearestWeight(
-          equipment,
-          halvedWeight,
-          'prefer-down'
-        );
-        currentWeight = nearestWeight ?? Math.floor(halvedWeight);
-      }
     }
 
     return { plannedReps: currentReps, plannedWeight: currentWeight };

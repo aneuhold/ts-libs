@@ -712,17 +712,17 @@ describe('WorkoutVolumePlanningService', () => {
 
       // MuscleGain, 2 exercises, MEV=5, legacy progression (+1 per microcycle from MEV)
       // mic 0: 5 → distribute(5,2) = [3,2]
-      const result0 = WorkoutVolumePlanningService.calculateSetPlanForMicrocycle(context, 0, false);
+      const result0 = WorkoutVolumePlanningService.calculateSetPlanForMicrocycle(context, 0);
       expect(result0.exerciseIdToSetCount.get(benchId)).toBe(3);
       expect(result0.exerciseIdToSetCount.get(inclineId)).toBe(2);
 
       // mic 1: 5+1=6 → distribute(6,2) = [3,3]
-      const result1 = WorkoutVolumePlanningService.calculateSetPlanForMicrocycle(context, 1, false);
+      const result1 = WorkoutVolumePlanningService.calculateSetPlanForMicrocycle(context, 1);
       expect(result1.exerciseIdToSetCount.get(benchId)).toBe(3);
       expect(result1.exerciseIdToSetCount.get(inclineId)).toBe(3);
 
       // mic 2: 5+2=7 → distribute(7,2) = [4,3]
-      const result2 = WorkoutVolumePlanningService.calculateSetPlanForMicrocycle(context, 2, false);
+      const result2 = WorkoutVolumePlanningService.calculateSetPlanForMicrocycle(context, 2);
       expect(result2.exerciseIdToSetCount.get(benchId)).toBe(4);
       expect(result2.exerciseIdToSetCount.get(inclineId)).toBe(3);
     });
@@ -772,7 +772,7 @@ describe('WorkoutVolumePlanningService', () => {
         context.addMicrocycle(workoutTestUtil.createMicrocycle({ mesocycle }));
         context.setPlannedSessionExerciseCTOs(sessionExerciseCTOs);
 
-        return WorkoutVolumePlanningService.calculateSetPlanForMicrocycle(context, 1, false);
+        return WorkoutVolumePlanningService.calculateSetPlanForMicrocycle(context, 1);
       };
 
       const intact = planSecondMicrocycle(false);
@@ -815,9 +815,11 @@ describe('WorkoutVolumePlanningService', () => {
         historicalMicrocycles = []
       } = options;
 
-      // Create default mesocycle if not provided, with session count matching sessionStructure
+      // Session count matches sessionStructure. The microcycle being planned is followed by the
+      // deload, unless it is the deload itself.
       const mesocycle = workoutTestUtil.createMesocycle({
         plannedSessionCountPerMicrocycle: sessionStructure.length,
+        plannedMicrocycleCount: microcycleIndex + (isDeload ? 1 : 2),
         calibratedExercises: workoutTestUtil.getCalibrationIds(exerciseCTOs)
       });
 
@@ -837,8 +839,6 @@ describe('WorkoutVolumePlanningService', () => {
         workoutTestUtil.createHistoricalMicrocycle({
           context,
           exerciseCTOs: sessionExerciseCTOs,
-          targetRir: 2,
-          isDeloadMicrocycle: false,
           sessionExerciseOverrides: historicalData.sessionExerciseOverrides
         });
       });
@@ -850,8 +850,7 @@ describe('WorkoutVolumePlanningService', () => {
 
       const result = WorkoutVolumePlanningService.calculateSetPlanForMicrocycle(
         context,
-        microcycleIndex,
-        isDeload
+        microcycleIndex
       );
 
       return { context, result };
@@ -984,6 +983,7 @@ describe('WorkoutVolumePlanningService', () => {
 
       const mesocycle = workoutTestUtil.createMesocycle({
         plannedSessionCountPerMicrocycle: 1,
+        plannedMicrocycleCount: 6,
         calibratedExercises: workoutTestUtil.getCalibrationIds([chestCTO])
       });
 
@@ -1042,7 +1042,7 @@ describe('WorkoutVolumePlanningService', () => {
       context.addMicrocycle(workoutTestUtil.createMicrocycle({ mesocycle }));
       context.setPlannedSessionExerciseCTOs(sessionExerciseCTOs);
 
-      const result = WorkoutVolumePlanningService.calculateSetPlanForMicrocycle(context, 2, false);
+      const result = WorkoutVolumePlanningService.calculateSetPlanForMicrocycle(context, 2);
 
       return { context, result, exerciseId: chestExercise._id };
     }
@@ -1213,8 +1213,7 @@ describe('WorkoutVolumePlanningService', () => {
       for (const microcycleIndex of [0, 1, 2, 3]) {
         const result = WorkoutVolumePlanningService.calculateSetPlanForMicrocycle(
           context,
-          microcycleIndex,
-          false
+          microcycleIndex
         );
         // Resensitization without history: flat 2 sets per exercise at every microcycle
         expect(
@@ -1260,8 +1259,7 @@ describe('WorkoutVolumePlanningService', () => {
       for (const microcycleIndex of [0, 1, 2, 3]) {
         const result = WorkoutVolumePlanningService.calculateSetPlanForMicrocycle(
           context,
-          microcycleIndex,
-          false
+          microcycleIndex
         );
         expect(
           result.exerciseIdToSetCount.get(workoutTestUtil.STANDARD_EXERCISES.barbellBenchPress._id)
@@ -1281,6 +1279,7 @@ describe('WorkoutVolumePlanningService', () => {
       const mesocycle = workoutTestUtil.createMesocycle({
         cycleType: CycleType.Cut,
         plannedSessionCountPerMicrocycle: 1,
+        plannedMicrocycleCount: 6,
         calibratedExercises: workoutTestUtil.getCalibrationIds(exerciseCTOs)
       });
 
@@ -1290,31 +1289,31 @@ describe('WorkoutVolumePlanningService', () => {
       context.addMicrocycle(workoutTestUtil.createMicrocycle({ mesocycle }));
 
       // Microcycle 0: ceil(0/2) = 0 progression -> 2 sets
-      const result0 = WorkoutVolumePlanningService.calculateSetPlanForMicrocycle(context, 0, false);
+      const result0 = WorkoutVolumePlanningService.calculateSetPlanForMicrocycle(context, 0);
       expect(
         result0.exerciseIdToSetCount.get(workoutTestUtil.STANDARD_EXERCISES.barbellBenchPress._id)
       ).toBe(2);
 
       // Microcycle 1: ceil(1/2) = 1 progression -> 3 sets
-      const result1 = WorkoutVolumePlanningService.calculateSetPlanForMicrocycle(context, 1, false);
+      const result1 = WorkoutVolumePlanningService.calculateSetPlanForMicrocycle(context, 1);
       expect(
         result1.exerciseIdToSetCount.get(workoutTestUtil.STANDARD_EXERCISES.barbellBenchPress._id)
       ).toBe(3);
 
       // Microcycle 2: ceil(2/2) = 1 progression -> 3 sets
-      const result2 = WorkoutVolumePlanningService.calculateSetPlanForMicrocycle(context, 2, false);
+      const result2 = WorkoutVolumePlanningService.calculateSetPlanForMicrocycle(context, 2);
       expect(
         result2.exerciseIdToSetCount.get(workoutTestUtil.STANDARD_EXERCISES.barbellBenchPress._id)
       ).toBe(3);
 
       // Microcycle 3: ceil(3/2) = 2 progression -> 4 sets
-      const result3 = WorkoutVolumePlanningService.calculateSetPlanForMicrocycle(context, 3, false);
+      const result3 = WorkoutVolumePlanningService.calculateSetPlanForMicrocycle(context, 3);
       expect(
         result3.exerciseIdToSetCount.get(workoutTestUtil.STANDARD_EXERCISES.barbellBenchPress._id)
       ).toBe(4);
 
       // Microcycle 4: ceil(4/2) = 2 progression -> 4 sets
-      const result4 = WorkoutVolumePlanningService.calculateSetPlanForMicrocycle(context, 4, false);
+      const result4 = WorkoutVolumePlanningService.calculateSetPlanForMicrocycle(context, 4);
       expect(
         result4.exerciseIdToSetCount.get(workoutTestUtil.STANDARD_EXERCISES.barbellBenchPress._id)
       ).toBe(4);
@@ -1332,6 +1331,7 @@ describe('WorkoutVolumePlanningService', () => {
       const mesocycle = workoutTestUtil.createMesocycle({
         cycleType: CycleType.MuscleGain,
         plannedSessionCountPerMicrocycle: 1,
+        plannedMicrocycleCount: 6,
         calibratedExercises: workoutTestUtil.getCalibrationIds(exerciseCTOs)
       });
 
@@ -1346,11 +1346,7 @@ describe('WorkoutVolumePlanningService', () => {
         [2, 4],
         [3, 5]
       ]) {
-        const result = WorkoutVolumePlanningService.calculateSetPlanForMicrocycle(
-          context,
-          index,
-          false
-        );
+        const result = WorkoutVolumePlanningService.calculateSetPlanForMicrocycle(context, index);
         expect(
           result.exerciseIdToSetCount.get(workoutTestUtil.STANDARD_EXERCISES.barbellBenchPress._id)
         ).toBe(expectedSets);
@@ -1394,11 +1390,7 @@ describe('WorkoutVolumePlanningService', () => {
       // round(2 + 6*i/4): mic 0=2, mic 1=4, mic 2=5, mic 3=7, mic 4=8
       const expected = [2, 4, 5, 7, 8];
       for (let i = 0; i < expected.length; i++) {
-        const result = WorkoutVolumePlanningService.calculateSetPlanForMicrocycle(
-          context,
-          i,
-          false
-        );
+        const result = WorkoutVolumePlanningService.calculateSetPlanForMicrocycle(context, i);
         expect(result.exerciseIdToSetCount.get(benchId)).toBe(expected[i]);
       }
     });
@@ -1426,7 +1418,7 @@ describe('WorkoutVolumePlanningService', () => {
       const benchId = workoutTestUtil.STANDARD_EXERCISES.barbellBenchPress._id;
 
       // Last accumulation microcycle (index 4) has 8 sets, deload = floor(8/2) = 4
-      const result = WorkoutVolumePlanningService.calculateSetPlanForMicrocycle(context, 5, true);
+      const result = WorkoutVolumePlanningService.calculateSetPlanForMicrocycle(context, 5);
       expect(result.exerciseIdToSetCount.get(benchId)).toBe(4);
     });
 
@@ -1476,11 +1468,7 @@ describe('WorkoutVolumePlanningService', () => {
       const expectedBench = [3, 3, 4, 4, 5];
       const expectedIncline = [2, 3, 3, 4, 4];
       for (let i = 0; i < expectedBench.length; i++) {
-        const result = WorkoutVolumePlanningService.calculateSetPlanForMicrocycle(
-          context,
-          i,
-          false
-        );
+        const result = WorkoutVolumePlanningService.calculateSetPlanForMicrocycle(context, i);
         expect(result.exerciseIdToSetCount.get(benchId)).toBe(expectedBench[i]);
         expect(result.exerciseIdToSetCount.get(inclineId)).toBe(expectedIncline[i]);
       }
@@ -1513,11 +1501,7 @@ describe('WorkoutVolumePlanningService', () => {
       // round(2 + 3*i/4): mic 0=2, mic 1=3, mic 2=4, mic 3=4, mic 4=5
       const expected = [2, 3, 4, 4, 5];
       for (let i = 0; i < expected.length; i++) {
-        const result = WorkoutVolumePlanningService.calculateSetPlanForMicrocycle(
-          context,
-          i,
-          false
-        );
+        const result = WorkoutVolumePlanningService.calculateSetPlanForMicrocycle(context, i);
         expect(result.exerciseIdToSetCount.get(benchId)).toBe(expected[i]);
       }
     });
@@ -1554,8 +1538,7 @@ describe('WorkoutVolumePlanningService', () => {
       for (const microcycleIndex of [0, 1, 2, 3]) {
         const result = WorkoutVolumePlanningService.calculateSetPlanForMicrocycle(
           context,
-          microcycleIndex,
-          false
+          microcycleIndex
         );
         expect(result.exerciseIdToSetCount.get(benchId)).toBe(2);
         expect(result.exerciseIdToSetCount.get(inclineId)).toBe(2);
@@ -1586,7 +1569,7 @@ describe('WorkoutVolumePlanningService', () => {
       const benchId = workoutTestUtil.STANDARD_EXERCISES.barbellBenchPress._id;
 
       // accumulationMicrocycleCount = 1, so should use startVolume
-      const result = WorkoutVolumePlanningService.calculateSetPlanForMicrocycle(context, 0, false);
+      const result = WorkoutVolumePlanningService.calculateSetPlanForMicrocycle(context, 0);
       expect(result.exerciseIdToSetCount.get(benchId)).toBe(2);
     });
   });

@@ -150,7 +150,8 @@ import {
 } from './embedded-types/dashboard/userConfig/Tags.js';
 import {
   WorkoutDeloadSeverity,
-  WorkoutDeloadTriggerRule
+  WorkoutDeloadTriggerRule,
+  WorkoutSessionLockReason
 } from './services/workout/Mesocycle/WorkoutMesocycleService.types.js';
 import type { WorkoutDeloadRecommendation } from './services/workout/Mesocycle/WorkoutMesocycleService.types.js';
 import type { Fatigue } from './embedded-types/workout/Fatigue.js';
@@ -171,9 +172,7 @@ import WorkoutExerciseCalibrationService from './services/workout/ExerciseCalibr
 import WorkoutMesocyclePlanContext from './services/workout/Mesocycle/WorkoutMesocyclePlanContext.js';
 import WorkoutMesocycleService from './services/workout/Mesocycle/WorkoutMesocycle.service.js';
 import WorkoutMicrocycleService from './services/workout/Microcycle/WorkoutMicrocycle.service.js';
-import WorkoutSessionService, {
-  WorkoutSessionLockReason
-} from './services/workout/Session/WorkoutSession.service.js';
+import WorkoutSessionService from './services/workout/Session/WorkoutSession.service.js';
 import WorkoutSessionExerciseService from './services/workout/SessionExercise/WorkoutSessionExercise.service.js';
 import WorkoutSetService from './services/workout/Set/WorkoutSet.service.js';
 import WorkoutSFRService from './services/workout/util/SFR/WorkoutSFR.service.js';
