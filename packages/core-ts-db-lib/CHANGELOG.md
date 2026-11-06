@@ -9,11 +9,21 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### ✅ Added
 
+- `WorkoutMesocycleService.getCurrentMicrocycle` for getting the first microcycle that has not been completed.
+- `WorkoutMicrocycleService.getDeloadMicrocycleIndex` for getting the deload microcycle index of a cycle type.
+
 ### 🏗️ Changed
+
+- _Breaking Change:_ `getSessionLockReason` moved from `WorkoutSessionService` to `WorkoutMesocycleService` and now takes `(mesocycle, orderedMicrocycles, session, previousSessionInMicrocycle)`. A session is locked when its microcycle is after the current microcycle.
+- _Breaking Change:_ `WorkoutSessionLockReason` moved to `WorkoutMesocycleService.types.ts`. It is still exported from the browser entry point.
+- _Breaking Change:_ `targetRir` and `isDeloadMicrocycle` parameters removed from `WorkoutMicrocycleService.generateSessionsForMicrocycle` and `WorkoutSetService` set generation. They are derived from `WorkoutMesocyclePlanContext`, which now has `plannedMicrocycleCount`, `deloadMicrocycleIndex`, and `getTargetRir`.
+- Generated mesocycles use the mesocycle's `startDate` for the first microcycle when no start date is passed.
+- Deload sessions are titled `Deload - Session N` instead of `Microcycle N - Session N`.
+- Deload sets are straight sets derived from the previous microcycle's first set as performed, with halved reps and a flat weight (halved in the second half of the deload).
 
 ### 🩹 Fixed
 
-### 🔥 Removed
+- `WorkoutSessionService` current and next session lookup returns only an in-progress session when one exists, instead of also returning a next-up session.
 
 ## 🔖 [5.0.16] (2026-10-20)
 
