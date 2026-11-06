@@ -180,7 +180,7 @@ export default class WorkoutVolumePlanningService {
     microcycleIndex: number,
     muscleGroupExerciseCTOs: WorkoutExerciseCTO[]
   ): { exerciseIdToSetCount: Map<UUID, number>; recoveryExerciseIds: Set<UUID> } {
-    const isDeloadMicrocycle = microcycleIndex === context.deloadMicrocycleIndex;
+    const isDeloadMicrocycle = context.isDeloadMicrocycle(microcycleIndex);
     const exerciseIdToSetCount = new Map<UUID, number>();
     const recoveryExerciseIds = new Set<UUID>();
     const sessionIndexToExerciseIds = new Map<number, UUID[]>();

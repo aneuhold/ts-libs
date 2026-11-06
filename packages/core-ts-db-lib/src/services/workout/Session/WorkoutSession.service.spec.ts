@@ -7,7 +7,7 @@ import type { WorkoutSet } from '../../../documents/workout/WorkoutSet.js';
 import WorkoutVolumePlanningService from '../util/VolumePlanning/WorkoutVolumePlanning.service.js';
 import WorkoutSessionService from './WorkoutSession.service.js';
 
-describe('WorkoutSessionService', () => {
+describe('Unit Tests', () => {
   describe('getActiveAndNextSessions', () => {
     const emptySeMap = new Map<UUID, WorkoutSessionExercise>();
     const emptySetMap = new Map<UUID, WorkoutSet>();

@@ -159,6 +159,19 @@ describe('Unit Tests', () => {
       expect(sessions.length).toBe(9); // 3 sessions * 3 microcycles
       expect(sets.length).toBeGreaterThan(0); // At least some sets created
 
+      // Deload sessions are labeled as such instead of by microcycle number
+      expect(
+        microcycles.map((microcycle) =>
+          sessions
+            .filter((session) => session.workoutMicrocycleId === microcycle._id)
+            .map((session) => session.title)
+        )
+      ).toEqual([
+        ['Microcycle 1 - Session 1', 'Microcycle 1 - Session 2', 'Microcycle 1 - Session 3'],
+        ['Microcycle 2 - Session 1', 'Microcycle 2 - Session 2', 'Microcycle 2 - Session 3'],
+        ['Deload - Session 1', 'Deload - Session 2', 'Deload - Session 3']
+      ]);
+
       // Test RIR progression (4 -> 3 across accumulation microcycles, null for deload)
       const deloadIndex = microcycles.length - 1;
       for (let microcycleIndex = 0; microcycleIndex < 3; microcycleIndex++) {
@@ -931,6 +944,7 @@ describe('Unit Tests', () => {
         // No sets should have null plannedRir (which would indicate deload)
         const deloadSets = sets.filter((s) => s.plannedRir === null);
         expect(deloadSets).toHaveLength(0);
+        expect(result.sessions?.create?.at(-1)?.title).toBe('Microcycle 4 - Session 1');
       });
 
       it('should start RIR at 3 for Cut cycles instead of 4', () => {
@@ -1797,8 +1811,8 @@ describe('Unit Tests', () => {
     // CTOs covering 5 distinct muscle groups (no triceps)
     const fiveGroupCTOs = sixGroupCTOs.slice(0, 5);
 
-    // Shared mesocycle and 3 microcycles (so index 2 passes the guard)
-    const mesocycle = workoutTestUtil.createMesocycle();
+    // Shared mesocycle and 4 microcycles (so index 2 passes the guard and is not the deload)
+    const mesocycle = workoutTestUtil.createMesocycle({ plannedMicrocycleCount: 4 });
     const mc1 = workoutTestUtil.createMicrocycle({
       mesocycle,
       startDate: new Date('2024-01-01'),
@@ -1814,8 +1828,6 @@ describe('Unit Tests', () => {
       startDate: new Date('2024-01-15'),
       endDate: new Date('2024-01-22')
     });
-    // A 4th microcycle ensures mc3 is NOT the last (deload) microcycle,
-    // which would cause the deload guard to suppress recommendations.
     const mc4 = workoutTestUtil.createMicrocycle({
       mesocycle,
       startDate: new Date('2024-01-22'),

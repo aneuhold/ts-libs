@@ -2,7 +2,7 @@ import { DateService } from '@aneuhold/core-ts-lib';
 import type { UUID } from 'crypto';
 import type { WorkoutExerciseCTO } from '../../../ctos/workout/WorkoutExerciseCTO.js';
 import { ExerciseRepRange } from '../../../documents/workout/WorkoutExercise.js';
-import { CycleType } from '../../../documents/workout/WorkoutMesocycle.js';
+import { CycleType, type WorkoutMesocycle } from '../../../documents/workout/WorkoutMesocycle.js';
 import WorkoutExerciseService from '../Exercise/WorkoutExercise.service.js';
 import type WorkoutMesocyclePlanContext from '../Mesocycle/WorkoutMesocyclePlanContext.js';
 import WorkoutSessionService from '../Session/WorkoutSession.service.js';
@@ -210,6 +210,14 @@ export default class WorkoutMicrocycleService {
     }
 
     return sessions;
+  }
+
+  /**
+   * Returns the total number of microcycles planned for a mesocycle, including the deload.
+   * Defaults to 6 (5 accumulation + 1 deload) when the mesocycle does not specify a count.
+   */
+  static getPlannedMicrocycleCount(mesocycle: WorkoutMesocycle): number {
+    return mesocycle.plannedMicrocycleCount ?? 6;
   }
 
   /**

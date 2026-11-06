@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - `WorkoutMesocycleService.getCurrentMicrocycle` for getting the first microcycle that has not been completed.
 - `WorkoutMicrocycleService.getDeloadMicrocycleIndex` for getting the deload microcycle index of a cycle type.
+- `WorkoutMicrocycleService.getPlannedMicrocycleCount` for getting a mesocycle's planned microcycle count, defaulting to 6.
+- `WorkoutMesocyclePlanContext.isDeloadMicrocycle` for checking whether a microcycle index is the deload.
 
 ### 🏗️ Changed
 

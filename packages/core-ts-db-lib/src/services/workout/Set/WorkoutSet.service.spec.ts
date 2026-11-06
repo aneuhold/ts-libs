@@ -8,7 +8,7 @@ import WorkoutExerciseService from '../Exercise/WorkoutExercise.service.js';
 import type WorkoutMesocyclePlanContext from '../Mesocycle/WorkoutMesocyclePlanContext.js';
 import WorkoutSetService from './WorkoutSet.service.js';
 
-describe('WorkoutSetService', () => {
+describe('Unit Tests', () => {
   describe('isCompleted', () => {
     it('should return true when actualReps, actualWeight, and rir are all set', () => {
       const set = workoutTestUtil.createSet({
@@ -329,6 +329,33 @@ describe('WorkoutSetService', () => {
         expectStraightSets(plannedSets, {
           plannedReps: Math.floor((previousSet.actualReps ?? 0) / 2),
           plannedWeight: firstSet.plannedWeight
+        });
+      });
+
+      it("should start from the previous microcycle's planned first set when it was not logged", () => {
+        const historyContext = generateHistory({ microcycleCount: 2, nextIsDeload: true });
+        const previousSet = findFirstSet(historyContext, 1, curlCTO._id);
+        previousSet.actualReps = null;
+        previousSet.actualWeight = null;
+
+        const plannedSets = planNextSets(historyContext, curlCTO, { setCount: 2 });
+
+        expectStraightSets(plannedSets, {
+          plannedReps: Math.floor((previousSet.plannedReps ?? 0) / 2),
+          plannedWeight: previousSet.plannedWeight
+        });
+      });
+
+      it("should prefer the previous microcycle's logged first set over its planned values", () => {
+        const historyContext = generateHistory({ microcycleCount: 2, nextIsDeload: true });
+        const previousSet = findFirstSet(historyContext, 1, curlCTO._id);
+        previousSet.actualReps = (previousSet.plannedReps ?? 0) + 4;
+
+        const plannedSets = planNextSets(historyContext, curlCTO, { setCount: 2 });
+
+        expectStraightSets(plannedSets, {
+          plannedReps: Math.floor(previousSet.actualReps / 2),
+          plannedWeight: previousSet.actualWeight
         });
       });
 
