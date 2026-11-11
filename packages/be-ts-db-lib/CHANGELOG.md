@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## 🔖 [4.2.42] (2026-11-11)
+
+### ✅ Added
+
+- `WorkoutMuscleGroupRepository.buildMuscleGroupVolumeCTOsForUser` now populates `exerciseCount` on each `mesocycleHistory` entry.
+
+### 🏗️ Changed
+
+- `mesocycleHistory` from `buildMuscleGroupVolumeCTOsForUser` is ordered with the most recently completed mesocycle first.
+- Updated `@aneuhold/be-ts-lib` dependency to 3.1.28.
+- Updated `@aneuhold/core-ts-db-lib` dependency to 5.1.1.
+- Updated `@aneuhold/core-ts-lib` dependency to 2.4.11.
+
 ## 🔖 [4.2.41] (2026-11-06)
 
 ### 🏗️ Changed
@@ -516,6 +529,7 @@ Updated dependencies: now requires `@aneuhold/core-ts-db-lib@^3.0.0`, `@aneuhold
 - Updated workflow permissions to allow repository write access
 
 <!-- Link References -->
+[4.2.42]: https://github.com/aneuhold/ts-libs/compare/be-ts-db-lib-v4.2.41...be-ts-db-lib-v4.2.42
 [4.2.41]: https://github.com/aneuhold/ts-libs/compare/be-ts-db-lib-v4.2.40...be-ts-db-lib-v4.2.41
 [4.2.40]: https://github.com/aneuhold/ts-libs/compare/be-ts-db-lib-v4.2.39...be-ts-db-lib-v4.2.40
 [4.2.39]: https://github.com/aneuhold/ts-libs/compare/be-ts-db-lib-v4.2.38...be-ts-db-lib-v4.2.39

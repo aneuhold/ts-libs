@@ -1,3 +1,4 @@
+import type { UUID } from 'crypto';
 import type { WorkoutEquipmentType } from '../../../documents/workout/WorkoutEquipmentType.js';
 import type { WorkoutExercise } from '../../../documents/workout/WorkoutExercise.js';
 import {
@@ -101,6 +102,33 @@ export default class WorkoutExerciseService {
       repRange,
       repRangeMidpoint
     });
+  }
+
+  /**
+   * Groups exercises by their first primary muscle group, which is the muscle group volume
+   * planning assigns an exercise to. Keeps the given exercise order within each group.
+   *
+   * @param exercises The exercises to group.
+   */
+  static groupByPrimaryMuscleGroup<TExercise extends WorkoutExercise>(
+    exercises: TExercise[]
+  ): Map<UUID, TExercise[]> {
+    const muscleGroupToExercises = new Map<UUID, TExercise[]>();
+    for (const exercise of exercises) {
+      const muscleGroupId = exercise.primaryMuscleGroups.at(0);
+      if (!muscleGroupId) {
+        throw new Error(
+          `Exercise ${exercise._id}, ${exercise.exerciseName} has no primary muscle group`
+        );
+      }
+      const existing = muscleGroupToExercises.get(muscleGroupId);
+      if (existing) {
+        existing.push(exercise);
+      } else {
+        muscleGroupToExercises.set(muscleGroupId, [exercise]);
+      }
+    }
+    return muscleGroupToExercises;
   }
 
   /**

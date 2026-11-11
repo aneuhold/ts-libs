@@ -264,9 +264,14 @@ export default class FileSystemService {
       // Determine git diff command - prefer origin/main, fallback to HEAD~1
       const gitCommand = await this.#getGitDiffCommand(repoRoot);
 
-      // Get changed files
-      const { stdout } = await FileSystemService.#execAsync(gitCommand, { cwd: repoRoot });
-      const changedFiles = stdout.trim().split('\n').filter(Boolean);
+      // Get changed tracked files, plus untracked files that git diff does not list
+      const [{ stdout: diffOutput }, { stdout: untrackedOutput }] = await Promise.all([
+        FileSystemService.#execAsync(gitCommand, { cwd: repoRoot }),
+        FileSystemService.#execAsync('git ls-files --others --exclude-standard', {
+          cwd: repoRoot
+        })
+      ]);
+      const changedFiles = `${diffOutput}\n${untrackedOutput}`.split('\n').filter(Boolean);
 
       // Get relative path from git root to target directory
       const relativePath = path.relative(repoRoot, targetDir).replace(/\\/g, '/');
@@ -384,7 +389,7 @@ export default class FileSystemService {
       await FileSystemService.#execAsync('git show-ref --verify --quiet refs/remotes/origin/main', {
         cwd: repoRoot
       });
-      // Returns all changed files compared to origin/main, including uncommitted changes
+      // Returns tracked files changed compared to origin/main, including uncommitted changes
       return 'git diff --name-only $(git merge-base origin/main HEAD)';
     } catch {
       DR.logger.verbose.info('origin/main not found, comparing to HEAD~1');

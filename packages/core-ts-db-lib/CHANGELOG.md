@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## 🔖 [5.1.1] (2026-11-11)
+
+### ✅ Added
+
+- Optional `muscleGroupStartingSetCounts` field on `WorkoutMesocycleSchema`, a record keyed by muscle group ID that sets the starting set count for each muscle group in the first microcycle. Muscle groups with no entry use the default starting set count.
+- `WorkoutVolumePlanningService.getDefaultStartingSetCount` for getting the default starting set count of a muscle group (estimated MEV when history exists, otherwise a per-exercise default).
+- `exerciseCount` field on `MesocycleVolumeSummary`, the number of distinct exercises for the muscle group.
+- `WorkoutExerciseService.groupByPrimaryMuscleGroup` for grouping exercises by their first primary muscle group.
+- `WorkoutVolumePlanningService.MAX_SETS_PER_EXERCISE` is now public.
+
+### 🏗️ Changed
+
+- Volume planning starts each muscle group at its configured starting set count and progresses from there, for all cycle types. Logged set counts from earlier microcycles still carry forward.
+- Updated `@aneuhold/core-ts-lib` dependency to 2.4.11.
+
 ## 🔖 [5.1.0] (2026-11-06)
 
 ### ✅ Added
@@ -535,6 +550,7 @@ Updated dependency: now requires `@aneuhold/core-ts-lib@^2.3.11`.
 - Updated workflow permissions to allow repository write access
 
 <!-- Link References -->
+[5.1.1]: https://github.com/aneuhold/ts-libs/compare/core-ts-db-lib-v5.1.0...core-ts-db-lib-v5.1.1
 [5.1.0]: https://github.com/aneuhold/ts-libs/compare/core-ts-db-lib-v5.0.16...core-ts-db-lib-v5.1.0
 [5.0.16]: https://github.com/aneuhold/ts-libs/compare/core-ts-db-lib-v5.0.15...core-ts-db-lib-v5.0.16
 [5.0.15]: https://github.com/aneuhold/ts-libs/compare/core-ts-db-lib-v5.0.13...core-ts-db-lib-v5.0.15

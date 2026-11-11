@@ -34,14 +34,14 @@ export default class WorkoutVolumePlanningService {
   /**
    * Controls the volume *progression rate* across accumulation microcycles.
    *
-   * Both modes start at estimated MEV when historical volume data exists
-   * (falling back to 2 sets per exercise when no history is available).
+   * Both modes start at the muscle group's starting set count, set on the
+   * mesocycle or estimated from history.
    *
    * When `false` (default): legacy progression — adds 1 set per muscle group
-   * every `progressionInterval` microcycles from the MEV starting point.
+   * every `progressionInterval` microcycles from the starting set count.
    *
    * When `true`: MEV-to-MRV interpolation — linearly distributes sets from
-   * estimated MEV to estimated MRV across all accumulation microcycles.
+   * the starting set count to estimated MRV across all accumulation microcycles.
    *
    * This flag exists to allow toggling between the two progression algorithms
    * while the MEV-to-MRV approach is validated in practice. Once confidence is
@@ -49,7 +49,9 @@ export default class WorkoutVolumePlanningService {
    */
   static USE_VOLUME_LANDMARK_PROGRESSION = false;
 
-  static readonly #MAX_SETS_PER_EXERCISE = 8;
+  /** Most sets a single exercise gets in a microcycle. */
+  static readonly MAX_SETS_PER_EXERCISE = 8;
+
   static readonly #MAX_SETS_PER_MUSCLE_GROUP_PER_SESSION = 10;
 
   /** Minimum average RSM required for a mesocycle to count toward MEV estimation. */
@@ -163,10 +165,26 @@ export default class WorkoutVolumePlanningService {
   }
 
   /**
+   * Gets the default starting set count for a muscle group: estimated MEV when historical volume
+   * data exists, otherwise a per-exercise default.
+   *
+   * @param volumeLandmark Volume landmark estimate from historical data, if available.
+   * @param exerciseCount Number of exercises in the muscle group.
+   */
+  static getDefaultStartingSetCount(
+    volumeLandmark: WorkoutVolumeLandmarkEstimate | undefined,
+    exerciseCount: number
+  ): number {
+    return volumeLandmark && volumeLandmark.mesocycleCount > 0
+      ? volumeLandmark.estimatedMev
+      : this.#DEFAULT_MEV_PER_EXERCISE * exerciseCount;
+  }
+
+  /**
    * Calculates the set count for each exercise in a particular muscle group for this microcycle.
    *
    * Pipeline:
-   * 1. **Volume targets** — Determine start/end volume from landmarks or defaults
+   * 1. **Volume targets** — Determine start/end volume from the starting set count, landmarks, or defaults
    * 2. **Baseline** — Calculate default set counts from progression rules
    * 3. **Resolve history** — Find the most recent session exercise data for each exercise
    * 4. **Apply history** — Override baselines with historical set counts (or MAV for recovery returns)
@@ -186,14 +204,18 @@ export default class WorkoutVolumePlanningService {
     const sessionIndexToExerciseIds = new Map<number, UUID[]>();
     const { progressionInterval } = context;
 
-    // 1. Look up volume landmarks and compute volume targets
+    // 1. Look up volume landmarks and the starting set count, then compute volume targets
     const primaryMuscleGroupId = muscleGroupExerciseCTOs[0]?.primaryMuscleGroups[0];
     const volumeLandmark = primaryMuscleGroupId
       ? context.muscleGroupToVolumeLandmarkMap.get(primaryMuscleGroupId)
       : undefined;
+    const startingSetCount = primaryMuscleGroupId
+      ? context.mesocycle.muscleGroupStartingSetCounts?.[primaryMuscleGroupId]
+      : undefined;
 
     const { startVolume, endVolume } = this.#getVolumeTargetsForMuscleGroup(
       volumeLandmark,
+      startingSetCount,
       muscleGroupExerciseCTOs.length,
       progressionInterval
     );
@@ -213,7 +235,7 @@ export default class WorkoutVolumePlanningService {
     muscleGroupExerciseCTOs.forEach((cto, index) => {
       exerciseIdToSetCount.set(
         cto._id,
-        Math.min(baselineCounts[index], this.#MAX_SETS_PER_EXERCISE)
+        Math.min(baselineCounts[index], this.MAX_SETS_PER_EXERCISE)
       );
 
       if (!context.exerciseIdToSessionIndex) return;
@@ -278,47 +300,42 @@ export default class WorkoutVolumePlanningService {
 
   /**
    * Determines the start and end volume targets for a muscle group based on
-   * historical volume landmarks and cycle type.
+   * its starting set count, historical volume landmarks, and cycle type.
    *
    * @param volumeLandmark Volume landmark estimate from historical data, if available.
+   * @param startingSetCount The starting set count set on the mesocycle for the muscle group, if any.
    * @param exerciseCount Number of exercises in the muscle group.
    * @param progressionInterval Cycle-type progression interval (1=MuscleGain, 2=Cut, 0=Resensitization).
    */
   static #getVolumeTargetsForMuscleGroup(
     volumeLandmark: WorkoutVolumeLandmarkEstimate | undefined,
+    startingSetCount: number | undefined,
     exerciseCount: number,
     progressionInterval: number
   ): { startVolume: number; endVolume: number } {
-    // Resensitization (interval=0): flat at estimated MEV (or default when no history)
+    const startVolume =
+      startingSetCount ?? this.getDefaultStartingSetCount(volumeLandmark, exerciseCount);
+
+    // Resensitization (interval=0): flat at the start volume
     if (progressionInterval === 0) {
-      const flatVolume =
-        volumeLandmark && volumeLandmark.mesocycleCount > 0
-          ? volumeLandmark.estimatedMev
-          : this.#DEFAULT_MEV_PER_EXERCISE * exerciseCount;
-      return { startVolume: flatVolume, endVolume: flatVolume };
+      return { startVolume, endVolume: startVolume };
     }
 
-    // With historical volume landmarks
+    // Cut (interval=2): progress to MAV (midpoint), not MRV
+    let endVolume: number;
     if (volumeLandmark && volumeLandmark.mesocycleCount > 0) {
-      const startVolume = volumeLandmark.estimatedMev;
-      // Cut: progress to MAV (midpoint), not MRV
-      let endVolume =
+      endVolume =
         progressionInterval === 2 ? volumeLandmark.estimatedMav : volumeLandmark.estimatedMrv;
-
-      if (endVolume <= startVolume) {
-        endVolume = startVolume + 1;
-      }
-
-      return { startVolume, endVolume };
+    } else {
+      // No history: use per-exercise defaults
+      const mevTotal = this.#DEFAULT_MEV_PER_EXERCISE * exerciseCount;
+      const mrvTotal = this.#DEFAULT_MRV_PER_EXERCISE * exerciseCount;
+      endVolume = progressionInterval === 2 ? Math.ceil((mevTotal + mrvTotal) / 2) : mrvTotal;
     }
 
-    // No history: use per-exercise defaults
-    const startVolume = this.#DEFAULT_MEV_PER_EXERCISE * exerciseCount;
-    const mrvTotal = this.#DEFAULT_MRV_PER_EXERCISE * exerciseCount;
-
-    // Cut: target MAV (midpoint), not MRV
-    const endVolume =
-      progressionInterval === 2 ? Math.ceil((startVolume + mrvTotal) / 2) : mrvTotal;
+    if (endVolume <= startVolume) {
+      endVolume = startVolume + 1;
+    }
 
     return { startVolume, endVolume };
   }
@@ -492,10 +509,10 @@ export default class WorkoutVolumePlanningService {
       let setCount: number;
       if (exercisesThatWerePreviouslyInRecovery.has(cto._id) && mavDistribution) {
         // Returning from recovery — resume at conservatively distributed MAV
-        setCount = Math.min(mavDistribution[index], this.#MAX_SETS_PER_EXERCISE);
+        setCount = Math.min(mavDistribution[index], this.MAX_SETS_PER_EXERCISE);
       } else {
         // Carry forward last microcycle's set count
-        setCount = Math.min(previousSessionExercise.setOrder.length, this.#MAX_SETS_PER_EXERCISE);
+        setCount = Math.min(previousSessionExercise.setOrder.length, this.MAX_SETS_PER_EXERCISE);
       }
 
       if (isDeloadMicrocycle) {
@@ -558,7 +575,7 @@ export default class WorkoutVolumePlanningService {
 
         // Only exercises below per-exercise cap and in uncapped sessions are candidates
         if (
-          previousSessionExercise.setOrder.length < this.#MAX_SETS_PER_EXERCISE &&
+          previousSessionExercise.setOrder.length < this.MAX_SETS_PER_EXERCISE &&
           !this.#sessionIsCapped(
             cto._id,
             context.exerciseIdToSessionIndex,
@@ -713,7 +730,7 @@ export default class WorkoutVolumePlanningService {
     );
 
     // Respect all caps: per-exercise max, per-session max, and per-addition max
-    const maxDueToExerciseLimit = this.#MAX_SETS_PER_EXERCISE - currentSets;
+    const maxDueToExerciseLimit = this.MAX_SETS_PER_EXERCISE - currentSets;
     const maxDueToSessionLimit = this.#MAX_SETS_PER_MUSCLE_GROUP_PER_SESSION - sessionTotal;
     const maxAddable = Math.min(
       setsToAdd,

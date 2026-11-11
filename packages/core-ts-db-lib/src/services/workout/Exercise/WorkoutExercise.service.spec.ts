@@ -1273,4 +1273,34 @@ describe('Unit Tests', () => {
       });
     });
   });
+
+  describe('groupByPrimaryMuscleGroup', () => {
+    it('should group exercises by their first primary muscle group in the given order', () => {
+      const { barbellSquat, deadlift, barbellBenchPress } = workoutTestUtil.STANDARD_EXERCISES;
+      const { quads, back, chest } = workoutTestUtil.STANDARD_MUSCLE_GROUPS;
+
+      const groups = WorkoutExerciseService.groupByPrimaryMuscleGroup([
+        barbellSquat,
+        deadlift,
+        barbellBenchPress
+      ]);
+
+      expect([...groups]).toEqual([
+        [quads._id, [barbellSquat]],
+        [back._id, [deadlift]],
+        [chest._id, [barbellBenchPress]]
+      ]);
+    });
+
+    it('should throw when an exercise has no primary muscle group', () => {
+      const exercise = {
+        ...workoutTestUtil.STANDARD_EXERCISES.barbellSquat,
+        primaryMuscleGroups: []
+      };
+
+      expect(() => WorkoutExerciseService.groupByPrimaryMuscleGroup([exercise])).toThrow(
+        'has no primary muscle group'
+      );
+    });
+  });
 });

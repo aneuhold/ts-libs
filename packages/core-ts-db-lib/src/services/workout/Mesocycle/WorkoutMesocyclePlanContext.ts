@@ -12,6 +12,7 @@ import type { WorkoutMicrocycle } from '../../../documents/workout/WorkoutMicroc
 import type { WorkoutSession } from '../../../documents/workout/WorkoutSession.js';
 import type { WorkoutSessionExercise } from '../../../documents/workout/WorkoutSessionExercise.js';
 import type { WorkoutSet } from '../../../documents/workout/WorkoutSet.js';
+import WorkoutExerciseService from '../Exercise/WorkoutExercise.service.js';
 import WorkoutMicrocycleService from '../Microcycle/WorkoutMicrocycle.service.js';
 import WorkoutVolumePlanningService from '../util/VolumePlanning/WorkoutVolumePlanning.service.js';
 
@@ -228,12 +229,23 @@ export default class WorkoutMesocyclePlanContext {
   }
 
   /**
-   * Stores the planned session -> exercises structure for the mesocycle and derives
-   * the muscle-group-wide ordering used for set progression.
+   * Stores the planned session -> exercises structure for the mesocycle, and derives from it the
+   * primary muscle group -> exercise CTOs map and the exercise ID -> session index map.
+   *
+   * Exercises within a muscle group are ordered by session, then by position in the session, so
+   * set progression is distributed evenly across a muscle group for the entire microcycle, even
+   * when its exercises are split across sessions.
    */
   public setPlannedSessionExerciseCTOs(plannedSessionExerciseCTOs: WorkoutExerciseCTO[][]): void {
     this.plannedSessionExerciseCTOs = plannedSessionExerciseCTOs;
-    this.#buildSessionCTOMaps(plannedSessionExerciseCTOs);
+    this.muscleGroupToExerciseCTOsMap = WorkoutExerciseService.groupByPrimaryMuscleGroup(
+      plannedSessionExerciseCTOs.flat()
+    );
+    const exerciseIdToSessionIndex = new Map<UUID, number>();
+    plannedSessionExerciseCTOs.forEach((sessionCTOs, sessionIndex) => {
+      for (const cto of sessionCTOs) exerciseIdToSessionIndex.set(cto._id, sessionIndex);
+    });
+    this.exerciseIdToSessionIndex = exerciseIdToSessionIndex;
   }
 
   /**
@@ -260,41 +272,5 @@ export default class WorkoutMesocyclePlanContext {
     }
 
     return exerciseToSessionExercise;
-  }
-
-  /**
-   * Builds and stores a map of primary muscle group -> ordered exercise CTOs for the mesocycle plan.
-   *
-   * Also builds a map of exercise ID -> session index for use during session generation.
-   *
-   * The ordering is determined by flattening the planned sessions in order, then the exercises within
-   * each session in order. This allows set progression to be distributed evenly across a muscle group
-   * for the entire microcycle, even when exercises are split across sessions.
-   */
-  #buildSessionCTOMaps(sessionsToCTOs: WorkoutExerciseCTO[][]): void {
-    const muscleGroupToCTOsMap = new Map<UUID, WorkoutExerciseCTO[]>();
-    const exerciseIdToSessionIndex = new Map<UUID, number>();
-
-    for (let sessionIndex = 0; sessionIndex < sessionsToCTOs.length; sessionIndex++) {
-      const sessionCTOs = sessionsToCTOs[sessionIndex];
-      for (const cto of sessionCTOs) {
-        exerciseIdToSessionIndex.set(cto._id, sessionIndex);
-
-        const primaryMuscleGroupId = cto.primaryMuscleGroups[0];
-        if (!primaryMuscleGroupId) {
-          throw new Error(`Exercise ${cto._id}, ${cto.exerciseName} has no primary muscle group`);
-        }
-
-        const existing = muscleGroupToCTOsMap.get(primaryMuscleGroupId);
-        if (existing) {
-          existing.push(cto);
-        } else {
-          muscleGroupToCTOsMap.set(primaryMuscleGroupId, [cto]);
-        }
-      }
-    }
-
-    this.muscleGroupToExerciseCTOsMap = muscleGroupToCTOsMap;
-    this.exerciseIdToSessionIndex = exerciseIdToSessionIndex;
   }
 }

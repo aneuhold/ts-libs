@@ -682,6 +682,7 @@ class WorkoutTestUtil {
     mesocycleHistoryData: Array<{
       startingSetCount: number;
       peakSetCount: number;
+      exerciseCount?: number;
       avgRsm?: number | null;
       avgPerformanceScore?: number | null;
       recoverySessionCount?: number;
@@ -698,6 +699,7 @@ class WorkoutTestUtil {
         mesocycleId: DocumentService.generateID(),
         cycleType: CycleType.MuscleGain,
         startingSetCount: data.startingSetCount,
+        exerciseCount: data.exerciseCount ?? 1,
         peakSetCount: data.peakSetCount,
         avgRsm: data.avgRsm ?? null,
         avgSorenessScore: null,

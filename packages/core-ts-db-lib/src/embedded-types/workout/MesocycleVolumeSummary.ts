@@ -1,6 +1,6 @@
 import { z } from 'zod';
-import { UUIDSchema } from '../../schemas/UUIDSchema.js';
 import { CycleType } from '../../documents/workout/WorkoutMesocycle.js';
+import { UUIDSchema } from '../../schemas/UUIDSchema.js';
 
 /**
  * The schema for {@link MesocycleVolumeSummary}.
@@ -21,6 +21,11 @@ export const MesocycleVolumeSummarySchema = z.object({
    * Approximates the starting volume (roughly MEV if calibrated correctly).
    */
   startingSetCount: z.number(),
+
+  /**
+   * Number of distinct exercises for this muscle group.
+   */
+  exerciseCount: z.int().nonnegative(),
 
   /**
    * Maximum total sets for this muscle group in any single microcycle.
