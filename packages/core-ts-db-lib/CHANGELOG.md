@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## 🔖 [5.1.1] (2026-11-11)
+
+### ✅ Added
+
+### 🏗️ Changed
+
+### 🩹 Fixed
+
+### 🔥 Removed
+
 ## 🔖 [5.1.0] (2026-11-06)
 
 ### ✅ Added
@@ -535,6 +545,7 @@ Updated dependency: now requires `@aneuhold/core-ts-lib@^2.3.11`.
 - Updated workflow permissions to allow repository write access
 
 <!-- Link References -->
+[5.1.1]: https://github.com/aneuhold/ts-libs/compare/core-ts-db-lib-v5.1.0...core-ts-db-lib-v5.1.1
 [5.1.0]: https://github.com/aneuhold/ts-libs/compare/core-ts-db-lib-v5.0.16...core-ts-db-lib-v5.1.0
 [5.0.16]: https://github.com/aneuhold/ts-libs/compare/core-ts-db-lib-v5.0.15...core-ts-db-lib-v5.0.16
 [5.0.15]: https://github.com/aneuhold/ts-libs/compare/core-ts-db-lib-v5.0.13...core-ts-db-lib-v5.0.15
