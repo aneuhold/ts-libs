@@ -7,13 +7,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## 🔖 [2.4.11] (2026-11-11)
 
-### ✅ Added
-
-### 🏗️ Changed
-
 ### 🩹 Fixed
 
-### 🔥 Removed
+- `FileSystemService` changed-file detection now includes untracked files that are not git-ignored, in addition to files changed compared to `origin/main`.
 
 ## 🔖 [2.4.10] (2026-09-18)
 

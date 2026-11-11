@@ -9,11 +9,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### ✅ Added
 
+- `muscleGroupStartingSetCounts` field on `WorkoutMesocycleSchema`, a record keyed by muscle group ID that sets the starting set count for each muscle group in the first microcycle. Muscle groups with no entry use the default starting set count.
+- `WorkoutVolumePlanningService.getDefaultStartingSetCount` for getting the default starting set count of a muscle group (estimated MEV when history exists, otherwise a per-exercise default).
+
 ### 🏗️ Changed
 
-### 🩹 Fixed
-
-### 🔥 Removed
+- Volume planning starts each muscle group at its configured starting set count and progresses from there, for all cycle types. Logged set counts from earlier microcycles still carry forward.
+- Updated `@aneuhold/core-ts-lib` dependency to 2.4.11.
 
 ## 🔖 [5.1.0] (2026-11-06)
 
