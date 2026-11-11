@@ -80,7 +80,7 @@ export const WorkoutMesocycleSchema = z.object({
    * Only affects microcycles planned without logged data from an earlier microcycle in this
    * mesocycle; after that, logged set counts carry forward.
    */
-  muscleGroupStartingSetCounts: z.record(UUIDSchema, z.int().positive()).default({}),
+  muscleGroupStartingSetCounts: z.record(UUIDSchema, z.int().positive()).optional(),
   /**
    * The date this mesocycle was started by the user.
    *

@@ -91,18 +91,7 @@ export default class WorkoutMicrocycleService {
     sessionCount: number,
     exerciseCTOs: WorkoutExerciseCTO[]
   ): WorkoutExerciseCTO[][] {
-    // Group exercises by their primary muscle group (use first one as main identifier, this might
-    // need to be revisited later for multi-group exercises)
-    const muscleGroupsMap = new Map<UUID, WorkoutExerciseCTO[]>();
-    for (const cto of exerciseCTOs) {
-      const muscleGroupId = cto.primaryMuscleGroups[0];
-      const existingGroup = muscleGroupsMap.get(muscleGroupId);
-      if (existingGroup) {
-        existingGroup.push(cto);
-      } else {
-        muscleGroupsMap.set(muscleGroupId, [cto]);
-      }
-    }
+    const muscleGroupsMap = WorkoutExerciseService.groupByPrimaryMuscleGroup(exerciseCTOs);
 
     // 1. Calculate max fatigue for each muscle group to sort them initially
     const muscleGroupFatigueScores = new Map<UUID, number>();

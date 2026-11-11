@@ -66,6 +66,7 @@ export default class WorkoutMuscleGroupRepository extends WorkoutBaseWithUserIdR
     interface VolumeRow {
       _id: { mesocycleId: string; muscleGroupId: string };
       startingSetCount: number;
+      exerciseCount: number;
       peakSetCount: number;
       rsmSum: number;
       rsmCount: number;
@@ -191,6 +192,7 @@ export default class WorkoutMuscleGroupRepository extends WorkoutBaseWithUserIdR
               microIdx: '$_microIdx'
             },
             setCount: { $sum: { $size: { $ifNull: ['$_se.setOrder', []] } } },
+            exerciseIds: { $addToSet: '$_se.workoutExerciseId' },
             rsmSum: {
               $sum: {
                 $cond: [
@@ -268,6 +270,7 @@ export default class WorkoutMuscleGroupRepository extends WorkoutBaseWithUserIdR
               muscleGroupId: '$_id.muscleGroupId'
             },
             startingSetCount: { $first: '$setCount' },
+            exerciseCount: { $first: { $size: '$exerciseIds' } },
             peakSetCount: { $max: '$setCount' },
             rsmSum: { $sum: '$rsmSum' },
             rsmCount: { $sum: '$rsmCount' },
@@ -279,7 +282,10 @@ export default class WorkoutMuscleGroupRepository extends WorkoutBaseWithUserIdR
             cycleType: { $first: '$cycleType' },
             completedDate: { $first: '$completedDate' }
           }
-        }
+        },
+        // $group output has no guaranteed order, so 1 final sort makes sure everything is by
+        // date
+        { $sort: { completedDate: -1 } }
       ])
       .toArray();
 
@@ -305,6 +311,7 @@ export default class WorkoutMuscleGroupRepository extends WorkoutBaseWithUserIdR
         mesocycleId: row._id.mesocycleId,
         cycleType: row.cycleType,
         startingSetCount: row.startingSetCount,
+        exerciseCount: row.exerciseCount,
         peakSetCount: row.peakSetCount,
         avgRsm: row.rsmCount > 0 ? row.rsmSum / row.rsmCount : null,
         avgSorenessScore: row.sorenessCount > 0 ? row.sorenessSum / row.sorenessCount : null,

@@ -138,6 +138,66 @@ describe('WorkoutMuscleGroupRepository', () => {
       expect(cto.mesocycleHistory[0].startingSetCount).toBe(2);
     });
 
+    it('should compute exerciseCount from the exercises in the first microcycle', async () => {
+      const user = await workoutTestUtil.insertUser('WorkoutMuscleGroupRepository.buildCTOs');
+      const mg = await workoutTestUtil.insertMuscleGroup(user._id, 'Chest');
+      const eq = await workoutTestUtil.insertEquipmentType(user._id);
+      const exercises = await Promise.all(
+        ['Bench', 'Incline Press'].map((name) =>
+          workoutTestUtil.insertExercise({
+            userId: user._id,
+            equipmentTypeId: eq._id,
+            primaryMuscleGroupIds: [mg._id],
+            name
+          })
+        )
+      );
+
+      await workoutTestUtil.insertCompletedMesocycle(user._id, exercises, {
+        microcycleCount: 2,
+        setsPerMicrocycle: [2, 3]
+      });
+
+      const ctos = await repo.buildMuscleGroupVolumeCTOsForUser(user._id);
+      const cto = ctos.find((c) => c._id === mg._id);
+
+      expect(cto).toBeDefined();
+      if (!cto) return;
+      expect(cto.mesocycleHistory[0].exerciseCount).toBe(2);
+      expect(cto.mesocycleHistory[0].startingSetCount).toBe(4);
+    });
+
+    it('should order mesocycleHistory with the most recently completed mesocycle first', async () => {
+      const user = await workoutTestUtil.insertUser('WorkoutMuscleGroupRepository.buildCTOs');
+      const mg = await workoutTestUtil.insertMuscleGroup(user._id, 'Chest');
+      const eq = await workoutTestUtil.insertEquipmentType(user._id);
+      const exercise = await workoutTestUtil.insertExercise({
+        userId: user._id,
+        equipmentTypeId: eq._id,
+        primaryMuscleGroupIds: [mg._id],
+        name: 'Bench'
+      });
+
+      const olderDate = new Date('2026-01-01');
+      const newerDate = new Date('2026-03-01');
+      await workoutTestUtil.insertCompletedMesocycle(user._id, exercise, {
+        completedDate: olderDate
+      });
+      await workoutTestUtil.insertCompletedMesocycle(user._id, exercise, {
+        completedDate: newerDate
+      });
+
+      const ctos = await repo.buildMuscleGroupVolumeCTOsForUser(user._id);
+      const cto = ctos.find((c) => c._id === mg._id);
+
+      expect(cto).toBeDefined();
+      if (!cto) return;
+      expect(cto.mesocycleHistory.map((summary) => summary.completedDate)).toEqual([
+        newerDate,
+        olderDate
+      ]);
+    });
+
     it('should compute peakSetCount as the max across microcycles', async () => {
       const user = await workoutTestUtil.insertUser('WorkoutMuscleGroupRepository.buildCTOs');
       const mg = await workoutTestUtil.insertMuscleGroup(user._id, 'Quads');

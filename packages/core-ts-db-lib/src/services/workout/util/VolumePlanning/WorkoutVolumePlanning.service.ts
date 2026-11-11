@@ -49,7 +49,9 @@ export default class WorkoutVolumePlanningService {
    */
   static USE_VOLUME_LANDMARK_PROGRESSION = false;
 
-  static readonly #MAX_SETS_PER_EXERCISE = 8;
+  /** Most sets a single exercise gets in a microcycle. */
+  static readonly MAX_SETS_PER_EXERCISE = 8;
+
   static readonly #MAX_SETS_PER_MUSCLE_GROUP_PER_SESSION = 10;
 
   /** Minimum average RSM required for a mesocycle to count toward MEV estimation. */
@@ -208,7 +210,7 @@ export default class WorkoutVolumePlanningService {
       ? context.muscleGroupToVolumeLandmarkMap.get(primaryMuscleGroupId)
       : undefined;
     const startingSetCount = primaryMuscleGroupId
-      ? context.mesocycle.muscleGroupStartingSetCounts[primaryMuscleGroupId]
+      ? context.mesocycle.muscleGroupStartingSetCounts?.[primaryMuscleGroupId]
       : undefined;
 
     const { startVolume, endVolume } = this.#getVolumeTargetsForMuscleGroup(
@@ -233,7 +235,7 @@ export default class WorkoutVolumePlanningService {
     muscleGroupExerciseCTOs.forEach((cto, index) => {
       exerciseIdToSetCount.set(
         cto._id,
-        Math.min(baselineCounts[index], this.#MAX_SETS_PER_EXERCISE)
+        Math.min(baselineCounts[index], this.MAX_SETS_PER_EXERCISE)
       );
 
       if (!context.exerciseIdToSessionIndex) return;
@@ -507,10 +509,10 @@ export default class WorkoutVolumePlanningService {
       let setCount: number;
       if (exercisesThatWerePreviouslyInRecovery.has(cto._id) && mavDistribution) {
         // Returning from recovery — resume at conservatively distributed MAV
-        setCount = Math.min(mavDistribution[index], this.#MAX_SETS_PER_EXERCISE);
+        setCount = Math.min(mavDistribution[index], this.MAX_SETS_PER_EXERCISE);
       } else {
         // Carry forward last microcycle's set count
-        setCount = Math.min(previousSessionExercise.setOrder.length, this.#MAX_SETS_PER_EXERCISE);
+        setCount = Math.min(previousSessionExercise.setOrder.length, this.MAX_SETS_PER_EXERCISE);
       }
 
       if (isDeloadMicrocycle) {
@@ -573,7 +575,7 @@ export default class WorkoutVolumePlanningService {
 
         // Only exercises below per-exercise cap and in uncapped sessions are candidates
         if (
-          previousSessionExercise.setOrder.length < this.#MAX_SETS_PER_EXERCISE &&
+          previousSessionExercise.setOrder.length < this.MAX_SETS_PER_EXERCISE &&
           !this.#sessionIsCapped(
             cto._id,
             context.exerciseIdToSessionIndex,
@@ -728,7 +730,7 @@ export default class WorkoutVolumePlanningService {
     );
 
     // Respect all caps: per-exercise max, per-session max, and per-addition max
-    const maxDueToExerciseLimit = this.#MAX_SETS_PER_EXERCISE - currentSets;
+    const maxDueToExerciseLimit = this.MAX_SETS_PER_EXERCISE - currentSets;
     const maxDueToSessionLimit = this.#MAX_SETS_PER_MUSCLE_GROUP_PER_SESSION - sessionTotal;
     const maxAddable = Math.min(
       setsToAdd,
