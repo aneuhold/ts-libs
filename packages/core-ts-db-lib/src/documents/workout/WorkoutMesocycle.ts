@@ -73,6 +73,15 @@ export const WorkoutMesocycleSchema = z.object({
    */
   plannedMicrocycleCount: z.int().min(2).max(20).nullish(),
   /**
+   * The starting set count for each muscle group, keyed by muscle group ID: the total sets for
+   * the muscle group in the first microcycle, spread across its exercises. A muscle group with no
+   * entry uses the default starting set count.
+   *
+   * Only affects microcycles planned without logged data from an earlier microcycle in this
+   * mesocycle; after that, logged set counts carry forward.
+   */
+  muscleGroupStartingSetCounts: z.record(UUIDSchema, z.int().positive()).default({}),
+  /**
    * The date this mesocycle was started by the user.
    *
    * Distinct from `createdDate` — this is set when the user explicitly clicks
