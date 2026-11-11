@@ -9,8 +9,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### ✅ Added
 
-- `muscleGroupStartingSetCounts` field on `WorkoutMesocycleSchema`, a record keyed by muscle group ID that sets the starting set count for each muscle group in the first microcycle. Muscle groups with no entry use the default starting set count.
+- Optional `muscleGroupStartingSetCounts` field on `WorkoutMesocycleSchema`, a record keyed by muscle group ID that sets the starting set count for each muscle group in the first microcycle. Muscle groups with no entry use the default starting set count.
 - `WorkoutVolumePlanningService.getDefaultStartingSetCount` for getting the default starting set count of a muscle group (estimated MEV when history exists, otherwise a per-exercise default).
+- `exerciseCount` field on `MesocycleVolumeSummary`, the number of distinct exercises for the muscle group.
+- `WorkoutExerciseService.groupByPrimaryMuscleGroup` for grouping exercises by their first primary muscle group.
+- `WorkoutVolumePlanningService.MAX_SETS_PER_EXERCISE` is now public.
 
 ### 🏗️ Changed
 
