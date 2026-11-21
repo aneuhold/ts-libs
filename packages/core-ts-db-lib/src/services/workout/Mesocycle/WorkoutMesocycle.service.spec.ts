@@ -7,6 +7,7 @@ import type { WorkoutMicrocycle } from '../../../documents/workout/WorkoutMicroc
 import type { WorkoutSession } from '../../../documents/workout/WorkoutSession.js';
 import type { WorkoutSessionExercise } from '../../../documents/workout/WorkoutSessionExercise.js';
 import type { WorkoutSet } from '../../../documents/workout/WorkoutSet.js';
+import { WorkoutMesocyclePlanningSettingsSchema } from '../../../embedded-types/workout/MesocyclePlanningSettings.js';
 import WorkoutMesocycleService from './WorkoutMesocycle.service.js';
 import {
   WorkoutDeloadSeverity,
@@ -15,6 +16,7 @@ import {
 } from './WorkoutMesocycleService.types.js';
 
 describe('Unit Tests', () => {
+  const defaultMesocyclePlanningSettings = WorkoutMesocyclePlanningSettingsSchema.parse({});
   describe('generateOrUpdateMesocycle', () => {
     it('should not generate any plan documents for FreeForm mesocycles', () => {
       const exerciseCTOs = [
@@ -37,7 +39,11 @@ describe('Unit Tests', () => {
         )
       });
 
-      const result = WorkoutMesocycleService.generateOrUpdateMesocycle(mesocycle, exerciseCTOs);
+      const result = WorkoutMesocycleService.generateOrUpdateMesocycle(
+        mesocycle,
+        defaultMesocyclePlanningSettings,
+        exerciseCTOs
+      );
 
       expect(result.microcycles?.create).toBeUndefined();
       expect(result.sessions?.create).toBeUndefined();
@@ -82,7 +88,11 @@ describe('Unit Tests', () => {
         )
       });
 
-      const result = WorkoutMesocycleService.generateOrUpdateMesocycle(mesocycle, exerciseCTOs);
+      const result = WorkoutMesocycleService.generateOrUpdateMesocycle(
+        mesocycle,
+        defaultMesocyclePlanningSettings,
+        exerciseCTOs
+      );
 
       // Verify microcycles
       expect(result.microcycles?.create).toHaveLength(3);
@@ -148,7 +158,11 @@ describe('Unit Tests', () => {
         )
       });
 
-      const result = WorkoutMesocycleService.generateOrUpdateMesocycle(mesocycle, exerciseCTOs);
+      const result = WorkoutMesocycleService.generateOrUpdateMesocycle(
+        mesocycle,
+        defaultMesocyclePlanningSettings,
+        exerciseCTOs
+      );
 
       const sets = result.sets?.create ?? [];
       const sessions = result.sessions?.create ?? [];
@@ -205,7 +219,11 @@ describe('Unit Tests', () => {
         )
       });
 
-      const result = WorkoutMesocycleService.generateOrUpdateMesocycle(mesocycle, exerciseCTOs);
+      const result = WorkoutMesocycleService.generateOrUpdateMesocycle(
+        mesocycle,
+        defaultMesocyclePlanningSettings,
+        exerciseCTOs
+      );
 
       // Verify microcycles
       expect(result.microcycles?.create).toHaveLength(7);
@@ -284,6 +302,7 @@ describe('Unit Tests', () => {
       // Generate initial plan
       const initialResult = WorkoutMesocycleService.generateOrUpdateMesocycle(
         mesocycle,
+        defaultMesocyclePlanningSettings,
         exerciseCTOs
       );
 
@@ -296,6 +315,7 @@ describe('Unit Tests', () => {
       // Regenerate - should not create, update, or delete anything
       const regenResult = WorkoutMesocycleService.generateOrUpdateMesocycle(
         mesocycle,
+        defaultMesocyclePlanningSettings,
         exerciseCTOs,
         [],
         initialResult.microcycles?.create ?? [],
@@ -341,6 +361,7 @@ describe('Unit Tests', () => {
       const initialMesocycle = { ...mesocycle, plannedMicrocycleCount: 2 };
       const initialResult = WorkoutMesocycleService.generateOrUpdateMesocycle(
         initialMesocycle,
+        defaultMesocyclePlanningSettings,
         exerciseCTOs
       );
 
@@ -356,6 +377,7 @@ describe('Unit Tests', () => {
       // Now generate with the full 4 microcycles - should create 2 more
       const extendedResult = WorkoutMesocycleService.generateOrUpdateMesocycle(
         mesocycle,
+        defaultMesocyclePlanningSettings,
         exerciseCTOs,
         [],
         initialResult.microcycles?.create ?? [],
@@ -411,6 +433,7 @@ describe('Unit Tests', () => {
       // Generate initial plan
       const initialResult = WorkoutMesocycleService.generateOrUpdateMesocycle(
         mesocycle,
+        defaultMesocyclePlanningSettings,
         exerciseCTOs
       );
 
@@ -427,6 +450,7 @@ describe('Unit Tests', () => {
       // Regenerate - should clean up microcycles 2 and 3, keep microcycle 1
       const regenResult = WorkoutMesocycleService.generateOrUpdateMesocycle(
         mesocycle,
+        defaultMesocyclePlanningSettings,
         exerciseCTOs,
         [],
         initialResult.microcycles?.create ?? [],
@@ -477,6 +501,7 @@ describe('Unit Tests', () => {
       // Generate initial plan
       const initialResult = WorkoutMesocycleService.generateOrUpdateMesocycle(
         mesocycle,
+        defaultMesocyclePlanningSettings,
         exerciseCTOs
       );
 
@@ -493,6 +518,7 @@ describe('Unit Tests', () => {
       // Regenerate - should clean up the empty microcycle
       const regenResult = WorkoutMesocycleService.generateOrUpdateMesocycle(
         mesocycle,
+        defaultMesocyclePlanningSettings,
         exerciseCTOs,
         [],
         modifiedMicrocycles,
@@ -538,6 +564,7 @@ describe('Unit Tests', () => {
       // Generate initial plan
       const initialResult = WorkoutMesocycleService.generateOrUpdateMesocycle(
         mesocycle,
+        defaultMesocyclePlanningSettings,
         exerciseCTOs
       );
 
@@ -550,6 +577,7 @@ describe('Unit Tests', () => {
       // microcycles 1 and 2 (no completedDate, sessions incomplete) should be cleaned up
       const regenResult = WorkoutMesocycleService.generateOrUpdateMesocycle(
         mesocycle,
+        defaultMesocyclePlanningSettings,
         exerciseCTOs,
         [],
         initialMicrocycles,
@@ -603,6 +631,7 @@ describe('Unit Tests', () => {
       // Generate initial plan
       const initialResult = WorkoutMesocycleService.generateOrUpdateMesocycle(
         mesocycle,
+        defaultMesocyclePlanningSettings,
         exerciseCTOs
       );
 
@@ -628,6 +657,7 @@ describe('Unit Tests', () => {
       expect(() => {
         WorkoutMesocycleService.generateOrUpdateMesocycle(
           mesocycle,
+          defaultMesocyclePlanningSettings,
           exerciseCTOs,
           [],
           initialResult.microcycles?.create ?? [],
@@ -668,6 +698,7 @@ describe('Unit Tests', () => {
 
       const result = WorkoutMesocycleService.generateOrUpdateMesocycle(
         mesocycle,
+        defaultMesocyclePlanningSettings,
         exerciseCTOs,
         [],
         [],
@@ -714,7 +745,11 @@ describe('Unit Tests', () => {
         startDate: mesocycleStartDate
       });
 
-      const result = WorkoutMesocycleService.generateOrUpdateMesocycle(mesocycle, exerciseCTOs);
+      const result = WorkoutMesocycleService.generateOrUpdateMesocycle(
+        mesocycle,
+        defaultMesocyclePlanningSettings,
+        exerciseCTOs
+      );
 
       const microcycles = result.microcycles?.create ?? [];
       expect(microcycles).toHaveLength(2);
@@ -748,7 +783,11 @@ describe('Unit Tests', () => {
       });
 
       const before = Date.now();
-      const result = WorkoutMesocycleService.generateOrUpdateMesocycle(mesocycle, exerciseCTOs);
+      const result = WorkoutMesocycleService.generateOrUpdateMesocycle(
+        mesocycle,
+        defaultMesocyclePlanningSettings,
+        exerciseCTOs
+      );
       const after = Date.now();
 
       const microcycles = result.microcycles?.create ?? [];
@@ -789,6 +828,7 @@ describe('Unit Tests', () => {
       // Generate initial plan
       const initialResult = WorkoutMesocycleService.generateOrUpdateMesocycle(
         mesocycle,
+        defaultMesocyclePlanningSettings,
         exerciseCTOs
       );
 
@@ -819,6 +859,7 @@ describe('Unit Tests', () => {
       // Regenerate
       const regenResult = WorkoutMesocycleService.generateOrUpdateMesocycle(
         mesocycle,
+        defaultMesocyclePlanningSettings,
         exerciseCTOs,
         [],
         initialResult.microcycles?.create ?? [],
@@ -890,9 +931,12 @@ describe('Unit Tests', () => {
         )
       });
 
-      const result = WorkoutMesocycleService.generateOrUpdateMesocycle(mesocycle, exerciseCTOs, [
-        volumeCTO
-      ]);
+      const result = WorkoutMesocycleService.generateOrUpdateMesocycle(
+        mesocycle,
+        defaultMesocyclePlanningSettings,
+        exerciseCTOs,
+        [volumeCTO]
+      );
 
       // Should generate normally (volume data doesn't change structure)
       expect(result.microcycles?.create).toHaveLength(3);
@@ -922,7 +966,11 @@ describe('Unit Tests', () => {
           )
         });
 
-        const result = WorkoutMesocycleService.generateOrUpdateMesocycle(mesocycle, exerciseCTOs);
+        const result = WorkoutMesocycleService.generateOrUpdateMesocycle(
+          mesocycle,
+          defaultMesocyclePlanningSettings,
+          exerciseCTOs
+        );
         const sets = result.sets?.create ?? [];
 
         // All 4 microcycles should be accumulation (no deload)
@@ -954,7 +1002,11 @@ describe('Unit Tests', () => {
           )
         });
 
-        const result = WorkoutMesocycleService.generateOrUpdateMesocycle(mesocycle, exerciseCTOs);
+        const result = WorkoutMesocycleService.generateOrUpdateMesocycle(
+          mesocycle,
+          defaultMesocyclePlanningSettings,
+          exerciseCTOs
+        );
         const sets = result.sets?.create ?? [];
         const sessions = result.sessions?.create ?? [];
         const microcycles = result.microcycles?.create ?? [];
@@ -987,7 +1039,11 @@ describe('Unit Tests', () => {
           )
         });
 
-        const result = WorkoutMesocycleService.generateOrUpdateMesocycle(mesocycle, exerciseCTOs);
+        const result = WorkoutMesocycleService.generateOrUpdateMesocycle(
+          mesocycle,
+          defaultMesocyclePlanningSettings,
+          exerciseCTOs
+        );
         const sets = result.sets?.create ?? [];
         const sessions = result.sessions?.create ?? [];
         const microcycles = result.microcycles?.create ?? [];
@@ -1022,7 +1078,11 @@ describe('Unit Tests', () => {
           )
         });
 
-        const result = WorkoutMesocycleService.generateOrUpdateMesocycle(mesocycle, exerciseCTOs);
+        const result = WorkoutMesocycleService.generateOrUpdateMesocycle(
+          mesocycle,
+          defaultMesocyclePlanningSettings,
+          exerciseCTOs
+        );
         expect(result.microcycles).toBeUndefined();
         expect(result.sessions).toBeUndefined();
       });
@@ -1102,7 +1162,11 @@ describe('Unit Tests', () => {
           )
         });
 
-        const result = WorkoutMesocycleService.generateOrUpdateMesocycle(mesocycle, exerciseCTOs);
+        const result = WorkoutMesocycleService.generateOrUpdateMesocycle(
+          mesocycle,
+          defaultMesocyclePlanningSettings,
+          exerciseCTOs
+        );
 
         const firstSet = getFirstSetForExercise(
           result,
@@ -1120,9 +1184,11 @@ describe('Unit Tests', () => {
           equipmentType: workoutTestUtil.STANDARD_EQUIPMENT_TYPES.barbell
         });
 
-        const resultNoHistory = WorkoutMesocycleService.generateOrUpdateMesocycle(mesocycle, [
-          exerciseCTOWithoutHistory
-        ]);
+        const resultNoHistory = WorkoutMesocycleService.generateOrUpdateMesocycle(
+          mesocycle,
+          defaultMesocyclePlanningSettings,
+          [exerciseCTOWithoutHistory]
+        );
 
         const firstSetNoHistory = getFirstSetForExercise(
           resultNoHistory,
@@ -1165,7 +1231,11 @@ describe('Unit Tests', () => {
           )
         });
 
-        const result = WorkoutMesocycleService.generateOrUpdateMesocycle(mesocycle, exerciseCTOs);
+        const result = WorkoutMesocycleService.generateOrUpdateMesocycle(
+          mesocycle,
+          defaultMesocyclePlanningSettings,
+          exerciseCTOs
+        );
 
         const firstSet = getFirstSetForExercise(
           result,
@@ -1187,9 +1257,11 @@ describe('Unit Tests', () => {
           equipmentType: workoutTestUtil.STANDARD_EQUIPMENT_TYPES.barbell
         });
 
-        const resultDefault = WorkoutMesocycleService.generateOrUpdateMesocycle(mesocycle, [
-          exerciseCTODefault
-        ]);
+        const resultDefault = WorkoutMesocycleService.generateOrUpdateMesocycle(
+          mesocycle,
+          defaultMesocyclePlanningSettings,
+          [exerciseCTODefault]
+        );
 
         const firstSetDefault = getFirstSetForExercise(
           resultDefault,
@@ -1230,8 +1302,65 @@ describe('Unit Tests', () => {
 
         // Should throw because no calibration exists for the exercise
         expect(() => {
-          WorkoutMesocycleService.generateOrUpdateMesocycle(mesocycle, exerciseCTOs);
+          WorkoutMesocycleService.generateOrUpdateMesocycle(
+            mesocycle,
+            defaultMesocyclePlanningSettings,
+            exerciseCTOs
+          );
         }).toThrow(/no bestCalibration/i);
+      });
+    });
+
+    describe('exercise CTO coverage', () => {
+      const squatCTO = workoutTestUtil.createExerciseCTO({
+        exercise: workoutTestUtil.STANDARD_EXERCISES.barbellSquat,
+        calibration: workoutTestUtil.STANDARD_CALIBRATIONS.barbellSquat,
+        equipmentType: workoutTestUtil.STANDARD_EQUIPMENT_TYPES.barbell
+      });
+      const benchCTO = workoutTestUtil.createExerciseCTO({
+        exercise: workoutTestUtil.STANDARD_EXERCISES.barbellBenchPress,
+        calibration: workoutTestUtil.STANDARD_CALIBRATIONS.barbellBenchPress,
+        equipmentType: workoutTestUtil.STANDARD_EQUIPMENT_TYPES.barbell
+      });
+      const exerciseCTOs = [squatCTO, benchCTO];
+      const mesocycle = WorkoutMesocycleSchema.parse({
+        userId: workoutTestUtil.userId,
+        cycleType: CycleType.MuscleGain,
+        plannedSessionCountPerMicrocycle: 2,
+        plannedMicrocycleLengthInDays: 7,
+        plannedMicrocycleRestDays: [],
+        plannedMicrocycleCount: 3,
+        calibratedExercises: exerciseCTOs.flatMap((c) =>
+          c.bestCalibration ? [c.bestCalibration._id] : []
+        )
+      });
+      const initialResult = WorkoutMesocycleService.generateOrUpdateMesocycle(
+        mesocycle,
+        defaultMesocyclePlanningSettings,
+        exerciseCTOs
+      );
+
+      /**
+       * Regenerates the mesocycle from the initial plan with the given CTOs.
+       */
+      const regenerate = (ctos: typeof exerciseCTOs) =>
+        WorkoutMesocycleService.generateOrUpdateMesocycle(
+          mesocycle,
+          defaultMesocyclePlanningSettings,
+          ctos,
+          [],
+          initialResult.microcycles?.create ?? [],
+          initialResult.sessions?.create ?? [],
+          initialResult.sessionExercises?.create ?? [],
+          initialResult.sets?.create ?? []
+        );
+
+      it('should throw when the mesocycle has calibrated exercises but no CTOs are given', () => {
+        expect(() => regenerate([])).toThrow();
+      });
+
+      it('should throw listing the exercises in the mesocycle that have no CTO', () => {
+        expect(() => regenerate([squatCTO])).toThrow(benchCTO._id);
       });
     });
 
@@ -1294,7 +1423,11 @@ describe('Unit Tests', () => {
           calibratedExercises: workoutTestUtil.getCalibrationIds(exerciseCTOs)
         });
 
-        const planned = WorkoutMesocycleService.generateOrUpdateMesocycle(mesocycle, exerciseCTOs);
+        const planned = WorkoutMesocycleService.generateOrUpdateMesocycle(
+          mesocycle,
+          defaultMesocyclePlanningSettings,
+          exerciseCTOs
+        );
         const microcycles = planned.microcycles?.create ?? [];
         const sessionExercises = planned.sessionExercises?.create ?? [];
         const sets = planned.sets?.create ?? [];
@@ -1319,6 +1452,7 @@ describe('Unit Tests', () => {
 
         const replanned = WorkoutMesocycleService.generateOrUpdateMesocycle(
           mesocycle,
+          defaultMesocyclePlanningSettings,
           exerciseCTOs,
           [],
           microcycles,
@@ -1674,6 +1808,7 @@ describe('Unit Tests', () => {
       const mesocycle = workoutTestUtil.createMesocycle({ startDate: new Date() });
       const result = WorkoutMesocycleService.generateOrUpdateMesocycle(
         mesocycle,
+        defaultMesocyclePlanningSettings,
         workoutTestUtil.STANDARD_EXERCISE_CTOS
       );
       const microcycles = result.microcycles?.create ?? [];
@@ -1877,6 +2012,7 @@ describe('Unit Tests', () => {
     ) => {
       return WorkoutMesocycleService.shouldTriggerEarlyDeload(
         mesocycle,
+        defaultMesocyclePlanningSettings,
         options?.exerciseCTOs ?? sixGroupCTOs,
         options?.currentMicrocycleId ?? mc3._id,
         allMicrocycles,

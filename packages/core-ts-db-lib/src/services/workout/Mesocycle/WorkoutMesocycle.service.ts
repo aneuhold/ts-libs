@@ -9,6 +9,7 @@ import { WorkoutMicrocycleSchema } from '../../../documents/workout/WorkoutMicro
 import type { WorkoutSession } from '../../../documents/workout/WorkoutSession.js';
 import type { WorkoutSessionExercise } from '../../../documents/workout/WorkoutSessionExercise.js';
 import type { WorkoutSet } from '../../../documents/workout/WorkoutSet.js';
+import type { WorkoutMesocyclePlanningSettings } from '../../../embedded-types/workout/MesocyclePlanningSettings.js';
 import type { DocumentOperations } from '../../Document.service.js';
 import WorkoutMicrocycleService from '../Microcycle/WorkoutMicrocycle.service.js';
 import WorkoutSessionExerciseService from '../SessionExercise/WorkoutSessionExercise.service.js';
@@ -56,16 +57,18 @@ export default class WorkoutMesocycleService {
    * (first session complete), in which case it will throw an error.
    *
    * @param mesocycle The mesocycle configuration.
+   * @param mesocyclePlanningSettings The user's settings that control how the mesocycle is planned.
    * @param exerciseCTOs The exercise CTOs containing exercise, calibration, equipment, and historical data.
    * @param volumeCTOs Optional muscle group volume CTOs for historical volume landmark estimation.
    * @param existingMicrocycles Existing microcycle documents for this mesocycle.
    * @param existingSessions Existing session documents.
-   * @param existingSessionExercises Existing session exercise documents.
+   * @param existingSessionExercises Existing session exercise documents for this mesocycle.
    * @param existingSets Existing set documents.
    * @param startDate Optional start date for the first microcycle. Defaults to the mesocycle's `startDate`, then to the current date.
    */
   static generateOrUpdateMesocycle(
     mesocycle: WorkoutMesocycle,
+    mesocyclePlanningSettings: WorkoutMesocyclePlanningSettings,
     exerciseCTOs: WorkoutExerciseCTO[],
     volumeCTOs: WorkoutMuscleGroupVolumeCTO[] = [],
     existingMicrocycles: WorkoutMicrocycle[] = [],
@@ -87,14 +90,8 @@ export default class WorkoutMesocycleService {
       return {};
     }
 
-    // Validate all exercises have calibrations before doing any work
-    for (const cto of exerciseCTOs) {
-      if (!cto.bestCalibration) {
-        throw new Error(
-          `Exercise "${cto.exerciseName}" (${cto._id}) has no bestCalibration. All exercises must be calibrated before planning a mesocycle.`
-        );
-      }
-    }
+    // Validate the exercise CTOs before doing any work, so invalid input never deletes documents
+    this.#validateExerciseCTOs(mesocycle, exerciseCTOs, existingSessionExercises);
 
     // Clean up incomplete microcycles before creating context
     const cleanupResult = this.#cleanUpIncompleteMicrocycles(
@@ -120,6 +117,7 @@ export default class WorkoutMesocycleService {
     // Create planning context with clean data
     const context = new WorkoutMesocyclePlanContext(
       mesocycle,
+      mesocyclePlanningSettings,
       exerciseCTOs,
       volumeCTOs,
       cleanMicrocycles,
@@ -395,6 +393,7 @@ export default class WorkoutMesocycleService {
    */
   static shouldTriggerEarlyDeload(
     mesocycle: WorkoutMesocycle,
+    mesocyclePlanningSettings: WorkoutMesocyclePlanningSettings,
     exerciseCTOs: WorkoutExerciseCTO[],
     currentMicrocycleId: UUID,
     existingMicrocycles: WorkoutMicrocycle[],
@@ -410,6 +409,7 @@ export default class WorkoutMesocycleService {
 
     const context = new WorkoutMesocyclePlanContext(
       mesocycle,
+      mesocyclePlanningSettings,
       exerciseCTOs,
       [],
       existingMicrocycles,
@@ -615,6 +615,46 @@ export default class WorkoutMesocycleService {
       return WorkoutDeloadSeverity.Recommended;
     }
     return WorkoutDeloadSeverity.Suggested;
+  }
+
+  /**
+   * Throws when the exercise CTOs can't be used to plan the mesocycle:
+   *
+   * 1. An exercise CTO has no `bestCalibration`.
+   * 2. The mesocycle has calibrated exercises, but no exercise CTOs were given.
+   * 3. An existing session exercise references an exercise with no CTO.
+   */
+  static #validateExerciseCTOs(
+    mesocycle: WorkoutMesocycle,
+    exerciseCTOs: WorkoutExerciseCTO[],
+    existingSessionExercises: WorkoutSessionExercise[]
+  ): void {
+    const ctoExerciseIds = new Set<UUID>();
+    for (const cto of exerciseCTOs) {
+      if (!cto.bestCalibration) {
+        throw new Error(
+          `Exercise "${cto.exerciseName}" (${cto._id}) has no bestCalibration. All exercises must be calibrated before planning a mesocycle.`
+        );
+      }
+      ctoExerciseIds.add(cto._id);
+    }
+
+    if (mesocycle.calibratedExercises.length > 0 && ctoExerciseIds.size === 0) {
+      throw new Error(
+        `Mesocycle ${mesocycle._id} has calibrated exercises, but no exercise CTOs were provided.`
+      );
+    }
+
+    const missingExerciseIds = new Set(
+      existingSessionExercises
+        .map((sessionExercise) => sessionExercise.workoutExerciseId)
+        .filter((exerciseId) => !ctoExerciseIds.has(exerciseId))
+    );
+    if (missingExerciseIds.size > 0) {
+      throw new Error(
+        `Mesocycle ${mesocycle._id} has session exercises for exercises with no exercise CTO: ${[...missingExerciseIds].join(', ')}.`
+      );
+    }
   }
 
   /**

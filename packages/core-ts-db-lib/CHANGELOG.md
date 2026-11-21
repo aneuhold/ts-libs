@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## 🔖 [5.1.2] (2026-11-21)
+
+### ✅ Added
+
+- `WorkoutMesocyclePlanningSettingsSchema`, `WorkoutMesocyclePlanningSettings`, and `WorkoutRecoverySessionBehavior` (`HalveSets` or `MaintainSets`) for configuring how recovery sessions are planned.
+- `mesocyclePlanningSettings` field on `WorkoutUserConfigSchema`, defaulting to `HalveSets`.
+
+### 🏗️ Changed
+
+- *Breaking Change:* `WorkoutMesocycleService.generateOrUpdateMesocycle`, `WorkoutMesocycleService.shouldTriggerEarlyDeload`, and the `WorkoutMesocyclePlanContext` constructor take a `mesocyclePlanningSettings` argument as their second parameter.
+- `WorkoutMesocyclePlanContext` constructor properties are now `readonly`.
+- `generateOrUpdateMesocycle` validates exercise CTOs before deleting any documents.
+
+### 🩹 Fixed
+
+- `generateOrUpdateMesocycle` throws when a mesocycle has calibrated exercises but no exercise CTOs, or when an existing session exercise references an exercise with no CTO, instead of deleting documents.
+
 ## 🔖 [5.1.1] (2026-11-11)
 
 ### ✅ Added
@@ -550,6 +567,7 @@ Updated dependency: now requires `@aneuhold/core-ts-lib@^2.3.11`.
 - Updated workflow permissions to allow repository write access
 
 <!-- Link References -->
+[5.1.2]: https://github.com/aneuhold/ts-libs/compare/core-ts-db-lib-v5.1.1...core-ts-db-lib-v5.1.2
 [5.1.1]: https://github.com/aneuhold/ts-libs/compare/core-ts-db-lib-v5.1.0...core-ts-db-lib-v5.1.1
 [5.1.0]: https://github.com/aneuhold/ts-libs/compare/core-ts-db-lib-v5.0.16...core-ts-db-lib-v5.1.0
 [5.0.16]: https://github.com/aneuhold/ts-libs/compare/core-ts-db-lib-v5.0.15...core-ts-db-lib-v5.0.16

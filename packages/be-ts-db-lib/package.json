@@ -2,7 +2,7 @@
   "name": "@aneuhold/be-ts-db-lib",
   "author": "Anton G. Neuhold Jr.",
   "license": "MIT",
-  "version": "4.2.42",
+  "version": "4.2.43",
   "description": "A backend database library meant to actually interact with various databases in personal projects",
   "packageManager": "pnpm@12.4.1",
   "type": "module",
@@ -60,8 +60,8 @@
     "MongoDB"
   ],
   "dependencies": {
-    "@aneuhold/be-ts-lib": "^3.1.28",
-    "@aneuhold/core-ts-db-lib": "^5.1.1",
+    "@aneuhold/be-ts-lib": "^3.1.29",
+    "@aneuhold/core-ts-db-lib": "^5.1.2",
     "@aneuhold/core-ts-lib": "^2.4.11",
     "bson": "^7.3.1",
     "google-auth-library": "^11.0.0",

@@ -5,6 +5,7 @@ import type {
   WorkoutVolumeLandmarkEstimate
 } from '../../../../ctos/workout/WorkoutMuscleGroupVolumeCTO.js';
 import type { WorkoutSessionExercise } from '../../../../documents/workout/WorkoutSessionExercise.js';
+import { WorkoutRecoverySessionBehavior } from '../../../../embedded-types/workout/MesocyclePlanningSettings.js';
 import type WorkoutMesocyclePlanContext from '../../Mesocycle/WorkoutMesocyclePlanContext.js';
 import WorkoutSessionExerciseService from '../../SessionExercise/WorkoutSessionExercise.service.js';
 
@@ -531,7 +532,7 @@ export default class WorkoutVolumePlanningService {
    * @param muscleGroupExerciseCTOs Exercises in this muscle group.
    * @param exerciseIdToPrevSessionExercise Map from exercise ID to its previous session exercise.
    * @param exercisesThatWerePreviouslyInRecovery Exercises returning from recovery.
-   * @param exerciseIdToSetCount Current set count assignments (mutated for recovery exercises).
+   * @param exerciseIdToSetCount Current set count assignments.
    * @param recoveryExerciseIds Set of exercise IDs flagged for recovery (mutated).
    * @param sessionIndexToExerciseIds Map from session index to exercise IDs in that session.
    */
@@ -564,11 +565,16 @@ export default class WorkoutVolumePlanningService {
       }
 
       if (recommendation === -1) {
-        // Recovery needed: halve sets and flag as recovery exercise
+        // Recovery needed
         recoveryExerciseIds.add(cto._id);
-        const previousSetCount = previousSessionExercise.setOrder.length;
-        const recoverySets = Math.max(1, Math.floor(previousSetCount / 2));
-        exerciseIdToSetCount.set(cto._id, recoverySets);
+        if (
+          context.mesocyclePlanningSettings.recoverySessionBehavior ===
+          WorkoutRecoverySessionBehavior.HalveSets
+        ) {
+          const previousSetCount = previousSessionExercise.setOrder.length;
+          const recoverySets = Math.max(1, Math.floor(previousSetCount / 2));
+          exerciseIdToSetCount.set(cto._id, recoverySets);
+        }
       } else if (recommendation !== null && recommendation >= 0) {
         // Accumulate SFR-recommended additions into shared total
         totalSetsToAdd += recommendation;

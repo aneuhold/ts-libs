@@ -158,6 +158,11 @@ import type { Fatigue } from './embedded-types/workout/Fatigue.js';
 import { FatigueSchema } from './embedded-types/workout/Fatigue.js';
 import type { MesocycleVolumeSummary } from './embedded-types/workout/MesocycleVolumeSummary.js';
 import { MesocycleVolumeSummarySchema } from './embedded-types/workout/MesocycleVolumeSummary.js';
+import type { WorkoutMesocyclePlanningSettings } from './embedded-types/workout/MesocyclePlanningSettings.js';
+import {
+  WorkoutMesocyclePlanningSettingsSchema,
+  WorkoutRecoverySessionBehavior
+} from './embedded-types/workout/MesocyclePlanningSettings.js';
 import type { RSM } from './embedded-types/workout/Rsm.js';
 import { RsmSchema } from './embedded-types/workout/Rsm.js';
 import type { RequiredUserId } from './schemas/required-refs/RequiredUserId.js';
@@ -250,6 +255,7 @@ export {
   WorkoutExerciseService,
   WorkoutMesocycle_docType,
   WorkoutMesocyclePlanContext,
+  WorkoutMesocyclePlanningSettingsSchema,
   WorkoutMesocycleSchema,
   WorkoutMesocycleService,
   WorkoutMicrocycle_docType,
@@ -258,6 +264,7 @@ export {
   WorkoutMuscleGroup_docType,
   WorkoutMuscleGroupSchema,
   WorkoutMuscleGroupVolumeCTOSchema,
+  WorkoutRecoverySessionBehavior,
   WorkoutSession_docType,
   WorkoutSessionExercise_docType,
   WorkoutSessionExerciseSchema,
@@ -315,6 +322,7 @@ export type {
   WorkoutExerciseCalibration,
   WorkoutExerciseCTO,
   WorkoutMesocycle,
+  WorkoutMesocyclePlanningSettings,
   WorkoutMicrocycle,
   WorkoutMuscleGroup,
   WorkoutMuscleGroupVolumeCTO,

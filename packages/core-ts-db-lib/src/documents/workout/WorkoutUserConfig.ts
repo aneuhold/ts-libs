@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { WorkoutMesocyclePlanningSettingsSchema } from '../../embedded-types/workout/MesocyclePlanningSettings.js';
 import { RequiredUserIdSchema } from '../../schemas/required-refs/RequiredUserId.js';
 import {
   BaseDocumentWithTypeSchema,
@@ -42,7 +43,11 @@ export const WorkoutUserConfigSchema = z.object({
         expiresAt: z.date().nullish()
       })
     )
-    .default({})
+    .default({}),
+  /**
+   * The user's settings that control how mesocycles are planned.
+   */
+  mesocyclePlanningSettings: WorkoutMesocyclePlanningSettingsSchema.prefault({})
 });
 
 /**
