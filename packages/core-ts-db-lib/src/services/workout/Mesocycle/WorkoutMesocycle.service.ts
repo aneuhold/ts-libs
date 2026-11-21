@@ -9,6 +9,7 @@ import { WorkoutMicrocycleSchema } from '../../../documents/workout/WorkoutMicro
 import type { WorkoutSession } from '../../../documents/workout/WorkoutSession.js';
 import type { WorkoutSessionExercise } from '../../../documents/workout/WorkoutSessionExercise.js';
 import type { WorkoutSet } from '../../../documents/workout/WorkoutSet.js';
+import type { WorkoutMesocyclePlanningSettings } from '../../../embedded-types/workout/MesocyclePlanningSettings.js';
 import type { DocumentOperations } from '../../Document.service.js';
 import WorkoutMicrocycleService from '../Microcycle/WorkoutMicrocycle.service.js';
 import WorkoutSessionExerciseService from '../SessionExercise/WorkoutSessionExercise.service.js';
@@ -56,6 +57,7 @@ export default class WorkoutMesocycleService {
    * (first session complete), in which case it will throw an error.
    *
    * @param mesocycle The mesocycle configuration.
+   * @param mesocyclePlanningSettings The user's settings that control how the mesocycle is planned.
    * @param exerciseCTOs The exercise CTOs containing exercise, calibration, equipment, and historical data.
    * @param volumeCTOs Optional muscle group volume CTOs for historical volume landmark estimation.
    * @param existingMicrocycles Existing microcycle documents for this mesocycle.
@@ -66,6 +68,7 @@ export default class WorkoutMesocycleService {
    */
   static generateOrUpdateMesocycle(
     mesocycle: WorkoutMesocycle,
+    mesocyclePlanningSettings: WorkoutMesocyclePlanningSettings,
     exerciseCTOs: WorkoutExerciseCTO[],
     volumeCTOs: WorkoutMuscleGroupVolumeCTO[] = [],
     existingMicrocycles: WorkoutMicrocycle[] = [],
@@ -120,6 +123,7 @@ export default class WorkoutMesocycleService {
     // Create planning context with clean data
     const context = new WorkoutMesocyclePlanContext(
       mesocycle,
+      mesocyclePlanningSettings,
       exerciseCTOs,
       volumeCTOs,
       cleanMicrocycles,
@@ -395,6 +399,7 @@ export default class WorkoutMesocycleService {
    */
   static shouldTriggerEarlyDeload(
     mesocycle: WorkoutMesocycle,
+    mesocyclePlanningSettings: WorkoutMesocyclePlanningSettings,
     exerciseCTOs: WorkoutExerciseCTO[],
     currentMicrocycleId: UUID,
     existingMicrocycles: WorkoutMicrocycle[],
@@ -410,6 +415,7 @@ export default class WorkoutMesocycleService {
 
     const context = new WorkoutMesocyclePlanContext(
       mesocycle,
+      mesocyclePlanningSettings,
       exerciseCTOs,
       [],
       existingMicrocycles,

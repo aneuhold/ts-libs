@@ -12,6 +12,7 @@ import type { WorkoutMicrocycle } from '../../../documents/workout/WorkoutMicroc
 import type { WorkoutSession } from '../../../documents/workout/WorkoutSession.js';
 import type { WorkoutSessionExercise } from '../../../documents/workout/WorkoutSessionExercise.js';
 import type { WorkoutSet } from '../../../documents/workout/WorkoutSet.js';
+import type { WorkoutMesocyclePlanningSettings } from '../../../embedded-types/workout/MesocyclePlanningSettings.js';
 import WorkoutExerciseService from '../Exercise/WorkoutExercise.service.js';
 import WorkoutMicrocycleService from '../Microcycle/WorkoutMicrocycle.service.js';
 import WorkoutVolumePlanningService from '../util/VolumePlanning/WorkoutVolumePlanning.service.js';
@@ -110,13 +111,14 @@ export default class WorkoutMesocyclePlanContext {
    * Creates a new workout mesocycle planning context.
    */
   constructor(
-    public mesocycle: WorkoutMesocycle,
+    public readonly mesocycle: WorkoutMesocycle,
+    public readonly mesocyclePlanningSettings: WorkoutMesocyclePlanningSettings,
     exerciseCTOs: WorkoutExerciseCTO[],
     volumeCTOs: WorkoutMuscleGroupVolumeCTO[] = [],
-    public existingMicrocycles: WorkoutMicrocycle[] = [],
-    public existingSessions: WorkoutSession[] = [],
-    public existingSessionExercises: WorkoutSessionExercise[] = [],
-    public existingSets: WorkoutSet[] = []
+    public readonly existingMicrocycles: WorkoutMicrocycle[] = [],
+    public readonly existingSessions: WorkoutSession[] = [],
+    public readonly existingSessionExercises: WorkoutSessionExercise[] = [],
+    public readonly existingSets: WorkoutSet[] = []
   ) {
     // Set cycle-type-specific planning parameters
     const { cycleType } = mesocycle;

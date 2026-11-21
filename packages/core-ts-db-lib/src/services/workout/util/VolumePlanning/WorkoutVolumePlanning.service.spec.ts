@@ -6,6 +6,11 @@ import type { WorkoutMuscleGroupVolumeCTO } from '../../../../ctos/workout/Worko
 import type { WorkoutExercise } from '../../../../documents/workout/WorkoutExercise.js';
 import { CycleType } from '../../../../documents/workout/WorkoutMesocycle.js';
 import type { Fatigue } from '../../../../embedded-types/workout/Fatigue.js';
+import type { WorkoutMesocyclePlanningSettings } from '../../../../embedded-types/workout/MesocyclePlanningSettings.js';
+import {
+  WorkoutMesocyclePlanningSettingsSchema,
+  WorkoutRecoverySessionBehavior
+} from '../../../../embedded-types/workout/MesocyclePlanningSettings.js';
 import type { RSM } from '../../../../embedded-types/workout/Rsm.js';
 import WorkoutVolumePlanningService from './WorkoutVolumePlanning.service.js';
 
@@ -371,70 +376,33 @@ describe('WorkoutVolumePlanningService', () => {
       expect(result.recoveryExerciseIds.has(chestExercises[1]._id)).toBe(false);
     });
 
-    it('should cut sets in half (rounded down, min 1) when recovery is required', () => {
-      const chestExercises: WorkoutExercise[] = [
-        workoutTestUtil.STANDARD_EXERCISES.barbellBenchPress,
-        workoutTestUtil.STANDARD_EXERCISES.inclineBenchPress
-      ];
-
-      const chestCTOs = [
-        workoutTestUtil.createExerciseCTO({
-          exercise: chestExercises[0],
-          calibration: workoutTestUtil.STANDARD_CALIBRATIONS.barbellBenchPress,
-          equipmentType: workoutTestUtil.STANDARD_EQUIPMENT_TYPES.barbell
-        }),
-        workoutTestUtil.createExerciseCTO({
-          exercise: chestExercises[1],
-          calibration: workoutTestUtil.STANDARD_CALIBRATIONS.inclineBenchPress,
-          equipmentType: workoutTestUtil.STANDARD_EQUIPMENT_TYPES.barbell
-        })
-      ];
-
-      // Exercise A: 5 sets, triggers recovery (performanceScore=3)
-      // Exercise B: 3 sets, does not trigger recovery
-      const { result } = calculateSetPlan({
-        exerciseCTOs: chestCTOs,
-        microcycleIndex: 1,
-        sessionStructure: [[0, 1]],
-        historicalMicrocycles: [
-          {
-            sessionExerciseOverrides: [
-              [
-                {
-                  setCount: 5,
-                  sorenessScore: 0,
-                  performanceScore: 3, // Triggers recovery
-                  rsm: { mindMuscleConnection: 2, pump: 2, disruption: 2 },
-                  fatigue: {
-                    jointAndTissueDisruption: 2,
-                    perceivedEffort: 2,
-                    unusedMusclePerformance: 2
-                  }
-                },
-                {
-                  setCount: 3,
-                  sorenessScore: 0,
-                  performanceScore: 1, // Normal progression
-                  rsm: { mindMuscleConnection: 2, pump: 2, disruption: 2 },
-                  fatigue: {
-                    jointAndTissueDisruption: 1,
-                    perceivedEffort: 1,
-                    unusedMusclePerformance: 1
-                  }
-                }
-              ]
-            ]
-          }
-        ]
-      });
+    it('should cut sets in half (rounded down, min 1) when recovery is required and the recoverySessionBehavior is halveSets', () => {
+      const { result, recoveryExerciseId, progressingExerciseId } =
+        calculateRecoveryTriggerSetPlan();
 
       // Exercise A should be cut in half: floor(5/2) = 2 sets
-      expect(result.exerciseIdToSetCount.get(chestExercises[0]._id)).toBe(2);
-      expect(result.recoveryExerciseIds.has(chestExercises[0]._id)).toBe(true);
+      expect(result.exerciseIdToSetCount.get(recoveryExerciseId)).toBe(2);
+      expect(result.recoveryExerciseIds.has(recoveryExerciseId)).toBe(true);
 
       // Exercise B should progress normally (3 + 1 = 4 sets based on recommendation)
-      expect(result.exerciseIdToSetCount.get(chestExercises[1]._id)).toBe(4);
-      expect(result.recoveryExerciseIds.has(chestExercises[1]._id)).toBe(false);
+      expect(result.exerciseIdToSetCount.get(progressingExerciseId)).toBe(4);
+      expect(result.recoveryExerciseIds.has(progressingExerciseId)).toBe(false);
+    });
+
+    it('should keep the previous set count when recovery is required with MaintainSets', () => {
+      const { result, recoveryExerciseId, progressingExerciseId } = calculateRecoveryTriggerSetPlan(
+        WorkoutMesocyclePlanningSettingsSchema.parse({
+          recoverySessionBehavior: WorkoutRecoverySessionBehavior.MaintainSets
+        })
+      );
+
+      // Exercise A keeps its 5 sets, with none added, and is still a recovery exercise
+      expect(result.exerciseIdToSetCount.get(recoveryExerciseId)).toBe(5);
+      expect(result.recoveryExerciseIds.has(recoveryExerciseId)).toBe(true);
+
+      // Exercise B progresses as it does with HalveSets
+      expect(result.exerciseIdToSetCount.get(progressingExerciseId)).toBe(4);
+      expect(result.recoveryExerciseIds.has(progressingExerciseId)).toBe(false);
     });
 
     it('should enforce minimum of 1 set when recovery cuts below 1', () => {
@@ -843,6 +811,7 @@ describe('WorkoutVolumePlanningService', () => {
       sessionStructure?: number[][];
       volumeCTOs?: WorkoutMuscleGroupVolumeCTO[];
       muscleGroupStartingSetCounts?: Record<UUID, number>;
+      mesocyclePlanningSettings?: WorkoutMesocyclePlanningSettings;
       historicalMicrocycles?: Array<{
         sessionExerciseOverrides?: Array<
           Array<{
@@ -863,6 +832,7 @@ describe('WorkoutVolumePlanningService', () => {
         sessionStructure = [[0, 1]],
         volumeCTOs = [],
         muscleGroupStartingSetCounts,
+        mesocyclePlanningSettings,
         historicalMicrocycles = []
       } = options;
 
@@ -878,6 +848,7 @@ describe('WorkoutVolumePlanningService', () => {
       const context = workoutTestUtil.createContext({
         mesocycle,
         exerciseCTOs,
+        mesocyclePlanningSettings,
         volumeCTOs
       });
 
@@ -906,6 +877,70 @@ describe('WorkoutVolumePlanningService', () => {
       );
 
       return { context, result };
+    }
+
+    /**
+     * Plans the microcycle after one where Exercise A (5 sets) triggers recovery and Exercise B
+     * (3 sets) progresses normally.
+     */
+    function calculateRecoveryTriggerSetPlan(
+      mesocyclePlanningSettings?: WorkoutMesocyclePlanningSettings
+    ) {
+      const chestCTOs = [
+        workoutTestUtil.createExerciseCTO({
+          exercise: workoutTestUtil.STANDARD_EXERCISES.barbellBenchPress,
+          calibration: workoutTestUtil.STANDARD_CALIBRATIONS.barbellBenchPress,
+          equipmentType: workoutTestUtil.STANDARD_EQUIPMENT_TYPES.barbell
+        }),
+        workoutTestUtil.createExerciseCTO({
+          exercise: workoutTestUtil.STANDARD_EXERCISES.inclineBenchPress,
+          calibration: workoutTestUtil.STANDARD_CALIBRATIONS.inclineBenchPress,
+          equipmentType: workoutTestUtil.STANDARD_EQUIPMENT_TYPES.barbell
+        })
+      ];
+
+      const { result } = calculateSetPlan({
+        exerciseCTOs: chestCTOs,
+        microcycleIndex: 1,
+        sessionStructure: [[0, 1]],
+        mesocyclePlanningSettings,
+        historicalMicrocycles: [
+          {
+            sessionExerciseOverrides: [
+              [
+                {
+                  setCount: 5,
+                  sorenessScore: 0,
+                  performanceScore: 3, // Triggers recovery
+                  rsm: { mindMuscleConnection: 2, pump: 2, disruption: 2 },
+                  fatigue: {
+                    jointAndTissueDisruption: 2,
+                    perceivedEffort: 2,
+                    unusedMusclePerformance: 2
+                  }
+                },
+                {
+                  setCount: 3,
+                  sorenessScore: 0,
+                  performanceScore: 1, // Normal progression
+                  rsm: { mindMuscleConnection: 2, pump: 2, disruption: 2 },
+                  fatigue: {
+                    jointAndTissueDisruption: 1,
+                    perceivedEffort: 1,
+                    unusedMusclePerformance: 1
+                  }
+                }
+              ]
+            ]
+          }
+        ]
+      });
+
+      return {
+        result,
+        recoveryExerciseId: chestCTOs[0]._id,
+        progressingExerciseId: chestCTOs[1]._id
+      };
     }
   });
 

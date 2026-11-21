@@ -25,6 +25,8 @@ import { WorkoutSessionExerciseSchema } from '../src/documents/workout/WorkoutSe
 import type { WorkoutSet } from '../src/documents/workout/WorkoutSet.js';
 import { WorkoutSetSchema } from '../src/documents/workout/WorkoutSet.js';
 import type { Fatigue } from '../src/embedded-types/workout/Fatigue.js';
+import type { WorkoutMesocyclePlanningSettings } from '../src/embedded-types/workout/MesocyclePlanningSettings.js';
+import { WorkoutMesocyclePlanningSettingsSchema } from '../src/embedded-types/workout/MesocyclePlanningSettings.js';
 import { MesocycleVolumeSummarySchema } from '../src/embedded-types/workout/MesocycleVolumeSummary.js';
 import type { RSM } from '../src/embedded-types/workout/Rsm.js';
 import DocumentService from '../src/services/Document.service.js';
@@ -742,6 +744,7 @@ class WorkoutTestUtil {
   createContext(options: {
     mesocycle?: WorkoutMesocycle;
     exerciseCTOs?: WorkoutExerciseCTO[];
+    mesocyclePlanningSettings?: WorkoutMesocyclePlanningSettings;
     volumeCTOs?: WorkoutMuscleGroupVolumeCTO[];
   }): WorkoutMesocyclePlanContext {
     const {
@@ -753,10 +756,16 @@ class WorkoutTestUtil {
           equipmentType: this.STANDARD_EQUIPMENT_TYPES.barbell
         })
       ],
+      mesocyclePlanningSettings = WorkoutMesocyclePlanningSettingsSchema.parse({}),
       volumeCTOs = []
     } = options;
 
-    return new WorkoutMesocyclePlanContext(mesocycle, exerciseCTOs, volumeCTOs);
+    return new WorkoutMesocyclePlanContext(
+      mesocycle,
+      mesocyclePlanningSettings,
+      exerciseCTOs,
+      volumeCTOs
+    );
   }
 
   /**
@@ -804,6 +813,7 @@ class WorkoutTestUtil {
 
     return new WorkoutMesocyclePlanContext(
       context.mesocycle,
+      context.mesocyclePlanningSettings,
       exerciseCTOs,
       volumeCTOs,
       context.microcyclesInOrder.map(({ microcycle }) => microcycle),
