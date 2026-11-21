@@ -9,11 +9,18 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### ✅ Added
 
+- `WorkoutMesocyclePlanningSettingsSchema`, `WorkoutMesocyclePlanningSettings`, and `WorkoutRecoverySessionBehavior` (`HalveSets` or `MaintainSets`) for configuring how recovery sessions are planned.
+- `mesocyclePlanningSettings` field on `WorkoutUserConfigSchema`, defaulting to `HalveSets`.
+
 ### 🏗️ Changed
+
+- *Breaking Change:* `WorkoutMesocycleService.generateOrUpdateMesocycle`, `WorkoutMesocycleService.shouldTriggerEarlyDeload`, and the `WorkoutMesocyclePlanContext` constructor take a `mesocyclePlanningSettings` argument as their second parameter.
+- `WorkoutMesocyclePlanContext` constructor properties are now `readonly`.
+- `generateOrUpdateMesocycle` validates exercise CTOs before deleting any documents.
 
 ### 🩹 Fixed
 
-### 🔥 Removed
+- `generateOrUpdateMesocycle` throws when a mesocycle has calibrated exercises but no exercise CTOs, or when an existing session exercise references an exercise with no CTO, instead of deleting documents.
 
 ## 🔖 [5.1.1] (2026-11-11)
 
