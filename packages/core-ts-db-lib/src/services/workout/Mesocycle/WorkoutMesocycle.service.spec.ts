@@ -1311,6 +1311,59 @@ describe('Unit Tests', () => {
       });
     });
 
+    describe('exercise CTO coverage', () => {
+      const squatCTO = workoutTestUtil.createExerciseCTO({
+        exercise: workoutTestUtil.STANDARD_EXERCISES.barbellSquat,
+        calibration: workoutTestUtil.STANDARD_CALIBRATIONS.barbellSquat,
+        equipmentType: workoutTestUtil.STANDARD_EQUIPMENT_TYPES.barbell
+      });
+      const benchCTO = workoutTestUtil.createExerciseCTO({
+        exercise: workoutTestUtil.STANDARD_EXERCISES.barbellBenchPress,
+        calibration: workoutTestUtil.STANDARD_CALIBRATIONS.barbellBenchPress,
+        equipmentType: workoutTestUtil.STANDARD_EQUIPMENT_TYPES.barbell
+      });
+      const exerciseCTOs = [squatCTO, benchCTO];
+      const mesocycle = WorkoutMesocycleSchema.parse({
+        userId: workoutTestUtil.userId,
+        cycleType: CycleType.MuscleGain,
+        plannedSessionCountPerMicrocycle: 2,
+        plannedMicrocycleLengthInDays: 7,
+        plannedMicrocycleRestDays: [],
+        plannedMicrocycleCount: 3,
+        calibratedExercises: exerciseCTOs.flatMap((c) =>
+          c.bestCalibration ? [c.bestCalibration._id] : []
+        )
+      });
+      const initialResult = WorkoutMesocycleService.generateOrUpdateMesocycle(
+        mesocycle,
+        defaultMesocyclePlanningSettings,
+        exerciseCTOs
+      );
+
+      /**
+       * Regenerates the mesocycle from the initial plan with the given CTOs.
+       */
+      const regenerate = (ctos: typeof exerciseCTOs) =>
+        WorkoutMesocycleService.generateOrUpdateMesocycle(
+          mesocycle,
+          defaultMesocyclePlanningSettings,
+          ctos,
+          [],
+          initialResult.microcycles?.create ?? [],
+          initialResult.sessions?.create ?? [],
+          initialResult.sessionExercises?.create ?? [],
+          initialResult.sets?.create ?? []
+        );
+
+      it('should throw when the mesocycle has calibrated exercises but no CTOs are given', () => {
+        expect(() => regenerate([])).toThrow();
+      });
+
+      it('should throw listing the exercises in the mesocycle that have no CTO', () => {
+        expect(() => regenerate([squatCTO])).toThrow(benchCTO._id);
+      });
+    });
+
     describe('progression after a microcycle loses a session', () => {
       const squatCTO = workoutTestUtil.createExerciseCTO({
         exercise: workoutTestUtil.STANDARD_EXERCISES.barbellSquat,
